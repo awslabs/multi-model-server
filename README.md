@@ -1,25 +1,30 @@
 ## Usage:
+
 ### Installation
 ```python
 pip install mxnet-model-server
 ```
+
 ### Start serving
 ```python
 mxnet-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model [--process mxnet_vision_service] [--gen-api python] [--port 8080] [--host 127.0.0.1]
 ```
 #### Arguments:
-1. models: required, model_name=model_path pairs, multiple models are supported.
+1. models: required, <model_name>=<model_path> pairs. 
+    (1) Model path can be a local file path or URI (s3 link, or http link). 
+    (2) Currently, the model file has .model extension, it is actually rename of a zip file with pretrained MXNet models and model signature files packed up. The details will be explained in **Export existing model** section
+    (3) Multiple models loading are also supported by specifying multiple name path pairs
 2. process: optional, our system will load input module and will initialize mxnet models with the service defined in the module. The module should contain a valid class extends our base model service with customized preprocess and postprocess.
-3. gen-api: optional, this will generate an open-api formated client sdk in build folder.
-4. port: optional, default is 8080
-5. host: optional, default is 127.0.0.1
+3. port: optional, default is 8080
+4. host: optional, default is 127.0.0.1
+5. gen-api: optional, this will generate an open-api formated client sdk in build folder.
 
 ### Export existing model to serving model format
 ```python
 mxnet-model-export --model resnet-18=models/resnet-18.model --signature signature.json --synset synset.txt --export-path models
 ```
 #### Arguments:
-1. model: required, model_name=model_path pair. Model path is the  path to pre-trained model file.
+1. model: required, <model_name>=<model_path> pair. Model path is the path to pre-trained model file.
 2. signature: required, signature json file for model service.
    Currently 4 entries are required: 
 

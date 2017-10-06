@@ -28,7 +28,7 @@ class ArgParser(object):
                             nargs='+',
                             help='Models to be deployed')
 
-        parser.add_argument('--process', help='Using user defined model service')
+        parser.add_argument('--service', help='Using user defined model service')
 
         parser.add_argument('--gen-api', help='Generate API')
 

@@ -35,7 +35,7 @@ class ClientSDKGenerator(object):
             
             # Use Swagger codegen tool to generate client sdk in target language
             with open(os.devnull, 'wb') as devnull:
-                sdk_proc = subprocess.call('java -jar ' + os.path.dirname(os.path.abspath(__file__)) + '/tools/swagger-codegen-cli-2.2.1.jar generate \
+                sdk_proc = subprocess.call('java -jar ' + os.path.dirname(os.path.abspath(__file__)) + '/../tools/swagger-codegen-cli-2.2.1.jar generate \
                                             -i build/openapi.json \
                                             -o build \
                                             -l %s' % sdk_lanugage, shell=True, stdout=devnull)

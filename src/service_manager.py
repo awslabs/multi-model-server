@@ -3,9 +3,9 @@ import inspect
 import os
 import imp
 
-from mms.storage import KVStorage
-from mms.model_service.model_service import ModelService
-import mms.model_service.mxnet_vision_service as mxnet_vision_service
+from src.storage import KVStorage
+from src.model_service.model_service import ModelService
+import src.model_service.mxnet_vision_service as mxnet_vision_service
 
 
 class ServiceManager(object):

@@ -2,7 +2,7 @@ import json
 import os
 import subprocess
 
-from mms.log import get_logger
+from src.log import get_logger
 
 
 logger = get_logger(__name__)

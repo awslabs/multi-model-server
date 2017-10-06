@@ -7,7 +7,7 @@ import os
 
 from mxnet.gluon.utils import download
 from mxnet.io import DataBatch
-from mms.model_service.model_service import SingleNodeService, URL_PREFIX
+from src.model_service.model_service import SingleNodeService, URL_PREFIX
 
 SIGNATURE_FILE = 'signature.json'
 

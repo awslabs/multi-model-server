@@ -1,9 +1,9 @@
 import json
 from functools import partial
 
-from mms.service_manager import ServiceManager
-from mms.request_handler.flask_handler import FlaskRequestHandler
-from mms.log import get_logger
+from src.service_manager import ServiceManager
+from src.request_handler.flask_handler import FlaskRequestHandler
+from src.log import get_logger
 
 
 logger = get_logger(__name__)

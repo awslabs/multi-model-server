@@ -1,24 +1,5 @@
 #!/usr/bin/env python
 
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied.  See the License for the
-# specific language governing permissions and limitations
-# under the License.
-
-# -*- coding: utf-8 -*-
-# pylint: disable= protected-access, invalid-name
 """Logging utilities."""
 import logging
 import sys
@@ -35,7 +16,6 @@ PY3 = sys.version_info[0] == 3
 
 
 class _Formatter(logging.Formatter):
-    # pylint: disable= no-self-use
     """Customized log formatter."""
 
     def __init__(self):
@@ -43,7 +23,6 @@ class _Formatter(logging.Formatter):
         super(_Formatter, self).__init__(datefmt=datefmt)
 
     def _get_color(self, level):
-        # pylint: disable= missing-docstring
         if logging.WARNING <= level:
             return '\x1b[31m'
         elif logging.INFO <= level:
@@ -51,7 +30,6 @@ class _Formatter(logging.Formatter):
         return '\x1b[34m'
 
     def _get_label(self, level):
-        # pylint: disable= missing-docstring
         if level == logging.CRITICAL:
             return 'C'
         elif level == logging.ERROR:
@@ -65,14 +43,13 @@ class _Formatter(logging.Formatter):
         return 'U'
 
     def format(self, record):
-        # pylint: disable= missing-docstring
         fmt = self._get_color(record.levelno)
         fmt += self._get_label(record.levelno)
         fmt += '%(asctime)s %(process)d %(pathname)s:%(funcName)s:%(lineno)d'
         fmt += ']\x1b[0m'
         fmt += ' %(message)s'
         if PY3:
-            self._style._fmt = fmt # pylint: disable= no-member
+            self._style._fmt = fmt 
         else:
             self._fmt = fmt
         return super(_Formatter, self).format(record)
@@ -135,7 +112,7 @@ def get_logger(name=None, filename=None, filemode=None, level=WARNING):
             mode = filemode if filemode else 'a'
             hdlr = logging.FileHandler(filename, mode)
         else:
-            hdlr = logging.StreamHandler() # pylint: disable=redefined-variable-type
+            hdlr = logging.StreamHandler()
             # the `_Formatter` contain some escape character to
             # represent color, which is not suitable for FileHandler,
             # (TODO) maybe we can add another Formatter for FileHandler.

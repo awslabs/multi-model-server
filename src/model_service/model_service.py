@@ -15,14 +15,41 @@ class ModelService(object):
 
     @abstractmethod
     def inference(self, data):
+        '''
+        Wrapper function to run preprocess, inference and postprocess functions.
+
+        Parameters
+        ----------
+        data : list of object
+            Raw input from request.
+
+        Returns
+        -------
+        list of outputs to be sent back to client.
+            data to be sent back
+        '''
         pass
 
     @abstractmethod
     def ping(self):
+        '''Ping to get system's health.
+
+        Returns
+        -------
+        String
+            MXNet version to show system is healthy.
+        '''
         pass
 
     @abstractproperty
     def signature(self):
+        '''Signiture for model service.
+
+        Returns
+        -------
+        Dict
+            Model service signiture.
+        '''
         pass
 
 

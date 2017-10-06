@@ -1,0 +1,7 @@
+FROM mxnet/python
+
+COPY install.sh /
+
+RUN /install.sh
+
+COPY virtual.conf /etc/nginx/conf.d/

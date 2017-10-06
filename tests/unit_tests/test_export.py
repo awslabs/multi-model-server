@@ -35,8 +35,8 @@ class TestExport(unittest.TestCase):
         mod.init_params()
         mod.init_optimizer(optimizer_params={'learning_rate': 0.01})
 
-        data_batch = mx.io.DataBatch(data=[mx.nd.random.uniform(0, 9, dshape1),
-                                           mx.nd.random.uniform(5, 15, dshape2)],
+        data_batch = mx.io.DataBatch(data=[mx.random.uniform(0, 9, dshape1),
+                                           mx.random.uniform(5, 15, dshape2)],
                                      label=[mx.nd.ones(lshape)])
         mod.forward(data_batch)
         mod.backward()
@@ -80,9 +80,9 @@ class TestExport(unittest.TestCase):
               '--synset %s --export-path %s' % (model_name, model_path,
                                                 signature, synset, export_path)
         os.system(cmd)
-        assert os.path.isfile('test.zip'), "No zip file is found. Export failed!"
+        assert os.path.isfile('test.model'), "No model file is found. Export failed!"
 
-        mx_vision_service('test.zip')
+        mx_vision_service('test.model')
 
     def runTest(self):
         self.test_export()

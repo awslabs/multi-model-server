@@ -1,10 +1,10 @@
-'''Command line interface to export MXNet model.
+'''Command line interface to export MXNet model to be used for inference by MXNet Model Server
 '''
 
 import os
 import json
 import zipfile
-from mms.arg_parser import ArgParser
+from src.arg_parser import ArgParser
 
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']
 VALID_MIME_TYPE = ['image/jpeg', 'application/json']
@@ -60,10 +60,10 @@ def _export_model(args):
                 file_list.append(os.path.join(dirpath, file_name))
     if args.synset:
         file_list += [args.synset]
-    with zipfile.ZipFile('%s/%s.zip' % (destination, model_name), 'w') as zip_file:
+    with zipfile.ZipFile(os.path.join(destination,'%s.model' % model_name), 'w') as zip_file:
         for item in file_list:
             zip_file.write(item, os.path.basename(item))
-    print('Successfully exported %s model. Model file is located at %s/%s.zip.'
+    print('Successfully exported %s model. Model file is located at %s/%s.model.'
           % (model_name, destination, model_name))
 
 

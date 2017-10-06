@@ -1,21 +1,22 @@
 ## Usage:
 ### Installation
 ```python
-pip install mms
+pip install mxnet-model-server
 ```
 ### Start serving
 ```python
-mms --models resnet-18=https://github.com/yuruofeifei/mms/raw/master/models/resnet-18.zip [--process mxnet_vision_service] [--gen-api python] [--port 8080]
+mxnet-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model [--process mxnet_vision_service] [--gen-api python] [--port 8080] [--host 127.0.0.1]
 ```
 #### Arguments:
 1. models: required, model_name=model_path pairs, multiple models are supported.
 2. process: optional, our system will load input module and will initialize mxnet models with the service defined in the module. The module should contain a valid class extends our base model service with customized preprocess and postprocess.
 3. gen-api: optional, this will generate an open-api formated client sdk in build folder.
-4. port: optional, default 8080
+4. port: optional, default is 8080
+5. host: optional, default is 127.0.0.1
 
 ### Export existing model to serving model format
 ```python
-mms_export --model resnet-18=models/resnet-18.zip --signature signature.json --synset synset.txt --export-path models
+mxnet-model-export --model resnet-18=models/resnet-18.model --signature signature.json --synset synset.txt --export-path models
 ```
 #### Arguments:
 1. model: required, model_name=model_path pair. Model path is the  path to pre-trained model file.
@@ -122,7 +123,7 @@ curl -X POST http://127.0.0.1:8080/resnet-18/predict -F "input0=@white-sleeping-
 ### Ping endpoint example:
 Since ping is a GET endpoint, we can see it in a browser by visiting:
 
-http://127.0.0.1:8080/ping
+curl -X GET http://127.0.0.1:8080/ping
 
 ```
 {
@@ -133,7 +134,7 @@ http://127.0.0.1:8080/ping
 ### API description example:
 This endpoint will list all the apis in OpenAPI compatible format:
 
-http://127.0.0.1:8080/api-description
+curl -X GET http://127.0.0.1:8080/api-description
 
 ```
 {
@@ -230,12 +231,12 @@ http://127.0.0.1:8080/api-description
 
 ## Multi model setup:
 ```python
-python mms.py --model resnet-18=file://models/resnet-18 vgg16=file://models/vgg16
+mxnet-model-server --models resnet-18=file://models/resnet-18 vgg16=file://models/vgg16
 ```
 This will setup a local host serving resnet-18 model and vgg16 model on the same port.
 
-## Define your own service:
-By passing `process` argument, you can specify your own service. All customized service class should be inherited from MXNetBaseService:
+## Define custom processing:
+By passing `process` argument, you can specify your own custom processing. All customized service class should be inherited from MXNetBaseService:
 ```python
    class MXNetBaseService(SingleNodeService):
       def __init__(self, path, synset=None, ctx=mx.cpu())
@@ -268,12 +269,18 @@ The following example is for resnet-18 service. In this example, we don't need t
 ```
 
 ## Dependencies:
-
 Flask, MXNet, numpy, JAVA(7+, required by swagger codegen)
 
+## Deployments:
+### Docker:
+We have provided two docker image for mxnet cpu and gpu version.
+Nginx and all other dependencies are installed.
+They are tested and can be deployed through [Amazon ECS](https://aws.amazon.com/ecs/) and [Google Kubernetes](https://kubernetes.io/)
 
 ## Design:
 To be updated
 
 ## Testing:
 python -m unittest tests/unit_tests/test_serving_frontend
+python -m unittest tests/unit_tests/test_export
+python -m unittest tests/unit_tests/test_service

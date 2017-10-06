@@ -1,7 +1,7 @@
-from mms.arg_parser import ArgParser
-from mms.log import get_logger
-from mms.serving_frontend import ServingFrontend
-from mms.client_sdk_generator import ClientSDKGenerator
+from src.arg_parser import ArgParser
+from src.log import get_logger
+from src.serving_frontend import ServingFrontend
+from src.client_sdk_generator import ClientSDKGenerator
 
 
 logger = get_logger(__name__)
@@ -27,7 +27,7 @@ class MMS(object):
         try:
             # Port 
             self.port = self.args.port or 8080
-            self.host = '127.0.0.1'
+            self.host = self.args.host or '127.0.0.1'
 
             # Register user defined model service or default mxnet_vision_service
             class_defs = self.serving_frontend.register_module(self.args.process)
@@ -60,9 +60,9 @@ class MMS(object):
             exit(1)
         
 
-def mms():
+def start_serving():
     mms = MMS()
     mms.start_model_serving()
 
 if __name__ == '__main__':
-    mms()
+    start_serving()

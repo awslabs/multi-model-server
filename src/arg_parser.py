@@ -2,6 +2,8 @@ import argparse
 
 
 class StoreDictKeyPair(argparse.Action):
+    '''This class is a helper class to parse <model-name>=<model-uri> pairs
+    '''
     def __call__(self, parser, namespace, values, option_string=None):
         try: 
           setattr(namespace, 'models', {kv.split('=', 1)[0]: kv.split('=', 1)[1] for kv in values})
@@ -10,12 +12,13 @@ class StoreDictKeyPair(argparse.Action):
                           ' Format should be <model-name>=<model-path> (Local file path, URL, S3).')
     
 class ArgParser(object):
-    '''Argument parser
+    '''Argument parser for mxnet-model-server and mxnet-model-export commands
+    More detailed example is at https://github.com/deep-learning-tools/mxnet-model-server/blob/master/README.md
     '''
-
-class ArgParser(object):
     @staticmethod
     def parse_args():
+        '''Parse mxnet-model-server arguments
+        '''
         parser = argparse.ArgumentParser(prog='mxnet-model-serving', description='MXNet Model Serving')
 
         parser.add_argument('--models',
@@ -31,10 +34,14 @@ class ArgParser(object):
 
         parser.add_argument('--port', help='Port')
 
+        parser.add_argument('--host', help='Host')
+
         return parser.parse_args()
 
     @staticmethod
     def parse_export_args():
+        '''Parse mxnet-model-export arguments
+        '''
         parser_export = argparse.ArgumentParser(prog='model-export', description='MXNet Model Export')
 
         parser_export.add_argument('--model',

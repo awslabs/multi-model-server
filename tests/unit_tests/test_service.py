@@ -50,14 +50,14 @@ class TestService(unittest.TestCase):
 
     def test_vision_init(self):
         self._train_and_export()
-        model_path = 'test.zip'
+        model_path = 'test.model'
         service = mx_vision_service(path=model_path)
         assert hasattr(service, 'labels'), "Fail to load synset file from model archive."
         assert len(service.labels) > 0, "Labels attribute is empty."
 
     def test_vision_inference(self):
         self._train_and_export()
-        model_path = 'test.zip'
+        model_path = 'test.model'
         service = mx_vision_service(path=model_path)
 
         # Test same size image inputs
@@ -118,7 +118,7 @@ class TestService(unittest.TestCase):
         #os.remove('gluon/signature.json')
         os.system(cmd)
 
-        service = Pixel2pixelService('gluon.zip')
+        service = Pixel2pixelService('gluon.model')
         data = mx.nd.random_uniform(0, 255, shape=(3, 256, 256))
         img_buf = Image.write(data)
         service.inference([img_buf])

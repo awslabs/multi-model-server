@@ -1,14 +1,17 @@
 import os
 import sys
 import json
-sys.path.append('../..')
+curr_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(curr_path + '/../..')
 
+import PIL
 import unittest
-import mock
+import numpy as np
 import mxnet as mx
+from io import BytesIO
 from model_service.mxnet_vision_service import MXNetVisionService as mx_vision_service
-from utils.mxnet_utils import Image
 from utils.service.pixel2pixel_service import UnetGenerator, Pixel2pixelService
+from export_model import export_serving
 
 class TestService(unittest.TestCase):
     def _train_and_export(self):
@@ -43,28 +46,38 @@ class TestService(unittest.TestCase):
         mod.backward()
         mod.update()
         signature = {'input_type': 'image/jpeg', 'output_type': 'application/json'}
-        with open('synset.txt', 'w') as synset:
+        with open('%s/synset.txt' % (curr_path), 'w') as synset:
             for i in range(10):
                 synset.write('test label %d\n' % (i))
-        mod.export_serving('test', 0, signature, use_synset=True)
+        export_serving(mod, 'test', signature, export_path=curr_path,
+                       util_files=['%s/synset.txt' % (curr_path)])
+
+    def _write_image(self, img_arr):
+        img_arr = mx.nd.transpose(img_arr, (1, 2, 0)).astype(np.uint8).asnumpy()
+        mode = 'RGB'
+        image = PIL.Image.fromarray(img_arr, mode)
+        output = BytesIO()
+        image.save(output, format='jpeg')
+        return output.getvalue()
 
     def test_vision_init(self):
         self._train_and_export()
-        model_path = 'test.model'
+        model_path = '%s/test.model' % (curr_path)
         service = mx_vision_service(path=model_path)
         assert hasattr(service, 'labels'), "Fail to load synset file from model archive."
         assert len(service.labels) > 0, "Labels attribute is empty."
+        os.system('rm -rf %s/test' % (curr_path))
 
     def test_vision_inference(self):
         self._train_and_export()
-        model_path = 'test.model'
+        model_path = '%s/test.model' % (curr_path)
         service = mx_vision_service(path=model_path)
 
         # Test same size image inputs
         data1 = mx.nd.random_uniform(0, 255, shape=(3, 64, 64))
         data2 = mx.nd.random_uniform(0, 255, shape=(3, 32, 32))
-        img_buf1 = Image.write(data1)
-        img_buf2 = Image.write(data2)
+        img_buf1 = self._write_image(data1)
+        img_buf2 = self._write_image(data2)
 
         output = service.inference([img_buf1, img_buf2])
         assert len(output[0]) == 5
@@ -72,11 +85,12 @@ class TestService(unittest.TestCase):
         # test different size image inputs
         data1 = mx.nd.random_uniform(0, 255, shape=(3, 96, 96))
         data2 = mx.nd.random_uniform(0, 255, shape=(3, 24, 24))
-        img_buf1 = Image.write(data1)
-        img_buf2 = Image.write(data2)
+        img_buf1 = self._write_image(data1)
+        img_buf2 = self._write_image(data2)
 
         output = service.inference([img_buf1, img_buf2])
         assert len(output[0]) == 5
+        os.system('rm -rf %s/test' % (curr_path))
 
     def test_gluon_inference(self):
         ctx = mx.cpu()
@@ -84,12 +98,8 @@ class TestService(unittest.TestCase):
         data = mx.nd.random_uniform(0, 255, shape=(1, 3, 256, 256))
         netG.initialize(mx.init.Normal(0.02), ctx=ctx)
         netG(data)
-        netG.save_params('gluon.params')
-        if not os.path.isdir('gluon-dir'):
-            os.mkdir('gluon-dir')
-        if os.path.isfile('test/signature.json'):
-            os.remove('test/signature.json')
-        with open('gluon-dir/signature.json', 'w') as sig:
+        netG.save_params('%s/gluon.params' % (curr_path))
+        with open('%s/signature.json' % (curr_path), 'w') as sig:
             signature = {
                 "input_type": "image/jpeg",
                 "inputs": [
@@ -108,20 +118,20 @@ class TestService(unittest.TestCase):
             }
             json.dump(signature, sig)
         model_name = 'gluon'
-        model_path = '.'
-        signature = 'gluon-dir/signature.json'
-        export_path = '.'
+        model_path = curr_path
+        signature = '%s/signature.json' % (curr_path)
+        export_path = curr_path
 
-        cmd = 'python ../../export_model.py --model %s=%s --signature %s ' \
-              '--export-path %s' % (model_name, model_path,
+        cmd = 'python %s/../../export_model.py --model %s=%s --signature %s ' \
+              '--export-path %s' % (curr_path, model_name, model_path,
                                     signature, export_path)
-        #os.remove('gluon/signature.json')
         os.system(cmd)
 
-        service = Pixel2pixelService('gluon.model')
+        service = Pixel2pixelService('%s/gluon.model' % (curr_path))
         data = mx.nd.random_uniform(0, 255, shape=(3, 256, 256))
-        img_buf = Image.write(data)
+        img_buf = self._write_image(data)
         service.inference([img_buf])
+        os.system('rm -rf %s/%s' % (curr_path, model_name))
 
     def runTest(self):
         self.test_vision_init()

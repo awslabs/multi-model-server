@@ -70,7 +70,7 @@ class MXNetBaseService(SingleNodeService):
        operations when serving MXNet model. This is a base class and needs to be
        inherited.
     '''
-    def __init__(self, path, synset=None, ctx=mx.cpu()):
+    def __init__(self, path, ctx=mx.cpu()):
         super(MXNetBaseService, self).__init__(path, ctx)
         model_dir, model_name = self._extract_model(path)
 
@@ -97,9 +97,8 @@ class MXNetBaseService(SingleNodeService):
         # Read synset file
         # If synset is not specified, check whether model archive contains synset file.
         archive_synset = '%s/synset.txt' % (model_dir)
-        if synset is None and os.path.isfile(archive_synset):
+        if os.path.isfile(archive_synset):
             synset = archive_synset
-        if synset:
             self.labels = [line.strip() for line in open(synset).readlines()]
 
     def _inference(self, data):

@@ -1,7 +1,7 @@
 import mxnet as mx
 import numpy as np
 from model_service.mxnet_model_service import MXNetBaseService, check_input_shape
-from utils.mxnet_utils import Image
+from ..mxnet import image
 from mxnet import gluon
 from mxnet import ndarray as nd
 from mxnet.gluon import nn, utils
@@ -79,7 +79,7 @@ class UnetGenerator(HybridBlock):
 
 class Pixel2pixelService(MXNetBaseService):
 
-    def __init__(self, path, synset=None, ctx=mx.cpu()):
+    def __init__(self, path, ctx=mx.cpu()):
         model_dir, model_name = self._extract_model(path)
         self.mx_model = UnetGenerator(in_channels=3, num_downs=8)
         self.mx_model.load_params('%s/%s.params' % (model_dir, model_name), ctx=ctx)
@@ -87,10 +87,10 @@ class Pixel2pixelService(MXNetBaseService):
     def _preprocess(self, data):
         input_shape = self.signature['inputs'][0]['data_shape']
         height, width = input_shape[2:]
-        img_arr = Image.read(data[0])
-        img_arr = Image.resize(img_arr, width, height)
-        img_arr = Image.color_normalize(img_arr, nd.array([127.5]), nd.array([127.5]))
-        img_arr = Image.transform_shape(img_arr)
+        img_arr = image.read(data[0])
+        img_arr = image.resize(img_arr, width, height)
+        img_arr = image.color_normalize(img_arr, nd.array([127.5]), nd.array([127.5]))
+        img_arr = image.transform_shape(img_arr)
         return [img_arr]
 
     def _inference(self, data):
@@ -99,7 +99,7 @@ class Pixel2pixelService(MXNetBaseService):
 
     def _postprocess(self, data):
         img_arr = ((data[0] + 1.0) * 127.5).astype(np.uint8)
-        return [Image.write(img_arr)]
+        return [image.write(img_arr)]
 
 
 

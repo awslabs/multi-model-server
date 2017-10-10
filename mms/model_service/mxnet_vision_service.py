@@ -1,11 +1,16 @@
-#import sys
-#sys.path.append('..')
+"""`MXNetVisionService` defines a MXNet base vision service
+"""
 
 from mxnet_model_service import MXNetBaseService
 from mms.utils.mxnet import image, ndarray
 
 
 class MXNetVisionService(MXNetBaseService):
+    """MXNetVisionService defines a fundamental service for image classification task.
+    In preprocess, input image buffer is read to NDArray and resized respect to input
+    shape in signature.
+    In post process, top-5 labels are returned.
+    """
     def _preprocess(self, data):
         img_list = []
         for idx, img in enumerate(data):

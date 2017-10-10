@@ -1,3 +1,6 @@
+"""`MXNetBaseService` defines an API for MXNet service.
+"""
+
 import mxnet as mx
 import numpy as np
 import zipfile

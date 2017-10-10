@@ -46,7 +46,7 @@ def _check_signature(sig_file):
 
 
 def _export_model(args):
-    '''Internal helper for exporting model.
+    '''Internal helper for exporting model command line interface.
     '''
     _check_signature(args.signature)
     model_name, model_path = args.model.split('=')
@@ -113,24 +113,27 @@ def export_serving(model, filename, signature, export_path = None, util_files=No
 
     Examples
     --------
+    >>> model1 = mx.mod.Module(...)
     >>> signature1 = { "input_type": "image/jpeg", "output_type": "application/json" }
     >>> export_serving(model1, filename='resnet-18', signature=signature1,
     >>>                util_files=['synset.txt'])
+    >>>
+    >>> model2 = mx.mod.Module(...)
     >>> signature2 = {
-    >>>                    "input_type": "image/jpeg",
-    >>>                    "inputs" : [
-    >>>                        {
-    >>>                            'data_name': 'data',
-    >>>                            'data_shape': [1, 3, 224, 224]
-    >>>                        }
-    >>>                    ],
-    >>>                    "outputs" : [
-    >>>                        {
-    >>>                            'data_name': 'softmax',
-    >>>                            'data_shape': [1, 1000]
-    >>>                        }
-    >>>                    ]
-    >>>                    "output_type": "application/json"
+    >>>                  "input_type": "image/jpeg",
+    >>>                  "inputs" : [
+    >>>                      {
+    >>>                          'data_name': 'data',
+    >>>                          'data_shape': [1, 3, 224, 224]
+    >>>                      }
+    >>>                  ],
+    >>>                  "outputs" : [
+    >>>                      {
+    >>>                          'data_name': 'softmax',
+    >>>                          'data_shape': [1, 1000]
+    >>>                      }
+    >>>                  ]
+    >>>                  "output_type": "application/json"
     >>>              }
     >>> export_serving(model2, filename='resnet-152', signature=signature2,
     >>>                util_files=['synset.txt'])

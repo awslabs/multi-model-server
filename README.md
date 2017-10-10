@@ -1,6 +1,6 @@
 ## Usage:
 
-### Installation
+### Installation for python2 and python3
 ```python
 pip install deep-model-server
 ```
@@ -11,7 +11,10 @@ deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-
 ```
 #### Arguments:
 1. models: required, <model_name>=<model_path> pairs. 
-    (1) Model path can be a local file path or URI (s3 link, or http link). 
+    (1) Model path can be a local file path or URI (s3 link, or http link).
+        local file path: path/to/local/model/file
+        s3 link: https://s3.amazonaws.com/...
+        http link: http://hostname/path/to/resource
 
     (2) Currently, the model file has .model extension, it is actually rename of a zip file with pretrained MXNet models and model signature files packed up. The details will be explained in **Export existing model** section
 
@@ -104,6 +107,8 @@ After local server is up, there will be three built-in endpoints:
 ## Prediction endpoint example:
 
 ### 1.Use curl:
+Pick a local image and use the following command to send request to endpoint.
+white-sleeping-kitten.jpg is a local kitten image. You can replace it with other local images.
 ```
 curl -X POST http://127.0.0.1:8080/resnet-18/predict -F "input0=@white-sleeping-kitten.jpg"
 ```
@@ -274,7 +279,7 @@ By passing `service` argument, you can specify your own custom service. All cust
 
       def _postprocess(self, data, method='predict')
 ```
-Usually you would like to override _preprocess and _postprocess since they are binded with specific domain of applications. We provide some [utility functions](https://github.com/yuruofeifei/mms/blob/master/utils/mxnet_utils.py) for vision and NLP applications to help user easily build basic preprocess functions.
+Usually you would like to override _preprocess and _postprocess since they are binded with specific domain of applications. We provide some [utility functions](https://github.com/deep-learning-tools/mxnet-model-server/tree/master/mms/utils) for vision and NLP applications to help user easily build basic preprocess functions.
 The following example is for resnet-18 service. In this example, we don't need to change __init__ or _inference methods, which means we just need override _preprocess and _postprocess. In preprocess, we first convert image to NDArray. Then resize to 224 x 224. In post process, we return top 5 categories:
 ```python
    import mxnet as mx

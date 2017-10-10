@@ -44,7 +44,7 @@ def check_input_shape(inputs, signature):
                                          % (sig_input['data_name'], sig_input['data_shape'],
                                             input.shape)
 
-def _extrac_zip(zip_file, destination):
+def _extract_zip(zip_file, destination):
     '''Extract zip to destination without keeping directory structure
 
         Parameters
@@ -155,7 +155,7 @@ class MXNetBaseService(SingleNodeService):
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
         try:
-            _extrac_zip(model_file, model_dir)
+            _extract_zip(model_file, model_dir)
         except Exception as e:
             raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
                             % (model_file, model_name, e))

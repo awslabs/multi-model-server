@@ -3,6 +3,7 @@
 
 import os
 import logging
+import warnings
 import json
 import zipfile
 import mxnet as mx
@@ -24,7 +25,9 @@ def _check_signature(sig_file):
         'Value of input_type and output_type should be string'
     assert signature['input_type'] in VALID_MIME_TYPE and \
            signature['output_type'] in VALID_MIME_TYPE, \
-        'Valid type should be picked from %s' % (VALID_MIME_TYPE)
+        'Valid type should be picked from %s. ' \
+        'Got %s for input and %s for output' % \
+        (VALID_MIME_TYPE, signature['input_type'], signature['output_type'])
 
     assert 'inputs' in signature and 'outputs' in signature, \
         'inputs and outputs are required in signature.'
@@ -174,7 +177,10 @@ def export_serving(model, filename, signature, export_path = None, util_files=No
     if util_files:
         file_list += util_files
 
-    with zipfile.ZipFile(os.path.join(destination,'%s.model' % filename), 'w') as zip_file:
+    abs_model_path = os.path.join(destination,'%s.model' % filename)
+    if os.path.isfile(abs_model_path):
+        warnings.warn("%s already exists and will be overwritten." % (abs_model_path))
+    with zipfile.ZipFile(abs_model_path, 'w') as zip_file:
         for item in file_list:
             zip_file.write(item)
     logging.info('Exported model to %s/%s.model', destination, filename)

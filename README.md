@@ -2,12 +2,12 @@
 
 ### Installation
 ```python
-pip install mxnet-model-server
+pip install deep-model-server
 ```
 
 ### Start serving
 ```python
-mxnet-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model [--service mxnet_vision_service] [--gen-api python] [--port 8080] [--host 127.0.0.1]
+deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model [--service mxnet_vision_service] [--gen-api python] [--port 8080] [--host 127.0.0.1]
 ```
 #### Arguments:
 1. models: required, <model_name>=<model_path> pairs. 
@@ -23,7 +23,7 @@ mxnet-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet
 
 ### Export existing model to serving model format
 ```python
-mxnet-model-export --model resnet-18=models/resnet-18.model --signature signature.json --synset synset.txt --export-path models
+deep-model-export --model resnet-18=models/resnet-18.model --signature signature.json --synset synset.txt --export-path models
 ```
 #### Arguments:
 1. model: required, <model_name>=<model_path> pair. Model path is the path to pre-trained model file.
@@ -238,7 +238,7 @@ curl -X GET http://127.0.0.1:8080/api-description
 
 ## Multi model setup:
 ```python
-mxnet-model-server --models resnet-18=file://models/resnet-18 vgg16=file://models/vgg16
+deep-model-server --models resnet-18=file://models/resnet-18 vgg16=file://models/vgg16
 ```
 This will setup a local host serving resnet-18 model and vgg16 model on the same port.
 

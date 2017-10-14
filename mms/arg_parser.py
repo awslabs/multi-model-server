@@ -12,12 +12,12 @@ class StoreDictKeyPair(argparse.Action):
                           ' Format should be <model-name>=<model-path> (Local file path, URL, S3).')
     
 class ArgParser(object):
-    '''Argument parser for mxnet-model-server and mxnet-model-export commands
-    More detailed example is at https://github.com/deep-learning-tools/mxnet-model-server/blob/master/README.md
+    '''Argument parser for deep-model-server and deep-model-export commands
+    More detailed example is at https://github.com/deep-learning-tools/deep-model-server/blob/master/README.md
     '''
     @staticmethod
     def parse_args():
-        '''Parse mxnet-model-server arguments
+        '''Parse deep-model-server arguments
         '''
         parser = argparse.ArgumentParser(prog='mxnet-model-serving', description='MXNet Model Serving')
 
@@ -40,7 +40,7 @@ class ArgParser(object):
 
     @staticmethod
     def parse_export_args():
-        '''Parse mxnet-model-export arguments
+        '''Parse deep-model-export arguments
         '''
         parser_export = argparse.ArgumentParser(prog='model-export', description='MXNet Model Export')
 

@@ -101,7 +101,7 @@ class TestExport(unittest.TestCase):
         signature = {'input_type': 'application/json', 'output_type': 'application/json'}
         with open('%s/synset.txt' % (curr_path), 'w') as synset:
             synset.write('test label')
-        export_serving(mod, 'test', signature, export_path=curr_path, util_files=['%s/synset.txt' % curr_path])
+        export_serving(mod, 'test', signature, export_path=curr_path, aux_files=['%s/synset.txt' % curr_path])
         assert os.path.isfile('%s/test.model' % (curr_path)), "No zip file found for export_serving."
         assert os.path.isfile('%s/signature.json' % (curr_path)), "No signature file found for export_serving."
         with open('%s/signature.json' % (curr_path)) as f:

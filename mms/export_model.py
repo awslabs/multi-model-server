@@ -72,7 +72,7 @@ def _export_model(args):
                  model_name, destination, model_name)
 
 
-def export_serving(model, filename, signature, export_path = None, util_files=None):
+def export_serving(model, filename, signature, export_path = None, aux_files=None):
     """Export a MXNet module object to a zip file used by MXNet model serving.
 
     Parameters
@@ -110,7 +110,7 @@ def export_serving(model, filename, signature, export_path = None, util_files=No
     export_path : str
         Destination path for export file. By default the model file
         is saved to current working directory.
-    util_files : List
+    aux_files : List
         A list of string containing other utility files for inference. One example is class
         label file for classification task.
 
@@ -119,7 +119,7 @@ def export_serving(model, filename, signature, export_path = None, util_files=No
     >>> model1 = mx.mod.Module(...)
     >>> signature1 = { "input_type": "image/jpeg", "output_type": "application/json" }
     >>> export_serving(model1, filename='resnet-18', signature=signature1,
-    >>>                util_files=['synset.txt'])
+    >>>                aux_files=['synset.txt'])
     >>>
     >>> model2 = mx.mod.Module(...)
     >>> signature2 = {
@@ -139,7 +139,7 @@ def export_serving(model, filename, signature, export_path = None, util_files=No
     >>>                  "output_type": "application/json"
     >>>              }
     >>> export_serving(model2, filename='resnet-152', signature=signature2,
-    >>>                util_files=['synset.txt'])
+    >>>                aux_files=['synset.txt'])
     Exported model to "resnet-18.model"
     Exported model to "resnet-152.model"
     """
@@ -174,8 +174,8 @@ def export_serving(model, filename, signature, export_path = None, util_files=No
 
     file_list = ['%s/%s-symbol.json' % (destination, filename), '%s/%s-%04d.params' %
                     (destination, filename, epoch_placeholder), sig_file]
-    if util_files:
-        file_list += util_files
+    if aux_files:
+        file_list += aux_files
 
     abs_model_path = os.path.join(destination,'%s.model' % filename)
     if os.path.isfile(abs_model_path):

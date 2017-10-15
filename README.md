@@ -12,11 +12,11 @@ deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-
 #### Arguments:
 1. models: required, <model_name>=<model_path> pairs. 
     (1) Model path can be a local file path or URI (s3 link, or http link).
-        local file path: path/to/local/model/file
-        s3 link: https://s3.amazonaws.com/...
+        local file path: path/to/local/model/file or file://root/path/to/model/file
+        s3 link: s3://S3_endpoint[:port]/...
         http link: http://hostname/path/to/resource
 
-    (2) Currently, the model file has .model extension, it is actually rename of a zip file with pretrained MXNet models and model signature files packed up. The details will be explained in **Export existing model** section
+    (2) Currently, the model file has .model extension, it is actually a zip file with a .model extension packing pretrained MXNet models and model signature files. The details will be explained in **Export existing model** section
 
     (3) Multiple models loading are also supported by specifying multiple name path pairs
 2. service: optional, our system will load input service module and will initialize mxnet models with the service defined in the module. The module should contain a valid class extends our base model service with customized preprocess and postprocess.
@@ -26,11 +26,11 @@ deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-
 
 ### Export existing model to serving model format
 ```python
-deep-model-export --model resnet-18=models/resnet-18.model --signature signature.json --synset synset.txt --export-path models
+deep-model-export --model resnet-18=models/resnet-18 --signature signature.json --synset synset.txt --export-path models
 ```
 
 #### Arguments:
-1. model: required, <model_name>=<model_path> pair. Model path is the pre-trained model file directory.
+1. model: required, <model_name>=<model_path> pair. Model path is the pre-trained model file directory. It should contain model symbol json and parameter files. For example, resnet-18-symbol.json and reset-18-0000.params for resnet-18 model.
 2. signature: required, signature json file for model service.
    Currently 4 entries are required: 
 
@@ -94,7 +94,7 @@ Another method to export model is to use `export_serving` function while complet
 
    # Export model
    signature = { "input_type": "image/jpeg", "output_type": "application/json" }
-   export_serving(mod, 'resnet-18', signature, util_files=['synset.txt'])
+   export_serving(mod, 'resnet-18', signature, aux_files=['synset.txt'])
 ```
 
 ## Endpoints:

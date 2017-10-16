@@ -1,3 +1,5 @@
+LABEL authors="Ruofei Yu"
+
 FROM mxnet/python
 
 COPY install.sh /

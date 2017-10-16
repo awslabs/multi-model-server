@@ -1,3 +1,6 @@
+"""`MXNetBaseService` defines an API for MXNet service.
+"""
+
 import mxnet as mx
 import numpy as np
 import zipfile
@@ -41,7 +44,7 @@ def check_input_shape(inputs, signature):
                                          % (sig_input['data_name'], sig_input['data_shape'],
                                             input.shape)
 
-def _extrac_zip(zip_file, destination):
+def _extract_zip(zip_file, destination):
     '''Extract zip to destination without keeping directory structure
 
         Parameters
@@ -70,7 +73,7 @@ class MXNetBaseService(SingleNodeService):
        operations when serving MXNet model. This is a base class and needs to be
        inherited.
     '''
-    def __init__(self, path, synset=None, ctx=mx.cpu()):
+    def __init__(self, path, ctx=mx.cpu()):
         super(MXNetBaseService, self).__init__(path, ctx)
         model_dir, model_name = self._extract_model(path)
 
@@ -97,9 +100,8 @@ class MXNetBaseService(SingleNodeService):
         # Read synset file
         # If synset is not specified, check whether model archive contains synset file.
         archive_synset = '%s/synset.txt' % (model_dir)
-        if synset is None and os.path.isfile(archive_synset):
+        if os.path.isfile(archive_synset):
             synset = archive_synset
-        if synset:
             self.labels = [line.strip() for line in open(synset).readlines()]
 
     def _inference(self, data):
@@ -153,7 +155,7 @@ class MXNetBaseService(SingleNodeService):
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
         try:
-            _extrac_zip(model_file, model_dir)
+            _extract_zip(model_file, model_dir)
         except Exception as e:
             raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
                             % (model_file, model_name, e))

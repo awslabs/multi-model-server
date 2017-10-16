@@ -1,3 +1,6 @@
+"""`ModelService` defines an API for base model service.
+"""
+
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 URL_PREFIX = ('http://', 'https://', 's3://')

@@ -2,8 +2,11 @@
 '''
 
 import os
+import logging
+import warnings
 import json
 import zipfile
+import mxnet as mx
 from arg_parser import ArgParser
 
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']
@@ -22,7 +25,9 @@ def _check_signature(sig_file):
         'Value of input_type and output_type should be string'
     assert signature['input_type'] in VALID_MIME_TYPE and \
            signature['output_type'] in VALID_MIME_TYPE, \
-        'Valid type should be picked from %s' % (VALID_MIME_TYPE)
+        'Valid type should be picked from %s. ' \
+        'Got %s for input and %s for output' % \
+        (VALID_MIME_TYPE, signature['input_type'], signature['output_type'])
 
     assert 'inputs' in signature and 'outputs' in signature, \
         'inputs and outputs are required in signature.'
@@ -44,7 +49,7 @@ def _check_signature(sig_file):
 
 
 def _export_model(args):
-    '''Internal helper for exporting model.
+    '''Internal helper for exporting model command line interface.
     '''
     _check_signature(args.signature)
     model_name, model_path = args.model.split('=')
@@ -63,8 +68,122 @@ def _export_model(args):
     with zipfile.ZipFile(os.path.join(destination,'%s.model' % model_name), 'w') as zip_file:
         for item in file_list:
             zip_file.write(item, os.path.basename(item))
-    print('Successfully exported %s model. Model file is located at %s/%s.model.'
-          % (model_name, destination, model_name))
+    logging.info('Successfully exported %s model. Model file is located at %s/%s.model.',
+                 model_name, destination, model_name)
+
+
+def export_serving(model, filename, signature, export_path = None, aux_files=None):
+    """Export a MXNet module object to a zip file used by MXNet model serving.
+
+    Parameters
+    ----------
+    model : mx.mod.Module or mx.mod.BucketModule
+        MXNet module object to be exported.
+    filename : str
+        Prefix of exported model file.
+    signature : dict
+        A dictionary containing model input and output information.
+        Data names or data shapes of inputs and outputs can be automatically
+        collected from module. They are optional. User needs to specify inputs
+        and outputs MIME type for http request. Currently only 'image/jpeg'
+        and 'application/json' are supported. All inputs should have the same type.
+        This also applies for outputs.
+        An example signature would be:
+            signature = { "input_type": "image/jpeg", "output_type": "application/json" }
+        A full signature containing inputs and outputs:
+            {
+                "input_type": "image/jpeg",
+                "inputs" : [
+                    {
+                        'data_name': 'data',
+                        'data_shape': [1, 3, 224, 224]
+                    }
+                ],
+                "outputs" : [
+                    {
+                        'data_name': 'softmax',
+                        'data_shape': [1, 1000]
+                    }
+                ]
+                "output_type": "application/json"
+            }
+    export_path : str
+        Destination path for export file. By default the model file
+        is saved to current working directory.
+    aux_files : List
+        A list of string containing other utility files for inference. One example is class
+        label file for classification task.
+
+    Examples
+    --------
+    >>> model1 = mx.mod.Module(...)
+    >>> signature1 = { "input_type": "image/jpeg", "output_type": "application/json" }
+    >>> export_serving(model1, filename='resnet-18', signature=signature1,
+    >>>                aux_files=['synset.txt'])
+    >>>
+    >>> model2 = mx.mod.Module(...)
+    >>> signature2 = {
+    >>>                  "input_type": "image/jpeg",
+    >>>                  "inputs" : [
+    >>>                      {
+    >>>                          'data_name': 'data',
+    >>>                          'data_shape': [1, 3, 224, 224]
+    >>>                      }
+    >>>                  ],
+    >>>                  "outputs" : [
+    >>>                      {
+    >>>                          'data_name': 'softmax',
+    >>>                          'data_shape': [1, 1000]
+    >>>                      }
+    >>>                  ]
+    >>>                  "output_type": "application/json"
+    >>>              }
+    >>> export_serving(model2, filename='resnet-152', signature=signature2,
+    >>>                aux_files=['synset.txt'])
+    Exported model to "resnet-18.model"
+    Exported model to "resnet-152.model"
+    """
+    assert issubclass(type(model), mx.mod.BaseModule), \
+        "Model is type %s. It must be a subclass of mx.mod.BaseModule." % (type(model))
+
+    epoch_placeholder = 0
+    destination = export_path or os.getcwd()
+    if destination.startswith('~'):
+        destination = os.path.expanduser(destination)
+    sig_file = '%s/signature.json' % (destination)
+
+    if 'inputs' not in signature:
+        signature['inputs'] = list()
+        for name, shape in model.data_shapes:
+            signature['inputs'].append({
+                'data_name': name,
+                'data_shape': list(shape)
+            })
+    if 'outputs' not in signature:
+        signature['outputs'] = list()
+        for name, shape in model.output_shapes:
+            signature['outputs'].append({
+                'data_name': name,
+                'data_shape': list(shape)
+            })
+
+    with open(sig_file, 'w') as sig:
+        json.dump(signature, sig)
+    _check_signature(sig_file)
+    model.save_checkpoint('%s/%s' % (destination, filename), epoch_placeholder)
+
+    file_list = ['%s/%s-symbol.json' % (destination, filename), '%s/%s-%04d.params' %
+                    (destination, filename, epoch_placeholder), sig_file]
+    if aux_files:
+        file_list += aux_files
+
+    abs_model_path = os.path.join(destination,'%s.model' % filename)
+    if os.path.isfile(abs_model_path):
+        warnings.warn("%s already exists and will be overwritten." % (abs_model_path))
+    with zipfile.ZipFile(abs_model_path, 'w') as zip_file:
+        for item in file_list:
+            zip_file.write(item)
+    logging.info('Exported model to %s/%s.model', destination, filename)
 
 
 def export():

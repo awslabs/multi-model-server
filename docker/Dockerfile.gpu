@@ -1,9 +1,0 @@
-FROM mxnet/python:gpu
-
-COPY install.sh /
-
-RUN /install.sh
-
-RUN pip install mxnet-cu80
-
-COPY virtual.conf /etc/nginx/conf.d/

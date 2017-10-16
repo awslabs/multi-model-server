@@ -280,9 +280,9 @@ Flask, MXNet, numpy, JAVA(7+, required by swagger codegen)
 
 ## Deployments:
 ### Docker:
-We have provided two docker image for mxnet cpu and gpu version.
+We have provided docker image for mxnet cpu.
 Nginx and all other dependencies are installed.
-They are tested and can be deployed through [Amazon ECS](https://aws.amazon.com/ecs/) and [Google Kubernetes](https://kubernetes.io/)
+The basic usage can be found [here](docker/README.md)
 
 ## Design:
 To be updated

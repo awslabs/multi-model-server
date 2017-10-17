@@ -8,8 +8,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import json
+import ast
+import traceback
 from functools import partial
+from flask import abort
 
 from service_manager import ServiceManager
 from request_handler.flask_handler import FlaskRequestHandler
@@ -251,7 +253,9 @@ class ServingFrontend(object):
                         'type': 'file'
                     }
                 else:
-                    raise Exception('%s is not supported for input content-type' % input_type)
+                    msg = '%s is not supported for input content-type' % (input_type)
+                    abort(400, msg)
+                    # raise Exception('%s is not supported for input content-type' % input_type)
                 predict_api[endpoint]['post']['parameters'].append(parameter)
 
             # Contruct openapi response schema
@@ -397,36 +401,47 @@ class ServingFrontend(object):
         # Get data from request according to input type
         input_data = []
         if input_type == 'application/json':
-            form_data = None
             try:
                 for name in input_names:
                     logger.info('Request input: ' + name +  ' should be json tensor.')
                     form_data = self.handler.get_form_data(name)
-                    assert isinstance(form_data, dict)
+                    form_data = ast.literal_eval(form_data)
+                    assert isinstance(form_data, dict), "Input data for request argument: %s is not correct. " \
+                                                        "%s is expected but got %s instead of dictionary" \
+                                                        % (name, input_type, type(form_data))
                     input_data.append(form_data)
-            except:
-                raise Exception('Type for request argument %s is not correct. %s is expected but %s is given.' % 
-                    (name, input_type, type(form_data)))
+            except Exception as e:
+                logger.warn(str(e))
+                abort(400, str(e))
+                #raise Exception(str(e))
         elif input_type == 'image/jpeg':
-            file_data = None
             try:
                 for name in input_names:
                     logger.info('Request input: ' + name +  ' should be image with jpeg format.')
-                    file_data = self.handler.get_file_data(name).read()
-                    assert isinstance(file_data, (str, bytes))
+                    input_file = self.handler.get_file_data(name)
+                    mime_type = input_file.content_type
+                    assert mime_type == input_type, 'Input data for request argument: %s is not correct. ' \
+                                                    '%s is expected but %s is given.' % (name, input_type, mime_type)
+                    file_data = input_file.read()
+                    assert isinstance(file_data, (str, bytes)), 'Image file buffer should be type str or ' \
+                                                                'bytes, but got %s' % (type(file_data))
                     input_data.append(file_data)
             except Exception as e:
-                raise Exception('Input data for request argument: %s is not correct. %s is expected but %s '
-                                'is given.' % (str(e), input_type, type(file_data)))
+                logger.warn(str(e))
+                abort(400, str(e))
+                #raise Exception(str(e))
         else:
-            logger.warn('%s is not supported for input content-type' % input_type)
-            raise Exception('%s is not supported for input content-type' % input_type)
+            msg = '%s is not supported for input content-type' % (input_type)
+            logger.warn(msg)
+            abort(400, msg)
+            #raise Exception(msg)
 
         # Doing prediciton on model
         try:
             response = modelservice.inference(input_data)
-        except Exception as e:
-            raise Exception('MXNet prediction run-time error')
+        except Exception:
+            logger.error(str(traceback.format_exc()))
+            abort(500, "Error occurs while inference was executed on server.")
 
         # Construct response according to output type
         if output_type == 'application/json':
@@ -436,6 +451,7 @@ class ServingFrontend(object):
             logger.info('Response is jpeg image encoded in base64 string.')
             return self.handler.jsonify({'prediction': response})
         else:
-            logger.warn('%s is not supported for input content-type' % output_type)
-            raise Exception('%s is not supported for output content-type' % output_type)
+            msg = '%s is not supported for input content-type.' % (output_type)
+            logger.error(msg)
+            abort(500, "Service setting error. %s" % (msg))
 

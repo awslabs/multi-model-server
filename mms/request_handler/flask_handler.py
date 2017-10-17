@@ -107,11 +107,11 @@ class FlaskRequestHandler(RequestHandler):
         Object: 
             Field data from form data.
         '''
-        logger.info('Getting from data from request.')
+        logger.info('Getting form data from request.')
         form = {k: v[0] for k, v in dict(request.form).items()}
         if field is None:
             return form
-
+        assert field in form, "%s form data is not found. Check http request format." % (field)
         return form[field]
 
     def get_file_data(self, field=None):
@@ -132,7 +132,7 @@ class FlaskRequestHandler(RequestHandler):
         files = {k: v[0] for k, v in dict(request.files).items()}
         if field is None:
             return files
-
+        assert field in files, "%s file is not found. Check http request format." % (field)
         return files[field]
 
 

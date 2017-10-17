@@ -38,13 +38,25 @@ class ArgParser(object):
                             nargs='+',
                             help='Models to be deployed')
 
-        parser.add_argument('--service', help='Using user defined model service')
+        parser.add_argument('--service', help='Using user defined model service. By default it uses mxnet_vision_service.')
 
         parser.add_argument('--gen-api', help='Generate API')
 
-        parser.add_argument('--port', help='Port')
+        parser.add_argument('--port', help='Port number. By default it is 8080.')
 
-        parser.add_argument('--host', help='Host')
+        parser.add_argument('--host', help='Host. By default it is localhost.')
+
+        parser.add_argument('--log-file', help='Log file name. By default it is "dms_log.log".')
+
+        parser.add_argument('--log-rotation-time',
+                            help='Log rotation time. By default it is "1 H", which means one hour. '
+                                 'Valid format is "interval when". For weekday and midnight, '
+                                 'only "when" is required. Check https://docs.python.org/2/library/'
+                                 'logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.')
+
+        parser.add_argument('--log-level', help='Log level. By default it is INFO. '
+                                                'Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL.'
+                                                'cHECK https://docs.python.org/2/library/logging.html#logging-levels')
 
         return parser.parse_args()
 

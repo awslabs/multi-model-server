@@ -8,12 +8,17 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+import logging
+
+from logging.handlers import TimedRotatingFileHandler
 from arg_parser import ArgParser
 from log import get_logger
+from log import LOG_LEVEL_DICT
 from serving_frontend import ServingFrontend
 from client_sdk_generator import ClientSDKGenerator
 
 
+VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in range(7)]
 logger = get_logger(__name__)
 
 
@@ -25,6 +30,25 @@ class MMS(object):
         try:
             self.args = ArgParser.parse_args()
             self.serving_frontend = ServingFrontend(app_name)
+
+            # Setup root logger handler and level.
+            log_file = self.args.log_file or "dms_log.log"
+            log_level = self.args.log_level or "INFO"
+            assert log_level in LOG_LEVEL_DICT, "log_level must be one of the keys in %s" % (str(LOG_LEVEL_DICT))
+            log_rotation_time = self.args.log_rotation_time or "1 H"
+            rotate_time = log_rotation_time.split(' ')
+            assert len(rotate_time) > 0 and len(rotate_time) < 3, \
+                "log_rotation_time must be in format 'interval when' or 'when' for weekday and midnight."
+            interval = int(rotate_time[0]) if len(rotate_time) > 1 else 1
+            when = rotate_time[-1]
+            assert isinstance(interval, int) and interval >0, "interval must be a positive integer."
+            assert when in VALID_ROTATE_UNIT, "rotate time unit must be one of the values in %s." \
+                                              % (str(VALID_ROTATE_UNIT))
+
+            time_rotate_handler = TimedRotatingFileHandler(log_file, when, interval)
+            root = logging.getLogger()
+            root.setLevel(LOG_LEVEL_DICT[log_level])
+            root.addHandler(time_rotate_handler)
 
             logger.info('Initialized model serving.')
         except Exception as e:
@@ -61,9 +85,8 @@ class MMS(object):
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
 
             # Start model serving host
+            logger.info('Host started at ' + self.host + ':' + str(self.port))
             self.serving_frontend.start_handler(self.host, self.port)
-
-            logger.info('Host is started at ' + self.host + ':' + str(self.port))
 
         except Exception as e:
             logger.error('Failed to start model serving host: ' + str(e))

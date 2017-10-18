@@ -21,7 +21,11 @@ from export_model import export_serving
 
 
 class TestExport(unittest.TestCase):
-    def _train_and_save(self):
+    def _train_and_save(self, path):
+        model_path = curr_path + '/' + path
+        if not os.path.isdir(model_path):
+            os.mkdir(model_path)
+
         num_class = 10
         data1 = mx.sym.Variable('data1')
         data2 = mx.sym.Variable('data2')
@@ -52,10 +56,10 @@ class TestExport(unittest.TestCase):
         mod.forward(data_batch)
         mod.backward()
         mod.update()
-        with open('%s/synset.txt' % (curr_path), 'w') as synset:
+        with open('%s/synset.txt' % (model_path), 'w') as synset:
             for i in range(10):
                 synset.write('test label %d\n' % (i))
-        with open('%s/signature.json' % (curr_path), 'w') as sig:
+        with open('%s/signature.json' % (model_path), 'w') as sig:
             signature = {
                 "input_type": "image/jpeg",
                 "inputs": [
@@ -77,26 +81,27 @@ class TestExport(unittest.TestCase):
                 ]
             }
             json.dump(signature, sig)
-        mod.save_checkpoint('%s/test' % (curr_path), 0)
+        mod.save_checkpoint('%s/test' % (model_path), 0)
 
     def test_export_CLI(self):
-        self._train_and_save()
-        model_name = 'test'
-        model_path = curr_path
-        signature = '%s/signature.json' % (curr_path)
-        synset = '%s/synset.txt' % (curr_path)
-        export_path = curr_path
+        path = 'test'
+        self._train_and_save(path)
+        model_name = 'test1'
+        model_path = curr_path + '/' + path
+        export_file = '%s/%s.model' % (os.getcwd(), model_name)
 
-        cmd = 'python %s/../../export_model.py --model %s=%s --signature %s ' \
-              '--synset %s --export-path %s' % (curr_path, model_name, model_path,
-                                                signature, synset, export_path)
+        cmd = 'python %s/../../export_model.py --model-name %s --model-path %s ' \
+              % (curr_path, model_name, model_path)
         os.system(cmd)
-        assert os.path.isfile('%s/test.model' % (curr_path)), "No model file is found. Export failed!"
+        assert os.path.isfile(export_file), "No model file is found. Export failed!"
 
-        mx_vision_service('%s/test.model' % (curr_path))
-        os.system('rm -rf %s/%s' % (curr_path, model_name))
+        mx_vision_service(export_file)
+        os.system('rm -rf %s %s' % (export_file, model_path))
 
     def test_export_API(self):
+        path = 'test'
+        model_path = curr_path + '/' + path
+        os.mkdir(model_path)
         sym = mx.sym.Variable('data')
         sym = mx.sym.FullyConnected(sym, num_hidden=100)
         sym = mx.symbol.Activation(name="act_1", data=sym, act_type='sigmoid')
@@ -109,12 +114,12 @@ class TestExport(unittest.TestCase):
         mod.update()
 
         signature = {'input_type': 'application/json', 'output_type': 'application/json'}
-        with open('%s/synset.txt' % (curr_path), 'w') as synset:
+        with open('%s/synset.txt' % (model_path), 'w') as synset:
             synset.write('test label')
-        export_serving(mod, 'test', signature, export_path=curr_path, aux_files=['%s/synset.txt' % curr_path])
-        assert os.path.isfile('%s/test.model' % (curr_path)), "No zip file found for export_serving."
-        assert os.path.isfile('%s/signature.json' % (curr_path)), "No signature file found for export_serving."
-        with open('%s/signature.json' % (curr_path)) as f:
+        export_serving(mod, 'test', signature, export_path=model_path, aux_files=['%s/synset.txt' % model_path])
+        assert os.path.isfile('%s/test.model' % (model_path)), "No zip file found for export_serving."
+        assert os.path.isfile('%s/signature.json' % (model_path)), "No signature file found for export_serving."
+        with open('%s/signature.json' % (model_path)) as f:
             sig = json.load(f)
         assert sig['input_type'] == signature['input_type'], \
             "Input type incorrect. Expect %s but got %s" % (signature['input_type'], sig['input_type'])
@@ -128,7 +133,7 @@ class TestExport(unittest.TestCase):
             assert output['data_name'] == data[0], "Output name mistach. %s vs %s" % (output['data_name'], data[0])
             assert output['data_shape'] == list(data[1]), "Output shape mistach. %s vs %s" % (
             output['data_shape'], data[1])
-        os.system('rm -rf %s/test' % (curr_path))
+        os.system('rm -rf %s' % (model_path))
 
     def runTest(self):
         self.test_export_CLI()

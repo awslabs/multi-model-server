@@ -89,8 +89,8 @@ class UnetGenerator(HybridBlock):
 
 class Pixel2pixelService(MXNetBaseService):
 
-    def __init__(self, path, ctx=mx.cpu()):
-        model_dir, model_name = self._extract_model(path)
+    def __init__(self, path, model_name, ctx=mx.cpu()):
+        model_dir, _ = self._extract_model(path, check_multi_sym=False)
         self.mx_model = UnetGenerator(in_channels=3, num_downs=8)
         self.mx_model.load_params('%s/%s.params' % (model_dir, model_name), ctx=ctx)
 

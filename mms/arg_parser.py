@@ -56,7 +56,7 @@ class ArgParser(object):
 
         parser.add_argument('--log-level', help='Log level. By default it is INFO. '
                                                 'Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL.'
-                                                'cHECK https://docs.python.org/2/library/logging.html#logging-levels')
+                                                'Check https://docs.python.org/2/library/logging.html#logging-levels')
 
         return parser.parse_args()
 

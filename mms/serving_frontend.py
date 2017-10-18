@@ -279,7 +279,9 @@ class ServingFrontend(object):
                     }
                 }
             else:
-                raise Exception('%s is not supported for output content-type' % output_type)
+                msg = '%s is not supported for output content-type' % output_type
+                logger.error(msg)
+                abort(500, "Service setting error. %s" % (msg))
             predict_api[endpoint]['post']['responses']['200'].update(responses) 
 
             self.openapi_endpoints['paths'].update(predict_api)

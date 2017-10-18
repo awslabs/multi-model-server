@@ -38,9 +38,12 @@ class ArgParser(object):
                             nargs='+',
                             help='Models to be deployed')
 
-        parser.add_argument('--service', help='Using user defined model service. By default it uses mxnet_vision_service.')
+        parser.add_argument('--service', help='Using user defined model service. '
+                                              'By default it uses mxnet_vision_service.')
 
-        parser.add_argument('--gen-api', help='Generate API')
+        parser.add_argument('--gen-api', help='Generates API client for the supplied language. Options include '
+                                              'Java, C#, JavaScript and Go. For complete list check out '
+                                              'https://github.com/swagger-api/swagger-codegen.')
 
         parser.add_argument('--port', help='Port number. By default it is 8080.')
 

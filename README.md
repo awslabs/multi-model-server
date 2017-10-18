@@ -313,4 +313,4 @@ The basic usage can be found [here](docker/README.md)
 To be updated
 
 ## Testing:
-python -m pytest tests/unit_tests/
+python -m pytest mms/tests/unit_tests/

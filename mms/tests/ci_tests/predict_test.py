@@ -48,3 +48,4 @@ subprocess.check_call('deep-model-server --models resnet-18=resnet-18.model &', 
 time.sleep(5)
 
 predict()
+logging()

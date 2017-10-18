@@ -255,7 +255,6 @@ class ServingFrontend(object):
                 else:
                     msg = '%s is not supported for input content-type' % (input_type)
                     abort(400, msg)
-                    # raise Exception('%s is not supported for input content-type' % input_type)
                 predict_api[endpoint]['post']['parameters'].append(parameter)
 
             # Contruct openapi response schema
@@ -413,7 +412,6 @@ class ServingFrontend(object):
             except Exception as e:
                 logger.warn(str(e))
                 abort(400, str(e))
-                #raise Exception(str(e))
         elif input_type == 'image/jpeg':
             try:
                 for name in input_names:
@@ -429,12 +427,10 @@ class ServingFrontend(object):
             except Exception as e:
                 logger.warn(str(e))
                 abort(400, str(e))
-                #raise Exception(str(e))
         else:
             msg = '%s is not supported for input content-type' % (input_type)
             logger.warn(msg)
             abort(400, msg)
-            #raise Exception(msg)
 
         # Doing prediciton on model
         try:

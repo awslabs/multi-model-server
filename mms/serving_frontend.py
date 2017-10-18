@@ -22,19 +22,19 @@ logger = get_logger(__name__)
 
 
 class ServingFrontend(object):
-    '''ServingFrontend warps up all internal services including 
+    """ServingFrontend warps up all internal services including 
     model service manager, request handler. It provides all public 
     apis for users to extend and use our system.
-    '''
+    """
     def __init__(self, app_name):
-        '''
+        """
         Initialize handler for FlaskHandler and ServiceManager.
 
         Parameters
         ----------
         app_name : string
             App name to initialize request handler.
-        '''
+        """
         try:
             self.service_manager = ServiceManager()
             self.handler = FlaskRequestHandler(app_name)
@@ -44,7 +44,7 @@ class ServingFrontend(object):
             raise Exception('Failed to initialize serving frontend: ' + str(e))
 
     def start_handler(self, host, port):
-        '''
+        """
         Start handler using given host and port.
 
         Parameters
@@ -53,11 +53,11 @@ class ServingFrontend(object):
             Host that server will use.
         port: int
             Port that server will use.
-        '''
+        """
         self.handler.start_handler(host, port)
 
     def load_models(self, models, ModelServiceClassDef):
-        '''
+        """
         Load models by using user passed Model Service Class Definitions.
 
         Parameters
@@ -66,13 +66,13 @@ class ServingFrontend(object):
             List of model_name, model_path pairs that will be initialized.
         ModelServiceClassDef: python class
             Model Service Class Definition which can initialize a model service.
-        '''
+        """
         for model_name, model_path in models.items():
             self.service_manager.load_model(model_name, model_path, ModelServiceClassDef)
 
 
     def register_module(self, user_defined_module_file_path):
-        '''
+        """
         Register a python module according to user_defined_module_name
         This module should contain a valid Model Service Class whose
         pre-process and post-process can be derived and customized.
@@ -87,7 +87,7 @@ class ServingFrontend(object):
         ----------
         List of model service class definitions.
             Those python class can be used to initialize model service.
-        '''
+        """
         model_class_definations = self.service_manager.parse_modelservices_from_module(user_defined_module_file_path)
         assert len(model_class_definations) >= 1, 'No valid python class derived from Base Model Service is in module file: %s' % user_defined_module_file_path
 
@@ -97,7 +97,7 @@ class ServingFrontend(object):
         return model_class_definations
 
     def get_registered_modelservices(self, modelservice_names=None):
-        '''
+        """
         Get all registered Model Service Class Definitions into a dictionary 
         according to name or list of names. 
         If nothing is passed, all registered model services will be returned.
@@ -111,14 +111,14 @@ class ServingFrontend(object):
         ----------
         Dict of name, model service pairs
             Registered model services according to given names.
-        '''
+        """
         if not isinstance(modelservice_names, list) and modelservice_names is not None:
             modelservice_names = [modelservice_names]
 
         return self.service_manager.get_modelservices_registry(modelservice_names)
 
     def get_loaded_modelservices(self, modelservice_names=None):
-        '''
+        """
         Get all model services which are loaded in the system into a dictionary 
         according to name or list of names. 
         If nothing is passed, all loaded model services will be returned.
@@ -132,14 +132,14 @@ class ServingFrontend(object):
         ----------
         Dict of name, model service pairs
             Loaded model services according to given names.
-        '''
+        """
         if not isinstance(modelservice_names, list) and modelservice_names is not None:
             modelservice_names = [modelservice_names]
 
         return self.service_manager.get_loaded_modelservices(modelservice_names)
 
     def get_query_string(self, field):
-        '''
+        """
         Get field data in the query string from request.
 
         Parameters
@@ -151,11 +151,11 @@ class ServingFrontend(object):
         ----------
         Object
             Field data in query string.
-        '''
+        """
         return self.handler.get_query_string(field)
 
     def add_endpoint(self, api_definition, callback, **kwargs):
-        '''
+        """
         Add an endpoint with OpenAPI compatible api definition and callback.
 
         Parameters
@@ -168,7 +168,7 @@ class ServingFrontend(object):
 
         kwargs: dict
             Arguments for callback functions.
-        '''
+        """
         endpoint = list(api_definition.keys())[0]
         method = list(api_definition[endpoint].keys())[0]
         api_name = api_definition[endpoint][method]['operationId']
@@ -177,7 +177,7 @@ class ServingFrontend(object):
         self.handler.add_endpoint(api_name, endpoint, partial(callback, **kwargs), [method.upper()])
 
     def setup_openapi_endpoints(self, host, port):
-        '''
+        """
         Firstly, construct Openapi compatible api definition for 
         1. Predict
         2. Ping
@@ -192,7 +192,7 @@ class ServingFrontend(object):
 
         port: int
             Host that server will use 
-        '''
+        """
         modelservices = self.service_manager.get_loaded_modelservices()
         # TODO: not hardcode host:port
         self.openapi_endpoints = {
@@ -254,7 +254,8 @@ class ServingFrontend(object):
                     }
                 else:
                     msg = '%s is not supported for input content-type' % (input_type)
-                    abort(400, msg)
+                    logger.error(msg)
+                    abort(500, "Service setting error. %s" % (msg))
                 predict_api[endpoint]['post']['parameters'].append(parameter)
 
             # Contruct openapi response schema
@@ -346,14 +347,14 @@ class ServingFrontend(object):
         return self.openapi_endpoints
     
     def ping_callback(self, **kwargs):
-        '''
+        """
         Callback function for ping endpoint.
             
         Returns
         ----------
         Response
             Http response for ping endpiont.
-        '''
+        """
         try:
             for model in self.service_manager.get_loaded_modelservices().values():
                 model.ping()
@@ -364,18 +365,18 @@ class ServingFrontend(object):
         return self.handler.jsonify({'health': 'healthy!'})
 
     def api_description(self, **kwargs):
-        '''
+        """
         Callback function for api description endpoint.
 
         Returns
         ----------
         Response
             Http response for api description endpiont.
-        '''
+        """
         return self.handler.jsonify({'description': self.openapi_endpoints})
 
     def predict_callback(self, **kwargs):
-        '''
+        """
         Callback for predict endpoint
 
         Parameters
@@ -390,7 +391,7 @@ class ServingFrontend(object):
         ----------
         Response
             Http response for predict endpiont.
-        '''
+        """
         modelservice = kwargs['modelservice']
         input_names = kwargs['input_names']
 
@@ -410,7 +411,7 @@ class ServingFrontend(object):
                                                         % (name, input_type, type(form_data))
                     input_data.append(form_data)
             except Exception as e:
-                logger.warn(str(e))
+                logger.error(str(e))
                 abort(400, str(e))
         elif input_type == 'image/jpeg':
             try:
@@ -425,12 +426,12 @@ class ServingFrontend(object):
                                                                 'bytes, but got %s' % (type(file_data))
                     input_data.append(file_data)
             except Exception as e:
-                logger.warn(str(e))
+                logger.error(str(e))
                 abort(400, str(e))
         else:
             msg = '%s is not supported for input content-type' % (input_type)
-            logger.warn(msg)
-            abort(400, msg)
+            logger.error(msg)
+            abort(500, "Service setting error. %s" % (msg))
 
         # Doing prediciton on model
         try:

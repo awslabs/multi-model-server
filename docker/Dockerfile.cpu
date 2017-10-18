@@ -6,4 +6,4 @@ RUN /install.sh
 
 COPY virtual.conf /etc/nginx/conf.d/
 
-LABEL authors="Ruofei Yu"
+LABEL maintainer="yuruofei@amazon.com, wayao@amazon.com"

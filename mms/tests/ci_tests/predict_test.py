@@ -24,6 +24,7 @@ def predict():
     assert response == expected
 
 def logging():
+    default_log_file = 'dms_app.log'
     expected_log = "Initialized model serving.\n" \
                    "Adding endpoint: resnet-18_predict to Flask\n" \
                    "Adding endpoint: ping to Flask\n" \
@@ -35,9 +36,9 @@ def logging():
                    "Response is text.\n" \
                    "Jsonifying the response: {'prediction': [[{'class': 'n02342885 hamster', 'probability': 0.1685481071472168}, {'class': 'n02328150 Angora, Angora rabbit', 'probability': 0.12471257895231247}, {'class': 'n02109961 Eskimo dog, husky', 'probability': 0.09091603755950928}, {'class': 'n02113023 Pembroke, Pembroke Welsh corgi', 'probability': 0.060132645070552826}, {'class': 'n02395406 hog, pig, grunter, squealer, Sus scrofa', 'probability': 0.043494272977113724}]]}\n" \
                    "127.0.0.1 - - [17/Oct/2017 16:35:35] \"POST /resnet-18/predict HTTP/1.1\" 200 -\n"
-    assert os.path.isfile('dms_log.log'), "Log file is not found."
+    assert os.path.isfile(default_log_file), "Log file is not found."
     line_num = len(expected_log.split('\n'))
-    with open('dms_log.log') as f:
+    with open(default_log_file) as f:
         log_content = f.read()
         assert len(log_content.split('\n')) == line_num, "Log content line number different. %d expected but got %d" \
                                                          % (line_num, len(log_content.split('\n')))

@@ -22,9 +22,28 @@ VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in ran
 logger = get_logger(__name__)
 
 
+def _set_root_logger(log_file, log_level, log_rotation_time):
+    """Internal function to setup root logger
+    """
+    assert log_level in LOG_LEVEL_DICT, "log_level must be one of the keys in %s" % (str(LOG_LEVEL_DICT))
+    rotate_time_list = log_rotation_time.split(' ')
+    assert len(rotate_time_list) > 0 and len(rotate_time_list) < 3, \
+        "log_rotation_time must be in format 'interval when' or 'when' for weekday and midnight."
+    interval = int(rotate_time_list[0]) if len(rotate_time_list) > 1 else 1
+    when = rotate_time_list[-1]
+    assert isinstance(interval, int) and interval > 0, "interval must be a positive integer."
+    assert when in VALID_ROTATE_UNIT, "rotate time unit must be one of the values in %s." \
+                                      % (str(VALID_ROTATE_UNIT))
+
+    time_rotate_handler = TimedRotatingFileHandler(log_file, when, interval)
+    root = logging.getLogger()
+    root.setLevel(LOG_LEVEL_DICT[log_level])
+    root.addHandler(time_rotate_handler)
+
+
 class MMS(object):
-    '''MXNet Model Serving
-    '''
+    """MXNet Model Serving
+    """
     def __init__(self, app_name='mms'):
         # Initialize serving frontend and arg parser
         try:
@@ -32,23 +51,10 @@ class MMS(object):
             self.serving_frontend = ServingFrontend(app_name)
 
             # Setup root logger handler and level.
-            log_file = self.args.log_file or "dms_log.log"
+            log_file = self.args.log_file or "dms_app.log"
             log_level = self.args.log_level or "INFO"
-            assert log_level in LOG_LEVEL_DICT, "log_level must be one of the keys in %s" % (str(LOG_LEVEL_DICT))
             log_rotation_time = self.args.log_rotation_time or "1 H"
-            rotate_time = log_rotation_time.split(' ')
-            assert len(rotate_time) > 0 and len(rotate_time) < 3, \
-                "log_rotation_time must be in format 'interval when' or 'when' for weekday and midnight."
-            interval = int(rotate_time[0]) if len(rotate_time) > 1 else 1
-            when = rotate_time[-1]
-            assert isinstance(interval, int) and interval >0, "interval must be a positive integer."
-            assert when in VALID_ROTATE_UNIT, "rotate time unit must be one of the values in %s." \
-                                              % (str(VALID_ROTATE_UNIT))
-
-            time_rotate_handler = TimedRotatingFileHandler(log_file, when, interval)
-            root = logging.getLogger()
-            root.setLevel(LOG_LEVEL_DICT[log_level])
-            root.addHandler(time_rotate_handler)
+            _set_root_logger(log_file, log_level, log_rotation_time)
 
             logger.info('Initialized model serving.')
         except Exception as e:
@@ -56,8 +62,8 @@ class MMS(object):
             exit(1)
         
     def start_model_serving(self):
-        '''Start model serving server
-        '''
+        """Start model serving server
+        """
         try:
             # Port 
             self.port = self.args.port or 8080
@@ -85,7 +91,7 @@ class MMS(object):
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
 
             # Start model serving host
-            logger.info('Host started at ' + self.host + ':' + str(self.port))
+            logger.info('Service started at ' + self.host + ':' + str(self.port))
             self.serving_frontend.start_handler(self.host, self.port)
 
         except Exception as e:

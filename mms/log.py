@@ -15,12 +15,14 @@ import logging
 import sys
 import warnings
 
-CRITICAL = logging.CRITICAL
-ERROR = logging.ERROR
-WARNING = logging.WARNING
-INFO = logging.INFO
-DEBUG = logging.DEBUG
-NOTSET = logging.NOTSET
+LOG_LEVEL_DICT = {
+    "CRITICAL": logging.CRITICAL,
+    "ERROR": logging.ERROR,
+    "WARNING": logging.WARNING,
+    "INFO": logging.INFO,
+    "DEBUG": logging.DEBUG,
+    "NOTSET": logging.NOTSET
+}
 
 PY3 = sys.version_info[0] == 3
 
@@ -64,7 +66,7 @@ class _Formatter(logging.Formatter):
             self._fmt = fmt
         return super(_Formatter, self).format(record)
 
-def getLogger(name=None, filename=None, filemode=None, level=WARNING):
+def getLogger(name=None, filename=None, filemode=None, level='NOTSET'):
     """Gets a customized logger.
 
     .. note:: `getLogger` is deprecated. Use `get_logger` instead.
@@ -72,9 +74,9 @@ def getLogger(name=None, filename=None, filemode=None, level=WARNING):
     """
     warnings.warn("getLogger is deprecated, Use get_logger instead.",
                   DeprecationWarning, stacklevel=2)
-    return get_logger(name, filename, filemode, level)
+    return get_logger(name, filename, filemode, LOG_LEVEL_DICT[level])
 
-def get_logger(name=None, filename=None, filemode=None, level=WARNING):
+def get_logger(name=None, filename=None, level="NOTSET", rotate_value='H', rotate_interval=1):
     """Gets a customized logger.
 
     Parameters
@@ -119,8 +121,7 @@ def get_logger(name=None, filename=None, filemode=None, level=WARNING):
     if name is not None and not getattr(logger, '_init_done', None):
         logger._init_done = True
         if filename:
-            mode = filemode if filemode else 'a'
-            hdlr = logging.FileHandler(filename, mode)
+            hdlr = logging.handlers.TimedRotatingFileHandler(filename, when=rotate_value, interval=rotate_interval)
         else:
             hdlr = logging.StreamHandler()
             # the `_Formatter` contain some escape character to
@@ -128,5 +129,5 @@ def get_logger(name=None, filename=None, filemode=None, level=WARNING):
             # (TODO) maybe we can add another Formatter for FileHandler.
             hdlr.setFormatter(_Formatter())
         logger.addHandler(hdlr)
-        logger.setLevel(level)
+        logger.setLevel(LOG_LEVEL_DICT[level])
     return logger

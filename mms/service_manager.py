@@ -19,15 +19,15 @@ import model_service.mxnet_vision_service as mxnet_vision_service
 
 
 class ServiceManager(object):
-    '''ServiceManager will be responsible for storing infomation and managing
+    """ServiceManager will be responsible for storing infomation and managing
     model services. ServiceManager will directly talk to model services.
     In later phase, ServiceManager will also be responsible for model versioning,
     prediction batching and caching...
-    '''
+    """
     def __init__(self):
-        '''
+        """
         Initialize Service Manager.
-        '''
+        """
 
         # registry for model defination and user defined functions
         self.modelservice_registry = KVStorage('modelservice')
@@ -37,7 +37,7 @@ class ServiceManager(object):
         self.loaded_modelservices = KVStorage('loaded_modelservices')
 
     def get_modelservices_registry(self, modelservice_names=None):
-        '''
+        """
         Get all registered Model Service Class Definitions in a dictionary 
         from internal registry according to name or list of names. 
         If nothing is passed, all registered model services will be returned.
@@ -51,7 +51,7 @@ class ServiceManager(object):
         ----------
         Dict of name, model service pairs
             Registered model services according to given names.
-        '''
+        """
         if modelservice_names is None:
             return self.modelservice_registry
 
@@ -61,7 +61,7 @@ class ServiceManager(object):
                 }
 
     def add_modelservice_to_registry(self, modelservice_name, ModelServiceClassDef):
-        '''
+        """
         Add a model service to internal registry.
 
         Parameters
@@ -70,11 +70,11 @@ class ServiceManager(object):
             Model service name to be added.
         ModelServiceClassDef: python class  
             Model Service Class Definition which can initialize a model service.
-        '''
+        """
         self.modelservice_registry[modelservice_name] = ModelServiceClassDef
 
     def get_loaded_modelservices(self, modelservice_names=None):
-        '''
+        """
         Get all model services which are loaded in the system into a dictionary 
         according to name or list of names. 
         If nothing is passed, all loaded model services will be returned.
@@ -88,7 +88,7 @@ class ServiceManager(object):
         ----------
         Dict of name, model service pairs
             Loaded model services according to given names.
-        '''
+        """
         if modelservice_names is None:
             return self.loaded_modelservices
 
@@ -98,7 +98,7 @@ class ServiceManager(object):
                 }
 
     def load_model(self, model_name, model_path, ModelServiceClassDef):
-        '''
+        """
         Load a single model into a model service by using 
         user passed Model Service Class Definitions.
 
@@ -110,11 +110,11 @@ class ServiceManager(object):
             Model path which can be url or local file path.
         ModelServiceClassDef: python class
             Model Service Class Definition which can initialize a model service.
-        '''
+        """
         self.loaded_modelservices[model_name] = ModelServiceClassDef(model_path)
 
     def parse_modelservices_from_module(self, user_defined_module_file_path):
-        '''
+        """
         Parse user defined module to get all model service classe in it.
 
         Parameters
@@ -126,7 +126,7 @@ class ServiceManager(object):
         ----------
         List of model service class definitions.
             Those parsed python class can be used to initialize model service.
-        '''
+        """
         module =  imp.load_source(
             os.path.splitext(os.path.basename(user_defined_module_file_path))[0],
             user_defined_module_file_path) if user_defined_module_file_path \

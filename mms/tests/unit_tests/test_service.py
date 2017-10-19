@@ -60,7 +60,7 @@ class TestService(unittest.TestCase):
             for i in range(10):
                 synset.write('test label %d\n' % (i))
         export_serving(mod, 'test', signature, export_path=curr_path,
-                       util_files=['%s/synset.txt' % (curr_path)])
+                       aux_files=['%s/synset.txt' % (curr_path)])
 
     def _write_image(self, img_arr):
         img_arr = mx.nd.transpose(img_arr, (1, 2, 0)).astype(np.uint8).asnumpy()

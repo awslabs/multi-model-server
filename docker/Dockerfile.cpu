@@ -1,5 +1,3 @@
-LABEL authors="Ruofei Yu"
-
 FROM mxnet/python
 
 COPY install.sh /
@@ -7,3 +5,5 @@ COPY install.sh /
 RUN /install.sh
 
 COPY virtual.conf /etc/nginx/conf.d/
+
+LABEL maintainer="yuruofei@amazon.com, wayao@amazon.com"

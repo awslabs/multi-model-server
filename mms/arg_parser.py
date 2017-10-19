@@ -12,8 +12,8 @@ import argparse
 
 
 class StoreDictKeyPair(argparse.Action):
-    '''This class is a helper class to parse <model-name>=<model-uri> pairs
-    '''
+    """This class is a helper class to parse <model-name>=<model-uri> pairs
+    """
     def __call__(self, parser, namespace, values, option_string=None):
         try: 
           setattr(namespace, 'models', {kv.split('=', 1)[0]: kv.split('=', 1)[1] for kv in values})
@@ -22,13 +22,13 @@ class StoreDictKeyPair(argparse.Action):
                           ' Format should be <model-name>=<model-path> (Local file path, URL, S3).')
     
 class ArgParser(object):
-    '''Argument parser for deep-model-server and deep-model-export commands
+    """Argument parser for deep-model-server and deep-model-export commands
     More detailed example is at https://github.com/deep-learning-tools/deep-model-server/blob/master/README.md
-    '''
+    """
     @staticmethod
     def parse_args():
-        '''Parse deep-model-server arguments
-        '''
+        """Parse deep-model-server arguments
+        """
         parser = argparse.ArgumentParser(prog='mxnet-model-serving', description='MXNet Model Serving')
 
         parser.add_argument('--models',
@@ -38,20 +38,35 @@ class ArgParser(object):
                             nargs='+',
                             help='Models to be deployed')
 
-        parser.add_argument('--service', help='Using user defined model service')
+        parser.add_argument('--service', help='Using user defined model service. '
+                                              'By default it uses mxnet_vision_service.')
 
-        parser.add_argument('--gen-api', help='Generate API')
+        parser.add_argument('--gen-api', help='Generates API client for the supplied language. Options include '
+                                              'Java, C#, JavaScript and Go. For complete list check out '
+                                              'https://github.com/swagger-api/swagger-codegen.')
 
-        parser.add_argument('--port', help='Port')
+        parser.add_argument('--port', help='Port number. By default it is 8080.')
 
-        parser.add_argument('--host', help='Host')
+        parser.add_argument('--host', help='Host. By default it is localhost.')
+
+        parser.add_argument('--log-file', help='Log file name. By default it is "dms_app.log".')
+
+        parser.add_argument('--log-rotation-time',
+                            help='Log rotation time. By default it is "1 H", which means one hour. '
+                                 'Valid format is "interval when". For weekday and midnight, '
+                                 'only "when" is required. Check https://docs.python.org/2/library/'
+                                 'logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.')
+
+        parser.add_argument('--log-level', help='Log level. By default it is INFO. '
+                                                'Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL.'
+                                                'Check https://docs.python.org/2/library/logging.html#logging-levels')
 
         return parser.parse_args()
 
     @staticmethod
     def parse_export_args():
-        '''Parse deep-model-export arguments
-        '''
+        """Parse deep-model-export arguments
+        """
         parser_export = argparse.ArgumentParser(prog='model-export', description='MXNet Model Export')
 
         parser_export.add_argument('--model',

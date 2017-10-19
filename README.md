@@ -23,15 +23,21 @@ deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-
 3. port: optional, default is 8080
 4. host: optional, default is 127.0.0.1
 5. gen-api: optional, this will generate an open-api formated client sdk in build folder.
+6. log-file: optional, log file name. By default it is "dms_app.log".
+7. log-rotation-time: optional, log rotation time. By default it is "1 H", which means one hour. Valid format is "interval when". For weekday and midnight, only "when" is required. Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.
+8. log-level: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL. Check https://docs.python.org/2/library/logging.html#logging-levels
 
 ### Export existing model to serving model format
 ```python
-deep-model-export --model resnet-18=models/resnet-18 --signature signature.json --synset synset.txt --export-path models
+deep-model-export --model-name resnet-18 --model-path models/resnet-18
 ```
 
 #### Arguments:
-1. model: required, <model_name>=<model_path> pair. Model path is the pre-trained model file directory. It should contain model symbol json and parameter files. For example, resnet-18-symbol.json and reset-18-0000.params for resnet-18 model.
-2. signature: required, signature json file for model service.
+1. model-name: required, prefix of exported model archive file.
+2. model-path: required, directory which contains files to be packed into exported archive.
+
+   signature.json is required to be in this directory.
+
    Currently 4 entries are required: 
 
    (1) input, which contains MXNet model input names and input shapes. It is a list contains { data_name : name, data_shape : shape } maps. Client side inputs should have the same order with the input order defined here.
@@ -66,20 +72,8 @@ deep-model-export --model resnet-18=models/resnet-18 --signature signature.json 
       }
    ```
    Data shape is a list of integer. It should contains batch size as the first dimension to follow MXNet data shape rule. Also 0 is a placeholder for MXNet shape and means any value is valid. Batch size should be set as 0.
-3. synset: optional, a synset file for classification task. [Here](https://github.com/tornadomeet/ResNet/blob/master/predict/synset.txt) is the synset file for Imagenet-11k.
-   The format looks like following:
-   ```
-      n01440764 tench, Tinca tinca
 
-      n01443537 goldfish, Carassius auratus
-
-      n01484850 great white shark, white shark, man-eater, man-eating shark, Carcharodon carcharias
-
-      ...
-   ```
-   If `synset.txt` is inclued in exported archive file and each line represents a category, `MXNetBaseModel`
-   will load this file and create `labels` attribute automatically. If this file is named differently or
-   has a different format, you need to override `__init__' method and manually load it.
+   If `synset.txt` is inclued in exported archive file and each line represents a category, `MXNetBaseModel` will load this file and create `labels` attribute automatically. If this file is named differently or has a different format, you need to override `__init__' method and manually load it.
 
 ### Directly export model after training in MXNet
 

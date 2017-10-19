@@ -45,7 +45,7 @@ class MMS(object):
     """MXNet Model Serving
     """
     def __init__(self, app_name='mms', args=None):
-        """Initialize handler for FlaskHandler and ServiceManager.
+        """Initialize deep model server application.
 
         Parameters
         ----------
@@ -116,7 +116,7 @@ class MMS(object):
         
 
 def start_serving(args=None):
-    """Initialize handler for FlaskHandler and ServiceManager.
+    """Start service routing.
 
     Parameters
     ----------

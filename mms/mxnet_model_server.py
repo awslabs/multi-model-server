@@ -44,10 +44,26 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
 class MMS(object):
     """MXNet Model Serving
     """
-    def __init__(self, app_name='mms'):
+    def __init__(self, app_name='mms', args=None):
+        """Initialize handler for FlaskHandler and ServiceManager.
+
+        Parameters
+        ----------
+        app_name : str
+            App name to initialize dms service.
+        args : List of str
+            Arguments for starting service. By default it is None
+            and commandline arguments will be used. It should follow
+            the format recognized by python argparse parse_args method:
+            https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.parse_args.
+            An example for dms arguments:
+            ['--models', 'resnet-18=path1', 'inception_v3=path2',
+             '--gen-api', 'java', '--port', '8080']
+        """
         # Initialize serving frontend and arg parser
         try:
-            self.args = ArgParser.parse_args()
+            parser = ArgParser.dms_parser()
+            self.args = parser.parse_args(args) if args else parser.parse_args()
             self.serving_frontend = ServingFrontend(app_name)
 
             # Setup root logger handler and level.
@@ -99,8 +115,23 @@ class MMS(object):
             exit(1)
         
 
-def start_serving():
-    mms = MMS()
+def start_serving(args=None):
+    """Initialize handler for FlaskHandler and ServiceManager.
+
+    Parameters
+    ----------
+    app_name : str
+        App name to initialize dms service.
+    args : List of str
+        Arguments for starting service. By default it is None
+        and commandline arguments will be used. It should follow
+        the format recognized by python argparse parse_args method:
+        https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.parse_args.
+        An example for dms arguments:
+        ['--models', 'resnet-18=path1', 'inception_v3=path2',
+         '--gen-api', 'java', '--port', '8080']
+        """
+    mms = MMS(args=args)
     mms.start_model_serving()
 
 if __name__ == '__main__':

@@ -26,8 +26,8 @@ class ArgParser(object):
     More detailed example is at https://github.com/deep-learning-tools/deep-model-server/blob/master/README.md
     """
     @staticmethod
-    def parse_args():
-        """Parse deep-model-server arguments
+    def dms_parser():
+        """ Argument parser for deep-model-server start service
         """
         parser = argparse.ArgumentParser(prog='mxnet-model-serving', description='MXNet Model Serving')
 
@@ -61,11 +61,11 @@ class ArgParser(object):
                                                 'Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL.'
                                                 'Check https://docs.python.org/2/library/logging.html#logging-levels')
 
-        return parser.parse_args()
+        return parser
 
     @staticmethod
-    def parse_export_args():
-        """Parse deep-model-export arguments
+    def export_parser():
+        """ Argument parser for deep-model-export
         """
         parser_export = argparse.ArgumentParser(prog='model-export', description='MXNet Model Export')
 
@@ -81,6 +81,6 @@ class ArgParser(object):
                                    help='Path to the folder containing model related files. '
                                         'Signature file is required')
 
-        return parser_export.parse_args()
+        return parser_export
 
 

@@ -74,23 +74,36 @@ The predictor endpoint will return a prediction in JSON. It will look something 
 Now you've seen how easy it can be to serve a deep learning model with Deep Model Server! There are several other features which we will now cover in more detail.
 
 ## Deep Model Server Command Line Interface
-
+TODO: update this example when help output is updated
 ```bash
 $ deep-model-server
-usage: mxnet-model-serving [-h] --models KEY1=VAL1,KEY2=VAL2...
+usage: deep-model-server [-h] --models KEY1=VAL1,KEY2=VAL2...
                            [KEY1=VAL1,KEY2=VAL2... ...] [--service SERVICE]
                            [--gen-api GEN_API] [--port PORT] [--host HOST]
 ```
 
 ### Required Arguments & Defaults
 
-`--models` is the only required argument. You can pass one or more models in a key value pair format, where `KEY` is the name you want to call the model and `VAL` is the local file path or URI to the model. The key/name is what appears in your REST API's endpoints. In our first example we used `resnet-18` for the name, e.g. `deep-model-server --models resnet-18=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/resnet-18/predict`. In our first example this was `resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model`. Alternatively, we could have downloaded the file and used a local file path like `resnet-18=dms_models/resnet-18.model`.
+Example single model usage:
 
-The rest of the arguments are optional and will have the following defaults:
+```
+deep-model-server --models name=model_location
+```
+
+Example multiple model usage:
+
+```
+deep-model-server --models name=model_location, name2=model_location2
+```
+
+`--models` is the only required argument. You can pass one or more models in a key value pair format, name you want to call the model and `VAL` is the local file path or URI to the model. The key/name is what appears in your REST API's endpoints. In our first example we used `resnet-18` for the name, e.g. `deep-model-server --models resnet-18=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/resnet-18/predict`. In our first example this was `resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model`. Alternatively, we could have downloaded the file and used a local file path like `resnet-18=dms_models/resnet-18.model`.
+
+The rest of these arguments are optional and will have the following defaults:
 * [--service mxnet_vision_service]
-* [--gen-api python]
 * [--port 8080]
 * [--host 127.0.0.1]
+
+Logging and exporting an SDK can also be triggered with additional arguments. Details are in the following Arguments section.
 
 #### Arguments:
 1. models: required, <model_name>=<model_path> pairs.
@@ -110,146 +123,56 @@ The rest of the arguments are optional and will have the following defaults:
 7. log-rotation-time: optional, log rotation time. By default it is "1 H", which means one hour. Valid format is "interval when". For weekday and midnight, only "when" is required. Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.
 8. log-level: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL. Check https://docs.python.org/2/library/logging.html#logging-levels
 
-### Export existing model to serving model format
-```python
-deep-model-export --model-name resnet-18 --model-path models/resnet-18
-```
 
-#### Arguments:
-1. model-name: required, prefix of exported model archive file.
-2. model-path: required, directory which contains files to be packed into exported archive.
+## Using the DMS REST API
 
-   signature.json is required to be in this directory.
+### Endpoints
 
-   Currently 4 entries are required:
-
-   (1) input, which contains MXNet model input names and input shapes. It is a list contains { data_name : name, data_shape : shape } maps. Client side inputs should have the same order with the input order defined here.
-
-   (2) input_type, which defines the MIME content type for client side inputs. Currently all inputs must have the same content type and only two MIME types, "image/jpeg" and "application/json", are supported.
-
-   (3) output. Similar to input, it contains MXNet model output names and output shapes.
-
-   (4) output_type. Similar to input_type,  currently all outputs must have the same content type and only two MIME types, "image/jpeg" and "application/json", are supported.
-
-   If model has two inputs. One is image with 3 color channels and size 28 by 28. Another is image with 3 color channels and size 32 by 32. Assume the data name of inputs in mxnet module is 'image1' and 'image2', and output is named 'softmax' with length 1000, signature.json would look like the following:
-   ```
-      {
-        'input' : [
-            {
-                'data_name' : 'image1',
-                'data_shape' : [ 0, 3, 28, 28 ]
-             },
-             {
-                'data_name' : 'image2',
-                'data_shape' : [ 0, 3, 32, 32 ]
-             }
-        ],
-        'input_type' : 'image/jpeg',
-        'output' : [
-            {        
-                'data_name' : 'softmax',
-                'data_shape' : [ 0, 100 ]
-            }
-        ],
-        'output_type' : 'application/json'
-      }
-   ```
-   The `data_shape` is a list of integers. It should contain batch size as the first dimension as in NCHW. Also, 0 is a placeholder for MXNet shape and means any value is valid. Batch size should be set as 0.
-3. synset: optional, a synset file for classification task. [Here](https://github.com/tornadomeet/ResNet/blob/master/predict/synset.txt) is the synset file for Imagenet-11k.
-   The format looks like following:
-   ```
-      n01440764 tench, Tinca tinca
-
-   If `synset.txt` is inclued in exported archive file and each line represents a category, `MXNetBaseModel` will load this file and create `labels` attribute automatically. If this file is named differently or has a different format, you need to override `__init__' method and manually load it.
-
-### Directly export model after training in MXNet
-
-Another method to export model is to use `export_serving` function while completing training:
-```python
-   import mxnet as mx
-   from mms.export_model import export_serving
-
-   mod = mx.mod.Module(...)
-   # Training process
-   ...
-
-   # Export model
-   signature = { "input_type": "image/jpeg", "output_type": "application/json" }
-   export_serving(mod, 'resnet-18', signature, aux_files=['synset.txt'])
-```
-
-## Endpoints:
 After local server is up, there will be three built-in endpoints:
 1. [POST] &nbsp; host:port/\<model-name>/predict       
 2. [GET] &nbsp; &nbsp; host:port/ping                        
-3. [GET] &nbsp; &nbsp; host:port/api-description             
+3. [GET] &nbsp; &nbsp; host:port/api-description   
 
+### Prediction
 
-## Prediction endpoint example:
+**curl Example**
+Using `curl` is a great way to test REST APIs, but you're welcome to use your preferred tools. Just follow the pattern described here. If you skipped over it, we've already gone through a simple prediction example where we curled a picture of kitten like so:
 
-### 1.Use curl:
-Pick a local image and use the following command to send request to endpoint.
-white-sleeping-kitten.jpg is a local kitten image. You can replace it with other local images.
+```bash
+curl -X POST http://127.0.0.1:8080/resnet-18/predict -F "input0=@kitten.jpg"
 ```
-curl -X POST http://127.0.0.1:8080/resnet-18/predict -F "input0=@white-sleeping-kitten.jpg"
-```
-```
-{
-  "prediction": [
-    [
-      {
-        "class": "n02123045 tabby, tabby cat",
-        "probability": 0.3166358768939972
-      },
-      {
-        "class": "n02124075 Egyptian cat",
-        "probability": 0.3160117268562317
-      },
-      {
-        "class": "n04074963 remote control, remote",
-        "probability": 0.047916918992996216
-      },
-      {
-        "class": "n02123159 tiger cat",
-        "probability": 0.036371976137161255
-      },
-      {
-        "class": "n02127052 lynx, catamount",
-        "probability": 0.03163142874836922
-      }
-    ]
-  ]
-}
-```
-### 2.Use generated client code:
-  ```python
-  import swagger_client
-  print swagger_client.DefaultApi().resnet18_predict('white-sleeping-kitten.jpg')
-  ```
-  ```
-  {
-    'prediction':
-      "[[{u'class': u'n02123045 tabby, tabby cat', u'probability': 0.3166358768939972}, {u'class': u'n02124075 Egyptian cat', u'probability': 0.3160117268562317}, {u'class': u'n04074963 remote control, remote', u'probability': 0.047916918992996216}, {u'class': u'n02123159 tiger cat', u'probability': 0.036371976137161255}, {u'class': u'n02127052 lynx, catamount', u'probability': 0.03163142874836922}]]"
-  }
-  ```
 
-### Ping endpoint example:
-Since ping is a GET endpoint, we can see it in a browser by visiting:
+The result was some json that told us our image likely held a tabby cat. The highest prediction was:
 
-curl -X GET http://127.0.0.1:8080/ping
-
+```json
+"class": "n02123045 tabby, tabby cat",
+"probability": 0.42514491081237793
 ```
+
+### Ping
+
+Since `ping` is a GET endpoint, we can see it in a browser by visiting:
+
+http://127.0.0.1:8080/ping
+
+Your response, if the server is running should be:
+
+```json
 {
   "health": "healthy!"
 }
 ```
 
-### API description example:
-This endpoint will list all the apis in OpenAPI compatible format:
+Otherwise, you'll probably get a server not responding error or `ERR_CONNECTION_REFUSED`.
 
-curl -X GET http://127.0.0.1:8080/api-description
+### API Description
 
-```
+To view a full list of all of the end points, you want to hit `api-description`.
+http://127.0.0.1:8080/api-description
+
+Your result will be like the following, and note that if you run this on a server running multiple models all of the models' endpoints should appear here:
+
+```json
 {
   "description": {
     "host": "127.0.0.1:8080",
@@ -342,14 +265,39 @@ curl -X GET http://127.0.0.1:8080/api-description
 }
 ```
 
-## Multi model setup:
-```python
+## Using the API with Swagger
+
+TODO: provide more context and info on how/why
+
+  ```python
+  import swagger_client
+  print swagger_client.DefaultApi().resnet18_predict('white-sleeping-kitten.jpg')
+  ```
+  ```
+  {
+    'prediction':
+      "[[{u'class': u'n02123045 tabby, tabby cat', u'probability': 0.3166358768939972}, {u'class': u'n02124075 Egyptian cat', u'probability': 0.3160117268562317}, {u'class': u'n04074963 remote control, remote', u'probability': 0.047916918992996216}, {u'class': u'n02123159 tiger cat', u'probability': 0.036371976137161255}, {u'class': u'n02127052 lynx, catamount', u'probability': 0.03163142874836922}]]"
+  }
+  ```
+
+
+## Serving Multiple Models with DMS
+
+Here's an example for running the `resnet-18` and the `vgg16` models using local model files.
+
+```bash
 deep-model-server --models resnet-18=file://models/resnet-18 vgg16=file://models/vgg16
 ```
-This will setup a local host serving resnet-18 model and vgg16 model on the same port.
 
-## Define custom service:
+This will setup a local host serving resnet-18 model and vgg16 model on the same port, using the default 8080.
+
+
+## Defining a Custom Service
+
+TODO: provide many more examples of pre & post processing.
+
 By passing `service` argument, you can specify your own custom service. All customized service class should be inherited from MXNetBaseService:
+
 ```python
    class MXNetBaseService(SingleNodeService):
       def __init__(self, path, synset=None, ctx=mx.cpu())
@@ -360,8 +308,10 @@ By passing `service` argument, you can specify your own custom service. All cust
 
       def _postprocess(self, data, method='predict')
 ```
+
 Usually you would like to override _preprocess and _postprocess since they are binded with specific domain of applications. We provide some [utility functions](https://github.com/deep-learning-tools/mxnet-model-server/tree/master/mms/utils) for vision and NLP applications to help user easily build basic preprocess functions.
 The following example is for resnet-18 service. In this example, we don't need to change __init__ or _inference methods, which means we just need override _preprocess and _postprocess. In preprocess, we first convert image to NDArray. Then resize to 224 x 224. In post process, we return top 5 categories:
+
 ```python
    import mxnet as mx
    from mms.mxnet_utils import image
@@ -380,6 +330,114 @@ The following example is for resnet-18 service. In this example, we don't need t
                response[output[0][i]] = self.labels[i]
            return response
 ```
+
+## Exporting Models for Use with DMS
+
+While all of these options are super exciting you've probably been asking yourself, so how do I create one of these fabulous model files? We'll provide some MXNet examples since that's the current level of support.
+
+There are two main routes for this: 1) export a checkpoint or use the new `.export` function, or 2) using a DMS Python class to export your model directly.
+
+The Python method to export model is to use `export_serving` function while completing training:
+
+```python
+   import mxnet as mx
+   from mms.export_model import export_serving
+
+   mod = mx.mod.Module(...)
+   # Training process
+   ...
+
+   # Export model
+   signature = { "input_type": "image/jpeg", "output_type": "application/json" }
+   export_serving(mod, 'resnet-18', signature, aux_files=['synset.txt'])
+```
+
+Another route is to use some new features in MXNet.
+
+```python
+net = gluon.nn.HybridSequential() # this mode will allow you to export the model
+with net.name_scope():
+    net.add(gluon.nn.Dense(128, activation="relu")) # an example first layer
+    # then add the rest of your architecture
+net.hybridize() # hybridize your network so that it can be exported as symbols
+# then train your network
+net.export('models/mnist') #export your model to a specific path
+```
+
+Note: be careful with versions. If you export a v0.12 model and try to run it with DMS running v0.11 of MXNet, it may server will probably throw errors and you won't be able to use the model.
+
+## Deep Model Export Command Line Interface
+
+Another important tool is packaged with DMS. This is `deep-model-export`, which can take model checkpoints and package them into a `.model` file that can then be redistributed and served by anyone using DMS.
+
+Example usage with the resnet-18 model you would have downloaded in the first example:
+
+```bash
+deep-model-export --model-name resnet-18 --model-path models/resnet-18
+```
+
+### Arguments:
+
+1. model-name: required, prefix of exported model archive file.
+2. model-path: required, directory which contains files to be packed into exported archive.
+
+### Required Assets:
+
+In order for the model file to be created, you need to provide these three or four assets:
+
+1. signature.json - required; the inputs and outputs of the model
+2. name-symbol.json - required; the model's definition (layers, etc.); name is any prefix you give it
+3. name-0000.params - required; the model's hyper-parameters and weights; name must match the name from the previous json file
+4. synset.txt - optional; a list of names of the prediction classes
+
+**signature.json**
+
+   (1) input, which contains MXNet model input names and input shapes. It is a list contains { data_name : name, data_shape : shape } maps. Client side inputs should have the same order with the input order defined here.
+
+   (2) input_type, which defines the MIME content type for client side inputs. Currently all inputs must have the same content type and only two MIME types, "image/jpeg" and "application/json", are supported.
+
+   (3) output. Similar to input, it contains MXNet model output names and output shapes.
+
+   (4) output_type. Similar to input_type,  currently all outputs must have the same content type and only two MIME types, "image/jpeg" and "application/json", are supported.
+
+   Using our resnet-18 example, you can view the `signature.json` file in the folder that was extracted once you dowloaded and served the model for the first time. The input is an image with 3 color channels and size 224 by 224. The output is named 'softmax' with length 1000 (one for every class that the model can recognize).
+
+   ```json
+   {
+     "inputs": [
+       {
+         "data_name": "data",
+         "data_shape": [0, 3, 224, 224]
+       }
+     ],
+     "input_type": "image/jpeg",
+     "outputs": [
+       {
+         "data_name": "softmax",
+         "data_shape": [0, 1000]
+       }
+     ],
+     "output_type": "application/json"
+   }
+   ```
+
+   The `data_shape` is a list of integers. It should contain batch size as the first dimension as in NCHW. Also, 0 is a placeholder for MXNet shape and means any value is valid. Batch size should be set as 0.
+
+**name-symbol.json**
+
+  This is the model's definition in json format. You can name it whatever you want, using a consistent prefix. The pattern expected is `my-awesome-network-symbol.json` or `mnist-symbol.json` so that when you use `deep-model-export` you're passing in the prefix and it'll look for prefix-symbol.json. You can generate this file in a variety of ways, but the easiest for MXNet is to use the `.export` feature or the `mms.export_model` method described later.
+
+**name-0000.params**
+
+  This is the model's hyper-parameters and weights. It will be created when you use MXNet's `.export` feature or the `mms.export_model` method described later.
+
+**synset.txt**
+
+  This optional text file is a synset file for classification. Simply put, if it were for MNIST, it would be 0 through 9 where each number is on its own line. For a more complex example take a look at the [synset for Imagenet-11k](https://github.com/tornadomeet/ResNet/blob/master/predict/synset.txt).
+
+
+   If `synset.txt` is inclued in exported archive file and each line represents a category, `MXNetBaseModel` will load this file and create `labels` attribute automatically. If this file is named differently or has a different format, you need to override `__init__` method and manually load it.
+
 
 ## Dependencies:
 Flask, MXNet, numpy, JAVA(7+, required by swagger codegen)

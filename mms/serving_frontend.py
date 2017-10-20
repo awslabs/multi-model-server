@@ -426,6 +426,7 @@ class ServingFrontend(object):
                     file_data = input_file.read()
                     assert isinstance(file_data, (str, bytes)), 'Image file buffer should be type str or ' \
                                                                 'bytes, but got %s' % (type(file_data))
+                    assert len(file_data) > 0, "Got empty file for %s." % (name)
                     input_data.append(file_data)
             except Exception as e:
                 logger.error(str(e))

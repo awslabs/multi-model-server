@@ -29,7 +29,7 @@ class ArgParser(object):
     def dms_parser():
         """ Argument parser for deep-model-server start service
         """
-        parser = argparse.ArgumentParser(prog='mxnet-model-serving', description='MXNet Model Serving')
+        parser = argparse.ArgumentParser(prog='deep-model-server', description='Deep Model Serving')
 
         parser.add_argument('--models',
                             required=True,
@@ -67,7 +67,7 @@ class ArgParser(object):
     def export_parser():
         """ Argument parser for deep-model-export
         """
-        parser_export = argparse.ArgumentParser(prog='model-export', description='MXNet Model Export')
+        parser_export = argparse.ArgumentParser(prog='deep-model-export', description='Deep Model Export')
 
         parser_export.add_argument('--model-name',
                                    required=True,

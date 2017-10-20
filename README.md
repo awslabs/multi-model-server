@@ -20,13 +20,13 @@ We'll get into more detail later, but in the spirit of TLDR, you can get up and 
 
 **Installation for Python 2 and Python 3**
 
-```python
+```bash
 pip install deep-model-server
 ```
 
 **Serve the resnet-18 Model for Image Classification**
 
-```python
+```bash
 deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
 ```
 
@@ -86,13 +86,13 @@ usage: deep-model-server [-h] --models KEY1=VAL1,KEY2=VAL2...
 
 Example single model usage:
 
-```
+```bash
 deep-model-server --models name=model_location
 ```
 
 Example multiple model usage:
 
-```
+```bash
 deep-model-server --models name=model_location, name2=model_location2
 ```
 

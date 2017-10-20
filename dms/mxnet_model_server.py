@@ -81,7 +81,37 @@ class DMS(object):
         """Start model serving server
         """
         try:
-            # Port 
+            # Process arguments
+            self._arg_process()
+
+            # Start model serving host
+            logger.info('Service started at ' + self.host + ':' + str(self.port))
+            self.serving_frontend.start_handler(self.host, self.port)
+
+        except Exception as e:
+            logger.error('Failed to start model serving host: ' + str(e))
+            exit(1)
+
+    def create_app(self):
+        """Create a Flask app object.
+        """
+        try:
+            # Process arguments
+            self._arg_process()
+
+            # Create app
+            return self.serving_frontend.handler.app
+
+        except Exception as e:
+            logger.error('Failed to start model serving host: ' + str(e))
+            exit(1)
+
+
+    def _arg_process(self):
+        """Process arguments before starting service or create application.
+        """
+        try:
+            # Port
             self.port = self.args.port or 8080
             self.host = self.args.host or '127.0.0.1'
 
@@ -106,12 +136,8 @@ class DMS(object):
             if self.args.gen_api is not None:
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
 
-            # Start model serving host
-            logger.info('Service started at ' + self.host + ':' + str(self.port))
-            self.serving_frontend.start_handler(self.host, self.port)
-
         except Exception as e:
-            logger.error('Failed to start model serving host: ' + str(e))
+            logger.error('Failed to process arguments: ' + str(e))
             exit(1)
         
 

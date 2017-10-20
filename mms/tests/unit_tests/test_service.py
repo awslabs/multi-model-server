@@ -24,7 +24,10 @@ from utils.service.pixel2pixel_service import UnetGenerator, Pixel2pixelService
 from export_model import export_serving
 
 class TestService(unittest.TestCase):
-    def _train_and_export(self):
+    def _train_and_export(self, path):
+        model_path = curr_path + '/' + path
+        if not os.path.isdir(model_path):
+            os.mkdir(model_path)
         num_class = 10
         data1 = mx.sym.Variable('data1')
         data2 = mx.sym.Variable('data2')
@@ -56,11 +59,11 @@ class TestService(unittest.TestCase):
         mod.backward()
         mod.update()
         signature = {'input_type': 'image/jpeg', 'output_type': 'application/json'}
-        with open('%s/synset.txt' % (curr_path), 'w') as synset:
+        with open('%s/synset.txt' % (model_path), 'w') as synset:
             for i in range(10):
                 synset.write('test label %d\n' % (i))
-        export_serving(mod, 'test', signature, export_path=curr_path,
-                       aux_files=['%s/synset.txt' % (curr_path)])
+        export_serving(mod, 'test', signature, export_path=model_path,
+                       aux_files=['%s/synset.txt' % (model_path)])
 
     def _write_image(self, img_arr):
         img_arr = mx.nd.transpose(img_arr, (1, 2, 0)).astype(np.uint8).asnumpy()
@@ -71,17 +74,19 @@ class TestService(unittest.TestCase):
         return output.getvalue()
 
     def test_vision_init(self):
-        self._train_and_export()
-        model_path = '%s/test.model' % (curr_path)
-        service = mx_vision_service(path=model_path)
+        path = 'test'
+        self._train_and_export(path)
+        model_path = curr_path + '/' + path
+        service = mx_vision_service(path='%s/test.model' % (model_path))
         assert hasattr(service, 'labels'), "Fail to load synset file from model archive."
         assert len(service.labels) > 0, "Labels attribute is empty."
-        os.system('rm -rf %s/test' % (curr_path))
+        os.system('rm -rf %s' % (model_path))
 
     def test_vision_inference(self):
-        self._train_and_export()
-        model_path = '%s/test.model' % (curr_path)
-        service = mx_vision_service(path=model_path)
+        path = 'test'
+        self._train_and_export(path)
+        model_path = curr_path + '/' + path
+        service = mx_vision_service(path='%s/test.model' % (model_path))
 
         # Test same size image inputs
         data1 = mx.nd.random_uniform(0, 255, shape=(3, 64, 64))
@@ -103,13 +108,17 @@ class TestService(unittest.TestCase):
         os.system('rm -rf %s/test' % (curr_path))
 
     def test_gluon_inference(self):
+        path = 'gluon'
+        model_name = 'gluon1'
+        model_path = curr_path + '/' + path
+        os.mkdir(model_path)
         ctx = mx.cpu()
         netG = UnetGenerator(in_channels=3, num_downs=8)
         data = mx.nd.random_uniform(0, 255, shape=(1, 3, 256, 256))
         netG.initialize(mx.init.Normal(0.02), ctx=ctx)
         netG(data)
-        netG.save_params('%s/gluon.params' % (curr_path))
-        with open('%s/signature.json' % (curr_path), 'w') as sig:
+        netG.save_params('%s/%s.params' % (model_path, model_name))
+        with open('%s/signature.json' % (model_path), 'w') as sig:
             signature = {
                 "input_type": "image/jpeg",
                 "inputs": [
@@ -127,21 +136,17 @@ class TestService(unittest.TestCase):
                 ]
             }
             json.dump(signature, sig)
-        model_name = 'gluon'
-        model_path = curr_path
-        signature = '%s/signature.json' % (curr_path)
-        export_path = curr_path
 
-        cmd = 'python %s/../../export_model.py --model %s=%s --signature %s ' \
-              '--export-path %s' % (curr_path, model_name, model_path,
-                                    signature, export_path)
+        cmd = 'python %s/../../export_model.py --model-name %s --model-path %s' \
+              % (curr_path, model_name, model_path)
         os.system(cmd)
 
-        service = Pixel2pixelService('%s/gluon.model' % (curr_path))
+        service = Pixel2pixelService('%s/%s.model' % (os.getcwd(), model_name), model_name)
         data = mx.nd.random_uniform(0, 255, shape=(3, 256, 256))
         img_buf = self._write_image(data)
         service.inference([img_buf])
-        os.system('rm -rf %s/%s' % (curr_path, model_name))
+        os.system('rm -rf %s %s/%s.model %s/%s' % (model_path, os.getcwd(),
+                                                   model_name, os.getcwd(), model_name))
 
     def runTest(self):
         self.test_vision_init()

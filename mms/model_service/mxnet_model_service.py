@@ -154,21 +154,34 @@ class MXNetBaseService(SingleNodeService):
         '''
         return self._signature
 
-    def _extract_model(self, path):
+    def _extract_model(self, path, check_multi_sym=True):
         curr_dir = os.getcwd()
         model_file = download(url=path, path=curr_dir) \
             if path.lower().startswith(URL_PREFIX) else path
 
         model_file = os.path.abspath(model_file)
-        model_name = os.path.splitext(os.path.basename(model_file))[0]
-        model_dir = os.path.join(os.path.dirname(model_file), model_name)
+        model_file_prefix = os.path.splitext(os.path.basename(model_file))[0]
+        model_dir = os.path.join(os.path.dirname(model_file), model_file_prefix )
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
         try:
             _extract_zip(model_file, model_dir)
         except Exception as e:
             raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
-                            % (model_file, model_name, e))
+                            % (model_file, model_file_prefix , e))
+
+        symbol_file_postfix = '-symbol.json'
+        symbol_file_num = 0
+        model_name = ''
+        for dirpath, _, filenames in os.walk(model_dir):
+            for file_name in filenames:
+                if file_name.endswith(symbol_file_postfix):
+                    symbol_file_num += 1
+                    model_name = file_name[:-len(symbol_file_postfix)]
+        if check_multi_sym:
+            assert symbol_file_num == 1, "Exported model file should have exactly one MXNet " \
+                                         "symbol json file. Otherwise you need to override " \
+                                         "__init__ method in service class."
 
         signature_file_path = os.path.join(model_dir, SIGNATURE_FILE)
         if not os.path.isfile(signature_file_path):

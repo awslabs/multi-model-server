@@ -69,24 +69,17 @@ class ArgParser(object):
         """
         parser_export = argparse.ArgumentParser(prog='model-export', description='MXNet Model Export')
 
-        parser_export.add_argument('--model',
-                                   required=True,
-                                   metavar='KEY=VAL',
-                                   help='Model to be exported. Key is model name. '
-                                        'Value is path contains model files.')
-
-        parser_export.add_argument('--signature',
+        parser_export.add_argument('--model-name',
                                    required=True,
                                    type=str,
-                                   help='Path to signature file')
+                                   help='Exported model name. Exported file will be named as '
+                                        'model-name.model and saved in current working directory.')
 
-        parser_export.add_argument('--synset',
+        parser_export.add_argument('--model-path',
+                                   required=True,
                                    type=str,
-                                   help='Path to synset file')
-
-        parser_export.add_argument('--export-path',
-                                   type=str,
-                                   help='Path to exported model')
+                                   help='Path to the folder containing model related files. '
+                                        'Signature file is required')
 
         return parser_export.parse_args()
 

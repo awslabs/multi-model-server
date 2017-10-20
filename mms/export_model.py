@@ -12,7 +12,6 @@
 '''
 
 import os
-import logging
 import warnings
 import json
 import zipfile
@@ -22,9 +21,12 @@ from arg_parser import ArgParser
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']
 VALID_MIME_TYPE = ['image/jpeg', 'application/json']
 
-def _check_signature(sig_file):
+def _check_signature(model_path):
     '''Internal helper to check signature error when exporting model with CLI.
     '''
+    sig_file = '%s/signature.json' % (model_path)
+    assert os.path.isfile(sig_file), \
+        "signature.json is not found in %s." % (model_path)
     with open(sig_file) as js_file:
         signature = json.load(js_file)
 
@@ -61,28 +63,39 @@ def _check_signature(sig_file):
 def _export_model(args):
     '''Internal helper for exporting model command line interface.
     '''
-    _check_signature(args.signature)
-    model_name, model_path = args.model.split('=')
-    destination = args.export_path or os.getcwd()
+    model_name = args.model_name
+    model_path = args.model_path
+    destination = os.getcwd()
     if model_path.startswith('~'):
         model_path = os.path.expanduser(model_path)
-    if destination.startswith('~'):
-        destination = os.path.expanduser(destination)
-    file_list = [args.signature]
+    _check_signature(model_path)
+
+    symbol_file_postfix = '-symbol.json'
+    symbol_file_num = 0
+    file_list = []
     for dirpath, _, filenames in os.walk(model_path):
         for file_name in filenames:
-            if file_name.endswith('.json') or file_name.endswith('.params'):
-                file_list.append(os.path.join(dirpath, file_name))
-    if args.synset:
-        file_list += [args.synset]
-    with zipfile.ZipFile(os.path.join(destination,'%s.model' % model_name), 'w') as zip_file:
+            if file_name.endswith(symbol_file_postfix):
+                symbol_file_num += 1
+            file_list.append(os.path.join(dirpath, file_name))
+    if symbol_file_num == 0:
+        warnings.warn("No MXNet model symbol json file is found. "
+                      "You may need to manually load model in your service class.")
+    if symbol_file_num > 1:
+        warnings.warn("More than one MXNet model symbol json files are found. "
+                      "You must manually load model in your service class.")
+
+    export_file = os.path.join(destination,'%s.model' % model_name)
+    if os.path.isfile(export_file):
+        warnings.warn("%s.model already in %s and will be overwritten." % (model_name, model_path))
+        os.remove(export_file)
+    with zipfile.ZipFile(export_file, 'w') as zip_file:
         for item in file_list:
             zip_file.write(item, os.path.basename(item))
-    logging.info('Successfully exported %s model. Model file is located at %s/%s.model.',
-                 model_name, destination, model_name)
+    print('Successfully exported %s model. Model file is located at %s.', model_name, export_file)
 
 
-def export_serving(model, filename, signature, export_path = None, aux_files=None):
+def export_serving(model, filename, signature, export_path=None, aux_files=None):
     """Export a MXNet module object to a zip file used by MXNet model serving.
 
     Parameters
@@ -179,7 +192,7 @@ def export_serving(model, filename, signature, export_path = None, aux_files=Non
 
     with open(sig_file, 'w') as sig:
         json.dump(signature, sig)
-    _check_signature(sig_file)
+    _check_signature(destination)
     model.save_checkpoint('%s/%s' % (destination, filename), epoch_placeholder)
 
     file_list = ['%s/%s-symbol.json' % (destination, filename), '%s/%s-%04d.params' %
@@ -193,7 +206,7 @@ def export_serving(model, filename, signature, export_path = None, aux_files=Non
     with zipfile.ZipFile(abs_model_path, 'w') as zip_file:
         for item in file_list:
             zip_file.write(item)
-    logging.info('Exported model to %s/%s.model', destination, filename)
+    print('Exported model to %s/%s.model', destination, filename)
 
 
 def export():

@@ -41,10 +41,10 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
     root.addHandler(time_rotate_handler)
 
 
-class MMS(object):
-    """MXNet Model Serving
+class DMS(object):
+    """Deep Model Serving
     """
-    def __init__(self, app_name='mms', args=None):
+    def __init__(self, app_name='dms', args=None):
         """Initialize deep model server application.
 
         Parameters
@@ -115,7 +115,7 @@ class MMS(object):
             exit(1)
         
 
-def start_serving(args=None):
+def start_serving(app_name='dms', args=None):
     """Start service routing.
 
     Parameters
@@ -131,8 +131,8 @@ def start_serving(args=None):
         ['--models', 'resnet-18=path1', 'inception_v3=path2',
          '--gen-api', 'java', '--port', '8080']
         """
-    mms = MMS(args=args)
-    mms.start_model_serving()
+    dms = DMS(app_name, args=args)
+    dms.start_model_serving()
 
 if __name__ == '__main__':
     start_serving()

@@ -16,15 +16,15 @@ As of this first release, DMS only supports MXNet. In future versions, DMS will 
 
 ## Serving a Model (TLDR)
 
-We'll get into more detail later, but in the spirit of TLDR, you can get up and running very quickly with the following steps.
+We'll get into more detail later, but in the spirit of TLDR, you can get up and running very quickly with the following three steps.
 
-**Installation for Python 2 and Python 3**
+**1. Installation for Python 2 and Python 3**
 
 ```bash
 pip install deep-model-server
 ```
 
-**Serve the resnet-18 Model for Image Classification**
+**2. Serve the resnet-18 Model for Image Classification**
 
 ```bash
 deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
@@ -33,7 +33,8 @@ deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-
 This will download the model from S3 to the current directory, and serve it with the default options (localhost on port 8080). Also, if you already have run this once and have the model file locally it will use the local file.
 You can test DMS and look at the API description by hitting the [api-description](http://127.0.0.1:8080/api-description) endpoint which is hosted at `http://127.0.0.1:8080/api-description`.
 
-**Predict an Image!**
+**3. Predict an Image!**
+
 First, go download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post the image to your DMS.
 
 ```bash
@@ -96,7 +97,7 @@ Example multiple model usage:
 deep-model-server --models name=model_location, name2=model_location2
 ```
 
-`--models` is the only required argument. You can pass one or more models in a key value pair format, name you want to call the model and `VAL` is the local file path or URI to the model. The key/name is what appears in your REST API's endpoints. In our first example we used `resnet-18` for the name, e.g. `deep-model-server --models resnet-18=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/resnet-18/predict`. In our first example this was `resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model`. Alternatively, we could have downloaded the file and used a local file path like `resnet-18=dms_models/resnet-18.model`.
+`--models` is the only required argument. You can pass one or more models in a key value pair format: `name` you want to call the model and `model_location` for the local file path or URI to the model. The name is what appears in your REST API's endpoints. In the first example we used `resnet-18` for the name, e.g. `deep-model-server --models resnet-18=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/resnet-18/predict`. In the first example this was `resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model`. Alternatively, we could have downloaded the file and used a local file path like `resnet-18=dms_models/resnet-18.model`.
 
 The rest of these arguments are optional and will have the following defaults:
 * [--service mxnet_vision_service]
@@ -106,22 +107,23 @@ The rest of these arguments are optional and will have the following defaults:
 Logging and exporting an SDK can also be triggered with additional arguments. Details are in the following Arguments section.
 
 #### Arguments:
-1. models: required, <model_name>=<model_path> pairs.
-    (1) Model path can be a local file path or URI (s3 link, or http link).
+1. **models**: required, <model_name>=<model_path> pairs.
+
+    (a) Model path can be a local file path or URI (s3 link, or http link).
         local file path: path/to/local/model/file or file://root/path/to/model/file
         s3 link: s3://S3_endpoint[:port]/...
         http link: http://hostname/path/to/resource
 
-    (2) Currently, the model file has .model extension, it is actually a zip file with a .model extension packing pre-trained MXNet models and model signature files. The details will be explained in **Export existing model** section
+    (b) Currently, the model file has .model extension, it is actually a zip file with a .model extension packing pre-trained MXNet models and model signature files. The details will be explained in **Export existing model** section
 
-    (3) Multiple models loading are also supported by specifying multiple name path pairs
-2. service: optional, our system will load input service module and will initialize MXNet models with the service defined in the module. The module should contain a valid class extends our base model service with customized `_preprocess` and `_postprocess` functions.
-3. port: optional, default is 8080
-4. host: optional, default is 127.0.0.1
-5. gen-api: optional, this will generate an open-api formated client sdk in build folder.
-6. log-file: optional, log file name. By default it is "dms_app.log".
-7. log-rotation-time: optional, log rotation time. By default it is "1 H", which means one hour. Valid format is "interval when". For weekday and midnight, only "when" is required. Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.
-8. log-level: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL. Check https://docs.python.org/2/library/logging.html#logging-levels
+    (c) Multiple models loading are also supported by specifying multiple name path pairs
+2. **service**: optional, the system will load input service module and will initialize MXNet models with the service defined in the module. The module should contain a valid class which extends the base model service with customized `_preprocess` and `_postprocess` functions.
+3. **port**: optional, default is 8080
+4. **host**: optional, default is 127.0.0.1
+5. **gen-api**: optional, this will generate an open-api formated client sdk in build folder.
+6. **log-file**: optional, log file name. By default it is "dms_app.log".
+7. **log-rotation-time**: optional, log rotation time. By default it is "1 H", which means one hour. Valid format is "interval when". For weekday and midnight, only "when" is required. Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.
+8. **log-level**: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL. Check https://docs.python.org/2/library/logging.html#logging-levels
 
 
 ## Using the DMS REST API
@@ -138,6 +140,7 @@ After local server is up, there will be three built-in endpoints:
 ### Prediction
 
 **curl Example**
+
 Using `curl` is a great way to test REST APIs, but you're welcome to use your preferred tools. Just follow the pattern described here. If you skipped over it, we've already gone through a simple prediction example where we curled a picture of kitten like so:
 
 ```bash
@@ -378,31 +381,29 @@ Example usage with the resnet-18 model you would have downloaded in the first ex
 deep-model-export --model-name resnet-18 --model-path models/resnet-18
 ```
 
-### Arguments:
+### Arguments
 
 1. model-name: required, prefix of exported model archive file.
 2. model-path: required, directory which contains files to be packed into exported archive.
 
-### Required Assets:
+### Required Assets
 
+#### Assets Overview
 In order for the model file to be created, you need to provide these three or four assets:
 
 1. signature.json - required; the inputs and outputs of the model
-2. name-symbol.json - required; the model's definition (layers, etc.); name is any prefix you give it
-3. name-0000.params - required; the model's hyper-parameters and weights; name must match the name from the previous JSON file
-4. synset.txt - optional; a list of names of the prediction classes
+1. name-symbol.json - required; the model's definition (layers, etc.); name is any prefix you give it
+1. name-0000.params - required; the model's hyper-parameters and weights; name must match the name from the previous JSON file
+1. synset.txt - optional; a list of names of the prediction classes
 
 **signature.json**
 
-   (1) input, which contains MXNet model input names and input shapes. It is a list contains { data_name : name, data_shape : shape } maps. Client side inputs should have the same order with the input order defined here.
+1. **input**: Contains MXNet model input names and input shapes. It is a list contains { data_name : name, data_shape : shape } maps. Client side inputs should have the same order with the input order defined here.
+1. **input_type**: Defines the MIME content type for client side inputs. Currently all inputs must have the same content type and only two MIME types, "image/jpeg" and "application/json", are supported.
+1. **output**: Similar to input, it contains MXNet model output names and output shapes.
+1. **output_type**: Similar to input_type. Currently all outputs must have the same content type. Only two MIME types are currently supported: "image/jpeg" and "application/json".
 
-   (2) input_type, which defines the MIME content type for client side inputs. Currently all inputs must have the same content type and only two MIME types, "image/jpeg" and "application/json", are supported.
-
-   (3) output. Similar to input, it contains MXNet model output names and output shapes.
-
-   (4) output_type. Similar to input_type,  currently all outputs must have the same content type and only two MIME types, "image/jpeg" and "application/json", are supported.
-
-   Using our resnet-18 example, you can view the `signature.json` file in the folder that was extracted once you dowloaded and served the model for the first time. The input is an image with 3 color channels and size 224 by 224. The output is named 'softmax' with length 1000 (one for every class that the model can recognize).
+   Using the resnet-18 example, you can view the `signature.json` file in the folder that was extracted once you dowloaded and served the model for the first time. The input is an image with 3 color channels and size 224 by 224. The output is named 'softmax' with length 1000 (one for every class that the model can recognize).
 
    ```json
    {

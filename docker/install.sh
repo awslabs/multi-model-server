@@ -7,4 +7,3 @@ apt-get install -y nginx
 pip install gunicorn
 pip install gevent
 pip install deep-model-server
-

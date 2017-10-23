@@ -452,11 +452,10 @@ In order for the model file to be created, you need to provide these three or fo
 
 Flask, MXNet, numpy, JAVA(7+, required by swagger codegen)
 
-## Deployments
-
-### Docker
-We have provided a Docker image for an MXNet CPU build on Ubuntu. Nginx and all other dependencies are also pre-installed.
-The basic usage can be found on the [Docker readme](docker/README.md).
+## Deployments:
+### Docker:
+We have provided docker image for mxnet cpu together with Gunicorn and nginx.
+The basic usage can be found [here](docker/README.md)
 
 ## Design
 To be updated

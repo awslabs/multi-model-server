@@ -18,7 +18,7 @@ You can also modify this config file after building and running a docker contain
 
 Second step is to build docker image.:
 ```bash
-    cp dockerfile.cpu Dockerfile
+    cp Dockerfile.cpu Dockerfile
     docker build -t mms_image .
 ```
 
@@ -32,6 +32,35 @@ Inside docker container, run following command:
     cd dms_docker && ./launch.sh
 ```
 System settings are stored in dms_app.config. You can modify these settings to use different models or apply other customized settings.
+
+    # deep-model-server arguments
+    --models
+    resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
+
+    --service
+    optional
+
+    --gen-api
+    optional
+
+    --log-file
+    optional
+
+--log-rotation-time
+optional
+
+--log-level
+optional
+
+# Gunicorn arguments
+--bind
+unix:/tmp/dms_app.sock
+
+--workers
+1
+
+--worker-class
+gevent
 
 Now you can send request to http://your_public_host_name.
 In browser, type in `http://your_public_host_name/ping` to check health status.

@@ -39,8 +39,6 @@ do
     fi
 done
 
-echo "$gunicorn_arg"
-
 app_script='wsgi'
 service nginx start
 gunicorn $gunicorn_arg $app_script

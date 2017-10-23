@@ -80,7 +80,7 @@ deep-model-export --model-name resnet-18 --model-path models/resnet-18
 Another method to export model is to use `export_serving` function while completing training:
 ```python
    import mxnet as mx
-   from mms.export_model import export_serving
+   from dms.export_model import export_serving
 
    mod = mx.mod.Module(...)
    # Training process
@@ -273,12 +273,12 @@ By passing `service` argument, you can specify your own custom service. All cust
 
       def _postprocess(self, data, method='predict')
 ```
-Usually you would like to override _preprocess and _postprocess since they are binded with specific domain of applications. We provide some [utility functions](https://github.com/deep-learning-tools/mxnet-model-server/tree/master/mms/utils) for vision and NLP applications to help user easily build basic preprocess functions.
+Usually you would like to override _preprocess and _postprocess since they are binded with specific domain of applications. We provide some [utility functions](https://github.com/deep-learning-tools/mxnet-model-server/tree/master/dms/utils) for vision and NLP applications to help user easily build basic preprocess functions.
 The following example is for resnet-18 service. In this example, we don't need to change __init__ or _inference methods, which means we just need override _preprocess and _postprocess. In preprocess, we first convert image to NDArray. Then resize to 224 x 224. In post process, we return top 5 categories:
 ```python
    import mxnet as mx
-   from mms.mxnet_utils import image
-   from mms.mxnet_model_service import MXNetBaseService
+   from dms.mxnet_utils import image
+   from dms.mxnet_model_service import MXNetBaseService
 
    class Resnet18Service(MXNetBaseService):
        def _preprocess(self, data):
@@ -307,4 +307,4 @@ The basic usage can be found [here](docker/README.md)
 To be updated
 
 ## Testing:
-python -m pytest mms/tests/unit_tests/
+python -m pytest dms/tests/unit_tests/

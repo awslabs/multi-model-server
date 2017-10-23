@@ -210,7 +210,7 @@ def export_serving(model, filename, signature, export_path=None, aux_files=None)
 
 
 def export():
-    args = ArgParser.parse_export_args()
+    args = ArgParser.export_parser().parse_args()
     _export_model(args)
 
 if __name__ =='__main__':

@@ -32,7 +32,7 @@ class ServingFrontend(object):
 
         Parameters
         ----------
-        app_name : string
+        app_name : str
             App name to initialize request handler.
         """
         try:
@@ -49,7 +49,7 @@ class ServingFrontend(object):
 
         Parameters
         ----------
-        host : string
+        host : str
             Host that server will use.
         port: int
             Port that server will use.
@@ -104,7 +104,7 @@ class ServingFrontend(object):
 
         Parameters
         ----------
-        modelservice_names : string or List, optional
+        modelservice_names : str or List, optional
             Names to retrieve registered model services
             
         Returns
@@ -125,7 +125,7 @@ class ServingFrontend(object):
 
         Parameters
         ----------
-        modelservice_names : string or List, optional
+        modelservice_names : str or List, optional
             Names to retrieve loaded model services
             
         Returns
@@ -144,7 +144,7 @@ class ServingFrontend(object):
 
         Parameters
         ----------
-        field : string
+        field : str
             Field in the query string from request.
             
         Returns
@@ -187,7 +187,7 @@ class ServingFrontend(object):
 
         Parameters
         ----------
-        host : string
+        host : str
             Host that server will use 
 
         port: int

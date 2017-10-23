@@ -32,41 +32,6 @@ deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-
 
 This will download the model from S3 to the current directory, and serve it with the default options (localhost on port 8080). Also, if you already have run this once and have the model file locally it will use the local file.
 You can test DMS and look at the API description by hitting the [api-description](http://127.0.0.1:8080/api-description) endpoint which is hosted at `http://127.0.0.1:8080/api-description`.
-=======
-# Deep Model Server
-
-The purpose of **Deep Model Server (DMS)** is to provide an easy way for you host and serve pre-trained models. For example, you have a model that was trained on millions of images and it's capable of providing predictions on 1,000 different classes (let's say 1,000 different birds for this example). You want to write an app that lets your users snap a picture of a bird and it'll tell them what kind of bird it might be. You can use Deep Model Server to run the bird model, intake images, and return a prediction.
-
-You can also use DMS with **multiple models**, so it would be no problem to add a dog classifier, one for cats, and one for flowers. DMS isn't limited to *vision* type models either. Any kind of model that takes an input and returns a prediction is suitable for DMS. It can run a speech recognition model and a model for a chatbot, so you could have your very own virtual assistant service running from the same server.
-
-Let's talk about what DMS is not. It isn't a managed service. You still need to run it from a computer or cloud server. You still need to manage your input and output pipelines.
-
-## Technical Details
-
-Now that you have a high level view of DMS, let's get a little into the weeds. DMS takes a deep learning model and it wraps it in a REST API. Currently it is bundled with MXNet and it comes with a built-in web server that you run from command line. This command line call takes in the single or multiple MXNet models you want to serve, along with optional port and IP info. Additionally you can point it to service extensions which define pre-processing and post-processing steps. Currently, DMS comes with a default vision service which makes it easy to serve a image classification model. If you're looking to build chat bots or video understanding then you'll have some additional leg work to do with the pre-processing and post-processing steps.
-
-### Supported Deep Learning Frameworks
-
-As of this first release, DMS only supports MXNet. In future versions, DMS will support models from other frameworks! As an open source project, we welcome contributions from the community to build ever wider support and enhanced model serving functionality.
-
-## Serving a Model (TLDR)
-
-We'll get into more detail later, but in the spirit of TLDR, you can get up and running very quickly with the following steps.
-
-**Installation for Python 2 and Python 3**
-
-```bash
-pip install deep-model-server
-```
-
-**Serve the resnet-18 Model for Image Classification**
-
-```bash
-deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
-```
-
-This will download the model from S3 to the current directory, and serve it with the default options (localhost on port 8080). Also, if you already have run this once and have the model file locally it will use the local file.
-You can test DMS and look at the API description by hitting the [api-description](http://127.0.0.1:8080/api-description) endpoint which is hosted at `http://127.0.0.1:8080/api-description`.
 
 **Predict an Image!**
 First, go download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post the image to your DMS.

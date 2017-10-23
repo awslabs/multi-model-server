@@ -33,6 +33,7 @@ deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-
 This will download the model from S3 to the current directory, and serve it with the default options (localhost on port 8080). Also, if you already have run this once and have the model file locally it will use the local file.
 You can test DMS and look at the API description by hitting the [api-description](http://127.0.0.1:8080/api-description) endpoint which is hosted at `http://127.0.0.1:8080/api-description`.
 
+
 **Predict an Image!**
 First, go download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post the image to your DMS.
 
@@ -310,12 +311,13 @@ By passing `service` argument, you can specify your own custom service. All cust
 ```
 
 Usually you would like to override _preprocess and _postprocess since they are binded with specific domain of applications. We provide some [utility functions](https://github.com/deep-learning-tools/mxnet-model-server/tree/master/mms/utils) for vision and NLP applications to help user easily build basic preprocess functions.
+
 The following example is for resnet-18 service. In this example, we don't need to change __init__ or _inference methods, which means we just need override _preprocess and _postprocess. In preprocess, we first convert image to NDArray. Then resize to 224 x 224. In post process, we return top 5 categories:
 
 ```python
    import mxnet as mx
-   from mms.mxnet_utils import image
-   from mms.mxnet_model_service import MXNetBaseService
+   from dms.mxnet_utils import image
+   from dms.mxnet_model_service import MXNetBaseService
 
    class Resnet18Service(MXNetBaseService):
        def _preprocess(self, data):
@@ -452,4 +454,4 @@ The basic usage can be found [here](docker/README.md)
 To be updated
 
 ## Testing:
-python -m pytest mms/tests/unit_tests/
+python -m pytest dms/tests/unit_tests/

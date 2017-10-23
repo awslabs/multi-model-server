@@ -41,13 +41,29 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
     root.addHandler(time_rotate_handler)
 
 
-class MMS(object):
-    """MXNet Model Serving
+class DMS(object):
+    """Deep Model Serving
     """
-    def __init__(self, app_name='mms'):
+    def __init__(self, app_name='dms', args=None):
+        """Initialize deep model server application.
+
+        Parameters
+        ----------
+        app_name : str
+            App name to initialize dms service.
+        args : List of str
+            Arguments for starting service. By default it is None
+            and commandline arguments will be used. It should follow
+            the format recognized by python argparse parse_args method:
+            https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.parse_args.
+            An example for dms arguments:
+            ['--models', 'resnet-18=path1', 'inception_v3=path2',
+             '--gen-api', 'java', '--port', '8080']
+        """
         # Initialize serving frontend and arg parser
         try:
-            self.args = ArgParser.parse_args()
+            parser = ArgParser.dms_parser()
+            self.args = parser.parse_args(args) if args else parser.parse_args()
             self.serving_frontend = ServingFrontend(app_name)
 
             # Setup root logger handler and level.
@@ -65,7 +81,37 @@ class MMS(object):
         """Start model serving server
         """
         try:
-            # Port 
+            # Process arguments
+            self._arg_process()
+
+            # Start model serving host
+            logger.info('Service started at ' + self.host + ':' + str(self.port))
+            self.serving_frontend.start_handler(self.host, self.port)
+
+        except Exception as e:
+            logger.error('Failed to start model serving host: ' + str(e))
+            exit(1)
+
+    def create_app(self):
+        """Create a Flask app object.
+        """
+        try:
+            # Process arguments
+            self._arg_process()
+
+            # Create app
+            return self.serving_frontend.handler.app
+
+        except Exception as e:
+            logger.error('Failed to start model serving host: ' + str(e))
+            exit(1)
+
+
+    def _arg_process(self):
+        """Process arguments before starting service or create application.
+        """
+        try:
+            # Port
             self.port = self.args.port or 8080
             self.host = self.args.host or '127.0.0.1'
 
@@ -90,18 +136,29 @@ class MMS(object):
             if self.args.gen_api is not None:
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
 
-            # Start model serving host
-            logger.info('Service started at ' + self.host + ':' + str(self.port))
-            self.serving_frontend.start_handler(self.host, self.port)
-
         except Exception as e:
-            logger.error('Failed to start model serving host: ' + str(e))
+            logger.error('Failed to process arguments: ' + str(e))
             exit(1)
         
 
-def start_serving():
-    mms = MMS()
-    mms.start_model_serving()
+def start_serving(app_name='dms', args=None):
+    """Start service routing.
+
+    Parameters
+    ----------
+    app_name : str
+        App name to initialize dms service.
+    args : List of str
+        Arguments for starting service. By default it is None
+        and commandline arguments will be used. It should follow
+        the format recognized by python argparse parse_args method:
+        https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.parse_args.
+        An example for dms arguments:
+        ['--models', 'resnet-18=path1', 'inception_v3=path2',
+         '--gen-api', 'java', '--port', '8080']
+        """
+    dms = DMS(app_name, args=args)
+    dms.start_model_serving()
 
 if __name__ == '__main__':
     start_serving()

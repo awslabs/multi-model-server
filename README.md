@@ -112,10 +112,10 @@ Logging and exporting an SDK can also be triggered with additional arguments. De
         s3 link: s3://S3_endpoint[:port]/...
         http link: http://hostname/path/to/resource
 
-    (2) Currently, the model file has .model extension, it is actually a zip file with a .model extension packing pretrained MXNet models and model signature files. The details will be explained in **Export existing model** section
+    (2) Currently, the model file has .model extension, it is actually a zip file with a .model extension packing pre-trained MXNet models and model signature files. The details will be explained in **Export existing model** section
 
     (3) Multiple models loading are also supported by specifying multiple name path pairs
-2. service: optional, our system will load input service module and will initialize mxnet models with the service defined in the module. The module should contain a valid class extends our base model service with customized preprocess and postprocess.
+2. service: optional, our system will load input service module and will initialize MXNet models with the service defined in the module. The module should contain a valid class extends our base model service with customized `_preprocess` and `_postprocess` functions.
 3. port: optional, default is 8080
 4. host: optional, default is 127.0.0.1
 5. gen-api: optional, this will generate an open-api formated client sdk in build folder.
@@ -142,7 +142,7 @@ Using `curl` is a great way to test REST APIs, but you're welcome to use your pr
 curl -X POST http://127.0.0.1:8080/resnet-18/predict -F "input0=@kitten.jpg"
 ```
 
-The result was some json that told us our image likely held a tabby cat. The highest prediction was:
+The result was some JSON that told us our image likely held a tabby cat. The highest prediction was:
 
 ```json
 "class": "n02123045 tabby, tabby cat",
@@ -283,7 +283,7 @@ TODO: provide more context and info on how/why
 
 ## Serving Multiple Models with DMS
 
-Here's an example for running the `resnet-18` and the `vgg16` models using local model files.
+Here's an example for running the resnet-18 and the vgg16 models using local model files.
 
 ```bash
 deep-model-server --models resnet-18=file://models/resnet-18 vgg16=file://models/vgg16
@@ -309,9 +309,8 @@ By passing `service` argument, you can specify your own custom service. All cust
       def _postprocess(self, data, method='predict')
 ```
 
-Usually you would like to override _preprocess and _postprocess since they are bound with specific domain of applications. We provide some [utility functions](https://github.com/deep-learning-tools/mxnet-model-server/tree/master/mms/utils) for vision and NLP applications to help user easily build basic preprocess functions.
-
-The following example is for resnet-18 service. In this example, we don't need to change __init__ or _inference methods, which means we just need override _preprocess and _postprocess. In preprocess, we first convert image to NDArray. Then resize to 224 x 224. In post process, we return top 5 categories:
+Usually you would like to override `_preprocess` and `_postprocess` since they are bound with specific domain of applications. We provide some [utility functions](https://github.com/deep-learning-tools/mxnet-model-server/tree/master/mms/utils) for vision and NLP applications to help user easily build basic preprocess functions.
+The following example is for resnet-18 service. In this example, we don't need to change `__init__` or `_inference` methods, which means we just need override `_preprocess` and `_postprocess`. In preprocess, we first convert image to NDArray. Then resize to 224 x 224. In post process, we return top 5 categories:
 
 ```python
    import mxnet as mx
@@ -388,7 +387,7 @@ In order for the model file to be created, you need to provide these three or fo
 
 1. signature.json - required; the inputs and outputs of the model
 2. name-symbol.json - required; the model's definition (layers, etc.); name is any prefix you give it
-3. name-0000.params - required; the model's hyper-parameters and weights; name must match the name from the previous json file
+3. name-0000.params - required; the model's hyper-parameters and weights; name must match the name from the previous JSON file
 4. synset.txt - optional; a list of names of the prediction classes
 
 **signature.json**
@@ -426,7 +425,7 @@ In order for the model file to be created, you need to provide these three or fo
 
 **name-symbol.json**
 
-  This is the model's definition in json format. You can name it whatever you want, using a consistent prefix. The pattern expected is `my-awesome-network-symbol.json` or `mnist-symbol.json` so that when you use `deep-model-export` you're passing in the prefix and it'll look for prefix-symbol.json. You can generate this file in a variety of ways, but the easiest for MXNet is to use the `.export` feature or the `mms.export_model` method described later.
+  This is the model's definition in JSON format. You can name it whatever you want, using a consistent prefix. The pattern expected is `my-awesome-network-symbol.json` or `mnist-symbol.json` so that when you use `deep-model-export` you're passing in the prefix and it'll look for prefix-symbol.json. You can generate this file in a variety of ways, but the easiest for MXNet is to use the `.export` feature or the `mms.export_model` method described later.
 
 **name-0000.params**
 
@@ -434,23 +433,41 @@ In order for the model file to be created, you need to provide these three or fo
 
 **synset.txt**
 
-  This optional text file is a synset file for classification. Simply put, if it were for MNIST, it would be 0 through 9 where each number is on its own line. For a more complex example take a look at the [synset for Imagenet-11k](https://github.com/tornadomeet/ResNet/blob/master/predict/synset.txt).
+  This optional text file is for classification labels. Simply put, if it were for MNIST, it would be 0 through 9 where each number is on its own line. For a more complex example take a look at the [synset for Imagenet-11k](https://github.com/tornadomeet/ResNet/blob/master/predict/synset.txt).
 
 
-   If `synset.txt` is inclued in exported archive file and each line represents a category, `MXNetBaseModel` will load this file and create `labels` attribute automatically. If this file is named differently or has a different format, you need to override `__init__` method and manually load it.
+   If `synset.txt` is included in exported archive file and each line represents a category, `MXNetBaseModel` will load this file and create `labels` attribute automatically. If this file is named differently or has a different format, you need to override `__init__` method and manually load it.
 
 
-## Dependencies:
+## Dependencies
 Flask, MXNet, numpy, JAVA(7+, required by swagger codegen)
 
-## Deployments:
-### Docker:
-We have provided docker image for mxnet cpu.
-Nginx and all other dependencies are installed.
-The basic usage can be found [here](docker/README.md)
+## Deployments
 
-## Design:
+### Docker
+We have provided a Docker image for an MXNet CPU build on Ubuntu. Nginx and all other dependencies are also pre-installed.
+The basic usage can be found on the [Docker readme](docker/README.md).
+
+## Design
 To be updated
 
-## Testing:
-python -m pytest dms/tests/unit_tests/
+## Testing
+
+You will need some additional Python modules to run the unit tests.
+
+```bash
+sudo pip install mock pytest
+```
+
+You will also need the source for the project, so clone the project first.
+
+```bash
+git clone --recursive https://github.com/deep-learning-tools/deep-model-server.git
+cd deep-model-server
+```
+
+Then you can run the unit tests with the following:
+
+```bash
+python -m pytest mms/tests/unit_tests/
+```

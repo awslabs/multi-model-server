@@ -1,14 +1,16 @@
 # Deep Model Server
 
-The purpose of **Deep Model Server (DMS)** is to provide an easy way for you host and serve pre-trained models. For example, you have a model that was trained on millions of images and it's capable of providing predictions on 1,000 different classes (let's say 1,000 different birds for this example). You want to write an app that lets your users snap a picture of a bird and it'll tell them what kind of bird it might be. You can use Deep Model Server to run the bird model, intake images, and return a prediction.
+The purpose of **Deep Model Server (DMS)** is to provide an easy way for you to host and serve trained models. For example, you have a model that was trained on millions of images and it's capable of providing predictions on 1,000 different classes (let's say 1,000 different birds for this example). You want to write an app that lets your users snap a picture of a bird and it'll tell them what kind of bird it might be. You can use Deep Model Server to run the bird model, intake images, and return a prediction.
 
 You can also use DMS with **multiple models**, so it would be no problem to add a dog classifier, one for cats, and one for flowers. DMS isn't limited to *vision* type models either. Any kind of model that takes an input and returns a prediction is suitable for DMS. It can run a speech recognition model and a model for a chatbot, so you could have your very own virtual assistant service running from the same server.
 
-Let's talk about what DMS is not. It isn't a managed service. You still need to run it from a computer or cloud server. You still need to manage your input and output pipelines.
+Let's talk about what DMS is not. It isn't a managed service. You still need to run it on a host you manage. You still need to manage your input and output pipelines.
 
 ## Technical Details
 
 Now that you have a high level view of DMS, let's get a little into the weeds. DMS takes a deep learning model and it wraps it in a REST API. Currently it is bundled with MXNet and it comes with a built-in web server that you run from command line. This command line call takes in the single or multiple MXNet models you want to serve, along with optional port and IP info. Additionally you can point it to service extensions which define pre-processing and post-processing steps. Currently, DMS comes with a default vision service which makes it easy to serve a image classification model. If you're looking to build chat bots or video understanding then you'll have some additional leg work to do with the pre-processing and post-processing steps.
+
+TODO: Add overview of export features
 
 ### Supported Deep Learning Frameworks
 
@@ -29,6 +31,8 @@ pip install deep-model-server
 ```bash
 deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
 ```
+
+TODO: move s3 buckets to dms-models
 
 This will download the model from S3 to the current directory, and serve it with the default options (localhost on port 8080). Also, if you already have run this once and have the model file locally it will use the local file.
 You can test DMS and look at the API description by hitting the [api-description](http://127.0.0.1:8080/api-description) endpoint which is hosted at `http://127.0.0.1:8080/api-description`.
@@ -114,7 +118,7 @@ Logging and exporting an SDK can also be triggered with additional arguments. De
         s3 link: s3://S3_endpoint[:port]/...
         http link: http://hostname/path/to/resource
 
-    (b) Currently, the model file has .model extension, it is actually a zip file with a .model extension packing pre-trained MXNet models and model signature files. The details will be explained in **Export existing model** section
+    (b) Currently, the model file has .model extension, it is actually a zip file with a .model extension packing trained MXNet models and model signature files. The details will be explained in **Export existing model** section
 
     (c) Multiple models loading are also supported by specifying multiple name path pairs
 2. **service**: optional, the system will load input service module and will initialize MXNet models with the service defined in the module. The module should contain a valid class which extends the base model service with customized `_preprocess` and `_postprocess` functions.
@@ -171,6 +175,8 @@ Your response, if the server is running should be:
 Otherwise, you'll probably get a server not responding error or `ERR_CONNECTION_REFUSED`.
 
 ### API Description
+
+TODO: Talk about how "API description" is actually an OpenAPI format
 
 To view a full list of all of the end points, you want to hit `api-description`.
 http://127.0.0.1:8080/api-description

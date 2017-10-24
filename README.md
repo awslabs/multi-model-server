@@ -317,7 +317,7 @@ By passing `service` argument, you can specify your own custom service. All cust
 
       def _preprocess(self, data)
 
-      def _postprocess(self, data, method='predict')
+      def _postprocess(self, data)
 ```
 
 Usually you would like to override `_preprocess` and `_postprocess` since they are bound with specific domain of applications. We provide some [utility functions](https://github.com/deep-learning-tools/mxnet-model-server/tree/master/mms/utils) for vision and NLP applications to help user easily build basic preprocess functions.

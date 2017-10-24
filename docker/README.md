@@ -46,21 +46,24 @@ System settings are stored in dms_app.config. You can modify these settings to u
     --log-file
     optional
 
---log-rotation-time
-optional
+    --log-rotation-time
+    optional
 
---log-level
-optional
+    --log-level
+    optional
 
-# Gunicorn arguments
---bind
-unix:/tmp/dms_app.sock
+    # Gunicorn arguments
+    --bind
+    unix:/tmp/dms_app.sock
 
---workers
-1
+    --workers
+    1
 
---worker-class
-gevent
+    --worker-class
+    gevent
+
+    --limit-request-line
+    0
 
 Now you can send request to http://your_public_host_name.
 In browser, type in `http://your_public_host_name/ping` to check health status.

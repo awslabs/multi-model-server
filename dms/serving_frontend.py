@@ -10,6 +10,7 @@
 
 import ast
 import traceback
+import time
 from functools import partial
 from flask import abort
 
@@ -394,6 +395,7 @@ class ServingFrontend(object):
         Response
             Http response for predict endpiont.
         """
+        handler_start_time = time.time()
         modelservice = kwargs['modelservice']
         input_names = kwargs['input_names']
 
@@ -437,7 +439,10 @@ class ServingFrontend(object):
 
         # Doing prediciton on model
         try:
+            inference_start_time = time.time()
             response = modelservice.inference(input_data)
+            logger.debug("Inference time is: %s ms" %
+                         ((time.time() - inference_start_time) * 1000))
         except Exception:
             logger.error(str(traceback.format_exc()))
             abort(500, "Error occurs while inference was executed on server.")
@@ -445,12 +450,14 @@ class ServingFrontend(object):
         # Construct response according to output type
         if output_type == 'application/json':
             logger.info('Response is text.')
-            return self.handler.jsonify({'prediction': response})
         elif output_type == 'image/jpeg':
             logger.info('Response is jpeg image encoded in base64 string.')
-            return self.handler.jsonify({'prediction': response})
         else:
             msg = '%s is not supported for input content-type.' % (output_type)
             logger.error(msg)
             abort(500, "Service setting error. %s" % (msg))
+
+        logger.debug("Prediction request handling time is: %s ms" %
+                     ((time.time() - handler_start_time) * 1000))
+        return self.handler.jsonify({'prediction': response})
 

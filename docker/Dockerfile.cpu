@@ -6,4 +6,6 @@ RUN /install.sh
 
 COPY virtual.conf /etc/nginx/conf.d/
 
+ADD dms_docker dms_docker
+
 LABEL maintainer="yuruofei@amazon.com, wayao@amazon.com"

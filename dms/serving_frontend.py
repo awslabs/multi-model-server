@@ -325,7 +325,7 @@ class ServingFrontend(object):
             '/api-description': {
                 'get': {
                     'produces': ['application/json'],
-                    'operationId': 'apiDescription', 
+                    'operationId': 'api-description',
                     'responses': {
                         '200': {
                             'description': 'OK',

@@ -317,7 +317,7 @@ By passing `service` argument, you can specify your own custom service. All cust
 
       def _preprocess(self, data)
 
-      def _postprocess(self, data, method='predict')
+      def _postprocess(self, data)
 ```
 
 Usually you would like to override `_preprocess` and `_postprocess` since they are bound with specific domain of applications. We provide some [utility functions](https://github.com/deep-learning-tools/mxnet-model-server/tree/master/mms/utils) for vision and NLP applications to help user easily build basic preprocess functions.
@@ -452,11 +452,10 @@ In order for the model file to be created, you need to provide these three or fo
 
 Flask, MXNet, numpy, JAVA(7+, required by swagger codegen)
 
-## Deployments
-
-### Docker
-We have provided a Docker image for an MXNet CPU build on Ubuntu. Nginx and all other dependencies are also pre-installed.
-The basic usage can be found on the [Docker readme](docker/README.md).
+## Deployments:
+### Docker:
+We have provided a Docker image for an MXNet CPU build on Ubuntu. Gunicorn and Nginx and all other dependencies are also pre-installed.
+The basic usage can be found [here](docker/README.md)
 
 ## Design
 To be updated

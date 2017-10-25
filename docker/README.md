@@ -1,5 +1,5 @@
 ## Docker Usage
-We'll go through how to build a DMS cpu docker image and establish a public accessible endpoint on EC2 instance.
+We'll go through how to build a DMS cpu docker image and establish a public accessible endpoint on EC2 instance. This docker image can be used in other production environments as well.
 
 First step is to create an (EC2 instance)[https://aws.amazon.com/ec2/].
 Before we start to build docker image, change the server_name entry in virtual_config to be your public hostname:

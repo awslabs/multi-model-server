@@ -22,14 +22,14 @@ The following example is for resnet-18 service. In this example, we don't need t
 
 ```python
    import mxnet as mx
-   from dms.mxnet_utils import image
-   from dms.mxnet_model_service import MXNetBaseService
+   from dms.utils.mxnet import image
+   from dms.model_service.mxnet_model_service import MXNetBaseService
 
    class Resnet18Service(MXNetBaseService):
        def _preprocess(self, data):
-           img_arr = image.read(data)
+           img_arr = image.read(data[0])
            img_arr = image.resize(img_arr, 224, 224)
-           return img_arr
+           return [img_arr]
 
        def _postprocess(self, data):
            output = data[0]

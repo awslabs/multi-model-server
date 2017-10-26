@@ -20,8 +20,10 @@ do
 done < "$config_file"
 
 gunicorn_arg_id='# Gunicorn arguments'
+mxnet_env_id='# MXNet environment variables'
 total=${#line_list[*]}
 is_gunicorn_arg=false
+is_mxnet_env=false
 for (( i=0; i<=$(( $total -1 )); i++ ))
 do
     if [[ ${line_list[$i]} == $gunicorn_arg_id ]]
@@ -29,13 +31,22 @@ do
         is_gunicorn_arg=true
         continue
     fi
+    if [[ ${line_list[$i]} == $mxnet_env_id ]]
+    then
+        is_gunicorn_arg=false
+        is_mxnet_env=true
+        continue
+    fi
+    if [[ "$is_mxnet_env" == true && ${#line_list[$i]} > 0 ]]
+    then
+        export "${line_list[$i]}"
+    fi
     if [[ ${line_list[$i]} == --* ]]
     then
         if [ "$is_gunicorn_arg" = true ]
         then
             gunicorn_arg="${gunicorn_arg} ${line_list[$i]} ${line_list[$i+1]}"
         fi
-
     fi
 done
 

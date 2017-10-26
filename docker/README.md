@@ -65,5 +65,8 @@ System settings are stored in dms_app.config. You can modify these settings to u
     --limit-request-line
     0
 
+    # MXNet environment variables
+    OMP_NUM_THREADS=4
+
 Now you can send request to http://your_public_host_name.
 In browser, type in `http://your_public_host_name/ping` to check health status.

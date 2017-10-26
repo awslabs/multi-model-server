@@ -439,10 +439,7 @@ class ServingFrontend(object):
 
         # Doing prediciton on model
         try:
-            inference_start_time = time.time()
             response = modelservice.inference(input_data)
-            logger.debug("Inference time is: %s ms" %
-                         ((time.time() - inference_start_time) * 1000))
         except Exception:
             logger.error(str(traceback.format_exc()))
             abort(500, "Error occurs while inference was executed on server.")

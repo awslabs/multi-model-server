@@ -11,10 +11,13 @@
 """`ModelService` defines an API for base model service.
 """
 
+import time
+
 from abc import ABCMeta, abstractmethod, abstractproperty
+from ..log import get_logger
 
+logger = get_logger(__name__)
 URL_PREFIX = ('http://', 'https://', 's3://')
-
 
 class ModelService(object):
     '''ModelService wraps up all preprocessing, inference and postprocessing
@@ -84,9 +87,18 @@ class SingleNodeService(ModelService):
         list of outputs to be sent back to client.
             data to be sent back
         '''
+        pre_start_time = time.time()
         data = self._preprocess(data)
+        infer_start_time = time.time()
+        logger.debug("Preprocess time is %s ms."
+                     % (str((infer_start_time - pre_start_time) * 1000)))
         data = self._inference(data)
+        post_start_time = time.time()
+        logger.debug("Inference time is %s ms."
+                     % (str((post_start_time - infer_start_time) * 1000)))
         data = self._postprocess(data)
+        logger.debug("Post process time is %s ms."
+                     % (str((time.time() - post_start_time) * 1000)))
         return data
 
     @abstractmethod

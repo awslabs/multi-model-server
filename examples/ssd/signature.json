@@ -1,0 +1,17 @@
+{
+  "inputs": [
+    {
+      "data_name": "data",
+      "data_shape": [1, 3, 512, 512]
+    }
+  ],
+  "input_type": "image/jpeg",
+  "outputs": [
+    {
+      "data_name": "detection_output",
+      "data_shape": [1, 6132, 6]
+    }
+  ],
+  "output_type": "application/json"
+}
+

@@ -1,4 +1,4 @@
-FROM mxnet/python
+FROM ubuntu:latest
 
 COPY install.sh /
 

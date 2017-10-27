@@ -13,7 +13,16 @@ class SSDService(MXNetVisionService):
     """
     def __init__(self, path, ctx=mx.cpu()):
         super(SSDService, self).__init__(path, ctx)
+
+        # Threshold is used to pick the detection boxes with score > threshold.
+        # The detections from this network will be of the format - [[class_id, score, x1, y1, x2, y2]].
+        # We pick all detections where 'score > threshold'.
+        # You can experiment with different threshold to see the best threshold for the use-case.
         self.threshold = 0.2
+
+        # This is used to save the original input image shape.
+        # This is required for preparing the bounding box of the detected object "relative to
+        # original input"
         self.input_width = None
         self.input_height = None
 

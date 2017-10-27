@@ -12,11 +12,12 @@
 '''
 
 import os
-import warnings
+import logging
 import json
 import zipfile
 import mxnet as mx
 from arg_parser import ArgParser
+
 
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']
 VALID_MIME_TYPE = ['image/jpeg', 'application/json']
@@ -79,20 +80,20 @@ def _export_model(args):
                 symbol_file_num += 1
             file_list.append(os.path.join(dirpath, file_name))
     if symbol_file_num == 0:
-        warnings.warn("No MXNet model symbol json file is found. "
-                      "You may need to manually load model in your service class.")
+        logging.warning("No MXNet model symbol json file is found. "
+                        "You may need to manually load model in your service class.")
     if symbol_file_num > 1:
-        warnings.warn("More than one MXNet model symbol json files are found. "
-                      "You must manually load model in your service class.")
+        logging.warning("More than one MXNet model symbol json files are found. "
+                        "You must manually load model in your service class.")
 
     export_file = os.path.join(destination,'%s.model' % model_name)
     if os.path.isfile(export_file):
-        warnings.warn("%s.model already in %s and will be overwritten." % (model_name, model_path))
-        os.remove(export_file)
+        raise RuntimeError("%s.model already exists in %s directory." % (model_name, destination))
     with zipfile.ZipFile(export_file, 'w') as zip_file:
         for item in file_list:
             zip_file.write(item, os.path.basename(item))
-    print('Successfully exported %s model. Model file is located at %s.', model_name, export_file)
+    print('Successfully exported %s model. Model file is located in %s directory.'
+          % (model_name, destination))
 
 
 def export_serving(model, filename, signature, export_path=None, aux_files=None):

@@ -8,7 +8,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-'''Command line interface to export MXNet model to be used for inference by MXNet Model Server
+'''Command line interface to export model files to be used for inference by Deep Model Server
 '''
 
 import os
@@ -61,7 +61,7 @@ def _check_signature(model_path):
 
 
 def _export_model(args):
-    '''Internal helper for exporting model command line interface.
+    '''Internal helper for the exporting model command line interface.
     '''
     model_name = args.model_name
     model_path = args.model_path
@@ -79,11 +79,11 @@ def _export_model(args):
                 symbol_file_num += 1
             file_list.append(os.path.join(dirpath, file_name))
     if symbol_file_num == 0:
-        warnings.warn("No MXNet model symbol json file is found. "
-                      "You may need to manually load model in your service class.")
+        warnings.warn("No model symbol json file is found. "
+                      "You may need to manually load the model in your service class.")
     if symbol_file_num > 1:
-        warnings.warn("More than one MXNet model symbol json files are found. "
-                      "You must manually load model in your service class.")
+        warnings.warn("More than one model symbol json file was found. "
+                      "You must manually load the model in your service class.")
 
     export_file = os.path.join(destination,'%s.model' % model_name)
     if os.path.isfile(export_file):
@@ -96,21 +96,21 @@ def _export_model(args):
 
 
 def export_serving(model, filename, signature, export_path=None, aux_files=None):
-    """Export a MXNet module object to a zip file used by MXNet model serving.
+    """Export a module object to a .model file to be used by Deep Model Server.
 
     Parameters
     ----------
     model : mx.mod.Module or mx.mod.BucketModule
-        MXNet module object to be exported.
+        Module object to be exported.
     filename : str
         Prefix of exported model file.
     signature : dict
         A dictionary containing model input and output information.
         Data names or data shapes of inputs and outputs can be automatically
-        collected from module. They are optional. User needs to specify inputs
-        and outputs MIME type for http request. Currently only 'image/jpeg'
-        and 'application/json' are supported. All inputs should have the same type.
-        This also applies for outputs.
+        collected from the module. They are optional. You need to specify the
+        MIME type of the inputs and outputs for the http request. Currently only
+        'image/jpeg' and 'application/json' are supported. All inputs should
+        have the same type. This also applies for outputs.
         An example signature would be:
             signature = { "input_type": "image/jpeg", "output_type": "application/json" }
         A full signature containing inputs and outputs:
@@ -118,14 +118,14 @@ def export_serving(model, filename, signature, export_path=None, aux_files=None)
                 "input_type": "image/jpeg",
                 "inputs" : [
                     {
-                        'data_name': 'data',
-                        'data_shape': [1, 3, 224, 224]
+                        "data_name": "data",
+                        "data_shape": [1, 3, 224, 224]
                     }
                 ],
                 "outputs" : [
                     {
-                        'data_name': 'softmax',
-                        'data_shape': [1, 1000]
+                        "data_name": "softmax",
+                        "data_shape": [1, 1000]
                     }
                 ]
                 "output_type": "application/json"
@@ -134,8 +134,8 @@ def export_serving(model, filename, signature, export_path=None, aux_files=None)
         Destination path for export file. By default the model file
         is saved to current working directory.
     aux_files : List
-        A list of string containing other utility files for inference. One example is class
-        label file for classification task.
+        A list of string containing other utility files for inference.
+        One example is class label file for classification task.
 
     Examples
     --------
@@ -149,14 +149,14 @@ def export_serving(model, filename, signature, export_path=None, aux_files=None)
     >>>                  "input_type": "image/jpeg",
     >>>                  "inputs" : [
     >>>                      {
-    >>>                          'data_name': 'data',
-    >>>                          'data_shape': [1, 3, 224, 224]
+    >>>                          "data_name": "data",
+    >>>                          "data_shape": [1, 3, 224, 224]
     >>>                      }
     >>>                  ],
     >>>                  "outputs" : [
     >>>                      {
-    >>>                          'data_name': 'softmax',
-    >>>                          'data_shape': [1, 1000]
+    >>>                          "data_name": "softmax",
+    >>>                          "data_shape": [1, 1000]
     >>>                      }
     >>>                  ]
     >>>                  "output_type": "application/json"

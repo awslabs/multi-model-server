@@ -1,6 +1,6 @@
 # DMS REST API
 
-TODO: api overview
+The REST API is built according to the [OpenAPI specification](https://en.wikipedia.org/wiki/OpenAPI_Specification). It is human readable and easy to integrate with a variety of applications. To that end, it interfaces with Swagger-generated client API code, so you can [very easily and automatically generate code](code_gen.md) for Java, Scala, C#, Javascript, [and more](https://swagger.io/swagger-codegen/).
 
 ## Endpoints
 
@@ -45,8 +45,6 @@ Your response, if the server is running should be:
 Otherwise, you'll probably get a server not responding error or `ERR_CONNECTION_REFUSED`.
 
 ## API Description
-
-TODO: Talk about how "API description" is actually an OpenAPI format
 
 To view a full list of all of the end points, you want to hit `api-description`.
 http://127.0.0.1:8080/api-description

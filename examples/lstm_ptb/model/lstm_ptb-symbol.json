@@ -1,0 +1,126 @@
+{
+  "nodes": [
+    {
+      "op": "null", 
+      "name": "data", 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "embed_weight", 
+      "attr": {
+        "input_dim": "10000", 
+        "output_dim": "200"
+      }, 
+      "inputs": []
+    }, 
+    {
+      "op": "Embedding", 
+      "name": "embed", 
+      "attr": {
+        "input_dim": "10000", 
+        "output_dim": "200"
+      }, 
+      "inputs": [[0, 0, 0], [1, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "lstm_parameters", 
+      "attr": {"__init__": "[\"fusedrnn\", {\"num_hidden\": 200, \"init\": null, \"mode\": \"lstm\", \"forget_bias\": 1.0, \"num_layers\": 2, \"bidirectional\": false}]"}, 
+      "inputs": []
+    }, 
+    {
+      "op": "_zeros", 
+      "name": "lstm_begin_state_0", 
+      "attr": {
+        "__layout__": "LNC", 
+        "dtype": "float32", 
+        "shape": "(2, 0, 200)"
+      }, 
+      "inputs": []
+    }, 
+    {
+      "op": "_zeros", 
+      "name": "lstm_begin_state_1", 
+      "attr": {
+        "__layout__": "LNC", 
+        "dtype": "float32", 
+        "shape": "(2, 0, 200)"
+      }, 
+      "inputs": []
+    }, 
+    {
+      "op": "RNN", 
+      "name": "lstm_rnn", 
+      "attr": {
+        "bidirectional": "False", 
+        "mode": "lstm", 
+        "num_layers": "2", 
+        "p": "0.0", 
+        "state_outputs": "False", 
+        "state_size": "200"
+      }, 
+      "inputs": [[2, 0, 0], [3, 0, 0], [4, 0, 0], [5, 0, 0]]
+    }, 
+    {
+      "op": "Reshape", 
+      "name": "reshape8", 
+      "attr": {"shape": "(-1, 200)"}, 
+      "inputs": [[6, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "pred_weight", 
+      "attr": {"num_hidden": "10000"}, 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "pred_bias", 
+      "attr": {"num_hidden": "10000"}, 
+      "inputs": []
+    }, 
+    {
+      "op": "FullyConnected", 
+      "name": "pred", 
+      "attr": {"num_hidden": "10000"}, 
+      "inputs": [[7, 0, 0], [8, 0, 0], [9, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "softmax_label", 
+      "inputs": []
+    }, 
+    {
+      "op": "Reshape", 
+      "name": "reshape9", 
+      "attr": {"shape": "(-1,)"}, 
+      "inputs": [[11, 0, 0]]
+    }, 
+    {
+      "op": "SoftmaxOutput", 
+      "name": "softmax", 
+      "inputs": [[10, 0, 0], [12, 0, 0]]
+    }
+  ], 
+  "arg_nodes": [0, 1, 3, 8, 9, 11], 
+  "node_row_ptr": [
+    0, 
+    1, 
+    2, 
+    3, 
+    4, 
+    5, 
+    6, 
+    7, 
+    8, 
+    9, 
+    10, 
+    11, 
+    12, 
+    13, 
+    14
+  ], 
+  "heads": [[13, 0, 0]], 
+  "attrs": {"mxnet_version": ["int", 1100]}
+}

@@ -80,11 +80,11 @@ def _export_model(args):
                 symbol_file_num += 1
             file_list.append(os.path.join(dirpath, file_name))
     if symbol_file_num == 0:
-        warnings.warn("No model symbol json file is found. "
-                      "You may need to manually load the model in your service class.")
+        logging.warning("No MXNet model symbol json file is found. "
+                        "You may need to manually load the model in your service class.")
     if symbol_file_num > 1:
-        warnings.warn("More than one model symbol json file was found. "
-                      "You must manually load the model in your service class.")
+        logging.warning("More than one model symbol json file was found. "
+                        "You must manually load the model in your service class.")
 
     export_file = os.path.join(destination,'%s.model' % model_name)
     if os.path.isfile(export_file):
@@ -203,7 +203,7 @@ def export_serving(model, filename, signature, export_path=None, aux_files=None)
 
     abs_model_path = os.path.join(destination,'%s.model' % filename)
     if os.path.isfile(abs_model_path):
-        warnings.warn("%s already exists and will be overwritten." % (abs_model_path))
+        raise RuntimeError("%s already exists." % (abs_model_path))
     with zipfile.ZipFile(abs_model_path, 'w') as zip_file:
         for item in file_list:
             zip_file.write(item)

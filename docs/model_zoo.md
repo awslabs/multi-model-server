@@ -1,6 +1,6 @@
 # Model Zoo
 
-These models are using the resnet-18 [signature.json]() and a [synset.txt]() with 1000 image classes from ImageNet.
+These models were trained on the Imagenet dataset with an output of 1,000 image classes.
 
 | Model File | Dataset |
 | --- | --- |

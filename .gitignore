@@ -105,3 +105,12 @@ ENV/
 
 # PyCharm
 .idea/
+
+# Log
+*.log.*
+
+# Model
+*.model
+
+# Pictures
+*.jpg

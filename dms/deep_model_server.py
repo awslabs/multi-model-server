@@ -16,6 +16,7 @@ from log import get_logger
 from log import LOG_LEVEL_DICT
 from serving_frontend import ServingFrontend
 from client_sdk_generator import ClientSDKGenerator
+from dms import *
 
 
 VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in range(7)]
@@ -139,6 +140,17 @@ class DMS(object):
             # Generate client SDK
             if self.args.gen_api is not None:
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
+
+            # Generate metrics to target location (memory, csv ...)
+            if self.args.metrics_write_to != None:
+                ErrorMetric.start_recording(self.args.metrics_write_to, 'interval_sum')
+                RequestsMetric.start_recording(self.args.metrics_write_to, 'interval_sum')
+                CPUMetric.start_recording(self.args.metrics_write_to, 'interval_average')
+                MemoryMetric.start_recording(self.args.metrics_write_to, 'interval_average')
+                OverallLatencyMetric.start_recording(self.args.metrics_write_to, 'interval_average')
+                InferenceLatencyMetric.start_recording(self.args.metrics_write_to, 'interval_average')
+                PreLatencyMetric.start_recording(self.args.metrics_write_to, 'interval_average')
+                PostLatencyMetric.start_recording(self.args.metrics_write_to, 'interval_average')
 
         except Exception as e:
             logger.error('Failed to process arguments: ' + str(e))

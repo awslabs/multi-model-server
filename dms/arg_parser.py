@@ -65,6 +65,10 @@ class ArgParser(object):
                                                 'Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL.'
                                                 'Check https://docs.python.org/2/library/logging.html#logging-levels')
 
+        parser.add_argument('--metrics-write-to',
+                            choices=['memory', 'csv'],
+                            help='Target location to write dms metrics. Memory, local CSV... ')
+
         return parser
 
     @staticmethod

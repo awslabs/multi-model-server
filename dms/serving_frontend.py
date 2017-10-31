@@ -17,6 +17,7 @@ from flask import abort
 from service_manager import ServiceManager
 from request_handler.flask_handler import FlaskRequestHandler
 from log import get_logger
+from dms import RequestsMetric
 
 
 logger = get_logger(__name__)
@@ -361,6 +362,7 @@ class ServingFrontend(object):
         Response
             Http response for ping endpiont.
         """
+        RequestsMetric.update(metric=1)
         try:
             for model in self.service_manager.get_loaded_modelservices().values():
                 model.ping()
@@ -379,6 +381,7 @@ class ServingFrontend(object):
         Response
             Http response for api description endpiont.
         """
+        RequestsMetric.update(metric=1)
         return self.handler.jsonify({'description': self.openapi_endpoints})
 
     def predict_callback(self, **kwargs):
@@ -398,6 +401,8 @@ class ServingFrontend(object):
         Response
             Http response for predict endpiont.
         """
+        RequestsMetric.update(metric=1)
+
         handler_start_time = time.time()
         modelservice = kwargs['modelservice']
         input_names = kwargs['input_names']

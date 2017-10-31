@@ -65,7 +65,7 @@ class DMS(object):
             parser = ArgParser.dms_parser()
             self.args = parser.parse_args(args) if args else parser.parse_args()
             self.serving_frontend = ServingFrontend(app_name)
-            self.gpu = args.gpu
+            self.gpu = self.args.gpu
 
             # Setup root logger handler and level.
             log_file = self.args.log_file or "dms_app.log"
@@ -126,7 +126,7 @@ class DMS(object):
             # Load models using registered model definitions
             registered_models = self.serving_frontend.get_registered_modelservices()
             ModelClassDef = registered_models[mode_class_name]
-            self.serving_frontend.load_models(self.args.models, ModelClassDef)
+            self.serving_frontend.load_models(self.args.models, ModelClassDef, self.gpu)
             if len(self.args.models) > 5:
                 raise Exception('Model number exceeds our system limits: 5')
 

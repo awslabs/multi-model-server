@@ -130,7 +130,8 @@ class MXNetBaseService(SingleNodeService):
         '''
         # Check input shape
         check_input_shape(data, self.signature)
-        self.mx_model.forward(DataBatch(data.as_in_context(self.ctx)))
+        data = [item.as_in_context(self.ctx) for item in data]
+        self.mx_model.forward(DataBatch(data))
         return self.mx_model.get_outputs()
 
     def ping(self):

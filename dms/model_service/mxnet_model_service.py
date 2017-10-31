@@ -83,8 +83,8 @@ class MXNetBaseService(SingleNodeService):
        operations when serving MXNet model. This is a base class and needs to be
        inherited.
     '''
-    def __init__(self, path, ctx=mx.cpu()):
-        super(MXNetBaseService, self).__init__(path, ctx)
+    def __init__(self, path, gpu=None):
+        self.ctx = mx.gpu(int(gpu)) if gpu else mx.cpu()
         model_dir, model_name = self._extract_model(path)
 
         data_names = []
@@ -102,7 +102,7 @@ class MXNetBaseService(SingleNodeService):
 
         # Load MXNet module
         sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' % (model_dir, model_name), 0)
-        self.mx_model = mx.mod.Module(symbol=sym, context=mx.cpu(),
+        self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
                                       data_names=data_names, label_names=None)
         self.mx_model.bind(for_training=False, data_shapes=data_shapes)
         self.mx_model.set_params(arg_params, aux_params, allow_missing=True)
@@ -130,7 +130,7 @@ class MXNetBaseService(SingleNodeService):
         '''
         # Check input shape
         check_input_shape(data, self.signature)
-        self.mx_model.forward(DataBatch(data))
+        self.mx_model.forward(DataBatch(data.as_in_context(self.ctx)))
         return self.mx_model.get_outputs()
 
     def ping(self):

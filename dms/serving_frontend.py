@@ -57,7 +57,7 @@ class ServingFrontend(object):
         """
         self.handler.start_handler(host, port)
 
-    def load_models(self, models, ModelServiceClassDef):
+    def load_models(self, models, ModelServiceClassDef, gpu=None):
         """
         Load models by using user passed Model Service Class Definitions.
 
@@ -67,9 +67,12 @@ class ServingFrontend(object):
             List of model_name, model_path pairs that will be initialized.
         ModelServiceClassDef: python class
             Model Service Class Definition which can initialize a model service.
+        gpu : int
+            Id of gpu device. If machine has two gpus, this number can be 0 or 1.
+            If it is not set, cpu will be used.
         """
         for model_name, model_path in models.items():
-            self.service_manager.load_model(model_name, model_path, ModelServiceClassDef)
+            self.service_manager.load_model(model_name, model_path, ModelServiceClassDef, gpu)
 
 
     def register_module(self, user_defined_module_file_path):

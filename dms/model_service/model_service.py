@@ -26,8 +26,8 @@ class ModelService(object):
     '''
     __metaclass__ = ABCMeta
 
-    def __init__(self, path, ctx):
-        self.context = ctx
+    def __init__(self, path, gpu=None):
+        self.ctx = None
 
     @abstractmethod
     def inference(self, data):

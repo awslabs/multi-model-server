@@ -65,6 +65,7 @@ class DMS(object):
             parser = ArgParser.dms_parser()
             self.args = parser.parse_args(args) if args else parser.parse_args()
             self.serving_frontend = ServingFrontend(app_name)
+            self.gpu = args.gpu
 
             # Setup root logger handler and level.
             log_file = self.args.log_file or "dms_app.log"

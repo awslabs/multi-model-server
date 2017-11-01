@@ -28,7 +28,7 @@ pip install deep-model-server
 
 **2. Download a Trained Model**
 
-The files in the `model-example.zip` file are viewable in a text editor, with the exception of the `.params` file: this file may or may not be binary, and is usually quite large. Download and extract the provided model file. It is a zip file under the hood, so if you have trouble extracting it, change the extension to .zip first and then extract it.
+The files in the `model-example.zip` file are human-readable in a text editor, with the exception of the `.params` file: this file is binary, and is usually quite large. Download and extract the provided model file. It is a zip file under the hood, so if you have trouble extracting it, change the extension to .zip first and then extract it.
 
 TODO: get S3 links
 

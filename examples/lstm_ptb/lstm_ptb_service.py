@@ -1,0 +1,103 @@
+import mxnet as mx
+import bisect
+import numpy as np
+
+from dms.model_service.mxnet_model_service import check_input_shape, MXNetBaseService
+from dms.utils.mxnet import nlp
+
+class MXNetLSTMService(MXNetBaseService):
+    """LSTM service class.
+    """
+    def __init__(self, path, ctx=mx.cpu()):
+        super(MXNetBaseService, self).__init__(path, ctx)
+        model_dir, model_name = self._extract_model(path)
+
+        self.data_names = []
+        self.data_shapes = []
+        for input in self._signature['inputs']:
+            self.data_names.append(input['data_name'])
+            self.data_shapes.append((input['data_name'], tuple(input['data_shape'])))
+
+        # Load pre-trained lstm bucketing module
+        load_epoch = 25
+        num_layers = 2
+        num_hidden = 200
+        num_embed = 200
+
+        self.buckets = [10, 20, 30, 40, 50, 60]
+        self.start_label = 1
+        self.invalid_key = '\n'
+        self.invalid_label = 0
+        self.layout = 'NT'
+
+        vocab_dict_file = '%s/vocab_dict.txt' % (model_dir)
+        self.vocab = {}
+        self.idx2word = {}
+        with open(vocab_dict_file, 'r') as vocab_file:
+            self.vocab[self.invalid_key] = self.invalid_label
+            for line in vocab_file:
+                word_index = line.split(' ')
+                if len(word_index) < 2 or word_index[0] == '':
+                    continue
+                self.vocab[word_index[0]] = int(word_index[1].rstrip())
+        for key, val in self.vocab.items():
+            self.idx2word[val] = key
+
+        stack = mx.rnn.FusedRNNCell(num_hidden, num_layers=num_layers, mode='lstm').unfuse()
+
+        def sym_gen(seq_len):
+            data = mx.sym.Variable('data')
+            embed = mx.sym.Embedding(data=data, input_dim=len(self.vocab),
+                                     output_dim=num_embed, name='embed')
+
+            stack.reset()
+            outputs, _ = stack.unroll(seq_len, inputs=embed, merge_outputs=True)
+
+            pred = mx.sym.Reshape(outputs, shape=(-1, num_hidden))
+            pred = mx.sym.FullyConnected(data=pred, num_hidden=len(self.vocab), name='pred')
+            pred = mx.sym.softmax(pred, name='softmax')
+
+            return pred, ('data',), None
+
+        self.mx_model = mx.mod.BucketingModule(
+            sym_gen=sym_gen,
+            default_bucket_key=max(self.buckets),
+            context=self.context)
+        self.mx_model.bind(data_shapes=self.data_shapes, for_training=False)
+        _, arg_params, aux_params = mx.rnn.load_rnn_checkpoint(stack, '%s/%s' % (model_dir, model_name), load_epoch)
+        self.mx_model.set_params(arg_params, aux_params)
+
+    def _preprocess(self, data):
+        # Convert a string of sentence to a list of string
+        sent = data[0].split(' ')
+        # Encode sentence to a list of int
+        res, _ = nlp.encode_sentences([sent], vocab=self.vocab, start_label=self.start_label, invalid_label=self.invalid_label)
+        # Pad sentence
+        sent = res[0]
+        buck = bisect.bisect_left(self.buckets, len(sent))
+        buff = np.full((self.buckets[buck],), self.invalid_label, dtype='float32')
+        buff[:len(sent)] = sent
+        sent_bucket = self.buckets[buck]
+        pad_sent = mx.nd.array([buff], dtype='float32')
+        return mx.io.DataBatch([pad_sent], pad=0, bucket_key=sent_bucket,
+                               provide_data=[mx.io.DataDesc(
+                                   name=self.data_names[0],
+                                   shape=(1, sent_bucket),
+                                   layout=self.layout)])
+
+    def _inference(self, data_batch):
+        self.mx_model.forward(data_batch)
+        return self.mx_model.get_outputs()
+
+    def _postprocess(self, data):
+        word_idx = mx.nd.argmax(data[0], axis=1).asnumpy()
+        res = ''
+        for idx in word_idx:
+            res += self.idx2word[idx] + ' '
+        print(res)
+        return res
+
+if __name__ == '__main__':
+    service = MXNetLSTMService(path='lstm_ptb.zip')
+    sent = " the dow jones industrials closed at N "
+    service.inference([sent])

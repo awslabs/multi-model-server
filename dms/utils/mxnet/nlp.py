@@ -37,4 +37,26 @@ def encode_sentences(sentences, vocab=None, invalid_label=-1, invalid_key='\n', 
     vocab : dict of str -> int
         result vocabulary
     """
-    return rnn.io.encode_sentences(sentences, vocab, invalid_label, invalid_key, start_label)
+    idx = start_label
+    if vocab is None:
+        vocab = {invalid_key: invalid_label}
+        new_vocab = True
+    else:
+        new_vocab = False
+    res = []
+    for sent in sentences:
+        coded = []
+        for word in sent:
+            if word not in vocab:
+                if not new_vocab:
+                    coded.append(invalid_label)
+                    continue
+                else:
+                    if idx == invalid_label:
+                        idx += 1
+                    vocab[word] = idx
+                    idx += 1
+            coded.append(vocab[word])
+        res.append(coded)
+
+    return res, vocab

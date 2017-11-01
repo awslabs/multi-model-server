@@ -1,6 +1,6 @@
 # Defining a Custom Service
 
-A custom service is a way of modifying the behavior of DMS so that the inputs, such as images or text, are pre-processed, and the outputs (predictions) from the model are post-processed before returning the result via the API.
+A custom service is a way to customize DMS's inference request handling logic. Potential customizations include model initialization, inference request pre-processing, post-processing, and even the inference call itself.
 
 ## Vision Service
 

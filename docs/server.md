@@ -1,15 +1,19 @@
 # Deep Model Server
 
-TODO: server intro
+The primary feature of DMS is the model server. It can be used for many types of inference in production settings. It provides an easy-to-use command line interface and utilizes an industry standard OpenAPI interface. It has features for pre-processing and post-processing inputs and outputs for customized applications.
+
+While current models and support is limited to MXNet as the underlying framework, other framework support and serving of models originating from other frameworks will be supported in the future.
 
 ## Command Line Interface
 
-TODO: update this example when help output is updated
 ```bash
 $ deep-model-server
 usage: deep-model-server [-h] --models KEY1=VAL1,KEY2=VAL2...
-                           [KEY1=VAL1,KEY2=VAL2... ...] [--service SERVICE]
-                           [--gen-api GEN_API] [--port PORT] [--host HOST]
+                         [KEY1=VAL1,KEY2=VAL2... ...] [--service SERVICE]
+                         [--gen-api GEN_API] [--port PORT] [--host HOST]
+                         [--log-file LOG_FILE]
+                         [--log-rotation-time LOG_ROTATION_TIME]
+                         [--log-level LOG_LEVEL]
 ```
 
 ### Required Arguments & Defaults

@@ -8,7 +8,7 @@ Let's talk about what DMS is not. It isn't a managed service. You still need to 
 
 ## Technical Details
 
-Now that you have a high level view of DMS, let's get a little into the weeds. DMS takes a deep learning model and it wraps it in a REST API. Currently it is bundled with the MXNet framework, and it comes with a built-in web server that you run from command line. This command line call takes in the single or multiple models you want to serve, along with optional port and IP info. Additionally you can point it to service extensions which define pre-processing and post-processing steps. DMS also comes with a default vision service that makes it easy to serve an image classification model. If you're looking to build chat bots or video understanding then you'll have some additional leg work to do with the pre-processing and post-processing steps. These are covered in more detail in the [custom service](custom_service.md) documentation.
+Now that you have a high level view of DMS, let's get a little into the weeds. DMS takes a deep learning model and it wraps it in a REST API. Currently it is bundled with the MXNet framework, and it comes with a built-in web server that you run from command line. This command line call takes in the single or multiple models you want to serve, along with additional optional parameters controlling the port, host, and logging. Additionally, you can point it to service extensions which define pre-processing and post-processing steps. DMS also comes with a default vision service that makes it easy to serve an image classification model. If you're looking to build chat bots or video understanding then you'll have some additional leg work to do with the pre-processing and post-processing steps. These are covered in more detail in the [custom service](custom_service.md) documentation.
 
 Another key feature that we'll demonstrate as a first example in the next section is DMS's export capability. It is a separate CLI that takes in network definitions in the form of a JSON file, the trained network weight in the form of a parameters file, and the description of the models' inputs and outputs in the form of a signature JSON file. It outputs a `.model` zip file that DMS's server CLI uses to serve the models.
 
@@ -28,7 +28,7 @@ pip install deep-model-server
 
 **2. Download a Trained Model**
 
-The files in the `model-example.zip` file are viewable in a text editor, with the exception of the `.params` file: this file may or may not be binary, and is usually quite large. Download and extract the provided model file. It is a zip file under the hood, so if you have trouble extracting it, change the extension to .zip first and then extract it.
+The files in the `model-example.zip` file are human-readable in a text editor, with the exception of the `.params` file: this file is binary, and is usually quite large. Download and extract the provided model file. It is a zip file under the hood, so if you have trouble extracting it, change the extension to .zip first and then extract it.
 
 TODO: get S3 links
 
@@ -127,10 +127,6 @@ Now you've seen how easy it can be to serve a deep learning model with Deep Mode
 ## Other Features
 
 Browse over to the [Docs readme](docs/README.md) for the full index of documentation. This includes more examples, how to customize the API service, API endpoint details, and more.
-
-## Dependencies
-
-Flask, MXNet, numpy, JAVA (7+, required by swagger codegen)
 
 ## Deployments
 

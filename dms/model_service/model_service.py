@@ -53,7 +53,7 @@ class ModelService(object):
         Returns
         -------
         String
-            MXNet version to show system is healthy.
+            A message, "health": "healthy!", to show system is healthy.
         '''
         pass
 
@@ -156,4 +156,3 @@ class SingleNodeService(ModelService):
 
 class MultiNodesService(ModelService):
     pass
-

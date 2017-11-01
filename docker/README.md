@@ -4,7 +4,7 @@ You will need to build the image yourself. The Docker image is not available on 
 
 ## Building the Docker Image
 
-The image will be built for CPU, so the underlying deep learning framework will also only use CPU. GPU is not yet supported, and either way, for the inference tasks that DMS is handling, GPU wouldn't be faster than CPU.
+The image will be built for CPU, so the underlying deep learning framework will also only use CPU. GPU is not yet supported.
 
 If you haven't already, you will need to [install Docker](https://docs.docker.com/engine/installation). When you've competed the installation, verify that Docker is running by running `docker images` in your terminal. If this works, you are ready to continue.
 
@@ -18,8 +18,6 @@ By default Docker expects a Dockerfile, so we'll make a copy leaving the origina
 
 Now let's update the [virtual.conf](virtual.conf) file for your environment. Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker container.
 
-You can also modify this config file after building and running a Docker container. It is located at `/etc/nginx/conf.d/virtual.conf`, however this will only last while you're running the Docker container and will revert once you shut it down.
-
 The `virtual.conf` file will look like this:
 
 ```
@@ -32,6 +30,8 @@ server {
     }
 }
 ```
+
+**Note:** You can also modify container's NGINX settings after building and running the Docker container. The config file is located inside the container at `/etc/nginx/conf.d/virtual.conf`, however this will only last while you're running the Docker container and will revert once you shut it down.
 
 ### Build Step
 
@@ -70,7 +70,7 @@ At this point you should see the typical DMS CLI output indicating that the serv
 
 ## System Settings  
 
-The system settings are stored in `dms_docker/dms_app.config`. You can modify these settings to use different models, or to apply other customized settings.
+The system settings are stored in `dms_docker/dms_app.config`. You can modify these settings to use different models, or to apply other customized settings. The default settings were optimized for a C4.8xlarge instance.
 
     # deep-model-server arguments
     --models

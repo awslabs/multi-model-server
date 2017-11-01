@@ -128,10 +128,6 @@ Now you've seen how easy it can be to serve a deep learning model with Deep Mode
 
 Browse over to the [Docs readme](docs/README.md) for the full index of documentation. This includes more examples, how to customize the API service, API endpoint details, and more.
 
-## Dependencies
-
-Flask, MXNet, numpy, JAVA (7+, required by swagger codegen)
-
 ## Deployments
 
 ### Docker

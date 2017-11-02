@@ -6,7 +6,8 @@ from dms.model_service.mxnet_model_service import MXNetBaseService
 from dms.utils.mxnet import nlp
 
 class MXNetLSTMService(MXNetBaseService):
-    """LSTM service class.
+    """LSTM service class. This service consumes a sentence
+    from length 0 to 60 and generates a sentence with the same size.
     """
     def __init__(self, path, ctx=mx.cpu()):
         super(MXNetBaseService, self).__init__(path, ctx)
@@ -60,6 +61,7 @@ class MXNetLSTMService(MXNetBaseService):
 
             return pred, ('data',), None
 
+        # Create bucketing module and load weights
         self.mx_model = mx.mod.BucketingModule(
             sym_gen=sym_gen,
             default_bucket_key=max(self.buckets),
@@ -69,9 +71,9 @@ class MXNetLSTMService(MXNetBaseService):
         self.mx_model.set_params(arg_params, aux_params)
 
     def _preprocess(self, data):
-        print(data)
         # Convert a string of sentence to a list of string
         sent = data[0]['input_sentence'].lower().split(' ')
+        assert len(sent) <= self.buckets[-1], "Sentence length must be no greater than %d." % (self.buckets[-1])
         # Encode sentence to a list of int
         res, _ = nlp.encode_sentences([sent], vocab=self.vocab, start_label=self.start_label, invalid_label=self.invalid_label)
 
@@ -83,6 +85,7 @@ class MXNetLSTMService(MXNetBaseService):
         return self.mx_model.get_outputs()
 
     def _postprocess(self, data):
+        # Generate predicted sentences
         word_idx = mx.nd.argmax(data[0], axis=1).asnumpy()
         res = ''
         for idx in word_idx:

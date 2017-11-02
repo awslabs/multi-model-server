@@ -84,7 +84,7 @@ class MXNetBaseService(SingleNodeService):
        inherited.
     '''
     def __init__(self, path, gpu=None):
-        self.ctx = mx.gpu(int(gpu)) if gpu else mx.cpu()
+        self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
         model_dir, model_name = self._extract_model(path)
 
         data_names = []

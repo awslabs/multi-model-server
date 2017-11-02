@@ -28,9 +28,9 @@ pip install deep-model-server
 
 **2. Download a Trained Model**
 
-The files in the `model-example.zip` file are human-readable in a text editor, with the exception of the `.params` file: this file is binary, and is usually quite large. Download and extract the provided model file. It is a zip file under the hood, so if you have trouble extracting it, change the extension to .zip first and then extract it.
+The files in the `model-example.model` file are human-readable in a text editor, with the exception of the `.params` file: this file is binary, and is usually quite large. Download and extract the provided model file. It is a zip file under the hood, so if you have trouble extracting it, change the extension to .zip first and then extract it.
 
-* [model-example.zip](https://s3.amazonaws.com/model-server/models/model-example/model-example.zip) - contains the following four files
+* [model-example.model](https://s3.amazonaws.com/model-server/models/model-example/model-example.model) - contains the following four files
 * [squeezenet_v1.1-symbol.json](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-symbol.json) - contains the layers and overall structure of the neural network; the name, or prefix, here is "squeezenet_v1.1"
 * [squeezenet_v1.1-0000.params](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-0000.params) - contains the parameters and the weights; again, the prefix is "squeezenet_v1.1"
 * [signature.json](https://s3.amazonaws.com/model-server/models/model-example/signature.json) - defines the inputs and outputs that DMS is expecting to hand-off to the API

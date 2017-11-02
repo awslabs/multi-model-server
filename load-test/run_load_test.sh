@@ -1,7 +1,8 @@
 #!/bin/bash
 
 if [ "$1" == "-h" ]; then
-  echo "Usage: `basename $0` [somestuff]"
+  echo "Usage: `basename $0` -i ip-address -c concurrency -n number-of-requests-each-thread -f output-filename [-p port] [-o raw-result]"
+  echo "Example $0 -i ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com -c 100 -n 20 -f report.csv"
   exit 0
 fi
 

@@ -11,6 +11,7 @@ $ deep-model-server
 usage: deep-model-server [-h] --models KEY1=VAL1,KEY2=VAL2...
                          [KEY1=VAL1,KEY2=VAL2... ...] [--service SERVICE]
                          [--gen-api GEN_API] [--port PORT] [--host HOST]
+                         [--gpu]
                          [--log-file LOG_FILE]
                          [--log-rotation-time LOG_ROTATION_TIME]
                          [--log-level LOG_LEVEL]
@@ -37,6 +38,8 @@ The rest of these arguments are optional and will have the following defaults:
 * [--port 8080]
 * [--host 127.0.0.1]
 
+gpu argument is to specifiy whether to use gpu for inference.
+
 Logging and exporting an SDK can also be triggered with additional arguments. Details are in the following Arguments section.
 
 #### Arguments:
@@ -53,6 +56,7 @@ Logging and exporting an SDK can also be triggered with additional arguments. De
 2. **service**: optional, the system will load input service module and will initialize MXNet models with the service defined in the module. The module should contain a valid class which extends the base model service with customized `_preprocess` and `_postprocess` functions.
 3. **port**: optional, default is 8080
 4. **host**: optional, default is 127.0.0.1
+5. **gpu**: optional, gpu device id, such as 0 or 1. cpu will be used if this argument is not set.
 5. **gen-api**: optional, this will generate an open-api formated client sdk in build folder.
 6. **log-file**: optional, log file name. By default it is "dms_app.log".
 7. **log-rotation-time**: optional, log rotation time. By default it is "1 H", which means one hour. Valid format is "interval when". For weekday and midnight, only "when" is required. Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.

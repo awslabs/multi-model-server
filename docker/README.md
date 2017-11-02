@@ -125,9 +125,9 @@ docker build -t dms_image_gpu .
 nvidia-docker run -it -p 80:80 dms_image_gpu:latest
 ```
 
-Now you are inside docker container and dms config file is localted in dms_docker_gpu folder. Run follwing command to launch service:
+Now you are inside docker container and dms config file is localted in dms_docker_gpu folder. Run following command to launch service:
 
 ```bash
 cd dms_docker_gpu && ./launch.sh
 ```
-You can change gunicorn argument `--workers` to be the number of your gpu devices to fully utilize gpu resources.
+You can change gunicorn argument `--workers` to change utilization of gpu resources. Each worker would utilize one gpu device. Currently up to 4 workers are recommended to get optimal performance.

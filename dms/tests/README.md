@@ -1,8 +1,8 @@
 # Testing DMS
 
-## Unit Tests
+## Pre-requisites
 
-You will need some additional Python modules to run the unit tests.
+You will need some additional Python modules to run the unit tests and integration tests.
 
 ```bash
 sudo pip install mock pytest
@@ -15,11 +15,17 @@ git clone https://github.com/awslabs/deep-model-server.git
 cd deep-model-server
 ```
 
-Then you can run the unit tests with the following:
+## Unit Tests
+
+You can run the unit tests with the following:
 
 ```bash
-python -m pytest mms/tests/unit_tests/
+python -m pytest dms/tests/unit_tests/
 ```
 ## CI Tests
 
-TODO: add comments about where they're hosted, etc.
+You can run the integration tests with the following:
+ 
+```bash
+python -m pytest dms/test/integration_tests/
+```

@@ -4,23 +4,35 @@ JMeter is a widely used load testing tool. This is a simple example for how we u
 JMeter to do load testing for DMS.
 
 ## Quick start
-Suppose you have hosted your DMS on a remote server, whose DNS is ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com. And also suppose you are hosting `resnet-18` service (so that you can use this test plan to test load without making changes). And you are sending the `test.jpg` image to the `predict` endpoint.
+Suppose you have hosted your DMS on a remote server, whose DNS is `ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com`. And also suppose you are hosting `resnet-18` service (so that you can use this test plan to test load without making changes). And you are sending the `test.jpg` image to the `predict` endpoint.
 
-You can used this simple tool to test load by running
+You can `run_load_test.sh` to do load testing by running
 ```shell
 ./run_load_test.sh -i ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com -c 100 -n 20 -f report.csv
 ```
 
-And this will start 100 threads concurrently and each threads will simulate 20 requests. The aggregated report will be write to `report/report.csv` and the JMeter logs will be write to
-`log/jmeter.log`.
+```
+Arguments:
+-i : ip address or DNS name
+-c : concurrency, number of threads
+-n : number of requests send by each thread
+-f : output file name
+
+optional:
+-p : port that hosting the endpoint
+-o : raw result tree output filename
+```
+
+This will start `100` threads concurrently and each threads will simulate `20` requests. The aggregated report will be write to `./report/report.csv` and the JMeter logs will be write to
+`./log/jmeter.log`.
 
 ## Prerequisite
-To setup JMeter you need to get Apache JMeter with Plugin. On Mac OS you can use `homebrew` to get JMeter with Plugin by running:
+To setup the JMeter, you need to get JMeter with Plugin. On Mac OS you can use `homebrew` to get JMeter with Plugin by running:
 ```
 brew install jmeter --with-plugins
 ```
 
-Then you need to find the path of `CMDRunner.jar`. You can use `brew list jmeter`. For example you might get the following result.
+Then you need to find the path of `CMDRunner.jar`. You can use `brew list jmeter`. For example, on my machine I will get the following result.
 ```
 /usr/local/Cellar/jmeter/3.3/bin/jmeter
 /usr/local/Cellar/jmeter/3.3/libexec/backups/ (20 files)

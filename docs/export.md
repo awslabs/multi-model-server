@@ -2,9 +2,9 @@
 
 When you export a model in MXNet, you will have a `model-symbol.json` file (1), which describes the neural network, and a larger `model-0000.params` file containing the parameters and their weights (2). In addition to these two files, for DMS to work with your model, you must provide a `signature.json` file (3), which describes your inputs and your outputs. You also have *the option* of providing labels for the outputs in a `synset.txt` file (4). For the purpose of a quick example, we'll pretend that you've already saved a checkpoint which gives you the first two assets by providing those files for you to download, or that you've acquired the trained models from a [model zoo](model_zoo.md). We'll also provide the latter two files that you would create on your own based on the model you're trying to serve. Don't worry if that sounds ominous; creating those last two files is easy. More details on this can be found in later the **Required Assets** section.
 
-Each of these files is viewable in a text editor. Download each or download and extract the provided zip file then review them to note the following features:
+Each of these files is viewable in a text editor. Download each or download and extract the provided model file then review them to note the following features:
 
-* [model-example.zip](https://s3.amazonaws.com/model-server/models/model-example/model-example.zip) - contains the following four files
+* [model-example.model](https://s3.amazonaws.com/model-server/models/model-example/model-example.model) - contains the following four files
 * [squeezenet_v1.1-symbol.json](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-symbol.json) - contains the layers and overall structure of the neural network; the name, or prefix, here is "squeezenet_v1.1"
 * [squeezenet_v1.1-0000.params](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-0000.params) - contains the parameters and the weights; again, the prefix is "squeezenet_v1.1"
 * [signature.json](https://s3.amazonaws.com/model-server/models/model-example/signature.json) - defines the inputs and outputs that DMS is expecting to hand-off to the API

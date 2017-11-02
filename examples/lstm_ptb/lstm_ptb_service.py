@@ -2,7 +2,7 @@ import mxnet as mx
 import bisect
 import numpy as np
 
-from dms.model_service.mxnet_model_service import check_input_shape, MXNetBaseService
+from dms.model_service.mxnet_model_service import MXNetBaseService
 from dms.utils.mxnet import nlp
 
 class MXNetLSTMService(MXNetBaseService):
@@ -19,7 +19,7 @@ class MXNetLSTMService(MXNetBaseService):
             self.data_shapes.append((input['data_name'], tuple(input['data_shape'])))
 
         # Load pre-trained lstm bucketing module
-        load_epoch = 25
+        load_epoch = 100
         num_layers = 2
         num_hidden = 200
         num_embed = 200
@@ -45,6 +45,7 @@ class MXNetLSTMService(MXNetBaseService):
 
         stack = mx.rnn.FusedRNNCell(num_hidden, num_layers=num_layers, mode='lstm').unfuse()
 
+        # Define symbol generation function for bucket module
         def sym_gen(seq_len):
             data = mx.sym.Variable('data')
             embed = mx.sym.Embedding(data=data, input_dim=len(self.vocab),
@@ -68,22 +69,14 @@ class MXNetLSTMService(MXNetBaseService):
         self.mx_model.set_params(arg_params, aux_params)
 
     def _preprocess(self, data):
+        print(data)
         # Convert a string of sentence to a list of string
-        sent = data[0].split(' ')
+        sent = data[0]['input_sentence'].lower().split(' ')
         # Encode sentence to a list of int
         res, _ = nlp.encode_sentences([sent], vocab=self.vocab, start_label=self.start_label, invalid_label=self.invalid_label)
-        # Pad sentence
-        sent = res[0]
-        buck = bisect.bisect_left(self.buckets, len(sent))
-        buff = np.full((self.buckets[buck],), self.invalid_label, dtype='float32')
-        buff[:len(sent)] = sent
-        sent_bucket = self.buckets[buck]
-        pad_sent = mx.nd.array([buff], dtype='float32')
-        return mx.io.DataBatch([pad_sent], pad=0, bucket_key=sent_bucket,
-                               provide_data=[mx.io.DataDesc(
-                                   name=self.data_names[0],
-                                   shape=(1, sent_bucket),
-                                   layout=self.layout)])
+
+        return nlp.pad_sentence(res[0], self.buckets, invalid_label=self.invalid_label,
+                                 data_name=self.data_names[0], layout=self.layout)
 
     def _inference(self, data_batch):
         self.mx_model.forward(data_batch)
@@ -94,10 +87,4 @@ class MXNetLSTMService(MXNetBaseService):
         res = ''
         for idx in word_idx:
             res += self.idx2word[idx] + ' '
-        print(res)
         return res
-
-if __name__ == '__main__':
-    service = MXNetLSTMService(path='lstm_ptb.zip')
-    sent = " the dow jones industrials closed at N "
-    service.inference([sent])

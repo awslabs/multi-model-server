@@ -16,6 +16,8 @@ sys.path.append(curr_path + '/../../..')
 import unittest
 import utils.mxnet.nlp as nlp
 
+from random import randint
+
 class TestMXNetNLPUtils(unittest.TestCase):
     def test_encode_sentence(self):
         vocab = {}
@@ -36,4 +38,14 @@ class TestMXNetNLPUtils(unittest.TestCase):
             "encode_sentence method failed. Result vector invalid."
         assert len(out2) == len(sentence) + 1, "encode_sentence method failed. " \
                                                "Generated vocab incorrect."
+
+    def test_pad_sentence(self):
+        buckets = [10, 20, 30, 40, 50, 60]
+        for _ in range(5):
+            sent_length = randint(1, 60)
+            sentence = [i for i in range(sent_length)]
+            databatch = nlp.pad_sentence(sentence, buckets)
+            assert databatch.data[0].shape[1] in buckets, "pad_sentence failed. Padded sentence has length %d." \
+                                                          % (databatch.data[0].shape[1])
+
 

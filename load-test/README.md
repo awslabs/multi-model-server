@@ -1,7 +1,6 @@
 # Use JMeter to do load testing for Deep Model Server
 
-JMeter is a widely used load testing tool. This is a simple example for how we used
-JMeter to do load testing for DMS.
+JMeter is a widely used load testing tool. This is a simple example for how we used JMeter to do load testing for DMS.
 
 ## Quick start
 Suppose you have hosted your DMS on a remote server, whose DNS is `ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com`. And also suppose you are hosting `resnet-18` service (so that you can use this test plan to test load without making changes). And you are sending the `test.jpg` image to the `predict` endpoint.
@@ -46,3 +45,6 @@ Then you need to find the path of `CMDRunner.jar`. You can use `brew list jmeter
 ```
 
 The `CMDRUnner.jar` is located in `/usr/local/Cellar/jmeter/3.3/libexec/lib/ext`, then you need to replace the command_runner location is the `run_load_test.sh` file line 38.
+
+## Modifying the test plan
+You can use JMeter's GUI by running command `jmeter` so that you can modify the test plan `test_dms.jmx`. For the current setting we are testing a HTTP POST request that send multi-part form-data to the server. The testing file is hard coded in `run_load_test.sh` that `inputfile="$curr_dir/test.jpg"`, you can change it to the image that you are testing.

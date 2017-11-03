@@ -1,6 +1,4 @@
 import mxnet as mx
-import bisect
-import numpy as np
 
 from dms.model_service.mxnet_model_service import MXNetBaseService
 from dms.utils.mxnet import nlp
@@ -77,10 +75,11 @@ class MXNetLSTMService(MXNetBaseService):
         # Encode sentence to a list of int
         res, _ = nlp.encode_sentences([sent], vocab=self.vocab, start_label=self.start_label, invalid_label=self.invalid_label)
 
-        return nlp.pad_sentence(res[0], self.buckets, invalid_label=self.invalid_label,
-                                 data_name=self.data_names[0], layout=self.layout)
+        return res
 
-    def _inference(self, data_batch):
+    def _inference(self, data):
+        data_batch = nlp.pad_sentence(data[0], self.buckets, invalid_label=self.invalid_label,
+                                      data_name=self.data_names[0], layout=self.layout)
         self.mx_model.forward(data_batch)
         return self.mx_model.get_outputs()
 

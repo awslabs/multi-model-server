@@ -87,18 +87,18 @@ class SingleNodeService(ModelService):
         list of outputs to be sent back to client.
             data to be sent back
         '''
-        #pre_start_time = time.time()
+        pre_start_time = time.time()
         data = self._preprocess(data)
-        #infer_start_time = time.time()
-        #logger.debug("Preprocess time is %s ms."
-        #             % (str((infer_start_time - pre_start_time) * 1000)))
+        infer_start_time = time.time()
+        logger.debug("Preprocess time is %s ms."
+                     % (str((infer_start_time - pre_start_time) * 1000)))
         data = self._inference(data)
-        #post_start_time = time.time()
-        #logger.debug("Inference time is %s ms."
-        #             % (str((post_start_time - infer_start_time) * 1000)))
+        post_start_time = time.time()
+        logger.debug("Inference time is %s ms."
+                     % (str((post_start_time - infer_start_time) * 1000)))
         data = self._postprocess(data)
-        #logger.debug("Post process time is %s ms."
-        #            % (str((time.time() - post_start_time) * 1000)))
+        logger.debug("Post process time is %s ms."
+                    % (str((time.time() - post_start_time) * 1000)))
         return data
 
     @abstractmethod

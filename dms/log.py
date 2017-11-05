@@ -31,8 +31,7 @@ class _Formatter(logging.Formatter):
     """Customized log formatter."""
 
     def __init__(self):
-        datefmt = '%m%d %H:%M:%S'
-        super(_Formatter, self).__init__(datefmt=datefmt)
+        super(_Formatter, self).__init__()
 
     def _get_color(self, level):
         if logging.WARNING <= level:
@@ -41,23 +40,10 @@ class _Formatter(logging.Formatter):
             return '\x1b[32m'
         return '\x1b[34m'
 
-    def _get_label(self, level):
-        if level == logging.CRITICAL:
-            return 'C'
-        elif level == logging.ERROR:
-            return 'E'
-        elif level == logging.WARNING:
-            return 'W'
-        elif level == logging.INFO:
-            return 'I'
-        elif level == logging.DEBUG:
-            return 'D'
-        return 'U'
-
     def format(self, record):
         fmt = self._get_color(record.levelno)
-        fmt += self._get_label(record.levelno)
-        fmt += '%(asctime)s %(process)d %(pathname)s:%(funcName)s:%(lineno)d'
+        fmt += '[' + logging.getLevelName(record.levelno)
+        fmt += ' %(asctime)s PID:%(process)d %(pathname)s:%(funcName)s:%(lineno)d'
         fmt += ']\x1b[0m'
         fmt += ' %(message)s'
         if PY3:

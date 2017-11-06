@@ -12,9 +12,11 @@
 """
 
 import time
+import sys
+sys.path.append('..')
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-from ..log import get_logger
+from log import get_logger
 
 logger = get_logger(__name__)
 URL_PREFIX = ('http://', 'https://', 's3://')
@@ -26,7 +28,7 @@ class ModelService(object):
     '''
     __metaclass__ = ABCMeta
 
-    def __init__(self, path, gpu=None):
+    def __init__(self, service_name, path, gpu=None):
         self.ctx = None
 
     @abstractmethod

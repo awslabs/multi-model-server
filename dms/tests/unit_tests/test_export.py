@@ -95,7 +95,7 @@ class TestExport(unittest.TestCase):
         os.system(cmd)
         assert os.path.isfile(export_file), "No model file is found. Export failed!"
 
-        mx_vision_service(export_file)
+        mx_vision_service(model_name, export_file)
         os.system('rm -rf %s %s %s/%s' % (export_file, model_path, os.getcwd(), model_name))
 
     def test_export_API(self):

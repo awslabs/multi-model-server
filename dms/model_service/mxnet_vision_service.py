@@ -12,7 +12,7 @@
 """
 
 from mxnet_model_service import MXNetBaseService
-from dms.utils.mxnet import image, ndarray
+from ..utils.mxnet import image, ndarray
 
 
 class MXNetVisionService(MXNetBaseService):

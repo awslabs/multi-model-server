@@ -66,8 +66,9 @@ class ArgParser(object):
                                                 'Check https://docs.python.org/2/library/logging.html#logging-levels')
 
         parser.add_argument('--metrics-write-to',
-                            choices=['memory', 'csv'],
-                            help='Target location to write dms metrics. Memory, local CSV... ')
+                            default='log',
+                            choices=['log', 'csv'],
+                            help='Target location to write dms metrics. Log, local CSV... ')
 
         return parser
 

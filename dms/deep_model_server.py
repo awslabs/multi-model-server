@@ -10,13 +10,14 @@
 
 import logging
 
-from logging.handlers import TimedRotatingFileHandler
 from arg_parser import ArgParser
+from client_sdk_generator import ClientSDKGenerator
 from log import get_logger
 from log import LOG_LEVEL_DICT
+from logging.handlers import TimedRotatingFileHandler
+from multiprocessing import Lock
 from serving_frontend import ServingFrontend
-from client_sdk_generator import ClientSDKGenerator
-from dms import *
+from dms import metrics_manager
 
 
 VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in range(7)]
@@ -141,16 +142,8 @@ class DMS(object):
             if self.args.gen_api is not None:
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
 
-            # Generate metrics to target location (memory, csv ...)
-            if self.args.metrics_write_to != None:
-                ErrorMetric.start_recording(self.args.metrics_write_to, 'interval_sum')
-                RequestsMetric.start_recording(self.args.metrics_write_to, 'interval_sum')
-                CPUMetric.start_recording(self.args.metrics_write_to, 'interval_average')
-                MemoryMetric.start_recording(self.args.metrics_write_to, 'interval_average')
-                OverallLatencyMetric.start_recording(self.args.metrics_write_to, 'interval_average')
-                InferenceLatencyMetric.start_recording(self.args.metrics_write_to, 'interval_average')
-                PreLatencyMetric.start_recording(self.args.metrics_write_to, 'interval_average')
-                PostLatencyMetric.start_recording(self.args.metrics_write_to, 'interval_average')
+            # Generate metrics to target location (log, csv ...), default to log
+            metrics_manager.start(self.args.metrics_write_to, Lock())
 
         except Exception as e:
             logger.error('Failed to process arguments: ' + str(e))

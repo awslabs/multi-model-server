@@ -16,6 +16,7 @@ import sys
 sys.path.append('..')
 
 from abc import ABCMeta, abstractmethod, abstractproperty
+from dms import metrics_manager
 from ..log import get_logger
 
 
@@ -96,23 +97,17 @@ class SingleNodeService(ModelService):
 
         # Update preprocess latency metric
         pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
-        PreLatencyMetric.update(pre_time_in_ms)
+        metrics_manager.pre_latency_metric.update(pre_time_in_ms)
 
         data = self._inference(data)
-        post_start_time = time.time()
-
-        # Update inference latency metric
-        infer_time_in_ms = (post_start_time - infer_start_time) * 1000
-        InferenceLatencyMetric.update(infer_time_in_ms)
-
         data = self._postprocess(data)
 
-        # Update postprocess latency metric
-        post_time_in_ms = (time.time() - post_start_time) * 1000
-        PostLatencyMetric.update(post_time_in_ms)
+        # Update inference latency metric
+        infer_time_in_ms = (time.time() - infer_start_time) * 1000
+        metrics_manager.inference_latency_metric.update(infer_time_in_ms)
 
         # Update overall latency metric
-        OverallLatencyMetric.update(pre_time_in_ms + infer_time_in_ms + post_time_in_ms)
+        metrics_manager.overall_latency_metric.update(pre_time_in_ms + infer_time_in_ms)
 
         return data
 

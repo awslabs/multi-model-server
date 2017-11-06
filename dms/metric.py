@@ -21,7 +21,7 @@ class Metric(object):
     """Metric class for model server
     """
     def __init__(self, name, mutex, 
-                 interval_sec=5, 
+                 interval_sec=5*60, 
                  update_func=None, 
                  aggregate_method='interval_average',
                  write_to='log'):

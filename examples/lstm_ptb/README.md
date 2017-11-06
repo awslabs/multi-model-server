@@ -1,4 +1,4 @@
-# Senquence to Sequence inference with LSTM network trained on PenTreeBank data set
+# Sequence to Sequence inference with LSTM network trained on PenTreeBank data set
 
 In this example, we show how to create a service which generates sentences with a pre-trained LSTM model with deep model server. This model is trained on [PenTreeBank data](https://catalog.ldc.upenn.edu/ldc99t42) and training detail can be found in [MXNet example](https://github.com/apache/incubator-mxnet/tree/master/example/rnn).
 

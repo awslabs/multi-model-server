@@ -66,7 +66,7 @@ The predictor endpoint will return a prediction response in JSON. It will look s
 }
 ```
 
-Now you've seen how easy it can be to serve a deep learning model with Portico! [Would you like to know more?](docs/serve.md)
+Now you've seen how easy it can be to serve a deep learning model with Portico! [Would you like to know more?](docs/server.md)
 
 
 ### Export a Portico Model
@@ -102,7 +102,7 @@ To learn more about exporting, check out [Portico export documentation](docs/exp
 
 Browse over to the [Docs readme](docs/README.md) for the full index of documentation. This includes more examples, how to customize the API service, API endpoint details, and more.
 
-For production deploymenmts, we recommend using containers, and include pre-configured docker images for you to use. The basic usage can be found on the [Docker readme](docker/README.md).
+For production deployments, we recommend using containers, and include pre-configured docker images for you to use. The basic usage can be found on the [Docker readme](docker/README.md).
 
 ## Contributing
 

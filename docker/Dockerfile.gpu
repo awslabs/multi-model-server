@@ -1,11 +1,13 @@
-FROM ubuntu:latest
+FROM nvidia/cuda:8.0-cudnn5-devel
 
 COPY install.sh /
 
 RUN /install.sh
 
+RUN pip install mxnet-cu80
+
 COPY virtual.conf /etc/nginx/conf.d/
 
-ADD dms_docker_cpu dms_docker_cpu
+ADD dms_docker_gpu dms_docker_gpu
 
 LABEL maintainer="yuruofei@amazon.com, wayao@amazon.com"

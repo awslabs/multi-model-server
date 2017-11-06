@@ -11,9 +11,10 @@
 import ast
 import traceback
 import time
+
+from dms import metrics_manager
 from functools import partial
 from flask import abort
-
 from service_manager import ServiceManager
 from request_handler.flask_handler import FlaskRequestHandler
 from log import get_logger
@@ -361,10 +362,12 @@ class ServingFrontend(object):
         Response
             Http response for ping endpiont.
         """
+        metrics_manager.request_metric.update(metric=1)
         try:
             for model in self.service_manager.get_loaded_modelservices().values():
                 model.ping()
         except Exception:
+            metrics_manager.error_metric.update(metric=1)
             logger.warn('Model serving is unhealthy.')
             return self.handler.jsonify({'health': 'unhealthy!'})
 
@@ -379,6 +382,7 @@ class ServingFrontend(object):
         Response
             Http response for api description endpiont.
         """
+        metrics_manager.request_metric.update(metric=1)
         return self.handler.jsonify({'description': self.openapi_endpoints})
 
     def predict_callback(self, **kwargs):
@@ -398,6 +402,8 @@ class ServingFrontend(object):
         Response
             Http response for predict endpiont.
         """
+        metrics_manager.request_metric.update(metric=1)
+
         handler_start_time = time.time()
         modelservice = kwargs['modelservice']
         input_names = kwargs['input_names']
@@ -418,6 +424,7 @@ class ServingFrontend(object):
                                                         % (name, input_type, type(form_data))
                     input_data.append(form_data)
             except Exception as e:
+                metrics_manager.error_metric.update(metric=1)
                 logger.error(str(e))
                 abort(400, str(e))
         elif input_type == 'image/jpeg':
@@ -433,10 +440,12 @@ class ServingFrontend(object):
                                                                 'bytes, but got %s' % (type(file_data))
                     input_data.append(file_data)
             except Exception as e:
+                metrics_manager.error_metric.update(metric=1)
                 logger.error(str(e))
                 abort(400, str(e))
         else:
             msg = '%s is not supported for input content-type' % (input_type)
+            metrics_manager.error_metric.update(metric=1)
             logger.error(msg)
             abort(500, "Service setting error. %s" % (msg))
 
@@ -444,6 +453,7 @@ class ServingFrontend(object):
         try:
             response = modelservice.inference(input_data)
         except Exception:
+            metrics_manager.error_metric.update(metric=1)
             logger.error(str(traceback.format_exc()))
             abort(500, "Error occurs while inference was executed on server.")
 
@@ -454,6 +464,7 @@ class ServingFrontend(object):
             logger.info('Response is jpeg image encoded in base64 string.')
         else:
             msg = '%s is not supported for input content-type.' % (output_type)
+            metrics_manager.error_metric.update(metric=1)
             logger.error(msg)
             abort(500, "Service setting error. %s" % (msg))
 

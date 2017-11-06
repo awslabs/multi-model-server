@@ -16,7 +16,9 @@ import sys
 sys.path.append('..')
 
 from abc import ABCMeta, abstractmethod, abstractproperty
+from dms import metrics_manager
 from log import get_logger
+
 
 logger = get_logger(__name__)
 URL_PREFIX = ('http://', 'https://', 's3://')
@@ -92,15 +94,21 @@ class SingleNodeService(ModelService):
         pre_start_time = time.time()
         data = self._preprocess(data)
         infer_start_time = time.time()
-        logger.debug("Preprocess time is %s ms."
-                     % (str((infer_start_time - pre_start_time) * 1000)))
+
+        # Update preprocess latency metric
+        pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
+        metrics_manager.pre_latency_metric.update(pre_time_in_ms)
+
         data = self._inference(data)
-        post_start_time = time.time()
-        logger.debug("Inference time is %s ms."
-                     % (str((post_start_time - infer_start_time) * 1000)))
         data = self._postprocess(data)
-        logger.debug("Post process time is %s ms."
-                     % (str((time.time() - post_start_time) * 1000)))
+
+        # Update inference latency metric
+        infer_time_in_ms = (time.time() - infer_start_time) * 1000
+        metrics_manager.inference_latency_metric.update(infer_time_in_ms)
+
+        # Update overall latency metric
+        metrics_manager.overall_latency_metric.update(pre_time_in_ms + infer_time_in_ms)
+
         return data
 
     @abstractmethod

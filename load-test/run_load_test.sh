@@ -19,7 +19,7 @@ done
 
 if [ "$dns" == "" ]; then
   echo "You need to provide the server name that hosting your DMS"
-  echo "e.g. ./run_load_test.sh -dns ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com"
+  echo "e.g. ./run_load_test.sh -i ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com"
 fi
 
 if [ "$filename" == "" ]; then

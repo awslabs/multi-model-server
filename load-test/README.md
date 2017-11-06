@@ -1,11 +1,12 @@
 # Use JMeter to do load testing for Deep Model Server
 
-JMeter is a widely used load testing tool. This is a simple example for how we used JMeter to do load testing for DMS.
+[JMeter](http://jmeter.apache.org/) is a widely used load testing tool. This is a simple example for how we used JMeter to load test DMS.
 
 ## Quick start
-Suppose you have hosted your DMS on a remote server, whose DNS is `ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com`. And also suppose you are hosting `resnet-18` service (so that you can use this test plan to test load without making changes). And you are sending the `test.jpg` image to the `predict` endpoint.
+To load test DMS serving your model, you can use the included run_load_test.sh.
 
-You can `run_load_test.sh` to do load testing by running
+As an example, here's how you would test DMS running on ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com, hosting a resnet-18 model.
+
 ```shell
 ./run_load_test.sh -i ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com -c 100 -n 20 -f report.csv
 ```

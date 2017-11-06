@@ -16,7 +16,6 @@ from metric import Metric
 
 # CPU and memory metric are collected every 5 seconds
 intervalSec = 5
-
 def cpu(metric_instance):
     cpu_usage = psutil.cpu_percent() / 100.0
     metric_instance.update(cpu_usage)
@@ -63,12 +62,6 @@ class MetricsManager(object):
                                     write_to=metrics_write_to)
         self.cpu_metric = Metric('cpu', mutex, 
                                 aggregate_method='interval_average', 
-<<<<<<< HEAD
-                                write_to=metrics_write_to)
-        self.memory_metric = Metric('memory', mutex, 
-                                    aggregate_method='interval_average', 
-                                    write_to=metrics_write_to)
-=======
                                 write_to=metrics_write_to,
                                 update_func=cpu)
         self.memory_metric = Metric('memory', mutex, 
@@ -79,7 +72,6 @@ class MetricsManager(object):
                                     aggregate_method='interval_average', 
                                     write_to=metrics_write_to,
                                     update_func=disk)
->>>>>>> Add Metric Manager
         self.overall_latency_metric = Metric('overall_latency', mutex, 
                                             aggregate_method='interval_average', 
                                     write_to=metrics_write_to)

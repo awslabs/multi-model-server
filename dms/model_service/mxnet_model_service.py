@@ -64,8 +64,6 @@ def download(url, path=None, overwrite=False):
         os.rename("%s.temp" % (fname), fname)
     return fname
 
-
-
 def check_input_shape(inputs, signature):
     '''Check input data shape consistency with signature.
 

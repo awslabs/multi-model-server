@@ -113,7 +113,7 @@ Now you can send a request to http://your_public_host_name/api-description to se
 
 ## Use docker image for gpu
 
-If your host machine has at least one GPU installed, you can use GPU docker image to boost your inference service.
+If your host machine has at least one GPU installed, you can use GPU docker image to benefit from improved inference performance.
 
 You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-docker) before you can use nvidia gpu inside docker.
 

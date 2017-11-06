@@ -49,7 +49,8 @@ class ArgParser(object):
 
         parser.add_argument('--host', help='Host. By default it is localhost.')
 
-        parser.add_argument('--gpu', help='Id of gpu device. If your machine has two gpus, this number can be 0 or 1. '
+        parser.add_argument('--gpu', help='ID of GPU device to use for inference. '
+                                          'If your machine has N gpus, this number can be 0 to N - 1. '
                                           'If it is not set, cpu will be used.')
 
         parser.add_argument('--log-file', help='Log file name. By default it is "dms_app.log".')

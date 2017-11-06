@@ -80,7 +80,7 @@ def _export_model(args):
                 symbol_file_num += 1
             file_list.append(os.path.join(dirpath, file_name))
     if symbol_file_num == 0:
-        logging.warning("No model symbol json file is found. "
+        logging.warning("No MXNet model symbol json file is found. "
                         "You may need to manually load the model in your service class.")
     if symbol_file_num > 1:
         logging.warning("More than one model symbol json file was found. "

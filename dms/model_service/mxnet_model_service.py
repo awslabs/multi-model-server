@@ -12,17 +12,58 @@
 """
 
 import mxnet as mx
-import numpy as np
+import requests
 import zipfile
 import json
 import shutil
 import os
 
-from mxnet.gluon.utils import download
 from mxnet.io import DataBatch
 from model_service import SingleNodeService, URL_PREFIX
 
 SIGNATURE_FILE = 'signature.json'
+
+def download(url, path=None, overwrite=False):
+    """Download an given URL
+
+    Parameters
+    ----------
+    url : str
+        URL to download
+    path : str, optional
+        Destination path to store downloaded file. By default stores to the
+        current directory with same name as in url.
+    overwrite : bool, optional
+        Whether to overwrite destination file if already exists.
+
+    Returns
+    -------
+    str
+        The file path of the downloaded file.
+    """
+    if path is None:
+        fname = url.split('/')[-1]
+    elif os.path.isdir(path):
+        fname = os.path.join(path, url.split('/')[-1])
+    else:
+        fname = path
+
+    if overwrite or not os.path.exists(fname):
+        dirname = os.path.dirname(os.path.abspath(os.path.expanduser(fname)))
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
+        print('Downloading %s from %s...' % (fname, url))
+        r = requests.get(url, stream=True)
+        if r.status_code != 200:
+            raise RuntimeError("Failed downloading url %s" % url)
+        with open("%s.temp" % (fname), 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:  # filter out keep-alive new chunks
+                    f.write(chunk)
+        os.rename("%s.temp" % (fname), fname)
+    return fname
+
 
 
 def check_input_shape(inputs, signature):
@@ -83,9 +124,9 @@ class MXNetBaseService(SingleNodeService):
        operations when serving MXNet model. This is a base class and needs to be
        inherited.
     '''
-    def __init__(self, path, gpu=None):
+    def __init__(self, service_name, path, gpu=None):
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
-        model_dir, model_name = self._extract_model(path)
+        model_dir, model_name = self._extract_model(service_name, path)
 
         data_names = []
         data_shapes = []
@@ -155,9 +196,9 @@ class MXNetBaseService(SingleNodeService):
         '''
         return self._signature
 
-    def _extract_model(self, path, check_multi_sym=True):
+    def _extract_model(self, service_name, path, check_multi_sym=True):
         curr_dir = os.getcwd()
-        model_file = download(url=path, path=curr_dir) \
+        model_file = download(url=path, path='%s/%s.model' % (curr_dir, service_name), overwrite=True) \
             if path.lower().startswith(URL_PREFIX) else path
 
         model_file = os.path.abspath(model_file)

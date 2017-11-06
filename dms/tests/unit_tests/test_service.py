@@ -20,7 +20,7 @@ import numpy as np
 import mxnet as mx
 from io import BytesIO
 from model_service.mxnet_vision_service import MXNetVisionService as mx_vision_service
-from utils.service.pixel2pixel_service import UnetGenerator, Pixel2pixelService
+from helper.pixel2pixel_service import UnetGenerator, Pixel2pixelService
 from export_model import export_serving
 
 class TestService(unittest.TestCase):
@@ -77,7 +77,7 @@ class TestService(unittest.TestCase):
         path = 'test'
         self._train_and_export(path)
         model_path = curr_path + '/' + path
-        service = mx_vision_service(path='%s/test.model' % (model_path))
+        service = mx_vision_service(service_name='test', path='%s/test.model' % (model_path))
         assert hasattr(service, 'labels'), "Fail to load synset file from model archive."
         assert len(service.labels) > 0, "Labels attribute is empty."
         os.system('rm -rf %s' % (model_path))
@@ -86,7 +86,7 @@ class TestService(unittest.TestCase):
         path = 'test'
         self._train_and_export(path)
         model_path = curr_path + '/' + path
-        service = mx_vision_service(path='%s/test.model' % (model_path))
+        service = mx_vision_service(service_name='test', path='%s/test.model' % (model_path))
 
         # Test same size image inputs
         data1 = mx.nd.random_uniform(0, 255, shape=(3, 64, 64))

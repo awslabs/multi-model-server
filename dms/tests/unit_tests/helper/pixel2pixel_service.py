@@ -10,11 +10,12 @@
 
 import mxnet as mx
 import numpy as np
+import sys
+sys.path.append('../../..')
+
 from model_service.mxnet_model_service import MXNetBaseService, check_input_shape
-from ..mxnet import image
-from mxnet import gluon
+from utils.mxnet import image
 from mxnet import ndarray as nd
-from mxnet.gluon import nn, utils
 from mxnet.gluon.nn import Dense, Activation, Conv2D, Conv2DTranspose, \
     BatchNorm, LeakyReLU, Flatten, HybridSequential, HybridBlock, Dropout
 
@@ -90,7 +91,7 @@ class UnetGenerator(HybridBlock):
 class Pixel2pixelService(MXNetBaseService):
 
     def __init__(self, path, model_name, ctx=mx.cpu()):
-        model_dir, _ = self._extract_model(path, check_multi_sym=False)
+        model_dir, _ = self._extract_model(model_name, path, check_multi_sym=False)
         self.mx_model = UnetGenerator(in_channels=3, num_downs=8)
         self.mx_model.load_params('%s/%s.params' % (model_dir, model_name), ctx=ctx)
 

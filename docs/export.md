@@ -1,8 +1,12 @@
 # Exporting Models for Use with DMS
 
+A key feature of DMS is the ability to export model files. It is a separate CLI that takes in network definitions in the form of a JSON file, the trained network weight in the form of a parameters file, and the description of the models' inputs and outputs in the form of a signature JSON file. It outputs a `.model` zip file that DMS's server CLI uses to serve the models.
+
+## Technical Details
+
 When you export a model in MXNet, you will have a `model-symbol.json` file (1), which describes the neural network, and a larger `model-0000.params` file containing the parameters and their weights (2). In addition to these two files, for DMS to work with your model, you must provide a `signature.json` file (3), which describes your inputs and your outputs. You also have *the option* of providing labels for the outputs in a `synset.txt` file (4). For the purpose of a quick example, we'll pretend that you've already saved a checkpoint which gives you the first two assets by providing those files for you to download, or that you've acquired the trained models from a [model zoo](model_zoo.md). We'll also provide the latter two files that you would create on your own based on the model you're trying to serve. Don't worry if that sounds ominous; creating those last two files is easy. More details on this can be found in later the **Required Assets** section.
 
-Each of these files is viewable in a text editor. Download each or download and extract the provided model file then review them to note the following features:
+The files in the `model-example.model` file are human-readable in a text editor, with the exception of the `.params` file: this file is binary, and is usually quite large. Download and extract the provided model file. It is a zip file under the hood, so if you have trouble extracting it, change the extension to .zip first and then extract it.
 
 * [model-example.model](https://s3.amazonaws.com/model-server/models/model-example/model-example.model) - contains the following four files
 * [squeezenet_v1.1-symbol.json](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-symbol.json) - contains the layers and overall structure of the neural network; the name, or prefix, here is "squeezenet_v1.1"
@@ -12,11 +16,11 @@ Each of these files is viewable in a text editor. Download each or download and 
 
 Given these files you can use the `deep-model-export` CLI to generate a `.model` file that can be used with DMS. This file is essentially a zip archive, so changing the extension from `.model` to `.zip` will let you manually extract the files from any DMS model file.
 
-To try this out, open your terminal and go to the folder you just extracted. Using the zip file and its directory structure can help you keep things organized. In this next example we'll go into the `model-example` folder and run `deep-model-export`. We're going to tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets. These are all in the `models/squeezenet_v1.1` folder.
+To try this out, open your terminal and go to the folder you just extracted. Using the zip file and its directory structure can help you keep things organized. In this next example we'll go into the `model-example` folder and run `deep-model-export`. We're going to tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets, which are in the current working directory, so we'll use `.` for the path.
 
 ```bash
 cd model-example
-deep-model-export --model-name squeezenet_v1.1 --model-path models/squeezenet_v1.1
+deep-model-export --model-name squeezenet_v1.1 --model-path .
 ```
 
 This will output `squeezenet_v1.1.model` in the current working directory.

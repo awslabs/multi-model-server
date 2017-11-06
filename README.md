@@ -87,7 +87,7 @@ First you'll need to obtain a trained model, which typically consist of a set of
 
 With the model files available locally, you can use the `portico-export` CLI to generate a `.model` file that can be used to serve inference with Portico.
 
-Open your terminal and go to the folder you just downloaded the files above into. In this next step we'll run `portico-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+Open your terminal and go to the folder that has the four files you just downloaded. In this next step we'll run `portico-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
 
 ```bash
 portico-export --model-name squeezenet_v1.1 --model-path .

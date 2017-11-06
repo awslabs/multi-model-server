@@ -13,11 +13,10 @@
 
 import time
 import sys
-sys.path.append('..')
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 from dms import metrics_manager
-from log import get_logger
+from dms.log import get_logger
 
 
 logger = get_logger(__name__)

@@ -17,7 +17,7 @@ portico-server --models squeezenet=https://s3.amazonaws.com/model-server/models/
 ```
 Then check the [API description](http://127.0.0.1:8080/api-description). For info on other endpoints check out the [REST API documentation](rest_api.md).
 
-For more models, check out the [model zoo](model_zoo.md). 
+For more models, check out the [model zoo](model_zoo.md).
 
 ## Model Files
 
@@ -136,10 +136,10 @@ deep-model-server --models name=model_location name2=model_location2
 Here's an example for running the resnet-18 and the vgg16 models using local model files.
 
 ```bash
-deep-model-server --models resnet-18=file://models/resnet-18 vgg16=file://models/vgg16
+deep-model-server --models resnet-18=file://models/resnet-18 squeezenet=file://models/squeezenet_v1.1
 ```
 
-If you don't have the model files locally, then you can call DMS using links to the model files.
+If you don't have the model files locally, then you can call DMS using URLs to the model files.
 
 ```bash
 deep-model-server --models resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model

@@ -11,7 +11,7 @@
 """`MXNetVisionService` defines a MXNet base vision service
 """
 
-from mxnet_model_service import MXNetBaseService
+from dms.model_service.mxnet_model_service import MXNetBaseService
 from dms.utils.mxnet import image, ndarray
 
 

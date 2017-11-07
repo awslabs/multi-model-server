@@ -12,7 +12,7 @@ import json
 import os
 import subprocess
 
-from log import get_logger
+from dms.log import get_logger
 
 
 logger = get_logger(__name__)

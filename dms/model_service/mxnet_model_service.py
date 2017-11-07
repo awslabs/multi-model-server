@@ -19,7 +19,7 @@ import shutil
 import os
 
 from mxnet.io import DataBatch
-from model_service import SingleNodeService, URL_PREFIX
+from dms.model_service.model_service import SingleNodeService, URL_PREFIX
 
 SIGNATURE_FILE = 'signature.json'
 

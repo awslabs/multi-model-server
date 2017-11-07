@@ -11,7 +11,7 @@ import sys
 
 from flask import Flask, request, jsonify, send_file
 from dms.log import get_logger
-from request_handler import RequestHandler
+from dms.request_handler.request_handler import RequestHandler
 from flask_cors import CORS
 
 

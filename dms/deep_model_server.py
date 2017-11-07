@@ -10,12 +10,13 @@
 
 import logging
 
+from dms.arg_parser import ArgParser
+from dms.client_sdk_generator import ClientSDKGenerator
+from dms.log import get_logger, LOG_LEVEL_DICT
 from logging.handlers import TimedRotatingFileHandler
-from arg_parser import ArgParser
-from log import get_logger
-from log import LOG_LEVEL_DICT
-from serving_frontend import ServingFrontend
-from client_sdk_generator import ClientSDKGenerator
+from multiprocessing import Lock
+from dms.serving_frontend import ServingFrontend
+from dms.metrics_manager import MetricsManager
 
 
 VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in range(7)]
@@ -65,6 +66,7 @@ class DMS(object):
             parser = ArgParser.dms_parser()
             self.args = parser.parse_args(args) if args else parser.parse_args()
             self.serving_frontend = ServingFrontend(app_name)
+            self.gpu = self.args.gpu
 
             # Setup root logger handler and level.
             log_file = self.args.log_file or "dms_app.log"
@@ -84,8 +86,11 @@ class DMS(object):
             # Process arguments
             self._arg_process()
 
+            logger.info('Service started successfully.')
+            logger.info('Service description endpoint: ' + self.host + ':' + str(self.port) + '/api-description')
+            logger.info('Service health endpoint: ' + self.host + ':' + str(self.port) + '/ping')
+
             # Start model serving host
-            logger.info('Service started at ' + self.host + ':' + str(self.port))
             self.serving_frontend.start_handler(self.host, self.port)
 
         except Exception as e:
@@ -125,7 +130,7 @@ class DMS(object):
             # Load models using registered model definitions
             registered_models = self.serving_frontend.get_registered_modelservices()
             ModelClassDef = registered_models[mode_class_name]
-            self.serving_frontend.load_models(self.args.models, ModelClassDef)
+            self.serving_frontend.load_models(self.args.models, ModelClassDef, self.gpu)
             if len(self.args.models) > 5:
                 raise Exception('Model number exceeds our system limits: 5')
 
@@ -135,6 +140,9 @@ class DMS(object):
             # Generate client SDK
             if self.args.gen_api is not None:
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
+
+            # Generate metrics to target location (log, csv ...), default to log
+            MetricsManager.start(self.args.metrics_write_to, Lock())
 
         except Exception as e:
             logger.error('Failed to process arguments: ' + str(e))

@@ -14,15 +14,15 @@ The inference service would return the response in the format - '[(object_class,
 ## Step 1 - Download the pre-trained SSD Model
 
 ```bash
- wget https://s3.amazonaws.com/dms-models/resnet50_ssd/resnet50_ssd_model-symbol.json
- wget https://s3.amazonaws.com/dms-models/resnet50_ssd/resnet50_ssd_model-0000.params
+ wget https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-symbol.json
+ wget https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-0000.params
 ```
 
 or
 
 Use these links to download the Symbol and Params files:
-1. <a href="https://s3.amazonaws.com/dms-models/resnet50_ssd/resnet50_ssd_model-symbol.json" download>resnet50_ssd_model-symbol.json</a>
-2. <a href="https://s3.amazonaws.com/dms-models/resnet50_ssd/resnet50_ssd_model-0000.params" download>resnet50_ssd_model-0000.params</a>
+1. <a href="https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-symbol.json" download>resnet50_ssd_model-symbol.json</a>
+2. <a href="https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-0000.params" download>resnet50_ssd_model-0000.params</a>
 
 **Note** params file is around 125 MB.
 
@@ -85,7 +85,7 @@ To understand more about the MultiboxPrior, anchor boxes, sizes and ratios, plea
 
 ## Step 3 - Prepare synset.txt with list of class names
 
-`[synset.txt](synsex.txt)` is where we define list of all classes detected by the model. The pre-trained SSD model used in the example is trained to detect 20 classes - person, car, aeroplane, bicycle and more. See synset.txt file for list of all classes.
+[synset.txt](synsex.txt) is where we define list of all classes detected by the model. The pre-trained SSD model used in the example is trained to detect 20 classes - person, car, aeroplane, bicycle and more. See synset.txt file for list of all classes.
 
 The list of classes in synset.txt will be loaded by DMS as list of labels in inference logic.
 
@@ -93,7 +93,7 @@ The list of classes in synset.txt will be loaded by DMS as list of labels in inf
 
 DMS allows users to extend the base service functionality and add more custom initialization, pre-processing, inference and post-processing.
 
-In this example, we extend `MXNetVisionService`, provided by DMS for vision inference use-cases, and reuse its input image preprocess functionality to resize and transform the image shape. We only add custom pre-processing and post-processing steps. See `[ssd_service.py](ssd_service.py)` for more details on how to extend the base service and add custom pre-processing and post-processing.
+In this example, we extend `MXNetVisionService`, provided by DMS for vision inference use-cases, and reuse its input image preprocess functionality to resize and transform the image shape. We only add custom pre-processing and post-processing steps. See [ssd_service.py](ssd_service.py) for more details on how to extend the base service and add custom pre-processing and post-processing.
 
 ## Step 5 - Export the model with deep-model-export CLI utility
 
@@ -228,11 +228,11 @@ For better visualization on the input and how we can use the inference output, s
 
 Input Image
 
-![Street Input Image](https://s3.amazonaws.com/dms-models/resnet50_ssd/street.jpg)
+![Street Input Image](https://s3.amazonaws.com/model-server/models/resnet50_ssd/street.jpg)
 
 Output Image
 
-![Street Output Image](https://s3.amazonaws.com/dms-models/resnet50_ssd/street_output.jpg)
+![Street Output Image](https://s3.amazonaws.com/model-server/models/resnet50_ssd/street_output.jpg)
 
 
 # References

@@ -1,97 +1,41 @@
-# Deep Model Server
+Portico
+=======
 
-The purpose of **Deep Model Server (DMS)** is to provide an easy way for you to host and serve trained models. For example, you have a model that was trained on millions of images and it's capable of providing predictions on 1,000 different classes (let's say 1,000 different birds for this example). You want to write an app that lets your users snap a picture of a bird and it'll tell them what kind of bird it might be. You can use Deep Model Server to run the bird model, intake images, and return a prediction.
+**_Note that Portico is still experimental_**
 
-You can also use DMS with **multiple models**, so it would be no problem to add a dog classifier, one for cats, and one for flowers. DMS isn't limited to *vision* type models either. Any kind of model that takes an input and returns a prediction is suitable for DMS. It can run a speech recognition model and a model for a chatbot, so you could have your very own virtual assistant service running from the same server.
+Portico is a flexible and easy to use tool for serving Deep Learning models.
 
-Let's talk about what DMS is not. It isn't a managed service. You still need to run it on a host you manage. You still need to manage your input and output pipelines.
+Use Portico's Server CLI, or the pre-configured Docker images, to start a service that sets up HTTP endpoints to handle model inference requests.
 
-## Technical Details
+Currently Portico supports only MXNet models, but we plan to extend Portico to support additional deep learning frameworks and welcome contributions.
 
-Now that you have a high level view of DMS, let's get a little into the weeds. DMS takes a deep learning model and it wraps it in a REST API. Currently it is bundled with the MXNet framework, and it comes with a built-in web server that you run from command line. This command line call takes in the single or multiple models you want to serve, along with additional optional parameters controlling the port, host, and logging. Additionally, you can point it to service extensions which define pre-processing and post-processing steps. DMS also comes with a default vision service that makes it easy to serve an image classification model. If you're looking to build chat bots or video understanding then you'll have some additional leg work to do with the pre-processing and post-processing steps. These are covered in more detail in the [custom service](custom_service.md) documentation.
 
-Another key feature that we'll demonstrate as a first example in the next section is DMS's export capability. It is a separate CLI that takes in network definitions in the form of a JSON file, the trained network weight in the form of a parameters file, and the description of the models' inputs and outputs in the form of a signature JSON file. It outputs a `.model` zip file that DMS's server CLI uses to serve the models.
+## Quick Start
 
-### Supported Deep Learning Frameworks
+### Install Portico
 
-As of this first release, DMS only supports MXNet. In future versions, DMS will support models from other frameworks! As an open source project, we welcome contributions from the community to build ever wider support and enhanced model serving functionality.
-
-## Exporting a DMS Compatible Model
-
-You can try out exporting a model in three easy steps. First things first though: you need to install DMS.
-
-**1. Installation for Python 2 and Python 3**
+Make sure you have Python installed, then run:
 
 ```bash
-pip install deep-model-server
+pip install portico
 ```
 
-**2. Download a Trained Model**
+### Serve a Model
 
-The files in the `model-example.zip` file are human-readable in a text editor, with the exception of the `.params` file: this file is binary, and is usually quite large. Download and extract the provided model file. It is a zip file under the hood, so if you have trouble extracting it, change the extension to .zip first and then extract it.
+Once installed, you can get Portico's model serving up and running very quickly. We've provided an example object classification model for you to use:
+```bash
+portico-server --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+```
 
-TODO: get S3 links
+With the command above executed, you have Portico running on your host, listening for inference requests.
 
-* [model-example.model]() - contains the following four files
-* [resnet-18-symbol.json]() - contains the layers and overall structure of the neural network; the name, or prefix, here is "resnet-18"
-* [resnet-18-0000.params]() - contains the parameters and the weights; again, the prefix is "resnet-18"
-* [signature.json]() - defines the inputs and outputs that DMS is expecting to hand-off to the API
-* [synset.txt]() - an *optional* list of labels (one per line)
-
-Given these files you can use the `deep-model-export` CLI to generate a `.model` file that can be used with DMS. To use your own model, take a look at the [DMS export documentation](docs/export.md) for details on saving a checkpoint or other model exporting options.
-
-**3. Export a DMS Model**
-
-Open your terminal and go to the folder you just extracted. Using the zip file and its directory structure can help you keep things organized. In this next step we'll run `deep-model-export` and tell it our model's prefix is `resnet-18` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets. These are all in the `models/resnet-18` folder.
+To test it out, download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post an inference request with the image.
 
 ```bash
-deep-model-export --model-name resnet-18 --model-path models/resnet-18
+curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "input0=@kitten.jpg"
 ```
 
-This will output `resnet-18.model` in the current working directory. This file is all you need to run DMS for an easy image recognition API.
-
-[Would you like to know more?](docs/export.md)
-
-## Serving a Model
-
-You can get DMS model serving up and running very quickly with the following three steps.
-
-**1. Installation for Python 2 and Python 3**
-
-```bash
-pip install deep-model-server
-```
-
-**2. Serve the resnet-18 Model for Image Classification**
-
-If you already tried the `deep-model-export` and have the `resnet-18.model` file then you're almost there! However, it's a good idea to move your exported models to another folder before serving them. `deep-model-server` will extract the model archive in the same folder. If you skipped to this section, you can still try it out with a one-liner, so stay tuned.
-
-```bash
-mv resnet-18.model exported-models # to keep things organized
-deep-model-server --models resnet-18=exported-models/resnet-18.model
-```
-
-If you don't have a `resnet-18.model` file handy, no worries. You can use a URL with DMS, and we've provided one on S3 for you to use. Note that when you use this method, the `resnet-18.model` file will be downloaded to your current working directory and this file's contents will be extracted into a `resnet-18` folder.
-
-```bash
-deep-model-server --models resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
-```
-
-TODO: move s3 buckets to dms-models
-
-Either which way you host the model file, the contents are extracted and the model is served with the default options (localhost on port 8080). Also, if you already have run the URL route once, and have the model file locally it will use the local file instead.
-
-You can test DMS and look at the API description by hitting the [api-description](http://127.0.0.1:8080/api-description) endpoint which is hosted at `http://127.0.0.1:8080/api-description`.
-
-**3. Predict an Image!**
-
-First, go download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post the image to your DMS.
-
-```bash
-curl -X POST http://127.0.0.1:8080/resnet-18/predict -F "input0=@kitten.jpg"
-```
-
-The predictor endpoint will return a prediction in JSON. It will look something like the following result:
+The predictor endpoint will return a prediction response in JSON. It will look something like the following result:
 
 ```
 {
@@ -122,17 +66,46 @@ The predictor endpoint will return a prediction in JSON. It will look something 
 }
 ```
 
-Now you've seen how easy it can be to serve a deep learning model with Deep Model Server! [Would you like to know more?](docs/serve.md)
+Now you've seen how easy it can be to serve a deep learning model with Portico! [Would you like to know more?](docs/serve.md)
+
+
+### Export a Portico Model
+
+Portico enables you to package up all of your model artifacts into a single model archive, that you can then easily share or distribute. To export a model, follow these steps:
+
+**1. Download a Model (if you don't have one handy)**
+
+First you'll need to obtain a trained model, which typically consist of a set of files such as the files listed below. Go ahead and download these files into a new and empty folder:
+
+* [squeezenet_v1.1-symbol.json](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-symbol.json) - contains the layers and overall structure of the neural network; the name, or prefix, here is "squeezenet_v1.1"
+* [squeezenet_v1.1-0000.params](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-0000.params) - contains the parameters and the weights; again, the prefix is "squeezenet_v1.1"
+* [signature.json](https://s3.amazonaws.com/model-server/models/model-example/signature.json) - defines the inputs and outputs that Portico is expecting to hand-off to the API
+* [synset.txt](https://s3.amazonaws.com/model-server/models/model-example/synset.txt) - an *optional* list of labels (one per line)
+
+
+**2. Export Your Model**
+
+With the model files available locally, you can use the `portico-export` CLI to generate a `.model` file that can be used to serve inference with Portico.
+
+Open your terminal and go to the folder you just downloaded the files above into. In this next step we'll run `portico-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+
+```bash
+portico-export --model-name squeezenet_v1.1 --model-path .
+```
+
+This will output `squeezenet_v1.1.model` in the current working directory. This file is all you need to run Portico, serving inference requests for a simple image recognition API.
+
+To learn more about exporting, check out [Portico export documentation](docs/export.md)
+
 
 ## Other Features
 
 Browse over to the [Docs readme](docs/README.md) for the full index of documentation. This includes more examples, how to customize the API service, API endpoint details, and more.
 
-## Deployments
+For production deploymenmts, we recommend using containers, and include pre-configured docker images for you to use. The basic usage can be found on the [Docker readme](docker/README.md).
 
-### Docker
-We have provided a Docker image for an MXNet CPU build on Ubuntu. Nginx, Gunicorn, and all other dependencies are also pre-installed.
-The basic usage can be found on the [Docker readme](docker/README.md).
+## Contributing
 
-## Design
-To be updated
+We welcome all contributions!
+
+To file a bug or request a feature, please file a GitHub issue. Pull requests are welcome.

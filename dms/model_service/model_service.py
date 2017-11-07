@@ -12,9 +12,12 @@
 """
 
 import time
+import sys
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-from ..log import get_logger
+from dms.log import get_logger
+from dms.metrics_manager import MetricsManager
+
 
 logger = get_logger(__name__)
 URL_PREFIX = ('http://', 'https://', 's3://')
@@ -26,8 +29,8 @@ class ModelService(object):
     '''
     __metaclass__ = ABCMeta
 
-    def __init__(self, path, ctx):
-        self.context = ctx
+    def __init__(self, service_name, path, gpu=None):
+        self.ctx = None
 
     @abstractmethod
     def inference(self, data):
@@ -53,7 +56,7 @@ class ModelService(object):
         Returns
         -------
         String
-            MXNet version to show system is healthy.
+            A message, "health": "healthy!", to show system is healthy.
         '''
         pass
 
@@ -90,15 +93,24 @@ class SingleNodeService(ModelService):
         pre_start_time = time.time()
         data = self._preprocess(data)
         infer_start_time = time.time()
-        logger.debug("Preprocess time is %s ms."
-                     % (str((infer_start_time - pre_start_time) * 1000)))
+
+        # Update preprocess latency metric
+        pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
+        if 'pre_latency_metric' in MetricsManager.metrics:
+            MetricsManager.metrics['pre_latency_metric'].update(pre_time_in_ms)
+
         data = self._inference(data)
-        post_start_time = time.time()
-        logger.debug("Inference time is %s ms."
-                     % (str((post_start_time - infer_start_time) * 1000)))
         data = self._postprocess(data)
-        logger.debug("Post process time is %s ms."
-                    % (str((time.time() - post_start_time) * 1000)))
+
+        # Update inference latency metric
+        infer_time_in_ms = (time.time() - infer_start_time) * 1000
+        if 'inference_latency_metric' in MetricsManager.metrics:
+            MetricsManager.metrics['inference_latency_metric'].update(infer_time_in_ms)
+
+        # Update overall latency metric
+        if 'overall_latency_metric' in MetricsManager.metrics:
+            MetricsManager.metrics['overall_latency_metric'].update(pre_time_in_ms + infer_time_in_ms)
+
         return data
 
     @abstractmethod

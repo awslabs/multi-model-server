@@ -8,3 +8,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+from . import model_service
+from . import mxnet_model_service
+from . import mxnet_vision_service

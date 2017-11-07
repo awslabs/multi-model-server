@@ -63,14 +63,14 @@ You may also want to modify the `-p 80:80` to utilize other ports instead. Refer
 Now that you have a prompt inside the container, the final step is to setup DMS endpoint, gunicorn wsgi entry point, and nginx proxy_pass. Using the Docker container's bash prompt, run the following command:
 
 ```bash
-    cd dms_docker && ./launch.sh
+    cd dms_docker_cpu && ./launch.sh
 ```
 
 At this point you should see the typical DMS CLI output indicating that the server is running.
 
 ## System Settings  
 
-The system settings are stored in `dms_docker/dms_app.config`. You can modify these settings to use different models, or to apply other customized settings. The default settings were optimized for a C4.8xlarge instance.
+The system settings are stored in `dms_docker_cpu/dms_app.config`. You can modify these settings to use different models, or to apply other customized settings. The default settings were optimized for a C4.8xlarge instance.
 
     # deep-model-server arguments
     --models
@@ -110,3 +110,24 @@ The system settings are stored in `dms_docker/dms_app.config`. You can modify th
 ## Testing the DMS Docker
 
 Now you can send a request to http://your_public_host_name/api-description to see the list of DMS endpoints or http://your_public_host_name/ping to check the health status of the DMS API.
+
+## Use docker image for gpu
+
+If your host machine has at least one GPU installed, you can use GPU docker image to benefit from improved inference performance.
+
+You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-docker) before you can use nvidia gpu inside docker.
+
+Once you install nvidia-docker, run following commands:
+
+```bash
+cp Dockerfile.gpu Dockerfile
+docker build -t dms_image_gpu .
+nvidia-docker run -it -p 80:80 dms_image_gpu:latest
+```
+
+Now you are inside docker container and dms config file is localted in dms_docker_gpu folder. Run following command to launch service:
+
+```bash
+cd dms_docker_gpu && ./launch.sh
+```
+You can change gunicorn argument `--workers` to change utilization of gpu resources. Each worker would utilize one gpu device. Currently up to 4 workers are recommended to get optimal performance.

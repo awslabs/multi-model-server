@@ -11,6 +11,7 @@ $ deep-model-server
 usage: deep-model-server [-h] --models KEY1=VAL1,KEY2=VAL2...
                          [KEY1=VAL1,KEY2=VAL2... ...] [--service SERVICE]
                          [--gen-api GEN_API] [--port PORT] [--host HOST]
+                         [--gpu]
                          [--log-file LOG_FILE]
                          [--log-rotation-time LOG_ROTATION_TIME]
                          [--log-level LOG_LEVEL]
@@ -30,12 +31,14 @@ Example multiple model usage:
 deep-model-server --models name=model_location, name2=model_location2
 ```
 
-`--models` is the only required argument. You can pass one or more models in a key value pair format: `name` you want to call the model and `model_location` for the local file path or URI to the model. The name is what appears in your REST API's endpoints. In the first example we used `resnet-18` for the name, e.g. `deep-model-server --models resnet-18=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/resnet-18/predict`. In the first example this was `resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model`. Alternatively, we could have downloaded the file and used a local file path like `resnet-18=dms_models/resnet-18.model`.
+`--models` is the only required argument. You can pass one or more models in a key value pair format: `name` you want to call the model and `model_location` for the local file path or URI to the model. The name is what appears in your REST API's endpoints. In the first example we used `squeezenet_v1.1` for the name, e.g. `deep-model-server --models squeezenet_v1.1=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/squeezenet_v1.1/predict`. In the first example this was `squeezenet=https://s3.amazonaws.com/mms-models/squeezenet_v1.1.model`. Alternatively, we could have downloaded the file and used a local file path like `squeezenet=dms_models/squeezenet_v1.1.model`.
 
 The rest of these arguments are optional and will have the following defaults:
 * [--service mxnet_vision_service]
 * [--port 8080]
 * [--host 127.0.0.1]
+
+gpu argument is to specifiy whether to use gpu for inference.
 
 Logging and exporting an SDK can also be triggered with additional arguments. Details are in the following Arguments section.
 
@@ -53,6 +56,7 @@ Logging and exporting an SDK can also be triggered with additional arguments. De
 2. **service**: optional, the system will load input service module and will initialize MXNet models with the service defined in the module. The module should contain a valid class which extends the base model service with customized `_preprocess` and `_postprocess` functions.
 3. **port**: optional, default is 8080
 4. **host**: optional, default is 127.0.0.1
+5. **gpu**: optional, gpu device id, such as 0 or 1. cpu will be used if this argument is not set.
 5. **gen-api**: optional, this will generate an open-api formated client sdk in build folder.
 6. **log-file**: optional, log file name. By default it is "dms_app.log".
 7. **log-rotation-time**: optional, log rotation time. By default it is "1 H", which means one hour. Valid format is "interval when". For weekday and midnight, only "when" is required. Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.

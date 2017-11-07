@@ -11,13 +11,13 @@
 import ast
 import traceback
 import time
+
 from functools import partial
 from flask import abort
-
-from service_manager import ServiceManager
-from request_handler.flask_handler import FlaskRequestHandler
-from log import get_logger
-
+from dms.service_manager import ServiceManager
+from dms.request_handler.flask_handler import FlaskRequestHandler
+from dms.log import get_logger
+from dms.metrics_manager import MetricsManager
 
 logger = get_logger(__name__)
 
@@ -57,7 +57,7 @@ class ServingFrontend(object):
         """
         self.handler.start_handler(host, port)
 
-    def load_models(self, models, ModelServiceClassDef):
+    def load_models(self, models, ModelServiceClassDef, gpu=None):
         """
         Load models by using user passed Model Service Class Definitions.
 
@@ -67,9 +67,12 @@ class ServingFrontend(object):
             List of model_name, model_path pairs that will be initialized.
         ModelServiceClassDef: python class
             Model Service Class Definition which can initialize a model service.
+        gpu : int
+            Id of gpu device. If machine has two gpus, this number can be 0 or 1.
+            If it is not set, cpu will be used.
         """
         for model_name, model_path in models.items():
-            self.service_manager.load_model(model_name, model_path, ModelServiceClassDef)
+            self.service_manager.load_model(model_name, model_path, ModelServiceClassDef, gpu)
 
 
     def register_module(self, user_defined_module_file_path):
@@ -358,10 +361,14 @@ class ServingFrontend(object):
         Response
             Http response for ping endpiont.
         """
+        if 'request_metric' in MetricsManager.metrics:
+            MetricsManager.metrics['request_metric'].update(metric=1)
         try:
             for model in self.service_manager.get_loaded_modelservices().values():
                 model.ping()
         except Exception:
+            if 'error_metric' in MetricsManager.metrics:
+                MetricsManager.metrics['error_metric'].update(metric=1)
             logger.warn('Model serving is unhealthy.')
             return self.handler.jsonify({'health': 'unhealthy!'})
 
@@ -376,6 +383,8 @@ class ServingFrontend(object):
         Response
             Http response for api description endpiont.
         """
+        if 'request_metric' in MetricsManager.metrics:
+            MetricsManager.metrics['request_metric'].update(metric=1)
         return self.handler.jsonify({'description': self.openapi_endpoints})
 
     def predict_callback(self, **kwargs):
@@ -395,6 +404,9 @@ class ServingFrontend(object):
         Response
             Http response for predict endpiont.
         """
+        if 'request_metric' in MetricsManager.metrics:
+            MetricsManager.metrics['request_metric'].update(metric=1)
+
         handler_start_time = time.time()
         modelservice = kwargs['modelservice']
         input_names = kwargs['input_names']
@@ -415,6 +427,8 @@ class ServingFrontend(object):
                                                         % (name, input_type, type(form_data))
                     input_data.append(form_data)
             except Exception as e:
+                if 'error_metric' in MetricsManager.metrics:
+                    MetricsManager.metrics['error_metric'].update(metric=1)
                 logger.error(str(e))
                 abort(400, str(e))
         elif input_type == 'image/jpeg':
@@ -430,10 +444,14 @@ class ServingFrontend(object):
                                                                 'bytes, but got %s' % (type(file_data))
                     input_data.append(file_data)
             except Exception as e:
+                if 'error_metric' in MetricsManager.metrics:
+                    MetricsManager.metrics['error_metric'].update(metric=1)
                 logger.error(str(e))
                 abort(400, str(e))
         else:
             msg = '%s is not supported for input content-type' % (input_type)
+            if 'error_metric' in MetricsManager.metrics:
+                MetricsManager.metrics['error_metric'].update(metric=1)
             logger.error(msg)
             abort(500, "Service setting error. %s" % (msg))
 
@@ -441,6 +459,8 @@ class ServingFrontend(object):
         try:
             response = modelservice.inference(input_data)
         except Exception:
+            if 'error_metric' in MetricsManager.metrics:
+                MetricsManager.metrics['error_metric'].update(metric=1)
             logger.error(str(traceback.format_exc()))
             abort(500, "Error occurs while inference was executed on server.")
 
@@ -451,6 +471,8 @@ class ServingFrontend(object):
             logger.info('Response is jpeg image encoded in base64 string.')
         else:
             msg = '%s is not supported for input content-type.' % (output_type)
+            if 'error_metric' in MetricsManager.metrics:
+                MetricsManager.metrics['error_metric'].update(metric=1)
             logger.error(msg)
             abort(500, "Service setting error. %s" % (msg))
 

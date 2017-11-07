@@ -7,10 +7,11 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
+import sys
 
 from flask import Flask, request, jsonify, send_file
-from ..log import get_logger
-from request_handler import RequestHandler
+from dms.log import get_logger
+from dms.request_handler.request_handler import RequestHandler
 from flask_cors import CORS
 
 

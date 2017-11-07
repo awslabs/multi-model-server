@@ -49,6 +49,10 @@ class ArgParser(object):
 
         parser.add_argument('--host', help='Host. By default it is localhost.')
 
+        parser.add_argument('--gpu', help='ID of GPU device to use for inference. '
+                                          'If your machine has N gpus, this number can be 0 to N - 1. '
+                                          'If it is not set, cpu will be used.')
+
         parser.add_argument('--log-file', help='Log file name. By default it is "dms_app.log".')
 
         parser.add_argument('--log-rotation-time',
@@ -60,6 +64,11 @@ class ArgParser(object):
         parser.add_argument('--log-level', help='Log level. By default it is INFO. '
                                                 'Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL.'
                                                 'Check https://docs.python.org/2/library/logging.html#logging-levels')
+
+        parser.add_argument('--metrics-write-to',
+                            default='log',
+                            choices=['log', 'csv'],
+                            help='Target location to write dms metrics. Log, local CSV... ')
 
         return parser
 

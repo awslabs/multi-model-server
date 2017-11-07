@@ -145,7 +145,8 @@ class MXNetBaseService(SingleNodeService):
         # Load MXNet module
         epoch = 0
         try:
-            param_filename = filter(lambda file: file.endswith('.params'), os.listdir(model_dir))[0]
+            param_filename = filter(lambda file: file.startswith(model_name) and 
+                file.endswith('.params'), os.listdir(model_dir))[0]
             epoch = int(param_filename[len(model_name) + 1: -len('.params')])
         except Exception as e:
             logger.warn('Failed to parse epoch from param file, setting epoch to 0')

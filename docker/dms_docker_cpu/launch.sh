@@ -14,15 +14,15 @@
 line_list=()
 gunicorn_arg=''
 config_file='dms_app.config'
-IFS=''
-while read -r line
+
+while read line
 do
     line_list+=("$line")
 done < "$config_file"
 
 gunicorn_arg_id='# Gunicorn arguments'
 nginx_config_id='# Nginx configurations'
-nginx_config_file='/etc/nginx/conf.d/virtual.config'
+nginx_config_file='/etc/nginx/conf.d/virtual.conf'
 mxnet_env_id='# MXNet environment variables'
 total=${#line_list[*]}
 is_gunicorn_arg=false

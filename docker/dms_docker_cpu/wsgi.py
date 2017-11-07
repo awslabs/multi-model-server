@@ -1,4 +1,4 @@
-from dms import mxnet_model_server
+from dms import deep_model_server
 
 # Read arguments
 config_file = 'dms_app.config'
@@ -17,5 +17,5 @@ for i, line in enumerate(content):
         else:
             args.append(content[i + 1])
 
-server = mxnet_model_server.DMS(args=args)
+server = deep_model_server.DMS(args=args)
 application = server.create_app()

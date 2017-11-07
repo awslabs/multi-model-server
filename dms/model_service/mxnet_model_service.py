@@ -19,8 +19,11 @@ import shutil
 import os
 
 from mxnet.io import DataBatch
+from dms.log import get_logger
 from dms.model_service.model_service import SingleNodeService, URL_PREFIX
 
+
+logger = get_logger(__name__)
 SIGNATURE_FILE = 'signature.json'
 
 def download(url, path=None, overwrite=False):
@@ -140,7 +143,14 @@ class MXNetBaseService(SingleNodeService):
             data_shapes.append((input['data_name'], tuple(data_shape)))
 
         # Load MXNet module
-        sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' % (model_dir, model_name), 0)
+        epoch = 0
+        try:
+            param_filename = filter(lambda file: file.endswith('.params'), os.listdir(model_dir))[0]
+            epoch = int(param_filename[len(model_name) + 1: -len('.params')])
+        except Exception as e:
+            logger.warn('Failed to parse epoch from param file, setting epoch to 0')
+
+        sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' % (model_dir, model_name), epoch)
         self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
                                       data_names=data_names, label_names=None)
         self.mx_model.bind(for_training=False, data_shapes=data_shapes)

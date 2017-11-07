@@ -12,7 +12,7 @@ import os
 import psutil
 import threading
 
-from metric import Metric
+from dms.metric import Metric
 
 # CPU and memory metric are collected every 5 seconds
 intervalSec = 5
@@ -44,7 +44,10 @@ def disk(metric_instance):
 class MetricsManager(object):
     """Metrics Manager
     """
-    def start(self, metrics_write_to, mutex):
+    metrics = {}
+
+    @staticmethod
+    def start(metrics_write_to, mutex):
         """Start service routing.
 
         Parameters
@@ -54,31 +57,31 @@ class MetricsManager(object):
         mutex: object
             Mutex to prevent double thread writing on same resource
         """
-        self.error_metric = Metric('error_number', mutex, 
-                                    aggregate_method='interval_sum', 
-                                    write_to=metrics_write_to)
-        self.request_metric = Metric('requests_number', mutex, 
-                                    aggregate_method='interval_sum', 
-                                    write_to=metrics_write_to)
-        self.cpu_metric = Metric('cpu', mutex, 
-                                aggregate_method='interval_average', 
-                                write_to=metrics_write_to,
-                                update_func=cpu)
-        self.memory_metric = Metric('memory', mutex, 
-                                    aggregate_method='interval_average', 
-                                    write_to=metrics_write_to,
-                                    update_func=memory)
-        self.disk_metric = Metric('disk', mutex, 
-                                    aggregate_method='interval_average', 
-                                    write_to=metrics_write_to,
-                                    update_func=disk)
-        self.overall_latency_metric = Metric('overall_latency', mutex, 
-                                            aggregate_method='interval_average', 
-                                    write_to=metrics_write_to)
-        self.inference_latency_metric = Metric('inference_latency', mutex, 
-                                                aggregate_method='interval_average', 
-                                                write_to=metrics_write_to)
-        self.pre_latency_metric = Metric('preprocess_latency', mutex, 
-                                        aggregate_method='interval_average', 
-                                        write_to=metrics_write_to)
+        MetricsManager.metrics['error_metric'] = Metric('error_number', mutex, 
+                                                        aggregate_method='interval_sum', 
+                                                        write_to=metrics_write_to)
+        MetricsManager.metrics['request_metric'] = Metric('requests_number', mutex, 
+                                                          aggregate_method='interval_sum', 
+                                                          write_to=metrics_write_to)
+        MetricsManager.metrics['cpu_metric'] = Metric('cpu', mutex, 
+                                                      aggregate_method='interval_average', 
+                                                      write_to=metrics_write_to,
+                                                      update_func=cpu)
+        MetricsManager.metrics['memory_metric'] = Metric('memory', mutex, 
+                                                         aggregate_method='interval_average', 
+                                                         write_to=metrics_write_to,
+                                                         update_func=memory)
+        MetricsManager.metrics['disk_metric'] = Metric('disk', mutex, 
+                                                        aggregate_method='interval_average', 
+                                                        write_to=metrics_write_to,
+                                                        update_func=disk)
+        MetricsManager.metrics['overall_latency_metric'] = Metric('overall_latency', mutex, 
+                                                                    aggregate_method='interval_average', 
+                                                                    write_to=metrics_write_to)
+        MetricsManager.metrics['inference_latency_metric'] = Metric('inference_latency', mutex, 
+                                                                    aggregate_method='interval_average', 
+                                                                    write_to=metrics_write_to)
+        MetricsManager.metrics['pre_latency_metric'] = Metric('preprocess_latency', mutex, 
+                                                                aggregate_method='interval_average', 
+                                                                write_to=metrics_write_to)
 

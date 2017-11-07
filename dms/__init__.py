@@ -8,6 +8,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-from metrics_manager import MetricsManager
-
-metrics_manager = MetricsManager()
+from . import log
+from . import metric
+from . import model_service
+from . import metrics_manager

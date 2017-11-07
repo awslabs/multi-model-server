@@ -10,14 +10,13 @@
 
 import logging
 
-from arg_parser import ArgParser
-from client_sdk_generator import ClientSDKGenerator
-from log import get_logger
-from log import LOG_LEVEL_DICT
+from dms.arg_parser import ArgParser
+from dms.client_sdk_generator import ClientSDKGenerator
+from dms.log import get_logger, LOG_LEVEL_DICT
 from logging.handlers import TimedRotatingFileHandler
 from multiprocessing import Lock
-from serving_frontend import ServingFrontend
-from dms import metrics_manager
+from dms.serving_frontend import ServingFrontend
+from dms.metrics_manager import MetricsManager
 
 
 VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in range(7)]
@@ -143,7 +142,7 @@ class DMS(object):
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
 
             # Generate metrics to target location (log, csv ...), default to log
-            metrics_manager.start(self.args.metrics_write_to, Lock())
+            MetricsManager.start(self.args.metrics_write_to, Lock())
 
         except Exception as e:
             logger.error('Failed to process arguments: ' + str(e))

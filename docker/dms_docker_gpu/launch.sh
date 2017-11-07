@@ -14,12 +14,15 @@
 line_list=()
 gunicorn_arg=''
 config_file='dms_app.config'
+IFS=''
 while read -r line
 do
     line_list+=("$line")
 done < "$config_file"
 
 gunicorn_arg_id='# Gunicorn arguments'
+nginx_config_id='# Nginx configurations'
+nginx_config_file='/etc/nginx/conf.d/virtual.config'
 mxnet_env_id='# MXNet environment variables'
 total=${#line_list[*]}
 is_gunicorn_arg=false
@@ -30,6 +33,21 @@ do
     then
         is_gunicorn_arg=true
         continue
+    fi
+    if [[ ${line_list[$i]} == $nginx_config_id ]]
+    then
+        nginx_config=''
+        for (( j=$i +1; j<=$(( $total -1 )); j++ ))
+        do
+            if [[ ${line_list[$j]} != $mxnet_env_id ]]
+            then
+                nginx_config="${nginx_config}${line_list[$j]}\n"
+            else
+                i=$j
+                break
+            fi
+        done
+        echo -e "${nginx_config}" > $nginx_config_file
     fi
     if [[ ${line_list[$i]} == $mxnet_env_id ]]
     then

@@ -1,5 +1,5 @@
 import os
-from dms import mxnet_model_server
+from dms import deep_model_server
 
 # Read arguments
 config_file = 'dms_app.config'
@@ -22,5 +22,5 @@ args.append('--gpu')
 args.append(int(os.environ['gpu_id']))
 os.environ['gpu_id'] = str(int(os.environ['gpu_id']) + 1)
 
-server = mxnet_model_server.DMS(args=args)
+server = deep_model_server.DMS(args=args)
 application = server.create_app()

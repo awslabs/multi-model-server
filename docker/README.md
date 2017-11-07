@@ -16,9 +16,9 @@ By default Docker expects a Dockerfile, so we'll make a copy leaving the origina
     cp Dockerfile.cpu Dockerfile
 ```
 
-Now let's update the [virtual.conf](virtual.conf) file for your environment. Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker container.
+Now let's update the nginx section of [dms_app.config](dms_docker_cpu/dms_app.conf) file for your environment. Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker container.
 
-The `virtual.conf` file will look like this:
+The nginx section will look like this:
 
 ```
 server {
@@ -30,8 +30,6 @@ server {
     }
 }
 ```
-
-**Note:** You can also modify container's NGINX settings after building and running the Docker container. The config file is located inside the container at `/etc/nginx/conf.d/virtual.conf`, however this will only last while you're running the Docker container and will revert once you shut it down.
 
 ### Build Step
 
@@ -104,6 +102,16 @@ The system settings are stored in `dms_docker_cpu/dms_app.config`. You can modif
     --limit-request-line
     0
 
+    # Nginx configurations
+    server {
+        listen       80;
+        server_name  localhost;
+
+        location / {
+            proxy_pass http://unix:/tmp/dms_app.sock;
+        }
+    }
+
     # MXNet environment variables
     OMP_NUM_THREADS=4
 
@@ -131,3 +139,41 @@ Now you are inside docker container and dms config file is localted in dms_docke
 cd dms_docker_gpu && ./launch.sh
 ```
 You can change gunicorn argument `--workers` to change utilization of gpu resources. Each worker would utilize one gpu device. Currently up to 4 workers are recommended to get optimal performance.
+
+## Configuring HTTPS servers
+
+To safely send traffic between the server and the client, we need to set secure sockets layer for nginx server.
+
+First of all, we need to get SSL certficate. It includes server certificate and private key. Suppose we have two files /etc/nginx/ssl/nginx.crt and /etc/nginx/ssl/nginx.key.
+
+Second step is to create a docker container which exposes TCP port 443 for SSL:
+
+```bash
+docker run -it -p 8080:443 -p 8081:80 dms_image:latest
+```
+
+Note that we expose both https and normal http ports.
+
+Third step is to modify nginx section of dms_app.config file to add ssl settings:
+
+```
+server {
+    listen       80;
+    listen       443 ssl;
+
+    server_name  your_public_host_name;
+    ssl_certificate /etc/nginx/ssl/nginx.crt;
+    ssl_certificate_key /etc/nginx/ssl/nginx.key;
+
+    location / {
+        proxy_pass http://unix:/tmp/dms_app.sock;
+    }
+}
+```
+
+Launch service by typing:
+```
+./launch.sh
+```
+
+Now we can try both https://your_public_host_name:8080/ping or http://your_public_host_name:8081/ping

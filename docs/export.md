@@ -62,7 +62,7 @@ optional arguments:
 #### Assets Overview
 In order for the model file to be created, you need to provide these three or four assets:
 
-1. signature.json - required; the inputs and outputs of the model
+1. signature.json - required; the inputs and outputs of the model and the service inputs and outputs
 1. name-symbol.json - required; the model's definition (layers, etc.); name is any prefix you give it
 1. name-0000.params - required; the model's hyper-parameters and weights; name must match the name from the previous JSON file
 1. synset.txt - optional; a list of names of the prediction classes
@@ -70,7 +70,7 @@ In order for the model file to be created, you need to provide these three or fo
 **signature.json**
 
 1. **input**: Contains MXNet model input names and input shapes. It is a list contains { data_name : name, data_shape : shape } maps. Client side inputs should have the same order with the input order defined here.
-1. **input_type**: Defines the MIME content type for client side inputs. Currently all inputs must have the same content type and only two MIME types, "image/jpeg" and "application/json", are supported.
+1. **input_type**: Defines the MIME content type for client side inputs. Currently all inputs must have the same content type. Only two MIME types are currently supported: "image/jpeg" and "application/json".
 1. **output**: Similar to input, it contains MXNet model output names and output shapes.
 1. **output_type**: Similar to input_type. Currently all outputs must have the same content type. Only two MIME types are currently supported: "image/jpeg" and "application/json".
 
@@ -96,6 +96,8 @@ In order for the model file to be created, you need to provide these three or fo
    ```
 
    The `data_shape` is a list of integers. It should contain batch size as the first dimension as in NCHW. Also, 0 is a placeholder for MXNet shape and means any value is valid. Batch size should be set as 0.
+
+   Note that the signature output isn't necessarily the final output that is returned to the user. This is directed by your model service class, which defaults to the [MXNet vision service](../dms/mxnet_vision_service.py). In this signature.json example your output_type is json and a shape of 1000 results, but API's response is actually limited to the top 5 results via the vision service. In the [object detection example](../examples/ssd/README.md), it is using a [signature.json](../examples/ssd/signature.json) that has `"data_shape": [1, 6132, 6]` and has a [custom service](../examples/ssd/ssd_service.py) to modify the output to the API in such a way as to identify the objects AND their locations, e.g. `[(person, 555, 175, 581, 242), (dog, 306, 446, 468, 530)]`.
 
 **name-symbol.json**
 

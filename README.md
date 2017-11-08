@@ -66,7 +66,7 @@ The predictor endpoint will return a prediction response in JSON. It will look s
 }
 ```
 
-Now you've seen how easy it can be to serve a deep learning model with Portico! [Would you like to know more?](docs/serve.md)
+Now you've seen how easy it can be to serve a deep learning model with Portico! [Would you like to know more?](docs/server.md)
 
 
 ### Export a Portico Model
@@ -87,7 +87,7 @@ First you'll need to obtain a trained model, which typically consist of a set of
 
 With the model files available locally, you can use the `portico-export` CLI to generate a `.model` file that can be used to serve inference with Portico.
 
-Open your terminal and go to the folder you just downloaded the files above into. In this next step we'll run `portico-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+Open your terminal and go to the folder that has the four files you just downloaded. In this next step we'll run `portico-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
 
 ```bash
 portico-export --model-name squeezenet_v1.1 --model-path .
@@ -102,7 +102,7 @@ To learn more about exporting, check out [Portico export documentation](docs/exp
 
 Browse over to the [Docs readme](docs/README.md) for the full index of documentation. This includes more examples, how to customize the API service, API endpoint details, and more.
 
-For production deploymenmts, we recommend using containers, and include pre-configured docker images for you to use. The basic usage can be found on the [Docker readme](docker/README.md).
+For production deployments, we recommend using containers, and include pre-configured docker images for you to use. The basic usage can be found on the [Docker readme](docker/README.md).
 
 ## Contributing
 

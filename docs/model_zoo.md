@@ -5,7 +5,7 @@ These models were trained on the Imagenet dataset with an output of 1,000 image 
 | Model File | Dataset | Size |
 | --- | --- | --- |
 | [Inception v3 w/BatchNorm](https://s3.amazonaws.com/model-server/models/inception-bn/Inception-BN.model) | ImageNet | 45 MB |
-| [Network in Network (NiN)](https://s3.amazonaws.com/model-server/models/nin/nin.model) | ImageNet | 30427543 |
+| [Network in Network (NiN)](https://s3.amazonaws.com/model-server/models/nin/nin.model) | ImageNet | 30 MB |
 | [ResNet-152](https://s3.amazonaws.com/model-server/models/resnet-152/resnet-152.model) | ImageNet | 241 MB |
 | [ResNet-18](https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model) | ImageNet | 43 MB |
 | [ResNet50-SSD](https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model.model) | ImageNet | 124 MB |

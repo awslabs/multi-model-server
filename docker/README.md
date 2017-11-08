@@ -66,10 +66,16 @@ Now that you have a prompt inside the container, the final step is to setup DMS 
 
 At this point you should see the typical DMS CLI output indicating that the server is running.
 
-## System Settings  
+## System Settings
 
 The system settings are stored in `dms_docker_cpu/dms_app.config`. You can modify these settings to use different models, or to apply other customized settings. The default settings were optimized for a C4.8xlarge instance.
 
+Notes on a couple of the parameters:
+
+* **worker-class** - the type of Gunicorn worker processes. We configure by default to gevent which is a type of async worker process. Options are [described in the Gunicorn docs](http://docs.gunicorn.org/en/stable/settings.html#worker-class).
+* **limit-request-line** - this is a security-related configuration that limits the [length of the request URI](http://docs.gunicorn.org/en/stable/settings.html#limit-request-line). It is useful preventing DDoS attacks.
+
+```
     # deep-model-server arguments
     --models
     resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
@@ -114,18 +120,19 @@ The system settings are stored in `dms_docker_cpu/dms_app.config`. You can modif
 
     # MXNet environment variables
     OMP_NUM_THREADS=4
+```
 
 ## Testing the DMS Docker
 
 Now you can send a request to http://your_public_host_name/api-description to see the list of DMS endpoints or http://your_public_host_name/ping to check the health status of the DMS API.
 
-## Use docker image for gpu
+## Use Docker Image for GPU
 
-If your host machine has at least one GPU installed, you can use GPU docker image to benefit from improved inference performance.
+If your host machine has at least one GPU installed, you can use a GPU docker image to benefit from improved inference performance.
 
-You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-docker) before you can use nvidia gpu inside docker.
+You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-docker) before you can use a NVIDIA GPU with Docker.
 
-Once you install nvidia-docker, run following commands:
+Once you install `nvidia-docker`, run following commands:
 
 ```bash
 cp Dockerfile.gpu Dockerfile
@@ -133,18 +140,18 @@ docker build -t dms_image_gpu .
 nvidia-docker run -it -p 80:80 dms_image_gpu:latest
 ```
 
-Now you are inside docker container and dms config file is localted in dms_docker_gpu folder. Run following command to launch service:
+Now you should be inside the docker container at a bash prompt. The config file, `dms_app.config` is located in the `dms_docker_gpu` folder. Run following command to launch the DMS service:
 
 ```bash
 cd dms_docker_gpu && ./launch.sh
 ```
-You can change gunicorn argument `--workers` to change utilization of gpu resources. Each worker would utilize one gpu device. Currently up to 4 workers are recommended to get optimal performance.
+You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance.
 
 ## Configuring HTTPS servers
 
-To safely send traffic between the server and the client, we need to set secure sockets layer for nginx server.
+To safely send traffic between the server and the client, we need to setup a secure sockets layer for nginx server.
 
-First of all, we need to get SSL certficate. It includes server certificate and private key. Suppose we have two files /etc/nginx/ssl/nginx.crt and /etc/nginx/ssl/nginx.key.
+First of all, we need to get a SSL certificate. It includes a server certificate and a private key. Suppose you have generated the cert (or received one from a CA) and resulting two files are located at /etc/nginx/ssl/nginx.crt and /etc/nginx/ssl/nginx.key.
 
 Second step is to create a docker container which exposes TCP port 443 for SSL:
 
@@ -154,7 +161,7 @@ docker run -it -p 8080:443 -p 8081:80 dms_image:latest
 
 Note that we expose both https and normal http ports.
 
-Third step is to modify nginx section of dms_app.config file to add ssl settings:
+Third step is to modify nginx section of `dms_app.config` file to add ssl settings:
 
 ```
 server {
@@ -172,8 +179,8 @@ server {
 ```
 
 Launch service by typing:
-```
+```bash
 ./launch.sh
 ```
 
-Now we can try both https://your_public_host_name:8080/ping or http://your_public_host_name:8081/ping
+Now we can try both https://your_public_host_name:8080/ping or http://your_public_host_name:8081/ping to test the service.

@@ -8,7 +8,7 @@ import shutil
 from threading import Thread
 from urllib2 import urlopen, URLError, HTTPError
 
-from dms import export_model, mxnet_model_server
+from dms import export_model, deep_model_server
 
 
 def _download_file(download_dir, url):
@@ -61,7 +61,7 @@ def setup_ssd_server(tmpdir):
     sys.argv.append("SSD={}/resnet50_ssd_model.model".format(tmpdir))
     sys.argv.append("--service")
     sys.argv.append("{}/ssd_service.py".format(tmpdir))
-    mxnet_model_server.start_serving()
+    deep_model_server.start_serving()
 
 
 def cleanup(tmpdir):

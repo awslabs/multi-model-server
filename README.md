@@ -17,14 +17,14 @@ Currently Portico supports only MXNet models, but we plan to extend Portico to s
 Make sure you have Python installed, then run:
 
 ```bash
-pip install portico
+pip install deep-model-server
 ```
 
 ### Serve a Model
 
 Once installed, you can get Portico's model serving up and running very quickly. We've provided an example object classification model for you to use:
 ```bash
-portico-server --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+deep-model-server --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
 With the command above executed, you have Portico running on your host, listening for inference requests.
@@ -85,12 +85,12 @@ First you'll need to obtain a trained model, which typically consist of a set of
 
 **2. Export Your Model**
 
-With the model files available locally, you can use the `portico-export` CLI to generate a `.model` file that can be used to serve inference with Portico.
+With the model files available locally, you can use the `deep-model-export` CLI to generate a `.model` file that can be used to serve inference with Portico.
 
-Open your terminal and go to the folder that has the four files you just downloaded. In this next step we'll run `portico-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+Open your terminal and go to the folder that has the four files you just downloaded. In this next step we'll run `deep-model-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
 
 ```bash
-portico-export --model-name squeezenet_v1.1 --model-path .
+deep-model-export --model-name squeezenet_v1.1 --model-path .
 ```
 
 This will output `squeezenet_v1.1.model` in the current working directory. This file is all you need to run Portico, serving inference requests for a simple image recognition API.

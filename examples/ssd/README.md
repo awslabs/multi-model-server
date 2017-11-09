@@ -85,7 +85,7 @@ To understand more about the MultiboxPrior, anchor boxes, sizes and ratios, plea
 
 ## Step 3 - Prepare synset.txt with list of class names
 
-[synset.txt](synsex.txt) is where we define list of all classes detected by the model. The pre-trained SSD model used in the example is trained to detect 20 classes - person, car, aeroplane, bicycle and more. See synset.txt file for list of all classes.
+[synset.txt](synset.txt) is where we define list of all classes detected by the model. The pre-trained SSD model used in the example is trained to detect 20 classes - person, car, aeroplane, bicycle and more. See synset.txt file for list of all classes.
 
 The list of classes in synset.txt will be loaded by DMS as list of labels in inference logic.
 

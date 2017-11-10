@@ -164,6 +164,12 @@ class MXNetBaseService(SingleNodeService):
             synset = archive_synset
             self.labels = [line.strip() for line in open(synset).readlines()]
 
+    def _preprocess(self, data):
+        return map(mx.nd.array, data)
+
+    def _postprocess(self, data):
+        return [str(d.asnumpy().tolist()) for d in data]
+
     def _inference(self, data):
         '''Internal inference methods for MXNet. Run forward computation and
         return output.

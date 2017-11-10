@@ -15,7 +15,8 @@ import imp
 
 from dms.storage import KVStorage
 from dms.model_service.model_service import ModelService
-import dms.model_service.mxnet_vision_service as mxnet_vision_service
+from dms.model_service.mxnet_model_service import MXNetBaseService
+import dms.model_service.mxnet_model_service as mxnet_model_service
 
 
 class ServiceManager(object):
@@ -133,9 +134,9 @@ class ServiceManager(object):
         module =  imp.load_source(
             os.path.splitext(os.path.basename(user_defined_module_file_path))[0],
             user_defined_module_file_path) if user_defined_module_file_path \
-            else mxnet_vision_service
+            else mxnet_model_service
 
         # Parsing the module to get all defined classes
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]
         # Check if class is subclass of base ModelService class
-        return list(filter(lambda cls: cls is not ModelService and issubclass(cls, ModelService), classes))
+        return list(filter(lambda cls: issubclass(cls, MXNetBaseService), classes))

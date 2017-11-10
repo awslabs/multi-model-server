@@ -122,10 +122,10 @@ class DMS(object):
 
             # Register user defined model service or default mxnet_vision_service
             class_defs = self.serving_frontend.register_module(self.args.service)
-            if len(class_defs) < 2:
+            if len(class_defs) < 1:
                 raise Exception('User defined module must derive base ModelService.')
             # First class is the base ModelService class
-            mode_class_name = class_defs[1].__name__
+            mode_class_name = class_defs[0].__name__
 
             # Load models using registered model definitions
             registered_models = self.serving_frontend.get_registered_modelservices()

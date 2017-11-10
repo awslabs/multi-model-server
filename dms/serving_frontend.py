@@ -422,8 +422,8 @@ class ServingFrontend(object):
                     logger.info('Request input: ' + name +  ' should be json tensor.')
                     form_data = self.handler.get_form_data(name)
                     form_data = ast.literal_eval(form_data)
-                    assert isinstance(form_data, dict), "Input data for request argument: %s is not correct. " \
-                                                        "%s is expected but got %s instead of dictionary" \
+                    assert isinstance(form_data, list), "Input data for request argument: %s is not correct. " \
+                                                        "%s is expected but got %s instead of list" \
                                                         % (name, input_type, type(form_data))
                     input_data.append(form_data)
             except Exception as e:

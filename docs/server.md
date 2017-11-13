@@ -49,6 +49,9 @@ optional arguments:
                         /swagger-codegen.
   --port PORT           Port number. By default it is 8080.
   --host HOST           Host. By default it is localhost.
+  --gpu GPU             ID of GPU device to use for inference.
+                        If your machine has N gpus, this number can be 0 to N - 1.
+                        If it is not set, cpu will be used.
   --log-file LOG_FILE   Log file name. By default it is "dms_app.log".
   --log-rotation-time LOG_ROTATION_TIME
                         Log rotation time. By default it is "1 H", which means
@@ -78,7 +81,7 @@ The rest of these arguments are optional and will have the following defaults:
 * [--port 8080]
 * [--host 127.0.0.1]
 
-gpu argument is to specifiy whether to use gpu for inference.
+gpu argument is to specify whether to use gpu for inference. Since currently there is no batching policy, multiple gpu is not supported. This argument is the ID of the gpu device you want to use.
 
 Logging and exporting an SDK can also be triggered with additional arguments. Details are in the following Arguments section.
 

@@ -34,7 +34,7 @@ class ArgParser(object):
         parser.add_argument('--models',
                             required=True,
                             action=StoreDictKeyPair,
-                            metavar='KEY1=VAL1,KEY2=VAL2...',
+                            metavar='KEY1=VAL1 KEY2=VAL2...',
                             nargs='+',
                             help='Models to be deployed')
 

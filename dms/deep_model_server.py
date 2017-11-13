@@ -104,6 +104,10 @@ class DMS(object):
             # Process arguments
             self._arg_process()
 
+            logger.info('Service started successfully.')
+            logger.info('Service description endpoint: ' + self.host + ':' + str(self.port) + '/api-description')
+            logger.info('Service health endpoint: ' + self.host + ':' + str(self.port) + '/ping')
+
             # Create app
             return self.serving_frontend.handler.app
 

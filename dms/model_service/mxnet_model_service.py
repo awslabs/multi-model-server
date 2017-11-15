@@ -23,7 +23,7 @@ from dms.log import get_logger
 from dms.model_service.model_service import SingleNodeService, URL_PREFIX
 
 
-logger = get_logger(__name__)
+logger = get_logger()
 SIGNATURE_FILE = 'signature.json'
 
 def download(url, path=None, overwrite=False):

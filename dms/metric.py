@@ -14,7 +14,7 @@ import threading
 from dms.log import get_logger
 
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class Metric(object):

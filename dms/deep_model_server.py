@@ -20,7 +20,7 @@ from dms.metrics_manager import MetricsManager
 
 
 VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in range(7)]
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 def _set_root_logger(log_file, log_level, log_rotation_time):
@@ -35,8 +35,10 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
     assert isinstance(interval, int) and interval > 0, "interval must be a positive integer."
     assert when in VALID_ROTATE_UNIT, "rotate time unit must be one of the values in %s." \
                                       % (str(VALID_ROTATE_UNIT))
+    log_handler = logging.StreamHandler()
+    if log_file is not None:
+        time_rotate_handler = TimedRotatingFileHandler(log_file, when, interval)
 
-    time_rotate_handler = TimedRotatingFileHandler(log_file, when, interval)
     root = logging.getLogger()
     root.setLevel(LOG_LEVEL_DICT[log_level])
     root.addHandler(time_rotate_handler)
@@ -126,10 +128,11 @@ class DMS(object):
 
             # Register user defined model service or default mxnet_vision_service
             class_defs = self.serving_frontend.register_module(self.args.service)
+            
             if len(class_defs) < 1:
                 raise Exception('User defined module must derive base ModelService.')
-            # First class is the base ModelService class
-            mode_class_name = class_defs[0].__name__
+            # The overrided class is the last one in class_defs
+            mode_class_name = class_defs[-1].__name__
 
             # Load models using registered model definitions
             registered_models = self.serving_frontend.get_registered_modelservices()

@@ -15,7 +15,7 @@ from dms.request_handler.request_handler import RequestHandler
 from flask_cors import CORS
 
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class FlaskRequestHandler(RequestHandler):

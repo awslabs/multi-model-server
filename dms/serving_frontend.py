@@ -19,7 +19,7 @@ from dms.request_handler.flask_handler import FlaskRequestHandler
 from dms.log import get_logger
 from dms.metrics_manager import MetricsManager
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 class ServingFrontend(object):

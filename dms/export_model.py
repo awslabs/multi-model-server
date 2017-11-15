@@ -16,7 +16,7 @@ import logging
 import json
 import zipfile
 import mxnet as mx
-from arg_parser import ArgParser
+from dms.arg_parser import ArgParser
 
 
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']

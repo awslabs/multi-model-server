@@ -1,7 +1,7 @@
 from dms import deep_model_server
 
 # Read arguments
-config_file = 'dms_app.config'
+config_file = 'dms_app.conf'
 args = []
 gunicorn_arg_start = '# Gunicorn arguments'
 with open(config_file) as f:

@@ -146,7 +146,7 @@ wget https://www.dphotographer.co.uk/users/21963/thm1024/1337890426_Img_8133.jpg
 Use curl to make a prediction call by passing the downloaded image as input to the prediction request.
 
 ```bash
- curl -X POST http://127.0.0.1:8080/SSD/predict -F "input0=@1337890426_Img_8133.jpg"
+ curl -X POST http://127.0.0.1:8080/SSD/predict -F "data=@1337890426_Img_8133.jpg"
 ```
 
 You can expect the response similar to below. The output format is `[(object_class, xmin, ymin, xmax, ymax)]`.

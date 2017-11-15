@@ -31,7 +31,7 @@
             <collectionProp name="HTTPFileArgs.files">
               <elementProp name="${__P(filepath,)}" elementType="HTTPFileArg">
                 <stringProp name="File.path">${__P(filepath,)}</stringProp>
-                <stringProp name="File.paramname">input0</stringProp>
+                <stringProp name="File.paramname">data</stringProp>
                 <stringProp name="File.mimetype">image/jpeg</stringProp>
               </elementProp>
             </collectionProp>

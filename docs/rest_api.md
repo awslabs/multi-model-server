@@ -18,7 +18,7 @@ After local server is up, there will be three built-in endpoints:
 Using `curl` is a great way to test REST APIs, but you're welcome to use your preferred tools. Just follow the pattern described here. If you skipped over it, we've already gone through a simple prediction example where we curled a picture of kitten like so:
 
 ```bash
-curl -X POST http://127.0.0.1:8080/resnet-18/predict -F "input0=@kitten.jpg"
+curl -X POST http://127.0.0.1:8080/resnet-18/predict -F "data=@kitten.jpg"
 ```
 
 The result was some JSON that told us our image likely held a tabby cat. The highest prediction was:
@@ -110,9 +110,9 @@ Your result will be like the following, and note that if you run this on a serve
           "operationId": "resnet-18_predict",
           "parameters": [
             {
-              "description": "input0 should be image with shape: [3, 224, 224]",
+              "description": "data should be image with shape: [3, 224, 224]",
               "in": "formData",
-              "name": "input0",
+              "name": "data",
               "required": "true",
               "type": "file"
             }

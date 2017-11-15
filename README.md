@@ -32,7 +32,7 @@ With the command above executed, you have Portico running on your host, listenin
 To test it out, download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post an inference request with the image.
 
 ```bash
-curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "input0=@kitten.jpg"
+curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
 ```
 
 The predictor endpoint will return a prediction response in JSON. It will look something like the following result:

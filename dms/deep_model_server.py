@@ -37,11 +37,11 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
                                       % (str(VALID_ROTATE_UNIT))
     log_handler = logging.StreamHandler()
     if log_file is not None:
-        time_rotate_handler = TimedRotatingFileHandler(log_file, when, interval)
+        log_handler = TimedRotatingFileHandler(log_file, when, interval)
 
     root = logging.getLogger()
     root.setLevel(LOG_LEVEL_DICT[log_level])
-    root.addHandler(time_rotate_handler)
+    root.addHandler(log_handler)
 
 
 class DMS(object):

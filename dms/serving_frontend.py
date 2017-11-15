@@ -232,16 +232,17 @@ class ServingFrontend(object):
                     }
                 }
             }
-            input_names = ['input' + str(idx) for idx in range(len(inputs))]
+            input_names = []
             # Setup endpoint for each modelservice
             for idx in range(len(inputs)):
                 # Check input content type to set up proper openapi consumes field
+                input_names.append(inputs[idx]['data_name'])
                 if input_type == 'application/json':
                     parameter = {
                         'in': 'formData',
-                        'name': input_names[idx],
+                        'name': inputs[idx]['data_name'],
                         'description': '%s should tensor with shape: %s' % 
-                            (input_names[idx], inputs[idx]['data_shape'][1:]),
+                            (inputs[idx]['data_name'], inputs[idx]['data_shape'][1:]),
                         'required': 'true',
                         'schema': {
                             'type': 'string'
@@ -250,9 +251,9 @@ class ServingFrontend(object):
                 elif input_type == 'image/jpeg':
                     parameter = {
                         'in': 'formData',
-                        'name': input_names[idx],
+                        'name': inputs[idx]['data_name'],
                         'description': '%s should be image which will be resized to: %s' % 
-                            (input_names[idx], inputs[idx]['data_shape'][1:]),
+                            (inputs[idx]['data_name'], inputs[idx]['data_shape'][1:]),
                         'required': 'true',
                         'type': 'file'
                     }

@@ -13,7 +13,7 @@
 
 line_list=()
 gunicorn_arg=''
-config_file='dms_app.config'
+config_file='dms_app.conf'
 
 while read line
 do
@@ -70,5 +70,5 @@ done
 
 export gpu_id=0
 app_script='wsgi'
-service nginx start
+service nginx restart
 gunicorn $gunicorn_arg $app_script

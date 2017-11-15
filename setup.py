@@ -15,7 +15,7 @@ pkgs.append('tools')
 
 setup(
     name='deep-model-server',
-    version='0.1.2',
+    version='0.1.3',
     description='Portico is a tool for packaging neural net models and deploying them for inference',
     url='https://github.com/awslabs/portico',
     keywords='MXNet Model Serving Deep Learning Inference',

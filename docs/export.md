@@ -101,11 +101,11 @@ In order for the model file to be created, you need to provide these three or fo
 
 **name-symbol.json**
 
-  This is the model's definition in JSON format. You can name it whatever you want, using a consistent prefix. The pattern expected is `my-awesome-network-symbol.json` or `mnist-symbol.json` so that when you use `deep-model-export` you're passing in the prefix and it'll look for prefix-symbol.json. You can generate this file in a variety of ways, but the easiest for MXNet is to use the `.export` feature or the `mms.export_model` method described later.
+  This is the model's definition in JSON format. You can name it whatever you want, using a consistent prefix. The pattern expected is `my-awesome-network-symbol.json` or `mnist-symbol.json` so that when you use `deep-model-export` you're passing in the prefix and it'll look for prefix-symbol.json. You can generate this file in a variety of ways, but the easiest for MXNet is to use the `.export` feature or the `dms.export_model` method described later.
 
 **name-0000.params**
 
-  This is the model's hyper-parameters and weights. It will be created when you use MXNet's `.export` feature or the `mms.export_model` method described later.
+  This is the model's hyper-parameters and weights. It will be created when you use MXNet's `.export` feature or the `dms.export_model` method described later.
 
 **synset.txt**
 
@@ -125,7 +125,7 @@ The Python method to export model is to use `export_serving` function while comp
 
 ```python
    import mxnet as mx
-   from mms.export_model import export_serving
+   from dms.export_model import export_serving
 
    mod = mx.mod.Module(...)
    # Training process

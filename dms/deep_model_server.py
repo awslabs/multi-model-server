@@ -71,7 +71,7 @@ class DMS(object):
             self.gpu = self.args.gpu
 
             # Setup root logger handler and level.
-            log_file = self.args.log_file or "dms_app.log"
+            log_file = self.args.log_file
             log_level = self.args.log_level or "INFO"
             log_rotation_time = self.args.log_rotation_time or "1 H"
             _set_root_logger(log_file, log_level, log_rotation_time)

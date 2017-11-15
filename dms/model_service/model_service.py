@@ -19,7 +19,7 @@ from dms.log import get_logger
 from dms.metrics_manager import MetricsManager
 
 
-logger = get_logger(__name__)
+logger = get_logger()
 URL_PREFIX = ('http://', 'https://', 's3://')
 
 class ModelService(object):

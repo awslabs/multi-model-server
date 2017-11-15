@@ -103,6 +103,7 @@ def get_logger(name=None, filename=None, level="NOTSET", rotate_value='H', rotat
     >>> logger.debug("Hello World") # Logs the debug output as the level is logging.DEBUG.
     D0505 00:31:30 3525 <stdin>:<module>:1] Hello World
     """
+
     logger = logging.getLogger(name)
     if name is not None and not getattr(logger, '_init_done', None):
         logger._init_done = True

@@ -7,10 +7,17 @@ A custom service is a way to customize DMS's inference request handling logic. P
 The simplest custom service example comes from one that is built into DMS, the `mxnet_vision_service`. When you run the resnet-18 example for image inference to predictions like "what's in this image?", it's actually using the custom vision service. You can check out the [code in its entirety](../model_service/mxnet_vision_service.py), but we'll also cover the highlights here. In the following code snippet, you can see that the vision service is taking in the image and resizing it. The main reasons you want to do this are as follows: you never know what resolution of image someone might submit to the API, models require the input to be the same size/shape that they were trained on, and you don't want to have to deal with that logic in your application. The vision service handles that for you.
 
 ```python
+input_shape = self.signature['inputs'][idx]['data_shape']
+# We are assuming input shape is NCHW
+[h, w] = input_shape[2:]
 img_arr = image.read(img)
 img_arr = image.resize(img_arr, w, h)
 img_arr = image.transform_shape(img_arr)
 ```
+
+### MXNet Image API Wrapper
+
+Take a closer look at the resize code, and you will note that it is pulling the height (h) and the width (w) from the signature data. This signature data describes the model inputs, so the images are being resized to match what the model expects. The resize mechanism comes from `mxnet.img.imresize` via a DMS utility wrapper, and it will upsample images smaller than the input size. Note that you can optionally add the `interp` parameter to the `resize` call for different interpolation methods. Details on the options are in the comments for the `resize` function found in [../dms/utils/mxnet/image.py](utils/mxnet/image.py). Images will be stretched by default, so if you need any other image handling like [resizing on the short edge](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L229), [center crop](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L362), etc. you will need to call [MXNet's image API](https://mxnet.incubator.apache.org/api/python/image/image.html) directly.
 
 Now say you want more pre-processing. This is designed to be easy. You have two options: you can extend the vision service, or you can go back to the base service, `MXNetBaseService`, and extend that instead.
 

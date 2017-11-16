@@ -128,7 +128,7 @@ def export_serving(model, filename, signature, export_path=None, aux_files=None)
                         "data_name": "softmax",
                         "data_shape": [1, 1000]
                     }
-                ]
+                ],
                 "output_type": "application/json"
             }
     export_path : str
@@ -167,8 +167,8 @@ def export_serving(model, filename, signature, export_path=None, aux_files=None)
     Exported model to "resnet-18.model"
     Exported model to "resnet-152.model"
     """
-    assert issubclass(type(model), mx.mod.BaseModule), \
-        "Model is type %s. It must be a subclass of mx.mod.BaseModule." % (type(model))
+    assert issubclass(type(model), mx.mod.BaseModule) or issubclass(type(model), mx.gluon.Block), \
+        "Model is type %s. It must be a subclass of mx.mod.BaseModule or mx.gluon.BLock." % (type(model))
 
     epoch_placeholder = 0
     destination = export_path or os.getcwd()
@@ -176,25 +176,30 @@ def export_serving(model, filename, signature, export_path=None, aux_files=None)
         destination = os.path.expanduser(destination)
     sig_file = '%s/signature.json' % (destination)
 
-    if 'inputs' not in signature:
-        signature['inputs'] = list()
-        for name, shape in model.data_shapes:
-            signature['inputs'].append({
-                'data_name': name,
-                'data_shape': list(shape)
-            })
-    if 'outputs' not in signature:
-        signature['outputs'] = list()
-        for name, shape in model.output_shapes:
-            signature['outputs'].append({
-                'data_name': name,
-                'data_shape': list(shape)
-            })
+    if issubclass(type(model), mx.mod.BaseModule):
+        if 'inputs' not in signature:
+            signature['inputs'] = list()
+            for name, shape in model.data_shapes:
+                signature['inputs'].append({
+                    'data_name': name,
+                    'data_shape': list(shape)
+                })
+        if 'outputs' not in signature:
+            signature['outputs'] = list()
+            for name, shape in model.output_shapes:
+                signature['outputs'].append({
+                    'data_name': name,
+                    'data_shape': list(shape)
+                })
+        model.save_checkpoint('%s/%s' % (destination, filename), epoch_placeholder)
+    else:
+        assert 'inputs' in signature and 'outputs' in signature, \
+            "Inputs and outputs information is required for gluon model signature."
+        model.export('%s/%s' % (destination, filename))
 
     with open(sig_file, 'w') as sig:
         json.dump(signature, sig)
     _check_signature(destination)
-    model.save_checkpoint('%s/%s' % (destination, filename), epoch_placeholder)
 
     file_list = ['%s/%s-symbol.json' % (destination, filename), '%s/%s-%04d.params' %
                     (destination, filename, epoch_placeholder), sig_file]
@@ -207,7 +212,8 @@ def export_serving(model, filename, signature, export_path=None, aux_files=None)
     with zipfile.ZipFile(abs_model_path, 'w') as zip_file:
         for item in file_list:
             zip_file.write(item)
-    print('Exported model to %s/%s.model', destination, filename)
+            os.remove(item)
+    print('Exported model to %s/%s.model' %( destination, filename))
 
 
 def export():

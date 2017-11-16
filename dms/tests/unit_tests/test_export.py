@@ -16,11 +16,29 @@ sys.path.append(curr_path + '/../..')
 import unittest
 import mxnet as mx
 import json
+import zipfile
+import shutil
+
 from model_service.mxnet_vision_service import MXNetVisionService as mx_vision_service
 from export_model import export_serving
+from mxnet.gluon import nn
 
 
 class TestExport(unittest.TestCase):
+    def _extract_zip(self, zip_file, destination):
+        with zipfile.ZipFile(zip_file) as file_buf:
+            for item in file_buf.namelist():
+                filename = os.path.basename(item)
+                # skip directories
+                if not filename:
+                    continue
+
+                # copy file (taken from zipfile's extract)
+                source = file_buf.open(item)
+                target = open(os.path.join(destination, filename), 'wb')
+                with source, target:
+                    shutil.copyfileobj(source, target)
+
     def _train_and_save(self, path):
         model_path = curr_path + '/' + path
         if not os.path.isdir(model_path):
@@ -99,6 +117,7 @@ class TestExport(unittest.TestCase):
         os.system('rm -rf %s %s %s/%s' % (export_file, model_path, os.getcwd(), model_name))
 
     def test_export_API(self):
+        # Test module export
         path = 'test'
         model_path = curr_path + '/' + path
         os.mkdir(model_path)
@@ -116,8 +135,9 @@ class TestExport(unittest.TestCase):
         signature = {'input_type': 'application/json', 'output_type': 'application/json'}
         with open('%s/synset.txt' % (model_path), 'w') as synset:
             synset.write('test label')
-        export_serving(mod, 'test', signature, export_path=model_path, aux_files=['%s/synset.txt' % model_path])
-        assert os.path.isfile('%s/test.model' % (model_path)), "No zip file found for export_serving."
+        export_serving(mod, path, signature, export_path=model_path, aux_files=['%s/synset.txt' % model_path])
+        self._extract_zip('%s/%s.model' % (model_path, path), model_path)
+        assert os.path.isfile('%s/%s.model' % (model_path, path)), "No zip file found for export_serving."
         assert os.path.isfile('%s/signature.json' % (model_path)), "No signature file found for export_serving."
         with open('%s/signature.json' % (model_path)) as f:
             sig = json.load(f)
@@ -133,6 +153,41 @@ class TestExport(unittest.TestCase):
             assert output['data_name'] == data[0], "Output name mistach. %s vs %s" % (output['data_name'], data[0])
             assert output['data_shape'] == list(data[1]), "Output shape mistach. %s vs %s" % (
             output['data_shape'], data[1])
+        os.system('rm -rf %s' % (model_path))
+
+        # Test gluon block export
+        os.mkdir(model_path)
+        w_init = mx.init.Xavier()
+
+        netG = nn.HybridSequential()
+        with netG.name_scope():
+            netG.add(nn.Dense(units=200, activation='relu', weight_initializer=w_init))
+
+        netG.initialize()
+        netG.hybridize()
+        latent_z = mx.nd.random_normal(0, 1, shape=(1, 100))
+        netG(latent_z)
+
+        signature = {
+            "input_type": "application/json",
+            "inputs": [
+                {
+                    "data_name": "data",
+                    "data_shape": [1, 100]
+                }
+            ],
+            "outputs": [
+                {
+                    "data_name": "softmax",
+                    "data_shape": [1, 200]
+                }
+            ],
+            "output_type": "application/json"
+        }
+        export_serving(netG, path, signature, export_path=model_path)
+        self._extract_zip('%s/%s.model' % (model_path, path), model_path)
+        assert os.path.isfile('%s/%s.model' % (model_path, path)), "No zip file found for export_serving."
+        assert os.path.isfile('%s/signature.json' % (model_path)), "No signature file found for export_serving."
         os.system('rm -rf %s' % (model_path))
 
     def runTest(self):

@@ -136,7 +136,7 @@ The Python method to export model is to use `export_serving` function while comp
    export_serving(mod, 'resnet-18', signature, aux_files=['synset.txt'])
 ```
 
-Another route is to use some new features in MXNet.
+In MXNet with version higher than 0.12.0, you can export a gluon HybridBlock directly.
 
 ```python
 net = gluon.nn.HybridSequential() # this mode will allow you to export the model
@@ -145,7 +145,23 @@ with net.name_scope():
     # then add the rest of your architecture
 net.hybridize() # hybridize your network so that it can be exported as symbols
 # then train your network
-net.export('models/mnist') #export your model to a specific path
+signature = {
+                "input_type": "application/json",
+                "inputs" : [
+                    {
+                        "data_name": "data",
+                        "data_shape": [1, 100]
+                    }
+                ],
+                "outputs" : [
+                    {
+                        "data_name": "softmax",
+                        "data_shape": [1, 128]
+                    }
+                ],
+                "output_type": "application/json"
+            }
+export_serving(mod, 'gluon_model', signature, aux_files=['synset.txt'])
 ```
 
 Note: be careful with versions. If you export a v0.12 model and try to run it with DMS running v0.11 of MXNet, the server will probably throw errors and you won't be able to use the model.

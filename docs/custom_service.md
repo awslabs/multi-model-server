@@ -2,9 +2,16 @@
 
 A custom service is a way to customize DMS's inference request handling logic. Potential customizations include model initialization, inference request pre-processing, post-processing, and even the inference call itself.
 
+The service code is provided in two possible ways.
+
+1. The `--service` argument, along with the path to the custom service Python file, is used when launching `deep-model-server`. If this argument is not used DMS will look in the model archive as described next.
+1. A custom service Python file may be included inside the model archive. When the model archive is executed by `deep-model-server` it will detect the presence of the custom service and load it.
+
+The `--service` argument overrides any custom service file inside the model archive.
+
 ## Vision Service
 
-The simplest custom service example comes from one that is built into DMS, the `mxnet_vision_service`. When you run the resnet-18 example for image inference to predictions like "what's in this image?", it's actually using the custom vision service. You can check out the [code in its entirety](../model_service/mxnet_vision_service.py), but we'll also cover the highlights here. In the following code snippet, you can see that the vision service is taking in the image and resizing it. The main reasons you want to do this are as follows: you never know what resolution of image someone might submit to the API, models require the input to be the same size/shape that they were trained on, and you don't want to have to deal with that logic in your application. The vision service handles that for you.
+The simplest custom service example comes from one that is built into DMS, the `mxnet_vision_service`. When you run the resnet-18 or squeezenet example for image inference to get predictions like "what's in this image?", it's actually using the custom vision service. You can check out the [code in its entirety](../dms/model_service/mxnet_vision_service.py), but we'll also cover the highlights here. In the following code snippet, you can see that the vision service is taking in the image and resizing it. The main reasons you want to do this are as follows: you never know what resolution of image someone might submit to the API, models require the input to be the same size/shape that they were trained on, and you don't want to have to deal with that logic in your application. The vision service handles that for you.
 
 ```python
 input_shape = self.signature['inputs'][idx]['data_shape']
@@ -17,13 +24,24 @@ img_arr = image.transform_shape(img_arr)
 
 ### MXNet Image API Wrapper
 
-Take a closer look at the resize code, and you will note that it is pulling the height (h) and the width (w) from the signature data. This signature data describes the model inputs, so the images are being resized to match what the model expects. The resize mechanism comes from `mxnet.img.imresize` via a DMS utility wrapper, and it will upsample images smaller than the input size. Note that you can optionally add the `interp` parameter to the `resize` call for different interpolation methods. Details on the options are in the comments for the `resize` function found in [../dms/utils/mxnet/image.py](utils/mxnet/image.py). Images will be stretched by default, so if you need any other image handling like [resizing on the short edge](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L229), [center crop](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L362), etc. you will need to call [MXNet's image API](https://mxnet.incubator.apache.org/api/python/image/image.html) directly.
+Take a closer look at the resize code, and you will note that it is pulling the height (h) and the width (w) from the signature data. This signature data describes the model inputs, so the images are being resized to match what the model expects. The resize mechanism comes from `mxnet.img.imresize` via a DMS utility wrapper, and it will upsample images smaller than the input size. Note that you can optionally add the `interp` parameter to the `resize` call for different interpolation methods. Details on the options are in the comments for the `resize` function found in [utils/mxnet/image.py](../dms/utils/mxnet/image.py). Images will be stretched by default, so if you need any other image handling like [resizing on the short edge](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L229), [center crop](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L362), etc. you will need to call [MXNet's image API](https://mxnet.incubator.apache.org/api/python/image/image.html) directly.
 
 Now say you want more pre-processing. This is designed to be easy. You have two options: you can extend the vision service, or you can go back to the base service, `MXNetBaseService`, and extend that instead.
 
 ## Calling a Custom Service
 
-When you launch the `deep-model-server` CLI using the `service` argument, the path to a service Python file is required. In this file, you specify your own custom service. All customized service classes should be inherited from `MXNetBaseService`, but you can also extend another custom service class that eventually drills down to `MXNetBaseService` which is outlined here:
+When you launch the `deep-model-server` CLI using the `service` argument, the path to a service Python file is required. For example, if you want to use a local model file and manually call the `mxnet_vision_service` you would use:
+
+```
+deep-model-server --models squeezenet=squeezenet.model \
+                  --service dms/model_service/mxnet_vision_service.py
+```
+
+This assumes that you've downloaded the DMS source and you're in the source root directory. In this example you're using the vision service that comes with DMS, but otherwise you don't need the source, and you can specify any Python file that contains your custom service code.
+
+## Designing a Custom Service
+
+All customized service classes should be inherited from `MXNetBaseService`, but you can also extend another custom service class that eventually drills down to `MXNetBaseService` which is outlined here:
 
 ```python
 class MXNetBaseService(SingleNodeService):
@@ -36,13 +54,11 @@ class MXNetBaseService(SingleNodeService):
   def _postprocess(self, data, method='predict'):
 ```
 
-## Designing a Custom Service
-
-Usually you would want to override `_preprocess` and `_postprocess` as features for your application, such as massaging the inputs and the outputs. This is going to be bound by the specific domain of your applications. For example, you could add functionality to `_preprocess` for resizing or otherwise modifying images to match your model's input. You could add logic in `_postprocess` for how prediction results are returned to the user. We provide some utility functions in the [utils](../utils/) folder for vision and NLP applications to help you easily build basic pre-process functions.
+Usually you would want to override `_preprocess` and `_postprocess` as features for your application, such as massaging the inputs and the outputs. This is going to be bound by the specific domain of your applications. For example, you could add functionality to `_preprocess` for resizing or otherwise modifying images to match your model's input. You could add logic in `_postprocess` for how prediction results are returned to the user. We provide some utility functions in the [utils](../dms/utils/) folder for vision and NLP applications to help you easily build basic pre-process functions.
 
 ### An Image Inference Example
 
-The following example is for a resnet-18 service that returns a prediction of what's in the image. In this example, we don't need to change `__init__` or `_inference` methods, which means we just need override `_preprocess` and `_postprocess`. In preprocess, we first convert image to NDArray. Then resize to 224 x 224. In post process, we return top 5 categories:
+The following example is for a resnet-18 service that returns a prediction of what's in the image. In this example, we don't need to change `__init__` or `_inference` methods, which means we just need override `_preprocess` and `_postprocess`. In `_preprocess`, we first read the image data, and then resize to 224 x 224. In `_postprocess`, we return top 5 categories:
 
 ```python
    import mxnet as mx

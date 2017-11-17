@@ -9,6 +9,8 @@ Use Portico's Server CLI, or the pre-configured Docker images, to start a servic
 
 Currently Portico supports only MXNet models, but we plan to extend Portico to support additional deep learning frameworks and welcome contributions.
 
+A quick overview and examples are below. Detailed documentation and examples are provided in the [docs folder](docs/README.md).
+
 
 ## Quick Start
 

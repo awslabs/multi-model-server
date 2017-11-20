@@ -26,7 +26,7 @@ pip install deep-model-server
 
 Once installed, you can get Portico's model serving up and running very quickly. We've provided an example object classification model for you to use:
 ```bash
-deep-model-server --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+deep-model-server --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model --service dms/model_service/mxnet_vision_service.py
 ```
 
 With the command above executed, you have Portico running on your host, listening for inference requests.

@@ -30,6 +30,7 @@ server {
     }
 }
 ```
+location section defines the proxy server to which all the requests are passed. Since gunicorn binds to a UNIX socket, proxy server is the corresponding URL.
 
 ### Build Step
 

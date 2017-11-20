@@ -57,31 +57,31 @@ class MetricsManager(object):
         mutex: object
             Mutex to prevent double thread writing on same resource
         """
-        MetricsManager.metrics['error_metric'] = Metric('error_number', mutex, 
+        MetricsManager.metrics['error_metric'] = Metric('errors', mutex,
                                                         aggregate_method='interval_sum', 
                                                         write_to=metrics_write_to)
-        MetricsManager.metrics['request_metric'] = Metric('requests_number', mutex, 
+        MetricsManager.metrics['request_metric'] = Metric('requests', mutex,
                                                           aggregate_method='interval_sum', 
                                                           write_to=metrics_write_to)
-        MetricsManager.metrics['cpu_metric'] = Metric('cpu', mutex, 
+        MetricsManager.metrics['cpu_metric'] = Metric('cpu', mutex,
                                                       aggregate_method='interval_average', 
                                                       write_to=metrics_write_to,
                                                       update_func=cpu)
-        MetricsManager.metrics['memory_metric'] = Metric('memory', mutex, 
+        MetricsManager.metrics['memory_metric'] = Metric('memory', mutex,
                                                          aggregate_method='interval_average', 
                                                          write_to=metrics_write_to,
                                                          update_func=memory)
-        MetricsManager.metrics['disk_metric'] = Metric('disk', mutex, 
+        MetricsManager.metrics['disk_metric'] = Metric('disk', mutex,
                                                         aggregate_method='interval_average', 
                                                         write_to=metrics_write_to,
                                                         update_func=disk)
-        MetricsManager.metrics['overall_latency_metric'] = Metric('overall_latency', mutex, 
+        MetricsManager.metrics['overall_latency_metric'] = Metric('overall_latency', mutex,
                                                                     aggregate_method='interval_average', 
                                                                     write_to=metrics_write_to)
-        MetricsManager.metrics['inference_latency_metric'] = Metric('inference_latency', mutex, 
+        MetricsManager.metrics['inference_latency_metric'] = Metric('inference_latency', mutex,
                                                                     aggregate_method='interval_average', 
                                                                     write_to=metrics_write_to)
-        MetricsManager.metrics['pre_latency_metric'] = Metric('preprocess_latency', mutex, 
+        MetricsManager.metrics['pre_latency_metric'] = Metric('preprocess_latency', mutex,
                                                                 aggregate_method='interval_average', 
                                                                 write_to=metrics_write_to)
 

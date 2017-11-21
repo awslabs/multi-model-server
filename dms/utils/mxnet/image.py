@@ -8,6 +8,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+import sys
 import numpy as np
 import mxnet as mx
 import base64
@@ -107,7 +108,10 @@ def write(img_arr, flag=1, format='jpeg', dim_order='CHW'):
     output = BytesIO()
     image.save(output, format=format)
     output.seek(0)
-    return base64.b64encode(output.getvalue())
+    if sys.version_info[0] < 3:
+        return base64.b64encode(output.getvalue())
+    else:
+        return base64.b64encode(output.getvalue()).decode("utf-8")
 
 
 def resize(src, new_width, new_height, interp=2):

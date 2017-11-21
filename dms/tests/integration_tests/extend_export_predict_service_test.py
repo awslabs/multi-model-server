@@ -6,7 +6,10 @@ import sys
 import shutil
 
 from threading import Thread
-from urllib2 import urlopen, URLError, HTTPError
+try:
+    from urllib2 import urlopen, URLError, HTTPError
+except:
+    from urllib.request import urlopen, URLError, HTTPError
 
 from dms import export_model, deep_model_server
 
@@ -22,9 +25,9 @@ def _download_file(download_dir, url):
         print("Downloading - {}".format(url))
         with open(os.path.join(download_dir, os.path.basename(url)), "wb") as local_file:
             local_file.write(f.read())
-    except HTTPError, e:
+    except HTTPError as e:
         print("Failed to download {}. HTTP Error {}".format(url, e.code))
-    except URLError, e:
+    except URLError as e:
         print("Failed to download {}. HTTP Error {}".format(url, e.reason))
 
 

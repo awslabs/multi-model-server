@@ -8,12 +8,13 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import PIL
-from io import BytesIO
 import numpy as np
 import mxnet as mx
-from mxnet import image as img
 import base64
+
+from PIL import Image
+from mxnet import image as img
+from io import BytesIO
 
 
 def transform_shape(img_arr, dim_order='NCHW'):
@@ -102,7 +103,7 @@ def write(img_arr, flag=1, format='jpeg', dim_order='CHW'):
         mode = 'L'
         img_arr = mx.nd.reshape(img_arr, (img_arr.shape[0], img_arr.shape[1]))
     img_arr = img_arr.astype(np.uint8).asnumpy()
-    image = PIL.Image.fromarray(img_arr, mode)
+    image = Image.fromarray(img_arr, mode)
     output = BytesIO()
     image.save(output, format=format)
     output.seek(0)

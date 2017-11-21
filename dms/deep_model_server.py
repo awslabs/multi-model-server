@@ -88,12 +88,12 @@ class DMS(object):
             # Process arguments
             self._arg_process()
 
-            logger.info('Service started successfully.')
-            logger.info('Service description endpoint: ' + self.host + ':' + str(self.port) + '/api-description')
-            logger.info('Service health endpoint: ' + self.host + ':' + str(self.port) + '/ping')
-
             # Start model serving host
             if self.args.gen_api is None:
+                logger.info('Service started successfully.')
+                logger.info('Service description endpoint: ' + self.host + ':' + str(self.port) + '/api-description')
+                logger.info('Service health endpoint: ' + self.host + ':' + str(self.port) + '/ping')
+                
                 self.serving_frontend.start_handler(self.host, self.port)
 
         except Exception as e:

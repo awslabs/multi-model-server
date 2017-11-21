@@ -55,11 +55,17 @@ class TestMXNetImageUtils(unittest.TestCase):
     def test_write(self):
         input1 = mx.nd.random.uniform(0, 255, shape=(3, 256, 256))
         output1 = image.write(input1)
-        assert isinstance(output1, str), "Write method failed. Output is not a string."
+        if sys.version_info[0] < 3:
+            assert isinstance(output1, str), "Write method failed. Output is not a string."
+        else:
+            assert isinstance(output1, bytes), "Write method failed. Output is not a string."
 
         input2 = mx.nd.random.uniform(0, 255, shape=(256, 256, 1))
         output2 = image.write(input2, flag=0, dim_order='HWC')
-        assert isinstance(output2, str), "Write method failed. Output is not a string."
+        if sys.version_info[0] < 3:
+            assert isinstance(output2, str), "Write method failed. Output is not a string."
+        else:
+            assert isinstance(output2, bytes), "Write method failed. Output is not a string."
 
     def test_resize(self):
         input1 = mx.nd.random.uniform(0, 255, shape=(245, 156, 3))

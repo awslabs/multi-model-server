@@ -93,7 +93,8 @@ class DMS(object):
             logger.info('Service health endpoint: ' + self.host + ':' + str(self.port) + '/ping')
 
             # Start model serving host
-            self.serving_frontend.start_handler(self.host, self.port)
+            if self.args.gen_api is None:
+                self.serving_frontend.start_handler(self.host, self.port)
 
         except Exception as e:
             logger.error('Failed to start model serving host: ' + str(e))

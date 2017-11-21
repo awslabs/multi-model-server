@@ -18,6 +18,11 @@ import zipfile
 import mxnet as mx
 from dms.arg_parser import ArgParser
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']
 VALID_MIME_TYPE = ['image/jpeg', 'application/json']

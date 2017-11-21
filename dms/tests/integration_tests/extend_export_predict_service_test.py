@@ -78,6 +78,8 @@ def test_ssd_extend_export_predict_service(tmpdir):
     start_test_server_thread.start()
     time.sleep(10)
     output = subprocess.check_output('curl -X POST http://127.0.0.1:8080/SSD/predict -F "data=@{}/street.jpg"'.format(str(tmpdir)), shell=True)
+    if sys.version_info[0] >= 3:
+        output = output.decode("utf-8")
     predictions = json.dumps(json.loads(output))
     # Assert objects are detected.
     assert predictions is not None

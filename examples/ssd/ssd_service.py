@@ -9,9 +9,8 @@
 # permissions and limitations under the License.
 
 import numpy as np
-import mxnet as mx
-from dms.utils.mxnet import image
-from dms.model_service.mxnet_vision_service import MXNetVisionService
+from mms.utils.mxnet import image
+from mms.model_service.mxnet_vision_service import MXNetVisionService
 
 
 class SSDService(MXNetVisionService):

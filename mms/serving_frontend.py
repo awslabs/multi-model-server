@@ -14,10 +14,10 @@ import time
 
 from functools import partial
 from flask import abort
-from dms.service_manager import ServiceManager
-from dms.request_handler.flask_handler import FlaskRequestHandler
-from dms.log import get_logger
-from dms.metrics_manager import MetricsManager
+from mms.service_manager import ServiceManager
+from mms.request_handler.flask_handler import FlaskRequestHandler
+from mms.log import get_logger
+from mms.metrics_manager import MetricsManager
 
 logger = get_logger()
 

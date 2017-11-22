@@ -12,11 +12,10 @@
 """
 
 import time
-import sys
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-from dms.log import get_logger
-from dms.metrics_manager import MetricsManager
+from mms.log import get_logger
+from mms.metrics_manager import MetricsManager
 
 
 logger = get_logger()

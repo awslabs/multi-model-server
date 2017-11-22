@@ -13,10 +13,9 @@ import inspect
 import os
 import imp
 
-from dms.storage import KVStorage
-from dms.model_service.model_service import ModelService
-from dms.model_service.mxnet_model_service import MXNetBaseService
-import dms.model_service.mxnet_model_service as mxnet_model_service
+from mms.storage import KVStorage
+from mms.model_service.mxnet_model_service import MXNetBaseService
+import mms.model_service.mxnet_model_service as mxnet_model_service
 
 
 class ServiceManager(object):

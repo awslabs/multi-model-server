@@ -18,7 +18,7 @@ while getopts "i:f:p:c:n:o" option; do
 done
 
 if [ "$dns" == "" ]; then
-  echo "You need to provide the server name that hosting your DMS"
+  echo "You need to provide the server name that hosting your MMS"
   echo "e.g. ./run_load_test.sh -i ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com"
 fi
 
@@ -51,6 +51,6 @@ tmpfile="$curr_dir/output.jtl"
 logfile="$curr_dir/log/jmeter.log"
 inputfile="$curr_dir/test.jpg"
 
-jmeter -n -t "$curr_dir/test_dms.jmx" -Jhostname=$dns -Jport=$port -Jthreads=$threads -Jloops=$loops -Jfilepath=$inputfile -l $tmpfile -j $logfile
+jmeter -n -t "$curr_dir/test_mms.jmx" -Jhostname=$dns -Jport=$port -Jthreads=$threads -Jloops=$loops -Jfilepath=$inputfile -l $tmpfile -j $logfile
 java -jar $command_runner --tool Reporter --generate-csv $output --input-jtl $tmpfile --plugin-type AggregateReport
 rm $tmpfile

@@ -11,7 +11,7 @@ try:
 except:
     from urllib.request import urlopen, URLError, HTTPError
 
-from dms import export_model, deep_model_server
+from mms import export_model, mxnet_model_server
 
 
 def _download_file(download_dir, url):
@@ -47,24 +47,24 @@ def setup_ssd_server(tmpdir):
     _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/street.jpg")
 
     # Export the model.
-    print("Exporting the deep model server model...")
-    sys.argv = ['deep-model-export']
+    print("Exporting the mxnet model server model...")
+    sys.argv = ['mxnet-model-export']
     sys.argv.append("--model-name")
     sys.argv.append("{}/resnet50_ssd_model".format(tmpdir))
     sys.argv.append("--model-path")
     sys.argv.append(tmpdir)
     export_model.export()
 
-    # Start the deep model server for SSD
+    # Start the mxnet model server for SSD
     print("Starting SSD Deep Model Server for test..")
 
     # Set argv parameters
-    sys.argv = ['deep-model-server']
+    sys.argv = ['mxnet-model-server']
     sys.argv.append("--models")
     sys.argv.append("SSD={}/resnet50_ssd_model.model".format(tmpdir))
     sys.argv.append("--service")
     sys.argv.append("{}/ssd_service.py".format(tmpdir))
-    deep_model_server.start_serving()
+    mxnet_model_server.start_serving()
 
 
 def cleanup(tmpdir):

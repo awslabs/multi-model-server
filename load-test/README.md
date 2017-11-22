@@ -1,11 +1,11 @@
 # Use JMeter to do load testing for Deep Model Server
 
-[JMeter](http://jmeter.apache.org/) is a widely used load testing tool. This is a simple example for how we used JMeter to load test DMS.
+[JMeter](http://jmeter.apache.org/) is a widely used load testing tool. This is a simple example for how we used JMeter to load test MMS.
 
 ## Quick start
-To load test DMS serving your model, you can use the included run_load_test.sh.
+To load test MMS serving your model, you can use the included run_load_test.sh.
 
-As an example, here's how you would test DMS running on ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com, hosting a resnet-18 model.
+As an example, here's how you would test MMS running on ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com, hosting a resnet-18 model.
 
 ```shell
 ./run_load_test.sh -i ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com -c 100 -n 20 -f report.csv
@@ -48,4 +48,4 @@ Then you need to find the path of `CMDRunner.jar`. You can use `brew list jmeter
 The `CMDRUnner.jar` is located in `/usr/local/Cellar/jmeter/3.3/libexec/lib/ext`, then you need to replace the command_runner location is the `run_load_test.sh` file line 38.
 
 ## Modifying the test plan
-You can use JMeter's GUI by running command `jmeter` so that you can modify the test plan `test_dms.jmx`. For the current setting we are testing a HTTP POST request that send multi-part form-data to the server. The testing file is hard coded in `run_load_test.sh` that `inputfile="$curr_dir/test.jpg"`, you can change it to the image that you are testing.
+You can use JMeter's GUI by running command `jmeter` so that you can modify the test plan `test_mms.jmx`. For the current setting we are testing a HTTP POST request that send multi-part form-data to the server. The testing file is hard coded in `run_load_test.sh` that `inputfile="$curr_dir/test.jpg"`, you can change it to the image that you are testing.

@@ -19,8 +19,8 @@ import shutil
 import os
 
 from mxnet.io import DataBatch
-from dms.log import get_logger
-from dms.model_service.model_service import SingleNodeService, URL_PREFIX
+from mms.log import get_logger
+from mms.model_service.model_service import SingleNodeService, URL_PREFIX
 
 
 logger = get_logger()

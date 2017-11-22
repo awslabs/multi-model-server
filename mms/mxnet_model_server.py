@@ -10,13 +10,13 @@
 
 import logging
 
-from dms.arg_parser import ArgParser
-from dms.client_sdk_generator import ClientSDKGenerator
-from dms.log import get_logger, LOG_LEVEL_DICT
+from mms.arg_parser import ArgParser
+from mms.client_sdk_generator import ClientSDKGenerator
+from mms.log import get_logger, LOG_LEVEL_DICT
 from logging.handlers import TimedRotatingFileHandler
 from multiprocessing import Lock
-from dms.serving_frontend import ServingFrontend
-from dms.metrics_manager import MetricsManager
+from mms.serving_frontend import ServingFrontend
+from mms.metrics_manager import MetricsManager
 
 
 VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in range(7)]
@@ -44,28 +44,28 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
     root.addHandler(log_handler)
 
 
-class DMS(object):
-    """Deep Model Serving
+class MMS(object):
+    """MXNet Model Serving
     """
-    def __init__(self, app_name='dms', args=None):
+    def __init__(self, app_name='mms', args=None):
         """Initialize deep model server application.
 
         Parameters
         ----------
         app_name : str
-            App name to initialize dms service.
+            App name to initialize mms service.
         args : List of str
             Arguments for starting service. By default it is None
             and commandline arguments will be used. It should follow
             the format recognized by python argparse parse_args method:
             https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.parse_args.
-            An example for dms arguments:
+            An example for mms arguments:
             ['--models', 'resnet-18=path1', 'inception_v3=path2',
              '--gen-api', 'java', '--port', '8080']
         """
         # Initialize serving frontend and arg parser
         try:
-            parser = ArgParser.dms_parser()
+            parser = ArgParser.mms_parser()
             self.args = parser.parse_args(args) if args else parser.parse_args()
             self.serving_frontend = ServingFrontend(app_name)
             self.gpu = self.args.gpu
@@ -157,24 +157,24 @@ class DMS(object):
             exit(1)
         
 
-def start_serving(app_name='dms', args=None):
+def start_serving(app_name='mms', args=None):
     """Start service routing.
 
     Parameters
     ----------
     app_name : str
-        App name to initialize dms service.
+        App name to initialize mms service.
     args : List of str
         Arguments for starting service. By default it is None
         and commandline arguments will be used. It should follow
         the format recognized by python argparse parse_args method:
         https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.parse_args.
-        An example for dms arguments:
+        An example for mms arguments:
         ['--models', 'resnet-18=path1', 'inception_v3=path2',
          '--gen-api', 'java', '--port', '8080']
         """
-    dms = DMS(app_name, args=args)
-    dms.start_model_serving()
+    mms = mms(app_name, args=args)
+    mms.start_model_serving()
 
 if __name__ == '__main__':
     start_serving()

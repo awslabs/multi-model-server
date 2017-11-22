@@ -4,6 +4,6 @@ COPY install.sh /
 
 RUN /install.sh
 
-ADD dms_docker_cpu dms_docker_cpu
+ADD mms_docker_cpu mms_docker_cpu
 
 LABEL maintainer="yuruofei@amazon.com, wayao@amazon.com"

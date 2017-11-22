@@ -12,7 +12,7 @@ import os
 import psutil
 import threading
 
-from dms.metric import Metric
+from mms.metric import Metric
 
 # CPU and memory metric are collected every 5 seconds
 intervalSec = 5

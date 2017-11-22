@@ -1,7 +1,7 @@
-from dms import deep_model_server
+from mms import mxnet_model_server
 
 # Read arguments
-config_file = 'dms_app.conf'
+config_file = 'mms_app.conf'
 args = []
 gunicorn_arg_start = '# Gunicorn arguments'
 with open(config_file) as f:
@@ -17,5 +17,5 @@ for i, line in enumerate(content):
         else:
             args.append(content[i + 1])
 
-server = deep_model_server.DMS(args=args)
+server = mxnet_model_server.MMS(args=args)
 application = server.create_app()

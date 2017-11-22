@@ -16,7 +16,7 @@ import logging
 import json
 import zipfile
 import mxnet as mx
-from dms.arg_parser import ArgParser
+from mms.arg_parser import ArgParser
 
 try:
     basestring

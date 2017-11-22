@@ -14,15 +14,15 @@ pkgs = find_packages()
 pkgs.append('tools')
 
 setup(
-    name='deep-model-server',
+    name='mxnet-model-server',
     version='0.1.3',
-    description='Portico is a tool for packaging neural net models and deploying them for inference',
-    url='https://github.com/awslabs/portico',
+    description='mxnet-model-server is a tool for packaging neural net models and deploying them for inference',
+    url='https://github.com/awslabs/mxnet-model-server',
     keywords='MXNet Model Serving Deep Learning Inference',
     packages=pkgs,
     install_requires=['mxnet>=0.11.0', 'Flask', 'Pillow', 'requests', 'flask-cors', 'psutil'],
     entry_points={
-        'console_scripts':['deep-model-server=dms.deep_model_server:start_serving', 'deep-model-export=dms.export_model:export']
+        'console_scripts':['mxnet-model-server=mms.deep_model_server:start_serving', 'mxnet-model-export=mms.export_model:export']
     },
     include_package_data=True,
     license='Apache License Version 2.0'

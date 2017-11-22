@@ -10,8 +10,8 @@
 import sys
 
 from flask import Flask, request, jsonify, send_file
-from dms.log import get_logger
-from dms.request_handler.request_handler import RequestHandler
+from mms.log import get_logger
+from mms.request_handler.request_handler import RequestHandler
 from flask_cors import CORS
 
 

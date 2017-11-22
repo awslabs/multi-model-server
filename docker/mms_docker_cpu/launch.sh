@@ -13,7 +13,7 @@
 
 line_list=()
 gunicorn_arg=''
-config_file='dms_app.conf'
+config_file='mms_app.conf'
 
 while read line
 do
@@ -68,7 +68,6 @@ do
     fi
 done
 
-export gpu_id=0
 app_script='wsgi'
 service nginx restart
 gunicorn $gunicorn_arg $app_script

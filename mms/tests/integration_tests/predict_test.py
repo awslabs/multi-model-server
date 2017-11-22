@@ -24,7 +24,7 @@ def predict():
     assert response == expected
 
 def logging():
-    default_log_file = 'dms_app.log'
+    default_log_file = 'mms_app.log'
     expected_log = "Initialized model serving.\n" \
                    "Adding endpoint: resnet-18_predict to Flask\n" \
                    "Adding endpoint: ping to Flask\n" \
@@ -44,7 +44,7 @@ def logging():
                                                          % (line_num, len(log_content.split('\n')))
 
 
-subprocess.check_call('deep-model-server --models resnet-18=resnet-18.model &', shell=True)
+subprocess.check_call('mxnet-model-server --models resnet-18=resnet-18.model &', shell=True)
 
 time.sleep(5)
 

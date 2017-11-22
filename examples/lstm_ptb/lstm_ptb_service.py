@@ -1,7 +1,7 @@
 import mxnet as mx
 
-from dms.model_service.mxnet_model_service import MXNetBaseService
-from dms.utils.mxnet import nlp
+from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.utils.mxnet import nlp
 
 class MXNetLSTMService(MXNetBaseService):
     """LSTM service class. This service consumes a sentence

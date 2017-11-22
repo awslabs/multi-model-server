@@ -14,4 +14,4 @@ apt-get install -y python-certbot-nginx
 pip install --upgrade pip
 pip install gunicorn
 pip install gevent
-pip install deep-model-server
+pip install mxnet-model-server

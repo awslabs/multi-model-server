@@ -173,7 +173,7 @@ def start_serving(app_name='mms', args=None):
         ['--models', 'resnet-18=path1', 'inception_v3=path2',
          '--gen-api', 'java', '--port', '8080']
         """
-    mms = mms(app_name, args=args)
+    mms = MMS(app_name, args=args)
     mms.start_model_serving()
 
 if __name__ == '__main__':

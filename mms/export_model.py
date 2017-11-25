@@ -8,7 +8,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-'''Command line interface to export model files to be used for inference by Deep Model Server
+'''Command line interface to export model files to be used for inference by MXNet Model Server
 '''
 
 import os
@@ -102,7 +102,7 @@ def _export_model(args):
 
 
 def export_serving(model, filename, signature, export_path=None, aux_files=None):
-    """Export a module object to a .model file to be used by Deep Model Server.
+    """Export a module object to a .model file to be used by MXNet Model Server.
 
     Parameters
     ----------

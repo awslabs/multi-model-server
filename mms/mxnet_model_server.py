@@ -48,7 +48,7 @@ class MMS(object):
     """MXNet Model Serving
     """
     def __init__(self, app_name='mms', args=None):
-        """Initialize deep model server application.
+        """Initialize mxnet model server application.
 
         Parameters
         ----------

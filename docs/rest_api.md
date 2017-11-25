@@ -1,4 +1,4 @@
-# DMS REST API
+# MMS REST API
 
 The REST API is built according to the [OpenAPI specification](https://en.wikipedia.org/wiki/OpenAPI_Specification). It is human readable and easy to integrate with a variety of applications. To that end, it interfaces with Swagger-generated client API code, so you can [very easily and automatically generate code](code_gen.md) for Java, Scala, C#, Javascript, [and more](https://swagger.io/swagger-codegen/).
 

@@ -1,4 +1,4 @@
-# Testing DMS
+# Testing MMS
 
 ## Pre-requisites
 
@@ -11,8 +11,8 @@ sudo pip install mock pytest
 You will also need the source for the project, so clone the project first.
 
 ```bash
-git clone https://github.com/awslabs/deep-model-server.git
-cd deep-model-server
+git clone https://github.com/awslabs/mxnet-model-server.git
+cd mxnet-model-server
 ```
 
 ## Unit Tests
@@ -20,12 +20,12 @@ cd deep-model-server
 You can run the unit tests with the following:
 
 ```bash
-python -m pytest dms/tests/unit_tests/
+python -m pytest mms/tests/unit_tests/
 ```
 ## CI Tests
 
 You can run the integration tests with the following:
  
 ```bash
-python -m pytest dms/test/integration_tests/
+python -m pytest mms/test/integration_tests/
 ```

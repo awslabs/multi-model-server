@@ -1,17 +1,17 @@
 # Defining a Custom Service
 
-A custom service is a way to customize DMS's inference request handling logic. Potential customizations include model initialization, inference request pre-processing, post-processing, and even the inference call itself.
+A custom service is a way to customize MMS inference request handling logic. Potential customizations include model initialization, inference request pre-processing, post-processing, and even the inference call itself.
 
 The service code is provided in two possible ways.
 
-1. The `--service` argument, along with the path to the custom service Python file, is used when launching `deep-model-server`. If this argument is not used DMS will look in the model archive as described next.
-1. A custom service Python file may be included inside the model archive. When the model archive is executed by `deep-model-server` it will detect the presence of the custom service and load it.
+1. The `--service` argument, along with the path to the custom service Python file, is used when launching `mxnet-model-server`. If this argument is not used DMS will look in the model archive as described next.
+1. A custom service Python file may be included inside the model archive. When the model archive is executed by `mxnet-model-server` it will detect the presence of the custom service and load it.
 
 The `--service` argument overrides any custom service file inside the model archive.
 
 ## Vision Service
 
-The simplest custom service example comes from one that is built into DMS, the `mxnet_vision_service`. When you run the resnet-18 or squeezenet example for image inference to get predictions like "what's in this image?", it's actually using the custom vision service. You can check out the [code in its entirety](../dms/model_service/mxnet_vision_service.py), but we'll also cover the highlights here. In the following code snippet, you can see that the vision service is taking in the image and resizing it. The main reasons you want to do this are as follows: you never know what resolution of image someone might submit to the API, models require the input to be the same size/shape that they were trained on, and you don't want to have to deal with that logic in your application. The vision service handles that for you.
+The simplest custom service example comes from one that is built into DMS, the `mxnet_vision_service`. When you run the resnet-18 or squeezenet example for image inference to get predictions like "what's in this image?", it's actually using the custom vision service. You can check out the [code in its entirety](../mms/model_service/mxnet_vision_service.py), but we'll also cover the highlights here. In the following code snippet, you can see that the vision service is taking in the image and resizing it. The main reasons you want to do this are as follows: you never know what resolution of image someone might submit to the API, models require the input to be the same size/shape that they were trained on, and you don't want to have to deal with that logic in your application. The vision service handles that for you.
 
 ```python
 input_shape = self.signature['inputs'][idx]['data_shape']
@@ -30,14 +30,14 @@ Now say you want more pre-processing. This is designed to be easy. You have two 
 
 ## Calling a Custom Service
 
-When you launch the `deep-model-server` CLI using the `service` argument, the path to a service Python file is required. For example, if you want to use a local model file and manually call the `mxnet_vision_service` you would use:
+When you launch the `mxnet-model-server` CLI using the `service` argument, the path to a service Python file is required. For example, if you want to use a local model file and manually call the `mxnet_vision_service` you would use:
 
 ```
-deep-model-server --models squeezenet=squeezenet.model \
-                  --service dms/model_service/mxnet_vision_service.py
+mxnet-model-server --models squeezenet=squeezenet.model \
+                  --service mms/model_service/mxnet_vision_service.py
 ```
 
-This assumes that you've downloaded the DMS source and you're in the source root directory. In this example you're using the vision service that comes with DMS, but otherwise you don't need the source, and you can specify any Python file that contains your custom service code.
+This assumes that you've downloaded the MMS source and you're in the source root directory. In this example you're using the vision service that comes with MMS, but otherwise you don't need the source, and you can specify any Python file that contains your custom service code.
 
 ## Designing a Custom Service
 
@@ -54,7 +54,7 @@ class MXNetBaseService(SingleNodeService):
   def _postprocess(self, data, method='predict'):
 ```
 
-Usually you would want to override `_preprocess` and `_postprocess` as features for your application, such as massaging the inputs and the outputs. This is going to be bound by the specific domain of your applications. For example, you could add functionality to `_preprocess` for resizing or otherwise modifying images to match your model's input. You could add logic in `_postprocess` for how prediction results are returned to the user. We provide some utility functions in the [utils](../dms/utils/) folder for vision and NLP applications to help you easily build basic pre-process functions.
+Usually you would want to override `_preprocess` and `_postprocess` as features for your application, such as massaging the inputs and the outputs. This is going to be bound by the specific domain of your applications. For example, you could add functionality to `_preprocess` for resizing or otherwise modifying images to match your model's input. You could add logic in `_postprocess` for how prediction results are returned to the user. We provide some utility functions in the [utils](../mms/utils/) folder for vision and NLP applications to help you easily build basic pre-process functions.
 
 ### An Image Inference Example
 
@@ -62,8 +62,8 @@ The following example is for a resnet-18 service that returns a prediction of wh
 
 ```python
    import mxnet as mx
-   from dms.utils.mxnet import image
-   from dms.model_service.mxnet_model_service import MXNetBaseService
+   from mms.utils.mxnet import image
+   from mms.model_service.mxnet_model_service import MXNetBaseService
 
    class Resnet18Service(MXNetBaseService):
        def _preprocess(self, data):

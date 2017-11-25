@@ -19,17 +19,17 @@ import mms.model_service.mxnet_model_service as mxnet_model_service
 
 
 class ServiceManager(object):
-    """ServiceManager will be responsible for storing infomation and managing
-    model services. ServiceManager will directly talk to model services.
+    """ServiceManager is responsible for storing information and managing
+    model services. ServiceManager calls model services directly.
     In later phase, ServiceManager will also be responsible for model versioning,
-    prediction batching and caching...
+    prediction batching and caching.
     """
     def __init__(self):
         """
         Initialize Service Manager.
         """
 
-        # registry for model defination and user defined functions
+        # registry for model definition and user defined functions
         self.modelservice_registry = KVStorage('modelservice')
         self.func_registry = KVStorage('func')
 

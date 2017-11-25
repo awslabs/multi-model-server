@@ -47,12 +47,12 @@ Both input and output are of type application/json. Input data shape is (1, 60).
 
 Loading a NLP model in MXNet is a bit more complicated than vision models. We need to override `__init__`, `_preprocess`, `_inference` and `_postprocess` methods in a custom service class. Implementation details are in [lstm_ptb_service.py](lstm_ptb_service.py).
 
-## Step 5 - Export model files with deep-model-export CLI tool
+## Step 5 - Export model files with mxnet-model-export CLI tool
 
 With model files together with signature and vocab_dict files in lstm-model folder, we are ready to export them to DMS model file.
 
 ```bash
-deep-model-export --model-path lstm-model/ --model-name lstm_ptb
+mxnet-model-export --model-path lstm-model/ --model-name lstm_ptb
 ```
 
 ## Step 6 - Establish inference service
@@ -60,7 +60,7 @@ deep-model-export --model-path lstm-model/ --model-name lstm_ptb
 lstm_ptb.model file is created by exporting model files. We also provided custom service script lstm_ptb_service.py. We are ready to establish the LSTM inference service:
 
 ```bash
-deep-model-server --models lstm_ptb=lstm_ptb.model  --service lstm_ptb_service.py
+mxnet-model-server --models lstm_ptb=lstm_ptb.model  --service lstm_ptb_service.py
 ```
 You will see the following outputs which means the service is successfully established:
 

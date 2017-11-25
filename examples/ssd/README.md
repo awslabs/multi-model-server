@@ -1,6 +1,6 @@
 # Single Shot Multi Object Detection Inference Service
 
-In this example, we show how to use a pre-trained Single Shot Multi Object Detection (SSD) MXNet model for performing real time inference using Deep Model Server.
+In this example, we show how to use a pre-trained Single Shot Multi Object Detection (SSD) MXNet model for performing real time inference using MMS
 
 The pre-trained model is trained on the [Pascal VOC 2012 dataset](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html) The network is a SSD model built on Resnet50 as base network to extract image features. The model is trained to detect the following entities (classes): ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']. For more details about the model, you can refer [here](https://github.com/apache/incubator-mxnet/tree/master/example/ssd).
 
@@ -8,8 +8,8 @@ The inference service would return the response in the format - '[(object_class,
 
 # Objective
 
-1. Demonstrate how to export and use a pre-trained MXNet model in Deep Model Server.
-2. Demonstrate how to extend Deep Model Server with custom pre-processing and post-processing?
+1. Demonstrate how to export and use a pre-trained MXNet model in MMS
+2. Demonstrate how to extend MMS with custom pre-processing and post-processing
 
 ## Step 1 - Download the pre-trained SSD Model
 
@@ -26,7 +26,7 @@ Use these links to download the Symbol and Params files:
 
 **Note** params file is around 125 MB.
 
-## Step 2 - Prepare the signature file for Deep Model Server (DMS)
+## Step 2 - Prepare the signature file
 
 Define Input and Output name, type and shape in `signature.json` file. The signature for this example looks like below:
 
@@ -49,7 +49,7 @@ Define Input and Output name, type and shape in `signature.json` file. The signa
 }
 ```
 
-In the pre-trained model, input name is 'data' and shape is '(1,3,512,512)'. Where, the expected input is a color image (3 channels - RGB) of shape 512*512. We also specify `image/jpeg` as the expected input type since we want the service to support handling of binary JPEG images, to make it easier for clients to use the service. With this setup, DMS will take care of converting binary images to tensor NDArray used by MXNet.
+In the pre-trained model, input name is 'data' and shape is '(1,3,512,512)'. Where, the expected input is a color image (3 channels - RGB) of shape 512*512. We also specify `image/jpeg` as the expected input type since we want the service to support handling of binary JPEG images, to make it easier for clients to use the service. With this setup, MMS will take care of converting binary images to tensor NDArray used by MXNet.
 
 Similarly, in the pre-trained model, output name is 'detection_output' with shape '(1,6132,6)' from the last layer of the network. Here, 6132 is number of detections the network outputs. 6 is the dimension of each detection - (class_id, score, x1, y1, x2, y2).
 
@@ -87,53 +87,53 @@ To understand more about the MultiboxPrior, anchor boxes, sizes and ratios, plea
 
 [synset.txt](synset.txt) is where we define list of all classes detected by the model. The pre-trained SSD model used in the example is trained to detect 20 classes - person, car, aeroplane, bicycle and more. See synset.txt file for list of all classes.
 
-The list of classes in synset.txt will be loaded by DMS as list of labels in inference logic.
+The list of classes in synset.txt will be loaded by MMS as list of labels in inference logic.
 
-## Step 4 - Extend DMS with custom preprocess and postprocess
+## Step 4 - Extend MMS with custom preprocess and postprocess
 
-DMS allows users to extend the base service functionality and add more custom initialization, pre-processing, inference and post-processing.
+MMS allows users to extend the base service functionality and add more custom initialization, pre-processing, inference and post-processing.
 
-In this example, we extend `MXNetVisionService`, provided by DMS for vision inference use-cases, and reuse its input image preprocess functionality to resize and transform the image shape. We only add custom pre-processing and post-processing steps. See [ssd_service.py](ssd_service.py) for more details on how to extend the base service and add custom pre-processing and post-processing.
+In this example, we extend `MXNetVisionService`, provided by MMS for vision inference use-cases, and reuse its input image preprocess functionality to resize and transform the image shape. We only add custom pre-processing and post-processing steps. See [ssd_service.py](ssd_service.py) for more details on how to extend the base service and add custom pre-processing and post-processing.
 
-## Step 5 - Export the model with deep-model-export CLI utility
+## Step 5 - Export the model with mxnet-model-export CLI utility
 
 In this step, we package the following:
 1. pre-trained MXNet Model we downloaded in Step 1.
 2. '[signature.json](signature.json)' file we prepared in step 2.
 3. '[synset.txt](synset.txt)' file we prepared in step 3.
 
-as one single 'resnet50_ssd_model.model' file. We use `deep-model-export` command line utility (CLI) provided by DMS.
+as one single 'resnet50_ssd_model.model' file. We use `mxnet-model-export` command line utility (CLI) provided by MMS.
 
 This tool prepares a .model file that will be provided as input to start the inference server.
 
 ```bash
-deep-model-export --model-name resnet50_ssd_model --model-path .
+mxnet-model-export --model-name resnet50_ssd_model --model-path .
 ```
 
 ## Step 6 - Start the Inference Service
 
 Start the inference service by providing the 'resnet50_ssd_model.model' file we exported in Step 5. We also provide the custom extended service module, 'ssd_service.py'.
 
-DMS then extracts the resources (signature, synset, model symbol and params) we have packaged into .model file and uses the extended custom service, to start the inference server.
+MMS then extracts the resources (signature, synset, model symbol and params) we have packaged into .model file and uses the extended custom service, to start the inference server.
 
 By default, the server is started on the localhost at port 8080. You can optionally specify different host and/or port to start the server using the command line options - '--host ', '--port '.
 
 ```bash
- deep-model-server --models SSD=resnet50_ssd_model.model --service ssd_service.py
+ mxnet-model-server --models SSD=resnet50_ssd_model.model --service ssd_service.py
 ```
 
 You will see the output similar to the output listed below.
 
 ```
-I1025 08:22:13 5986 /usr/local/lib/python2.7/dist-packages/dms/mxnet_model_server.py:__init__:75] Initialized model serving.
-I1025 08:22:14 5986 /usr/local/lib/python2.7/dist-packages/dms/serving_frontend.py:add_endpoint:176] Adding endpoint: SSD_predict to Flask
-I1025 08:22:14 5986 /usr/local/lib/python2.7/dist-packages/dms/serving_frontend.py:add_endpoint:176] Adding endpoint: ping to Flask
-I1025 08:22:14 5986 /usr/local/lib/python2.7/dist-packages/dms/serving_frontend.py:add_endpoint:176] Adding endpoint: apiDescription to Flask
-I1025 08:22:14 5986 /usr/local/lib/python2.7/dist-packages/dms/mxnet_model_server.py:start_model_serving:88] Service started at 127.0.0.1:8080
+I1025 08:22:13 5986 /usr/local/lib/python2.7/dist-packages/mms/mxnet_model_server.py:__init__:75] Initialized model serving.
+I1025 08:22:14 5986 /usr/local/lib/python2.7/dist-packages/mms/serving_frontend.py:add_endpoint:176] Adding endpoint: SSD_predict to Flask
+I1025 08:22:14 5986 /usr/local/lib/python2.7/dist-packages/mms/serving_frontend.py:add_endpoint:176] Adding endpoint: ping to Flask
+I1025 08:22:14 5986 /usr/local/lib/python2.7/dist-packages/mms/serving_frontend.py:add_endpoint:176] Adding endpoint: apiDescription to Flask
+I1025 08:22:14 5986 /usr/local/lib/python2.7/dist-packages/mms/mxnet_model_server.py:start_model_serving:88] Service started at 127.0.0.1:8080
 ```
-Awesome! we have successfully exported a pre-trained MXNet model, extended DMS with custom preprocess/postprocess and started a inference service.
+Awesome! we have successfully exported a pre-trained MXNet model, extended MMS with custom preprocess/postprocess and started a inference service.
 
-`Note:` In this example, DMS loads the .model file from the local file system. However, you can also store the archive (.model file) over a network-accessible storage such as AWS S3, and use a URL such as http:// or s3:// to indicate the model location. DMS is capable of loading the model archive over such URLs as well.
+`Note:` In this example, MMS loads the .model file from the local file system. However, you can also store the archive (.model file) over a network-accessible storage such as AWS S3, and use a URL such as http:// or s3:// to indicate the model location. MMS is capable of loading the model archive over such URLs as well.
 
 ## Step 7 - Test sample inference
 

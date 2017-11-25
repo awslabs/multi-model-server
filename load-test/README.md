@@ -1,4 +1,4 @@
-# Use JMeter to do load testing for Deep Model Server
+# Use JMeter to do load testing for MMS
 
 [JMeter](http://jmeter.apache.org/) is a widely used load testing tool. This is a simple example for how we used JMeter to load test MMS.
 

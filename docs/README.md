@@ -1,4 +1,4 @@
-# Deep Model Server Documentation
+# MXNet Model Server Documentation
 
 ## Basic Features
 * [Serving Models](server.md)

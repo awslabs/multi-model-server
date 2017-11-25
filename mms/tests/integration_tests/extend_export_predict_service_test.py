@@ -56,7 +56,7 @@ def setup_ssd_server(tmpdir):
     export_model.export()
 
     # Start the mxnet model server for SSD
-    print("Starting SSD Deep Model Server for test..")
+    print("Starting SSD MXNet Model Server for test..")
 
     # Set argv parameters
     sys.argv = ['mxnet-model-server']
@@ -68,7 +68,7 @@ def setup_ssd_server(tmpdir):
 
 
 def cleanup(tmpdir):
-    print("Deleting all downloaded resources for SSD Deep Model Server Integration Test")
+    print("Deleting all downloaded resources for SSD MXNet Model Server Integration Test")
     shutil.rmtree(tmpdir)
 
 

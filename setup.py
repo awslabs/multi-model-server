@@ -22,7 +22,7 @@ setup(
     packages=pkgs,
     install_requires=['mxnet>=0.11.0', 'Flask', 'Pillow', 'requests', 'flask-cors', 'psutil'],
     entry_points={
-        'console_scripts':['mxnet-model-server=mms.deep_model_server:start_serving', 'mxnet-model-export=mms.export_model:export']
+        'console_scripts':['mxnet-model-server=mms.mxnet_model_server:start_serving', 'mxnet-model-export=mms.export_model:export']
     },
     include_package_data=True,
     license='Apache License Version 2.0'

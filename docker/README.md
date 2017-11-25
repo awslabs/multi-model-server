@@ -78,7 +78,7 @@ Notes on a couple of the parameters:
 * **limit-request-line** - this is a security-related configuration that limits the [length of the request URI](http://docs.gunicorn.org/en/stable/settings.html#limit-request-line). It is useful preventing DDoS attacks.
 
 ```
-    # deep-model-server arguments
+    # mxnet-model-server arguments
     --models
     resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
 

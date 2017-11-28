@@ -10,7 +10,7 @@
 ## Advanced Features
 * [Custom Model Service](custom_service.md)
 * [Client Code Generation](code_gen.md)
-* [Unit Tests](../dms/tests/README.md)
+* [Unit Tests](../mms/tests/README.md)
 
 ## Examples
 * [Object Detection](../examples/ssd/README.md)

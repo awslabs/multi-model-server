@@ -14,6 +14,8 @@ import zipfile
 import shutil
 import json
 import jsonschema
+
+from mms.log import get_logger
 from jsonschema import validate
 
 

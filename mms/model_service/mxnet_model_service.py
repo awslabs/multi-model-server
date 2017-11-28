@@ -24,48 +24,7 @@ from mms.model_service.model_service import SingleNodeService, URL_PREFIX
 
 
 logger = get_logger()
-SIGNATURE_FILE = 'signature.json'
 
-def download(url, path=None, overwrite=False):
-    """Download an given URL
-
-    Parameters
-    ----------
-    url : str
-        URL to download
-    path : str, optional
-        Destination path to store downloaded file. By default stores to the
-        current directory with same name as in url.
-    overwrite : bool, optional
-        Whether to overwrite destination file if already exists.
-
-    Returns
-    -------
-    str
-        The file path of the downloaded file.
-    """
-    if path is None:
-        fname = url.split('/')[-1]
-    elif os.path.isdir(path):
-        fname = os.path.join(path, url.split('/')[-1])
-    else:
-        fname = path
-
-    if overwrite or not os.path.exists(fname):
-        dirname = os.path.dirname(os.path.abspath(os.path.expanduser(fname)))
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-
-        print('Downloading %s from %s...' % (fname, url))
-        r = requests.get(url, stream=True)
-        if r.status_code != 200:
-            raise RuntimeError("Failed downloading url %s" % url)
-        with open("%s.temp" % (fname), 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-        os.rename("%s.temp" % (fname), fname)
-    return fname
 
 def check_input_shape(inputs, signature):
     '''Check input data shape consistency with signature.
@@ -96,38 +55,23 @@ def check_input_shape(inputs, signature):
                                          % (sig_input['data_name'], sig_input['data_shape'],
                                             input.shape)
 
-def _extract_zip(zip_file, destination):
-    '''Extract zip to destination without keeping directory structure
-
-        Parameters
-        ----------
-        zip_file : str
-            Path to zip file.
-        destination : str
-            Destination directory.
-    '''
-    with zipfile.ZipFile(zip_file) as file_buf:
-        for item in file_buf.namelist():
-            filename = os.path.basename(item)
-            # skip directories
-            if not filename:
-                continue
-
-            # copy file (taken from zipfile's extract)
-            source = file_buf.open(item)
-            target = open(os.path.join(destination, filename), 'wb')
-            with source, target:
-                shutil.copyfileobj(source, target)
-
-
 class MXNetBaseService(SingleNodeService):
     '''MXNetBaseService defines the fundamental loading model and inference
        operations when serving MXNet model. This is a base class and needs to be
        inherited.
     '''
-    def __init__(self, service_name, path, gpu=None):
+    def __init__(self, model_name, model_dir, manifest, gpu=None):
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
-        model_dir, model_name = self._extract_model(service_name, path)
+        
+        signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
+        if not os.path.isfile(signature_file_path):
+            raise RuntimeError('Signature file is not found. Please put signature.json '
+                               'into the model file directory...' + signature_file_path)
+        try:
+            signature_file = open(signature_file_path)
+            self._signature = json.load(signature_file)
+        except:
+            raise Exception('Failed to open model signiture file: %s' % signature_file_path)
 
         data_names = []
         data_shapes = []
@@ -141,12 +85,11 @@ class MXNetBaseService(SingleNodeService):
                 if data_shape[idx] == 0:
                     data_shape[idx] = 1
             data_shapes.append((input['data_name'], tuple(data_shape)))
-
+        
         # Load MXNet module
         epoch = 0
         try:
-            param_filename = filter(lambda file: file.startswith(model_name) and 
-                file.endswith('.params'), os.listdir(model_dir))[0]
+            param_filename = manifest['Model']['Parameters']
             epoch = int(param_filename[len(model_name) + 1: -len('.params')])
         except Exception as e:
             logger.warn('Failed to parse epoch from param file, setting epoch to 0')
@@ -159,7 +102,8 @@ class MXNetBaseService(SingleNodeService):
 
         # Read synset file
         # If synset is not specified, check whether model archive contains synset file.
-        archive_synset = '%s/synset.txt' % (model_dir)
+        archive_synset = os.path.join(model_dir, manifest['Assets']['Synset'])
+
         if os.path.isfile(archive_synset):
             synset = archive_synset
             self.labels = [line.strip() for line in open(synset).readlines()]
@@ -211,45 +155,5 @@ class MXNetBaseService(SingleNodeService):
         '''
         return self._signature
 
-    def _extract_model(self, service_name, path, check_multi_sym=True):
-        curr_dir = os.getcwd()
-        model_file = download(url=path, path='%s/%s.model' % (curr_dir, service_name), overwrite=True) \
-            if path.lower().startswith(URL_PREFIX) else path
-
-        model_file = os.path.abspath(model_file)
-        model_file_prefix = os.path.splitext(os.path.basename(model_file))[0]
-        model_dir = os.path.join(os.path.dirname(model_file), model_file_prefix )
-        if not os.path.isdir(model_dir):
-            os.mkdir(model_dir)
-        try:
-            _extract_zip(model_file, model_dir)
-        except Exception as e:
-            raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
-                            % (model_file, model_file_prefix , e))
-
-        symbol_file_postfix = '-symbol.json'
-        symbol_file_num = 0
-        model_name = ''
-        for dirpath, _, filenames in os.walk(model_dir):
-            for file_name in filenames:
-                if file_name.endswith(symbol_file_postfix):
-                    symbol_file_num += 1
-                    model_name = file_name[:-len(symbol_file_postfix)]
-        if check_multi_sym:
-            assert symbol_file_num == 1, "Exported model file should have exactly one MXNet " \
-                                         "symbol json file. Otherwise you need to override " \
-                                         "__init__ method in service class."
-
-        signature_file_path = os.path.join(model_dir, SIGNATURE_FILE)
-        if not os.path.isfile(signature_file_path):
-            raise RuntimeError('Signature file is not found. Please put signature.json '
-                               'into the model file directory...' + signature_file_path)
-        try:
-            signature_file = open(signature_file_path)
-            self._signature = json.load(signature_file)
-        except:
-            raise Exception('Failed to open model signiture file: %s' % signature_file_path)
-
-        return model_dir, model_name
-
+    
 

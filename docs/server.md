@@ -12,6 +12,7 @@ To try out MMS serving now, you can load the SqueezeNet model, which is under 5 
 
 ```bash
 mxnet-model-server --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model --service mms/model_service/mxnet_vision_service.py
+<<<<<<< HEAD
 ```
 
 With the command above executed, you have MMS running on your host, listening for inference requests.
@@ -22,6 +23,8 @@ To test it out, download a [cute picture of a kitten](https://www.google.com/sea
 wget -O kitten.jpg \
   https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg
 curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
+=======
+>>>>>>> Manifest for model archive
 ```
 
 Then check the [API description](http://127.0.0.1:8080/api-description). For info on other endpoints check out the [REST API documentation](rest_api.md).

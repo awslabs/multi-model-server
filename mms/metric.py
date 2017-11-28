@@ -11,6 +11,8 @@
 import csv
 import datetime
 import threading
+import os
+
 from mms.log import get_logger
 
 
@@ -105,7 +107,10 @@ class Metric(object):
         # Start recording metrics
         with self.mutex:
             if self.write_to == 'csv':
-                with open('mms_' + self.name + '.csv', 'a') as csvfile:
+                filename = os.path.join('metrics', 'mms_' + self.name + '.csv')
+                if not os.path.exists(os.path.dirname(filename)):
+                     os.makedirs(os.path.dirname(filename))
+                with open(filename, 'a') as csvfile:
                     csvwriter = csv.writer(csvfile, delimiter=',')
                     csvwriter.writerow([utcnow, metric])
             else:

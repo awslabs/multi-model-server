@@ -116,9 +116,14 @@ def _extract_model(service_name, path, check_multi_sym=True):
 
     symbol_file_postfix = '-symbol.json'
     symbol_file_num = 0
+    params_postfix = '.params'
     model_name = ''
     for dirpath, _, filenames in os.walk(model_dir):
         for file_name in filenames:
+            if filename.endswith(params_postfix):
+                assert file_name == manifest['Model']['Parameters'], 'Parameter file in model archive ' \
+                                                                     'is inconsistent with manifest.'
+
             if file_name.endswith(symbol_file_postfix):
                 assert file_name == manifest['Model']['Symbol'], 'Symbol file in model archive ' \
                                                                  'is inconsistent with manifest.'

@@ -114,7 +114,7 @@ class TestService(unittest.TestCase):
         data = mx.nd.random_uniform(0, 255, shape=(1, 3, 256, 256))
         netG.initialize(mx.init.Normal(0.02), ctx=ctx)
         netG(data)
-        netG.save_params('%s/%s.params' % (model_path, path))
+        netG.save_params('%s/%s.params' % (model_path, model_name))
         with open('%s/signature.json' % (model_path), 'w') as sig:
             signature = {
                 "input_type": "image/jpeg",

@@ -30,7 +30,8 @@ PY3 = sys.version_info[0] == 3
 class _Formatter(logging.Formatter):
     """Customized log formatter."""
 
-    def __init__(self):
+    def __init__(self, colored=True):
+        self.colored = colored
         super(_Formatter, self).__init__()
 
     def _get_color(self, level):
@@ -41,10 +42,13 @@ class _Formatter(logging.Formatter):
         return '\x1b[34m'
 
     def format(self, record):
-        fmt = self._get_color(record.levelno)
+        fmt = ''
+        if self.colored:
+            fmt = self._get_color(record.levelno)
         fmt += '[' + logging.getLevelName(record.levelno)
         fmt += ' %(asctime)s PID:%(process)d %(pathname)s:%(funcName)s:%(lineno)d'
-        fmt += ']\x1b[0m'
+        if self.colored:
+            fmt += ']\x1b[0m'
         fmt += ' %(message)s'
         if PY3:
             self._style._fmt = fmt 

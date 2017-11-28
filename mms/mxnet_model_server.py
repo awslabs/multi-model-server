@@ -8,15 +8,18 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+
 import logging
+import os
 
 from mms.arg_parser import ArgParser
 from mms.client_sdk_generator import ClientSDKGenerator
-from mms.log import get_logger, LOG_LEVEL_DICT
+from mms.log import get_logger, LOG_LEVEL_DICT, _Formatter
 from logging.handlers import TimedRotatingFileHandler
 from multiprocessing import Lock
 from mms.serving_frontend import ServingFrontend
 from mms.metrics_manager import MetricsManager
+from mms.model_loader import ModelLoader
 
 
 VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in range(7)]
@@ -35,13 +38,19 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
     assert isinstance(interval, int) and interval > 0, "interval must be a positive integer."
     assert when in VALID_ROTATE_UNIT, "rotate time unit must be one of the values in %s." \
                                       % (str(VALID_ROTATE_UNIT))
-    log_handler = logging.StreamHandler()
-    if log_file is not None:
-        log_handler = TimedRotatingFileHandler(log_file, when, interval)
-
+   
     root = logging.getLogger()
     root.setLevel(LOG_LEVEL_DICT[log_level])
-    root.addHandler(log_handler)
+    
+    if log_file is not None:
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(_Formatter())
+        root.addHandler(stream_handler)
+
+    log_file = log_file or 'mms_app.log'
+    file_handler = TimedRotatingFileHandler(log_file, when, interval)
+    file_handler.setFormatter(_Formatter(colored=False))
+    root.addHandler(file_handler)
 
 
 class MMS(object):
@@ -127,8 +136,14 @@ class MMS(object):
             self.port = self.args.port or 8080
             self.host = self.args.host or '127.0.0.1'
 
+            # Load models
+            models = ModelLoader.load(self.args.models)
+
             # Register user defined model service or default mxnet_vision_service
-            class_defs = self.serving_frontend.register_module(self.args.service)
+            manifest = models[0][2]
+            service_file = os.path.join(models[0][1], manifest['Service-Files']['File-Name'])
+
+            class_defs = self.serving_frontend.register_module(self.args.service or service_file)
             
             if len(class_defs) < 1:
                 raise Exception('User defined module must derive base ModelService.')
@@ -138,10 +153,12 @@ class MMS(object):
             # Load models using registered model definitions
             registered_models = self.serving_frontend.get_registered_modelservices()
             ModelClassDef = registered_models[mode_class_name]
-            self.serving_frontend.load_models(self.args.models, ModelClassDef, self.gpu)
+            
+            self.serving_frontend.load_models(models, ModelClassDef, self.gpu)
+            
             if len(self.args.models) > 5:
                 raise Exception('Model number exceeds our system limits: 5')
-
+            
             # Setup endpoint
             openapi_endpoints = self.serving_frontend.setup_openapi_endpoints(self.host, self.port)
 

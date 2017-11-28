@@ -97,7 +97,7 @@ class ServiceManager(object):
                     for modelservice_name in modelservice_names
                 }
 
-    def load_model(self, model_name, model_path, ModelServiceClassDef, gpu=None):
+    def load_model(self, model_name, model_path, schema, ModelServiceClassDef, gpu=None):
         """
         Load a single model into a model service by using 
         user passed Model Service Class Definitions.
@@ -108,13 +108,15 @@ class ServiceManager(object):
             Model name
         model_path: stirng
             Model path which can be url or local file path.
+        schema: string
+            Model Schema
         ModelServiceClassDef: python class
             Model Service Class Definition which can initialize a model service.
         gpu : int
             Id of gpu device. If machine has two gpus, this number can be 0 or 1.
             If it is not set, cpu will be used.
         """
-        self.loaded_modelservices[model_name] = ModelServiceClassDef(model_name, model_path, gpu)
+        self.loaded_modelservices[model_name] = ModelServiceClassDef(model_name, model_path, schema, gpu)
 
     def parse_modelservices_from_module(self, user_defined_module_file_path):
         """
@@ -130,10 +132,13 @@ class ServiceManager(object):
         List of model service class definitions.
             Those parsed python class can be used to initialize model service.
         """
-        module =  imp.load_source(
-            os.path.splitext(os.path.basename(user_defined_module_file_path))[0],
-            user_defined_module_file_path) if user_defined_module_file_path \
-            else mxnet_model_service
+        try:
+            module =  imp.load_source(
+                os.path.splitext(os.path.basename(user_defined_module_file_path))[0],
+                user_defined_module_file_path) if user_defined_module_file_path \
+                else mxnet_model_service
+        except Exception as e:
+            raise Exception('Incorrect or missing service file: ' + user_defined_module_file_path)
 
         # Parsing the module to get all defined classes
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]

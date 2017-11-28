@@ -7,9 +7,8 @@ class MXNetLSTMService(MXNetBaseService):
     """LSTM service class. This service consumes a sentence
     from length 0 to 60 and generates a sentence with the same size.
     """
-    def __init__(self, path, ctx=mx.cpu()):
-        super(MXNetBaseService, self).__init__(path, ctx)
-        model_dir, model_name = self._extract_model(path)
+    def __init__(self, model_name, model_dir, manifest, gpu=None):
+        super(MXNetBaseService, self).__init__(model_name, model_dir, manifest, gpu)
 
         self.data_names = []
         self.data_shapes = []
@@ -29,7 +28,7 @@ class MXNetLSTMService(MXNetBaseService):
         self.invalid_label = 0
         self.layout = 'NT'
 
-        vocab_dict_file = '%s/vocab_dict.txt' % (model_dir)
+        vocab_dict_file = os.path.join(model_dir, manifest['Assets']['vocab'])
         self.vocab = {}
         self.idx2word = {}
         with open(vocab_dict_file, 'r') as vocab_file:

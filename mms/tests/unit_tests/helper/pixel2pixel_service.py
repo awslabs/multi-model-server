@@ -13,7 +13,8 @@ import numpy as np
 import sys
 sys.path.append('../../..')
 
-from model_service.mxnet_model_service import MXNetBaseService, check_input_shape
+from mms.model_service.mxnet_model_service import MXNetBaseService, check_input_shape
+from mms.model_loader import _extract_zip
 from utils.mxnet import image
 from mxnet import ndarray as nd
 from mxnet.gluon.nn import Dense, Activation, Conv2D, Conv2DTranspose, \
@@ -90,10 +91,9 @@ class UnetGenerator(HybridBlock):
 
 class Pixel2pixelService(MXNetBaseService):
 
-    def __init__(self, path, model_name, ctx=mx.cpu()):
-        model_dir, _ = self._extract_model(model_name, path, check_multi_sym=False)
+    def __init__(self, model_name, path):
         self.mx_model = UnetGenerator(in_channels=3, num_downs=8)
-        self.mx_model.load_params('%s/%s.params' % (model_dir, model_name), ctx=ctx)
+        self.mx_model.load_params('%s/%s.params' % (path, model_name), ctx=mx.cpu())
 
     def _preprocess(self, data):
         input_shape = self.signature['inputs'][0]['data_shape']

@@ -20,8 +20,8 @@ class SSDService(MXNetVisionService):
         and preparing the output.
         Reuses input image transformation functionality of MXNetVisionService.
     """
-    def __init__(self, service_name, path, gpu=None):
-        super(SSDService, self).__init__(service_name, path, gpu)
+    def __init__(self, model_name, model_dir, manifest, gpu=None):
+        super(SSDService, self).__init__(model_name, model_dir, manifest, gpu)
 
         # Threshold is used to pick the detection boxes with score > threshold.
         # The detections from this network will be of the format - [[class_id, score, x1, y1, x2, y2]].

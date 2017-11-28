@@ -65,11 +65,11 @@ mxnet-model-server --models lstm_ptb=lstm_ptb.model  --service lstm_ptb_service.
 You will see the following outputs which means the service is successfully established:
 
 ```
-I1102 11:25:58 4873 /Users/user/anaconda/lib/python2.7/site-packages/deep_model_server-0.1.1-py2.7.egg/dms/mxnet_model_server.py:__init__:75] Initialized model serving.
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/deep_model_server-0.1.1-py2.7.egg/dms/serving_frontend.py:add_endpoint:177] Adding endpoint: lstm_ptb_predict to Flask
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/deep_model_server-0.1.1-py2.7.egg/dms/serving_frontend.py:add_endpoint:177] Adding endpoint: ping to Flask
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/deep_model_server-0.1.1-py2.7.egg/dms/serving_frontend.py:add_endpoint:177] Adding endpoint: api-description to Flask
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/deep_model_server-0.1.1-py2.7.egg/dms/mxnet_model_server.py:start_model_serving:88] Service started at 127.0.0.1:8080
+I1102 11:25:58 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/mxnet_model_server.py:__init__:75] Initialized model serving.
+I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: lstm_ptb_predict to Flask
+I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: ping to Flask
+I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: api-description to Flask
+I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/mxnet_model_server.py:start_model_serving:88] Service started at 127.0.0.1:8080
 ```
 
 The endpoint is on localhost and port 8080. You can change them by passing --host and --port when establishing the service.

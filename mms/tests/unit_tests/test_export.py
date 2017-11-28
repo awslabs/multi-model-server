@@ -99,6 +99,7 @@ class TestExport(unittest.TestCase):
                 ]
             }
             json.dump(signature, sig)
+        
         mod.save_checkpoint('%s/test' % (model_path), 0)
 
     def test_export_CLI(self):
@@ -112,8 +113,16 @@ class TestExport(unittest.TestCase):
               % (curr_path, model_name, model_path)
         os.system(cmd)
         assert os.path.isfile(export_file), "No model file is found. Export failed!"
-
-        mx_vision_service(model_name, export_file)
+        
+        manifest = {
+            "Model": {
+                "Parameters": 'test-0000.params',
+                "Signature": "signature.json"
+            },
+            "Assets": {
+                "Synset": "synset.txt"
+            }
+        }
         os.system('rm -rf %s %s %s/%s' % (export_file, model_path, os.getcwd(), model_name))
 
     def test_export_API(self):

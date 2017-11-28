@@ -2,53 +2,97 @@
 
 You will need to build the image yourself. The Docker image is not available on Docker Hub yet.
 
+## Prerequisites
+
+In order to build the Docker image yourself you need the following:
+
+* Install Docker
+* Clone the MMS repo
+
+### Docker Installation
+
+For Mac you the option of [their Mac installer](https://docs.docker.com/docker-for-mac/install/) or you can simply use brew:
+
+```bash
+brew install docker
+```
+
+For Windows, you should use [their Windows installer](https://docs.docker.com/docker-for-windows/install/).
+
+For Linux, check your favorite package manager if brew is available, otherwise use their installation instructions for [Ubuntu](https://docs.docker.com/engine/installation/linux/ubuntu/) or [CentOS](https://docs.docker.com/engine/installation/linux/centos/).
+
+#### Verify Docker
+
+When you've competed the installation, verify that Docker is running by running `docker images` in your terminal. If this works, you are ready to continue.
+
+### Clone the MMS Repo
+
+If you haven't already, clone the MMS repo and go into the `docker` folder.
+
+```bash
+git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server/docker
+```
+
+
 ## Building the Docker Image
-
-The image will be built for both CPU and GPU.
-
-If you haven't already, you will need to [install Docker](https://docs.docker.com/engine/installation). When you've competed the installation, verify that Docker is running by running `docker images` in your terminal. If this works, you are ready to continue.
 
 ### Configuration Setup
 
-By default Docker expects a Dockerfile, so we'll make a copy leaving the original .cpu file as a backup.
+We can optionally update the **nginx** section of the `mms_app.conf` file for your target environment. If you're going to run the Docker image locally you can leave this alone and skip to the **Build Step**. If you want to run it on a publicly accessible IP or DNS name then continue with this setup step.
 
-```bash
-    cp Dockerfile.cpu Dockerfile
+* For CPU builds, use [mms_docker_cpu/mms_app.conf](mms_docker_cpu/mms_app.conf).
+* For GPU builds, use [mms_docker_gpu/mms_app.conf](mms_docker_gpu/mms_app.conf).
+
+Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker image.
+
+The **nginx** section will look like this:
+
 ```
-
-Now let's update the nginx section of [mms_app.conf](mms_docker_cpu/mms_app.conf) file for your environment. Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker container.
-
-The nginx section will look like this:
-
-```
+# Nginx configurations
 server {
     listen       80;
-    server_name  your_public_host_name;
+    server_name  localhost;
 
     location / {
         proxy_pass http://unix:/tmp/mms_app.sock;
     }
 }
 ```
-location section defines the proxy server to which all the requests are passed. Since gunicorn binds to a UNIX socket, proxy server is the corresponding URL.
+The `location` section defines the proxy server to which all the requests are passed. Since **gunicorn** binds to a UNIX socket, proxy server is the corresponding URL.
 
-### Build Step
+### Configuring the Docker Build for Use on EC2
+
+Now we'll go through how to build a Docker image with MMS and establish a public accessible endpoint on EC2 instance. You should be able to adapt this information for any cloud provider. This Docker image can be used in other production environments as well. Skip this section if you're building for local use.
+
+The first step is to create an (EC2 instance)[https://aws.amazon.com/ec2/].
+Before we start to build the Docker image, change the `server_name` entry of `nginx` configuration section in the [mms_app.conf](mms_docker_cpu/mms_app.conf) file to be your public hostname: `localhost` should be replaced with the public DNS of the EC2 instance.
+
+## Build Step for CPU
+
+There are separate `Dockerfile` configuration files for CPU and GPU. They are named `Dockerfile.cpu` and `Dockerfile.gpu` respectively.
+
+By default Docker expects a Dockerfile, so we'll make a copy leaving the original .cpu file as a backup. If you would like to use a GPU instead, follow the separate GPU Build Step further below.
+The next command will build the Docker image. The `-t` flag and following value will give the image the tag `mms_image`, however you can specify `mms_image:v0.11` or whatever you want for your tag. If you use just `mms_image` it will be assigned the default `latest` tag and be runnable with `mms_image:latest`.
 
 ```bash
-    docker build -t mms_image .
+cp Dockerfile.cpu Dockerfile
+docker build -t mms_image .
 ```
-You can specify `mms_image:v0.11` or whatever you want for your tag. If you use just `mms_image` it will be assigned the default `latest` tag and be runnable with `mms_image:latest`.
 
 Once this completes, run `docker images` from your terminal. You should see the Docker image listed with the tag, `mms_image:latest`. Skip down to the section **Running the MMS Docker** to continue, or peruse the EC2 instructions if you're curious how to configure it for the cloud.
 
-### Building the Docker Image on EC2
+## Build Step for GPU
 
-Now we'll go through how to build a Docker image with MMS and establish a public accessible endpoint on EC2 instance. You should be able to adapt this information for any cloud provider. This Docker image can be used in other production environments as well.
+If your host machine has at least one GPU installed, you can use a GPU docker image to benefit from improved inference performance.
 
-The first step is to create an (EC2 instance)[https://aws.amazon.com/ec2/].
-Before we start to build the Docker image, change the `server_name` entry of nginx configuration section in the [mms_app.conf](mms_docker_cpu/mms_app.conf) file to be your public hostname: `localhost` should be replaced with the public DNS of the EC2 instance.
+You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-docker) before you can use a NVIDIA GPU with Docker.
 
-TODO: this seems to be missing the security settings steps needed to poke a hole in the instance's firewall
+Once you install `nvidia-docker`, run following commands (for info modifying the tag, see the CPU section above):
+
+```bash
+cp Dockerfile.gpu Dockerfile
+docker build -t mms_image_gpu .
+```
 
 ## Running the MMS Docker
 
@@ -56,18 +100,44 @@ Since we used a general tag, `mms_image` we're go to run it using the default ta
 
 You may also want to modify the `-p 80:80` to utilize other ports instead. Refer to [Docker documentation on managing ports on hosts](https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/#connect-using-network-port-mapping) for more info.
 
-```bash
-    docker run -it -p 80:80 mms_image:latest
-```
-Now that you have a prompt inside the container, the final step is to setup MMS endpoint, gunicorn wsgi entry point, and nginx proxy_pass. Using the Docker container's bash prompt, run the following command:
+**Note**: if you're using the GPU Docker, skip ahead to the next section.
 
 ```bash
-    cd mms_docker_cpu && ./launch.sh
+docker run -it -p 80:80 mms_image:latest
 ```
+Now that you have a prompt inside the container, the final step is to run the following command:
 
+```bash
+cd mms_docker_cpu && ./launch.sh
+```
+This will setup the MMS endpoint, gunicorn wsgi entry point, and nginx proxy_pass. 
 At this point you should see the typical MMS CLI output indicating that the server is running.
 
-## System Settings
+### Running the MMS GPU Docker
+
+```bash
+nvidia-docker run -it -p 80:80 mms_image_gpu:latest
+```
+
+Now you should be inside the docker container at a bash prompt. The config file, `mms_app.conf` is located in the `mms_docker_gpu` folder. Run following command to launch the MMS service:
+
+```bash
+cd mms_docker_gpu && ./launch.sh
+```
+You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance.
+
+
+## Testing the MMS Docker
+
+Now you can send a request to your server's [api-description endpoint](http://localhost/api-description) to see the list of MMS endpoints or [ping endpoint](http://localhost/ping) to check the health status of the MMS API. Remember to add the port if you used a custom one or the IP or DNS of your server if you configured it for that instead of localhost. Here are some handy test links for common configurations:
+
+* [http://localhost/api-description](http://localhost/api-description)
+* [http://localhost:8080/api-description](http://localhost:8080/api-description)
+* [http://localhost/ping](http://localhost/ping)
+
+## Advanced Settings
+
+### Description of Settings in mms_app.conf
 
 The system settings are stored in `mms_docker_cpu/mms_app.conf`. You can modify these settings to use different models, or to apply other customized settings. The default settings were optimized for a C4.8xlarge instance.
 
@@ -124,32 +194,7 @@ Notes on a couple of the parameters:
     OMP_NUM_THREADS=4
 ```
 
-## Testing the MMS Docker
-
-Now you can send a request to http://your_public_host_name/api-description to see the list of MMS endpoints or http://your_public_host_name/ping to check the health status of the MMS API.
-
-## Use Docker Image for GPU
-
-If your host machine has at least one GPU installed, you can use a GPU docker image to benefit from improved inference performance.
-
-You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-docker) before you can use a NVIDIA GPU with Docker.
-
-Once you install `nvidia-docker`, run following commands:
-
-```bash
-cp Dockerfile.gpu Dockerfile
-docker build -t mms_image_gpu .
-nvidia-docker run -it -p 80:80 mms_image_gpu:latest
-```
-
-Now you should be inside the docker container at a bash prompt. The config file, `mms_app.conf` is located in the `mms_docker_gpu` folder. Run following command to launch the MMS service:
-
-```bash
-cd mms_docker_gpu && ./launch.sh
-```
-You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance.
-
-## Configuring HTTPS servers
+### Configuring SSL for HTTPS
 
 To safely send traffic between the server and the client, we need to setup a secure sockets layer for nginx server.
 

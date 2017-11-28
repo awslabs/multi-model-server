@@ -97,7 +97,7 @@ class ServiceManager(object):
                     for modelservice_name in modelservice_names
                 }
 
-    def load_model(self, service_name, model_name, model_path, schema, ModelServiceClassDef, gpu=None):
+    def load_model(self, service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu=None):
         """
         Load a single model into a model service by using 
         user passed Model Service Class Definitions.
@@ -110,23 +110,23 @@ class ServiceManager(object):
             Model name
         model_path: stirng
             Model path which can be url or local file path.
-        schema: string
-            Model Schema
+        manifest: string
+            Model manifest
         ModelServiceClassDef: python class
             Model Service Class Definition which can initialize a model service.
         gpu : int
             Id of gpu device. If machine has two gpus, this number can be 0 or 1.
             If it is not set, cpu will be used.
         """
-        self.loaded_modelservices[service_name] = ModelServiceClassDef(model_name, model_path, schema, gpu)
+        self.loaded_modelservices[service_name] = ModelServiceClassDef(model_name, model_path, manifest, gpu)
 
-    def parse_modelservices_from_module(self, user_defined_module_file_path):
+    def parse_modelservices_from_module(self, service_file):
         """
         Parse user defined module to get all model service classe in it.
 
         Parameters
         ----------
-        user_defined_module_file_path : User defined module file path 
+        service_file : User defined module file path 
             A python module which will be parsed by given name.
             
         Returns
@@ -136,11 +136,11 @@ class ServiceManager(object):
         """
         try:
             module =  imp.load_source(
-                os.path.splitext(os.path.basename(user_defined_module_file_path))[0],
-                user_defined_module_file_path) if user_defined_module_file_path \
+                os.path.splitext(os.path.basename(service_file))[0],
+                service_file) if service_file \
                 else mxnet_model_service
         except Exception as e:
-            raise Exception('Incorrect or missing service file: ' + user_defined_module_file_path)
+            raise Exception('Incorrect or missing service file: ' + service_file)
 
         # Parsing the module to get all defined classes
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]

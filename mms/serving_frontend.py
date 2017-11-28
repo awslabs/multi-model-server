@@ -71,8 +71,8 @@ class ServingFrontend(object):
             Id of gpu device. If machine has two gpus, this number can be 0 or 1.
             If it is not set, cpu will be used.
         """
-        for model_name, model_path, manifest in models:
-            self.service_manager.load_model(model_name, model_path, manifest, ModelServiceClassDef, gpu)
+        for service_name, model_name, model_path, manifest in models:
+            self.service_manager.load_model(service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu)
 
 
     def register_module(self, user_defined_module_file_path):

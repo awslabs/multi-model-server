@@ -140,8 +140,8 @@ class MMS(object):
             models = ModelLoader.load(self.args.models)
 
             # Register user defined model service or default mxnet_vision_service
-            manifest = models[0][2]
-            service_file = os.path.join(models[0][1], manifest['Service-Files']['File-Name'])
+            manifest = models[0][3]
+            service_file = os.path.join(models[0][2], manifest['Service-Files']['File-Name'])
 
             class_defs = self.serving_frontend.register_module(self.args.service or service_file)
             

@@ -93,17 +93,19 @@ class ServiceManager(object):
             return self.loaded_modelservices
 
         return {
-                    modelservice_name: self.loaded_models[modelservice_name] 
+                    modelservice_name: self.loaded_modelservices[modelservice_name]
                     for modelservice_name in modelservice_names
                 }
 
-    def load_model(self, model_name, model_path, schema, ModelServiceClassDef, gpu=None):
+    def load_model(self, service_name, model_name, model_path, schema, ModelServiceClassDef, gpu=None):
         """
         Load a single model into a model service by using 
         user passed Model Service Class Definitions.
 
         Parameters
         ----------
+        service_name : string
+            Service name
         model_name : string
             Model name
         model_path: stirng
@@ -116,7 +118,7 @@ class ServiceManager(object):
             Id of gpu device. If machine has two gpus, this number can be 0 or 1.
             If it is not set, cpu will be used.
         """
-        self.loaded_modelservices[model_name] = ModelServiceClassDef(model_name, model_path, schema, gpu)
+        self.loaded_modelservices[service_name] = ModelServiceClassDef(model_name, model_path, schema, gpu)
 
     def parse_modelservices_from_module(self, user_defined_module_file_path):
         """

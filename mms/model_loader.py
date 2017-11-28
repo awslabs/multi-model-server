@@ -17,6 +17,8 @@ import jsonschema
 from jsonschema import validate
 
 
+logger = get_logger()
+
 URL_PREFIX = ('http://', 'https://', 's3://')
 
 
@@ -86,8 +88,9 @@ def _extract_zip(zip_file, destination):
 
 def _extract_model(service_name, path, check_multi_sym=True):
     curr_dir = os.getcwd()
+    print (service_name)
     model_file = download(url=path, path=os.path.join(curr_dir, service_name, '.model'), overwrite=True) \
-        if path.lower().startswith(URL_PREFIX) else path
+    if path.lower().startswith(URL_PREFIX) else path
 
     model_file = os.path.abspath(model_file)
     model_file_prefix = os.path.splitext(os.path.basename(model_file))[0]
@@ -100,10 +103,14 @@ def _extract_model(service_name, path, check_multi_sym=True):
     except Exception as e:
         raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
                         % (model_file, model_file_prefix , e))
+    try:
+        schema = json.load(open(os.path.join(model_dir, 'manifest-schema.json')))
+        manifest = json.load(open(os.path.join(model_dir, 'manifest.json')))
+    except Exception as e:
+        raise Exception('Failed to open manifest file. Stacktrace: ' + str(e))
 
-    schema = json.load(open(os.path.join(model_dir, 'manifest-schema.json')))
-    manifest = json.load(open(os.path.join(model_dir, 'manifest.json')))
     validate(manifest, schema)
+    assert 'Signature' in manifest['Model'], 'Model should have signature file.'
 
     symbol_file_postfix = '-symbol.json'
     symbol_file_num = 0
@@ -111,6 +118,8 @@ def _extract_model(service_name, path, check_multi_sym=True):
     for dirpath, _, filenames in os.walk(model_dir):
         for file_name in filenames:
             if file_name.endswith(symbol_file_postfix):
+                assert file_name == manifest['Model']['Symbol'], 'Symbol file in model archive ' \
+                                                                 'is inconsistent with manifest.'
                 symbol_file_num += 1
                 model_name = file_name[:-len(symbol_file_postfix)]
     if check_multi_sym:

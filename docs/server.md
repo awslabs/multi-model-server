@@ -37,8 +37,7 @@ The rest of this topic focus on serving of model files without much discussion o
 ## Command Line Interface
 
 ```bash
-$ mxnet-model-server -h
-mxnet-model-server --help
+$ mxnet-model-server --help
 usage: mxnet-model-server [-h] --models KEY1=VAL1 KEY2=VAL2...
                           [KEY1=VAL1 KEY2=VAL2... ...] [--service SERVICE]
                           [--gen-api GEN_API] [--port PORT] [--host HOST]
@@ -47,14 +46,16 @@ usage: mxnet-model-server [-h] --models KEY1=VAL1 KEY2=VAL2...
                           [--log-level LOG_LEVEL]
                           [--metrics-write-to {log,csv}]
 
-MXNet Model Serving
+MXNet Model Server
 
 optional arguments:
   -h, --help            show this help message and exit
   --models KEY1=VAL1 KEY2=VAL2... [KEY1=VAL1 KEY2=VAL2... ...]
-                        Models to be deployed
-  --service SERVICE     Using user defined model service. By default it uses
-                        mxnet_vision_service.
+                        Models to be deployed using name=model_location
+                        format. Location can be a URL or a local path to a
+                        .model file. Name is arbitrary and used as the API
+                        endpoints base name.
+  --service SERVICE     Path to a user defined model service.
   --gen-api GEN_API     Generates API client for the supplied language.
                         Options include Java, C#, JavaScript and Go. For
                         complete list check out https://github.com/swagger-api
@@ -67,18 +68,21 @@ optional arguments:
   --log-file LOG_FILE   Log file name. By default it is "mms_app.log".
   --log-rotation-time LOG_ROTATION_TIME
                         Log rotation time. By default it is "1 H", which means
-                        one hour. Valid format is "interval when". For weekday
-                        and midnight, only "when" is required. Check https://d
-                        ocs.python.org/2/library/logging.handlers.html#logging
-                        .handlers.TimedRotatingFileHandler for detail values.
+                        one hour. Valid format is "interval when", where
+                        _when_ can be "S", "M", "H", or "D". For a particular
+                        weekday use only "W0" - "W6". For midnight use only
+                        "midnight". Check https://docs.python.org/2/library/lo
+                        gging.handlers.html#logging.handlers.TimedRotatingFile
+                        Handler for detailed information on values.
   --log-level LOG_LEVEL
                         Log level. By default it is INFO. Possible values are
-                        NOTEST, DEBUG, INFO, ERROR AND CRITICAL.Check
+                        NOTEST, DEBUG, INFO, ERROR AND CRITICAL. Check
                         https://docs.python.org/2/library/logging.html
-                        #logging-levels
+                        #logging-levelsfor detailed information on values.
   --metrics-write-to {log,csv}
-                        Target location to write mms metrics. Log, local
-                        CSV...
+                        Target location to write MMS metrics. Log file
+                        specified in --log-file or to local CSV files per
+                        metric type.
 ```
 
 ### Required Arguments & Defaults
@@ -94,32 +98,39 @@ mxnet-model-server --models name=model_location
 The rest of these arguments are optional and will have the following defaults:
 * [--port 8080]
 * [--host 127.0.0.1]
+* [--log-file mms_app.log]
+* [--log-rotation-time "1 H"] - one hour
+* [--log-level INFO]
+* [--metrics-write-to log] - will write to `mms_app.log`
 
-gpu argument is to specify whether to use gpu for inference. Since currently there is no batching policy, multiple gpu is not supported. This argument is the ID of the gpu device you want to use.
-
-Logging and exporting an SDK can also be triggered with additional arguments. Details are in the following Arguments section.
+Advanced logging, GPU-based inference, and exporting an SDK can also be triggered with additional arguments. Details are in the following Arguments section.
 
 #### Arguments:
 1. **models**: required, <model_name>=<model_path> pairs.
 
-    (a) Model path can be a local file path or URI (s3 link, or http link).
+    a) Model path can be a local file path or URI (s3 link, or http link).
         local file path: path/to/local/model/file or file://root/path/to/model/file
         s3 link: s3://S3_endpoint[:port]/...
         http link: http://hostname/path/to/resource
 
-    (b) Currently, the model file has .model extension, it is actually a zip file with a .model extension packing trained MXNet models and model signature files. The details will be explained in **Export existing model** section.
+    b) Currently, the model file has .model extension, it is actually a zip file with a .model extension packing trained MXNet models and model signature files. The details will be explained in **Export existing model** section.
 
-    (c) Multiple models loading are also supported by specifying multiple name path pairs.
-2. **service**: optional, the system will load input service module and will initialize MXNet models with the service defined in the module. The module should contain a valid class which extends the base model service with customized `_preprocess` and `_postprocess` functions.
-3. **port**: optional, default is 8080
-4. **host**: optional, default is 127.0.0.1
-5. **gpu**: optional, gpu device id, such as 0 or 1. cpu will be used if this argument is not set.
-5. **gen-api**: optional, this will generate an open-api formated client sdk in build folder.
-6. **log-file**: optional, log file name. By default it is "mms_app.log".
-7. **log-rotation-time**: optional, log rotation time. By default it is "1 H", which means one hour. Valid format is "interval when". For weekday and midnight, only "when" is required. Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.
-8. **log-level**: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL. Check https://docs.python.org/2/library/logging.html#logging-levels
+    c) Multiple models loading are also supported by specifying multiple name path pairs.
+1. **service**: optional, path to a custom service module. More info in the Custom Services section.
+1. **port**: optional, default is 8080
+1. **host**: optional, default is 127.0.0.1
+1. **gpu**: optional, GPU device id, such as 0 or 1. cpu will be used if this argument is not set.
+1. **gen-api**: optional, this will generate an open-api formatted client SDK in build folder. More information is in the generate API section.
+1. **log-file**: optional, log file name. By default it is "mms_app.log". More info is in the logging section.
+1. **log-rotation-time**: optional, log rotation time. By default it is "1 H", which means one hour. More info is in the logging section.
+1. **log-level**: optional, log level. By default it is INFO. More info is in the logging section.
+1. **metrics-write-to**: optional, metrics location/style. By default it is log. More info is in the logging section.
 
 ## Advanced Features
+
+### Inference with GPU
+
+The `gpu` argument is to specify whether to use a GPU for inference. Currently there is no batching capability in MMS, so multiple GPUs are not supported. This argument is the ID, starting with 0, of the GPU device you want to use.
 
 ### Custom Names
 
@@ -169,3 +180,35 @@ mxnet-model-server --models resnet=https://s3.amazonaws.com/model-server/models/
 This will setup a local host serving resnet-18 model and squeezenet model on the same port, using the default 8080. Check http://127.0.0.1:8080/api-description to see that each model has an endpoint for prediction. In this case you would see `resnet/predict` and `squeezenet/predict`/
 
 Note that if you supply a [custom service](custom_service.md) for pre or post-processing, both models will use that same pipeline. There is currently no support for using different pipelines per-model.
+
+### Logging Features
+
+The are four arguments for MMS that facilitate logging of the model serving and inference activity.
+
+1. **log-file**: optional, log file name. By default it is "mms_app.log". You may also specify a path and a custom file name such as `logs/squeezenet_inference`. This is the root file name that is used in file rotation.
+
+1. **log-rotation-time**: optional, log rotation time. By default it is "1 H", which means one Hour. Valid format is "interval when", where _when_ can be "S", "M", "H", or "D". For a particular weekday use only "W0" - "W6". For midnight use only "midnight". When a file is rotated a timestamp is appended, for example, `squeezenet_inference` would look like `squeezenet_inference.2017-11-27_17-26` after log rotation. Check the [Python docs on logging handlers](https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler) for detailed information on values.
+
+1. **log-level**: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR and CRITICAL. Check the [Python docs for logging levels](https://docs.python.org/2/library/logging.html#logging-levels) for more information.
+
+1. **metrics-write-to**: various server metrics are gathered and are written to the default log file, but if the `csv` value is passed to this argument, the metrics are recorded every 30 seconds in separate CSV files as follows.
+
+      a) **mms_cpu.csv** - CPU load
+
+      b) **mms_errors.csv** - number of errors
+
+      c) **mms_memory.csv**	- memory utilization
+
+      d) **mms_preprocess_latency.csv** - any custom pre-processing latency
+
+      e) **mms_disk.csv** - disk utilization
+
+      f) **mms_inference_latency.csv** - any inference latency
+
+      g) **mms_overall_latency.csv** - collective latency
+
+      h) **mms_requests.csv** - number of inference requests
+
+### Client API Code Generation
+
+Detailed info on using the `gen-api` argument and its outputs is found on the [Code Generation page](code_gen.md). 

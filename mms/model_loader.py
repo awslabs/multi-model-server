@@ -138,4 +138,4 @@ class ModelLoader(object):
         list
             (Model Name, Model Path, Model Schema) tuple list
         """
-        return map(lambda model: _extract_model(model[0], model[1]), models.items())
+        return list(map(lambda model: _extract_model(model[0], model[1]), models.items()))

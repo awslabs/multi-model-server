@@ -9,6 +9,7 @@
 # permissions and limitations under the License.
 
 import os
+import glob
 import requests
 import zipfile
 import shutil
@@ -88,9 +89,9 @@ def _extract_zip(zip_file, destination):
             with source, target:
                 shutil.copyfileobj(source, target)
 
-def _extract_model(service_name, path, check_multi_sym=True):
+def _extract_model(service_name, path):
     curr_dir = os.getcwd()
-    print (service_name)
+    
     model_file = download(url=path, path=os.path.join(curr_dir, service_name, '.model'), overwrite=True) \
     if path.lower().startswith(URL_PREFIX) else path
 
@@ -112,28 +113,24 @@ def _extract_model(service_name, path, check_multi_sym=True):
         raise Exception('Failed to open manifest file. Stacktrace: ' + str(e))
 
     validate(manifest, schema)
-    assert 'Signature' in manifest['Model'], 'Model should have signature file.'
 
-    symbol_file_postfix = '-symbol.json'
-    symbol_file_num = 0
-    params_postfix = '.params'
-    model_name = ''
-    for dirpath, _, filenames in os.walk(model_dir):
-        for file_name in filenames:
-            if filename.endswith(params_postfix):
-                assert file_name == manifest['Model']['Parameters'], 'Parameter file in model archive ' \
-                                                                     'is inconsistent with manifest.'
+    assert 'Signature' in manifest['Model'], 'Model should have signature file.' 
+    
+    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))) == 1, \
+    'Symbol file in model archive is inconsistent with manifest.'
 
-            if file_name.endswith(symbol_file_postfix):
-                assert file_name == manifest['Model']['Symbol'], 'Symbol file in model archive ' \
-                                                                 'is inconsistent with manifest.'
-                symbol_file_num += 1
-                model_name = file_name[:-len(symbol_file_postfix)]
-    if check_multi_sym:
-        assert symbol_file_num == 1, "Exported model file should have exactly one MXNet " \
-                                     "symbol json file. Otherwise you need to override " \
-                                     "__init__ method in service class."
+    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Parameters']))) == 1, \
+    'Parameter file in model archive is inconsistent with manifest.'
 
+    assert len(glob.glob(os.path.join(model_dir, manifest['Service-Files']['File-Name']))) == 1, \
+    'Service file in model archive is inconsistent with manifest.'
+
+    for asset in manifest['Assets']:
+        assert len(glob.glob(os.path.join(model_dir, manifest['Assets'][asset]))) == 1, \
+        asset + ' file in model archive is inconsistent with manifest.'
+
+    model_name = manifest['Model']['Model-Name']
+            
     return service_name, model_name, model_dir, manifest
 
 class ModelLoader(object):

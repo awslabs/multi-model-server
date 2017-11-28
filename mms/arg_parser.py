@@ -38,7 +38,7 @@ class ArgParser(object):
                             nargs='+',
                             help='Models to be deployed using name=model_location format. '
                                  'Location can be a URL or a local path to a .model file. '
-                                 'Name is arbitrary and used as the API endpoint\'s base name. '
+                                 'Name is arbitrary and used as the API endpoint\'s base name. ')
 
         parser.add_argument('--service', help='Path to a user defined model service.')
 
@@ -58,7 +58,7 @@ class ArgParser(object):
         parser.add_argument('--log-file', help='Log file name. By default it is "mms_app.log".')
 
         parser.add_argument('--log-rotation-time',
-                            help='Log rotation time. By default it is "1 H", which means one hour. '
+                            help='Log rotation time. By default it is "1 H", which means one Hour. '
                                  'Valid format is "interval when", where _when_ can be "S", "M", "H", or "D". '
                                  'For a particular weekday use only "W0" - "W6". '
                                  'For midnight use only "midnight". '

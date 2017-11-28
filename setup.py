@@ -20,7 +20,7 @@ setup(
     url='https://github.com/awslabs/mxnet-model-server',
     keywords='MXNet Model Serving Deep Learning Inference',
     packages=pkgs,
-    install_requires=['mxnet>=0.11.0', 'Flask', 'Pillow', 'requests', 'flask-cors', 'psutil'],
+    install_requires=['mxnet>=0.11.0', 'Flask', 'Pillow', 'requests', 'flask-cors', 'psutil', 'jsonschema'],
     entry_points={
         'console_scripts':['mxnet-model-server=mms.mxnet_model_server:start_serving', 'mxnet-model-export=mms.export_model:export']
     },

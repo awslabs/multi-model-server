@@ -118,7 +118,7 @@ def _extract_model(service_name, path, check_multi_sym=True):
                                      "symbol json file. Otherwise you need to override " \
                                      "__init__ method in service class."
 
-    return model_name, model_dir, manifest
+    return service_name, model_name, model_dir, manifest
 
 class ModelLoader(object):
     """Model Loader

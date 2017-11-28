@@ -4,14 +4,14 @@ A custom service is a way to customize MMS inference request handling logic. Pot
 
 The service code is provided in two possible ways.
 
-1. The `--service` argument, along with the path to the custom service Python file, is used when launching `mxnet-model-server`. If this argument is not used DMS will look in the model archive as described next.
+1. The `--service` argument, along with the path to the custom service Python file, is used when launching `mxnet-model-server`. If this argument is not used MMS will look in the model archive as described next.
 1. A custom service Python file may be included inside the model archive. When the model archive is executed by `mxnet-model-server` it will detect the presence of the custom service and load it.
 
 The `--service` argument overrides any custom service file inside the model archive.
 
 ## Vision Service
 
-The simplest custom service example comes from one that is built into DMS, the `mxnet_vision_service`. When you run the resnet-18 or squeezenet example for image inference to get predictions like "what's in this image?", it's actually using the custom vision service. You can check out the [code in its entirety](../mms/model_service/mxnet_vision_service.py), but we'll also cover the highlights here. In the following code snippet, you can see that the vision service is taking in the image and resizing it. The main reasons you want to do this are as follows: you never know what resolution of image someone might submit to the API, models require the input to be the same size/shape that they were trained on, and you don't want to have to deal with that logic in your application. The vision service handles that for you.
+The simplest custom service example comes from one that is built into MMS, the `mxnet_vision_service`. When you run the resnet-18 or squeezenet example for image inference to get predictions like "what's in this image?", it's actually using the custom vision service. You can check out the [code in its entirety](../mms/model_service/mxnet_vision_service.py), but we'll also cover the highlights here. In the following code snippet, you can see that the vision service is taking in the image and resizing it. The main reasons you want to do this are as follows: you never know what resolution of image someone might submit to the API, models require the input to be the same size/shape that they were trained on, and you don't want to have to deal with that logic in your application. The vision service handles that for you.
 
 ```python
 input_shape = self.signature['inputs'][idx]['data_shape']
@@ -24,7 +24,7 @@ img_arr = image.transform_shape(img_arr)
 
 ### MXNet Image API Wrapper
 
-Take a closer look at the resize code, and you will note that it is pulling the height (h) and the width (w) from the signature data. This signature data describes the model inputs, so the images are being resized to match what the model expects. The resize mechanism comes from `mxnet.img.imresize` via a DMS utility wrapper, and it will upsample images smaller than the input size. Note that you can optionally add the `interp` parameter to the `resize` call for different interpolation methods. Details on the options are in the comments for the `resize` function found in [utils/mxnet/image.py](../dms/utils/mxnet/image.py). Images will be stretched by default, so if you need any other image handling like [resizing on the short edge](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L229), [center crop](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L362), etc. you will need to call [MXNet's image API](https://mxnet.incubator.apache.org/api/python/image/image.html) directly.
+Take a closer look at the resize code, and you will note that it is pulling the height (h) and the width (w) from the signature data. This signature data describes the model inputs, so the images are being resized to match what the model expects. The resize mechanism comes from `mxnet.img.imresize` via MMS utility wrapper, and it will upsample images smaller than the input size. Note that you can optionally add the `interp` parameter to the `resize` call for different interpolation methods. Details on the options are in the comments for the `resize` function found in [utils/mxnet/image.py](../dms/utils/mxnet/image.py). Images will be stretched by default, so if you need any other image handling like [resizing on the short edge](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L229), [center crop](https://github.com/apache/incubator-mxnet/blob/master/python/mxnet/image/image.py#L362), etc. you will need to call [MXNet's image API](https://mxnet.incubator.apache.org/api/python/image/image.html) directly.
 
 Now say you want more pre-processing. This is designed to be easy. You have two options: you can extend the vision service, or you can go back to the base service, `MXNetBaseService`, and extend that instead.
 

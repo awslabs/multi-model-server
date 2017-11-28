@@ -1,22 +1,34 @@
 # Running the Model Server
 
-The primary feature of MMS is the model server. It can be used for many types of inference in production settings. It provides an easy-to-use command line interface and utilizes an industry standard OpenAPI interface. It has features for pre-processing and post-processing inputs and outputs for customized applications.
+The primary feature of MMS is the model server. It can be used for many types of inference in production settings. It provides an easy-to-use command line interface and utilizes an industry standard [OpenAPI interface](rest_api.md). It has features for pre-processing and post-processing inputs and outputs for customized applications.
 
-For example, you want to make an app that lets your users snap a picture, and it'll tell them what what objects were detected in the scene and predictions on what the objects might be. You can use DMS to serve a prediction endpoint for a object detection and identification model that intakes images, then returns predictions. You can also modify DMS behavior with custom services and run multiple models. There are examples of custom services, pre-processing, post-processing in the [examples](../examples) folder. The object detection example is in [examples/ssd](../examples/ssd/README.md).
+For example, you want to make an app that lets your users snap a picture, and it'll tell them what what objects were detected in the scene and predictions on what the objects might be. You can use MMS to serve a prediction endpoint for a object detection and identification model that intakes images, then returns predictions. You can also modify MMS behavior with custom services and run multiple models. There are examples of custom services, pre-processing, post-processing in the [examples](../examples) folder. The object detection example is in [examples/ssd](../examples/ssd/README.md).
 
 ## Technical Details
 
 Now that you have a high level view of MMS, let's get a little into the weeds. MMS takes a deep learning model and it wraps it in a REST API. Currently it is bundled with the MXNet framework, and it comes with a built-in web server that you run from command line. This command line call takes in the single or multiple models you want to serve, along with additional optional parameters controlling the port, host, and logging. Additionally, you can point it to service extensions which define pre-processing and post-processing steps. MMS also comes with a default vision service that makes it easy to serve an image classification model. If you're looking to build chat bots or video understanding then you'll have some additional leg work to do with the pre-processing and post-processing steps. These are covered in more detail in the [custom service](custom_service.md) documentation.
 
-To try out MMS serving now, you can load squeezenet, which is under 5 MB, with this example:
+To try out MMS serving now, you can load the SqueezeNet model, which is under 5 MB, with this example:
 
 ```bash
-mxnet-model-server --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model --service dms/model_service/mxnet_vision_service.py
+mxnet-model-server --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model --service mms/model_service/mxnet_vision_service.py
+```
+
+With the command above executed, you have MMS running on your host, listening for inference requests.
+
+To test it out, download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post an inference request with the image. In the example below both of these steps are provided.
+
+```bash
+wget -O kitten.jpg \
+  https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg
+curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
 ```
 
 Then check the [API description](http://127.0.0.1:8080/api-description). For info on other endpoints check out the [REST API documentation](rest_api.md).
 
 For more models, check out the [model zoo](model_zoo.md).
+
+To learn about serving different kinds of model and inference types, take a look at [custom services](custom_service.md).
 
 ## Model Files
 
@@ -26,20 +38,20 @@ The rest of this topic focus on serving of model files without much discussion o
 
 ```bash
 $ mxnet-model-server -h
-usage: mxnet-model-server [-h] --models KEY1=VAL1,KEY2=VAL2...
-                         [KEY1=VAL1,KEY2=VAL2... ...] [--service SERVICE]
-                         [--gen-api GEN_API] [--port PORT] [--host HOST]
-                         [--gpu]
-                         [--log-file LOG_FILE]
-                         [--log-rotation-time LOG_ROTATION_TIME]
-                         [--log-level LOG_LEVEL]
-                         [--metrics-write-to {log,csv}]
+mxnet-model-server --help
+usage: mxnet-model-server [-h] --models KEY1=VAL1 KEY2=VAL2...
+                          [KEY1=VAL1 KEY2=VAL2... ...] [--service SERVICE]
+                          [--gen-api GEN_API] [--port PORT] [--host HOST]
+                          [--gpu GPU] [--log-file LOG_FILE]
+                          [--log-rotation-time LOG_ROTATION_TIME]
+                          [--log-level LOG_LEVEL]
+                          [--metrics-write-to {log,csv}]
 
 MXNet Model Serving
 
 optional arguments:
   -h, --help            show this help message and exit
-  --models KEY1=VAL1,KEY2=VAL2... [KEY1=VAL1,KEY2=VAL2... ...]
+  --models KEY1=VAL1 KEY2=VAL2... [KEY1=VAL1 KEY2=VAL2... ...]
                         Models to be deployed
   --service SERVICE     Using user defined model service. By default it uses
                         mxnet_vision_service.
@@ -49,10 +61,10 @@ optional arguments:
                         /swagger-codegen.
   --port PORT           Port number. By default it is 8080.
   --host HOST           Host. By default it is localhost.
-  --gpu GPU             ID of GPU device to use for inference.
-                        If your machine has N gpus, this number can be 0 to N - 1.
-                        If it is not set, cpu will be used.
-  --log-file LOG_FILE   Log file name. By default it is "dms_app.log".
+  --gpu GPU             ID of GPU device to use for inference. If your machine
+                        has N gpus, this number can be 0 to N - 1. If it is
+                        not set, cpu will be used.
+  --log-file LOG_FILE   Log file name. By default it is "mms_app.log".
   --log-rotation-time LOG_ROTATION_TIME
                         Log rotation time. By default it is "1 H", which means
                         one hour. Valid format is "interval when". For weekday
@@ -65,7 +77,7 @@ optional arguments:
                         https://docs.python.org/2/library/logging.html
                         #logging-levels
   --metrics-write-to {log,csv}
-                        Target location to write dms metrics. Log, local
+                        Target location to write mms metrics. Log, local
                         CSV...
 ```
 
@@ -77,10 +89,9 @@ Example single model usage:
 mxnet-model-server --models name=model_location
 ```
 
-`--models` is the only required argument. You can pass one or more models in a key value pair format: `name` you want to call the model and `model_location` for the local file path or URI to the model. The name is what appears in your REST API's endpoints. In the first example we used `squeezenet_v1.1` for the name, e.g. `mxnet-model-server --models squeezenet_v1.1=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/squeezenet_v1.1/predict`. In the first example this was `squeezenet=https://s3.amazonaws.com/mms-models/squeezenet_v1.1.model`. Alternatively, we could have downloaded the file and used a local file path like `squeezenet=dms_models/squeezenet_v1.1.model`.
+`--models` is the only required argument. You can pass one or more models in a key value pair format: `name` you want to call the model and `model_location` for the local file path or URI to the model. The name is what appears in your REST API's endpoints. In the first example we used `squeezenet_v1.1` for the name, e.g. `mxnet-model-server --models squeezenet_v1.1=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/squeezenet_v1.1/predict`. In the first example this was `squeezenet=https://s3.amazonaws.com/mms-models/squeezenet_v1.1.model`. Alternatively, we could have downloaded the file and used a local file path like `squeezenet=mms_models/squeezenet_v1.1.model`.
 
 The rest of these arguments are optional and will have the following defaults:
-* [--service mxnet_vision_service]
 * [--port 8080]
 * [--host 127.0.0.1]
 
@@ -104,7 +115,7 @@ Logging and exporting an SDK can also be triggered with additional arguments. De
 4. **host**: optional, default is 127.0.0.1
 5. **gpu**: optional, gpu device id, such as 0 or 1. cpu will be used if this argument is not set.
 5. **gen-api**: optional, this will generate an open-api formated client sdk in build folder.
-6. **log-file**: optional, log file name. By default it is "dms_app.log".
+6. **log-file**: optional, log file name. By default it is "mms_app.log".
 7. **log-rotation-time**: optional, log rotation time. By default it is "1 H", which means one hour. Valid format is "interval when". For weekday and midnight, only "when" is required. Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler for detail values.
 8. **log-level**: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL. Check https://docs.python.org/2/library/logging.html#logging-levels
 
@@ -121,7 +132,7 @@ mxnet-model-server --models squeezenet=https://s3.amazonaws.com/model-server/mod
 ### Custom Services
 
 This topic is covered in much more detail on the [custom service documentation page](custom_service.md), but let's talk about how you start up your MMS server using a custom service and why you might want one.
-Let's say you have a model named `super-fancy-net.model` that can detect a lot of things, but you want an API endpoint that detects only hotdogs. You would use a name that makes sense for it, such as the "not-hot-dog" API. In this case we might invoke DMS like this:
+Let's say you have a model named `super-fancy-net.model` that can detect a lot of things, but you want an API endpoint that detects only hotdogs. You would use a name that makes sense for it, such as the "not-hot-dog" API. In this case we might invoke MMS like this:
 
 ```bash
 mxnet-model-server --models not-hot-dog=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/super-fancy-net.model

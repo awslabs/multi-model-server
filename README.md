@@ -11,7 +11,9 @@ A quick overview and examples are below. Detailed documentation and examples are
 
 ## Quick Start
 
-### Install MMS
+### Install with pip
+
+**Note: pip package currently unstable**
 
 Make sure you have Python installed, then run:
 
@@ -19,18 +21,31 @@ Make sure you have Python installed, then run:
 pip install mxnet-model-server
 ```
 
+### Install from Source
+
+Alternatively, you may install MMS from source:
+
+```bash
+git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server
+sudo python setup.py install
+```
+
 ### Serve a Model
 
 Once installed, you can get MMS model serving up and running very quickly. We've provided an example object classification model for you to use:
 ```bash
-mxnet-model-server --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model --service dms/model_service/mxnet_vision_service.py
+mxnet-model-server \
+  --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model \
+  --service mms/model_service/mxnet_vision_service.py
 ```
 
 With the command above executed, you have MMS running on your host, listening for inference requests.
 
-To test it out, download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post an inference request with the image.
+To test it out, download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post an inference request with the image. In the example below both of these steps are provided.
 
 ```bash
+wget -O kitten.jpg \
+  https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg
 curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
 ```
 
@@ -41,24 +56,24 @@ The predictor endpoint will return a prediction response in JSON. It will look s
   "prediction": [
     [
       {
-        "class": "n02123045 tabby, tabby cat",
-        "probability": 0.42514491081237793
-      },
-      {
         "class": "n02124075 Egyptian cat",
-        "probability": 0.20608820021152496
-      },
-      {
-        "class": "n02123159 tiger cat",
-        "probability": 0.1271171122789383
+        "probability": 0.9408261179924011
       },
       {
         "class": "n02127052 lynx, catamount",
-        "probability": 0.04275566339492798
+        "probability": 0.055966004729270935
       },
       {
-        "class": "n02123597 Siamese cat, Siamese",
-        "probability": 0.016593409702181816
+        "class": "n02123045 tabby, tabby cat",
+        "probability": 0.0025502564385533333
+      },
+      {
+        "class": "n02123159 tiger cat",
+        "probability": 0.00034320182749070227
+      },
+      {
+        "class": "n02123394 Persian cat",
+        "probability": 0.00026897044153884053
       }
     ]
   ]
@@ -74,7 +89,7 @@ MMS enables you to package up all of your model artifacts into a single model ar
 
 **1. Download a Model (if you don't have one handy)**
 
-First you'll need to obtain a trained model, which typically consist of a set of files such as the files listed below. Go ahead and download these files into a new and empty folder:
+First you'll need to obtain a trained model, which typically consist of a set of files such as the files listed below. Go ahead and download these files into a new and empty folder, or you can [download a model file from the model zoo](doc/model_zoo.md), rename it to have a .zip extension and extract it to see these files:
 
 * [squeezenet_v1.1-symbol.json](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-symbol.json) - contains the layers and overall structure of the neural network; the name, or prefix, here is "squeezenet_v1.1"
 * [squeezenet_v1.1-0000.params](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-0000.params) - contains the parameters and the weights; again, the prefix is "squeezenet_v1.1"
@@ -86,7 +101,7 @@ First you'll need to obtain a trained model, which typically consist of a set of
 
 With the model files available locally, you can use the `mxnet-model-export` CLI to generate a `.model` file that can be used to serve inference with MMS.
 
-Open your terminal and go to the folder that has the four files you just downloaded. In this next step we'll run `mxnet-model-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+Open your terminal and go to the folder that has the files you just downloaded. In this next step we'll run `mxnet-model-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
 
 ```bash
 mxnet-model-export --model-name squeezenet_v1.1 --model-path .

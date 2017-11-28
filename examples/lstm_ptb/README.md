@@ -49,7 +49,7 @@ Loading a NLP model in MXNet is a bit more complicated than vision models. We ne
 
 ## Step 5 - Export model files with mxnet-model-export CLI tool
 
-With model files together with signature and vocab_dict files in lstm-model folder, we are ready to export them to DMS model file.
+With model files together with signature and vocab_dict files in lstm-model folder, we are ready to export them to MMS model file.
 
 ```bash
 mxnet-model-export --model-path lstm-model/ --model-name lstm_ptb

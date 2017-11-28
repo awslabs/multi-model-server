@@ -53,7 +53,7 @@ class ArgParser(object):
                                           'If your machine has N gpus, this number can be 0 to N - 1. '
                                           'If it is not set, cpu will be used.')
 
-        parser.add_argument('--log-file', help='Log file name. By default it is "dms_app.log".')
+        parser.add_argument('--log-file', help='Log file name. By default it is "mms_app.log".')
 
         parser.add_argument('--log-rotation-time',
                             help='Log rotation time. By default it is "1 H", which means one hour. '
@@ -68,7 +68,7 @@ class ArgParser(object):
         parser.add_argument('--metrics-write-to',
                             default='log',
                             choices=['log', 'csv'],
-                            help='Target location to write dms metrics. Log, local CSV... ')
+                            help='Target location to write mms metrics. Log, local CSV... ')
 
         return parser
 

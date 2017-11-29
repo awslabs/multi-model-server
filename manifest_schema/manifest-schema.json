@@ -19,23 +19,13 @@
                 "Signature": {"type": "string"},
                 "Description": {"type": "string"},
                 "Model-Format": {"type": "string"},
-                "Model-Name": {"type": "string"}
+                "Model-Name": {"type": "string"},
+                "Service": {"type": "string"}
             },
-            "required": ["Parameters", "Symbol", "Signature", "Model-Format", "Model-Name"]
-        },
-        "Service-Files": {
-            "type": "object",
-            "properties": {
-                "File-Name": {"type": "string"},
-                "Description": {"type": "string"}
-            },
-            "required": ["File-Name"]
+            "required": ["Parameters", "Symbol", "Signature", "Model-Format", "Model-Name", "Service"]
         },
         "Engine": {
             "type": "object"
-        },
-        "Assets": {
-            "type": "array"
         }
     },
     "properties": {

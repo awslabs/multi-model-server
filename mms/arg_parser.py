@@ -96,4 +96,12 @@ class ArgParser(object):
                                    help='Path to the folder containing model related files. '
                                         'Signature file is required.')
 
+        parser_export.add_argument('--service-file-path',
+                                   required=False,
+                                   type=str,
+                                   default=None,
+                                   help='Service file path to handle custom MMS inference logic. '
+                                        'if not provided, this tool will package MXNetBaseService if input in signature.json is application/json or '
+                                        'MXNetVisionService if input is image/jpeg')
+        
         return parser_export

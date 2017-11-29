@@ -123,12 +123,8 @@ def _extract_model(service_name, path):
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Parameters']))) == 1, \
     'Parameter file in model archive is inconsistent with manifest.'
 
-    assert len(glob.glob(os.path.join(model_dir, manifest['Service-Files']['File-Name']))) == 1, \
+    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Service']))) == 1, \
     'Service file in model archive is inconsistent with manifest.'
-
-    for asset in manifest['Assets']:
-        assert len(glob.glob(os.path.join(model_dir, manifest['Assets'][asset]))) == 1, \
-        asset + ' file in model archive is inconsistent with manifest.'
 
     model_name = manifest['Model']['Model-Name']
             

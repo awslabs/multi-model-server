@@ -102,7 +102,7 @@ class MXNetBaseService(SingleNodeService):
 
         # Read synset file
         # If synset is not specified, check whether model archive contains synset file.
-        archive_synset = os.path.join(model_dir, manifest['Assets']['Synset'])
+        archive_synset = os.path.join(model_dir, 'synset.txt')
 
         if os.path.isfile(archive_synset):
             synset = archive_synset

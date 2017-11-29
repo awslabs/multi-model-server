@@ -114,8 +114,9 @@ def _extract_model(service_name, path):
 
     validate(manifest, schema)
 
-    assert 'Signature' in manifest['Model'], 'Model should have signature file.' 
-    
+    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Signature']))) == 1, \
+    'Signature file in model archive is inconsistent with manifest.'
+
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))) == 1, \
     'Symbol file in model archive is inconsistent with manifest.'
 

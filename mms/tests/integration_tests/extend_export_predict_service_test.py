@@ -55,6 +55,8 @@ def setup_ssd_server(tmpdir):
     sys.argv.append("{}/resnet50_ssd_model".format(tmpdir))
     sys.argv.append("--model-path")
     sys.argv.append(tmpdir)
+    sys.argv.append("--service-file-path")
+    sys.argv.append("{}/ssd_service.py".format(tmpdir))
     export_model.export()
 
     # Start the mxnet model server for SSD
@@ -78,7 +80,7 @@ def test_ssd_extend_export_predict_service(tmpdir):
     start_test_server_thread = Thread(target = setup_ssd_server, args=(str(tmpdir),))
     start_test_server_thread.daemon = True
     start_test_server_thread.start()
-    time.sleep(30)
+    time.sleep(90)
     output = subprocess.check_output('curl -X POST http://127.0.0.1:8080/SSD/predict -F "data=@{}/street.jpg"'.format(str(tmpdir)), shell=True)
     if sys.version_info[0] >= 3:
         output = output.decode("utf-8")

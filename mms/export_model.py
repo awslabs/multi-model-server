@@ -155,7 +155,7 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
     manifest["Model-Archive-Version"] = MODEL_ARCHIVE_VERSION
     manifest["Model-Archive-Description"] = model_name
     manifest["License"] = "Apache 2.0"
-    manifest["Created-By"] = {"Model-Server": MODEL_SERVER_VERSION}
+    manifest["Model-Server"] = MODEL_SERVER_VERSION
     
     manifest["Model"] = {}
     manifest["Model"]["Symbol"] = os.path.split(symbol_file)[1]

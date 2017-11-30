@@ -87,7 +87,7 @@ class MMS(object):
 
             logger.info('Initialized model serving.')
         except Exception as e:
-            logger.error('Failed to initialize model serving: ' + str(e))
+            print ('Failed to initialize model serving: ' + str(e))
             exit(1)
         
     def start_model_serving(self):

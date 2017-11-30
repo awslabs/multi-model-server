@@ -42,10 +42,9 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
     root = logging.getLogger()
     root.setLevel(LOG_LEVEL_DICT[log_level])
     
-    if log_file is not None:
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(_Formatter())
-        root.addHandler(stream_handler)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(_Formatter())
+    root.addHandler(stream_handler)
 
     log_file = log_file or 'mms_app.log'
     file_handler = TimedRotatingFileHandler(log_file, when, interval)

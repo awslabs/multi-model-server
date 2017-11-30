@@ -136,10 +136,6 @@ def validate_service(model_path, service_file, signature_file):
         input_type = None
         with open(signature_file) as js_file:
             input_type = json.load(js_file)['input_type']
-<<<<<<< HEAD
-=======
-        
->>>>>>> update exporter, remove export_serving test
         if input_type == 'image/jpeg':
             service_file = vision_service.__file__
         elif input_type == 'application/json':

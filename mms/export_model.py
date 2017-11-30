@@ -135,7 +135,8 @@ def validate_service(model_path, service_file, signature_file):
                 "The Service class should be derived from MXNetBaseService, found %s classes" % str(service_classes)
         
         #remove the compiled python code
-        os.remove(service_file + 'c')
+        if os.path.exists(service_file + 'c'):
+            os.remove(service_file + 'c')
     
     else:
         input_type = None

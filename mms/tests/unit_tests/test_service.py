@@ -21,7 +21,7 @@ import mxnet as mx
 from io import BytesIO
 from model_service.mxnet_vision_service import MXNetVisionService as mx_vision_service
 from helper.pixel2pixel_service import UnetGenerator, Pixel2pixelService
-from export_model import export_serving
+#from export_model import export_serving
 
 class TestService(unittest.TestCase):
     def _train_and_export(self, path):
@@ -62,8 +62,8 @@ class TestService(unittest.TestCase):
         with open('%s/synset.txt' % (model_path), 'w') as synset:
             for i in range(10):
                 synset.write('test label %d\n' % (i))
-        export_serving(mod, 'test', signature, export_path=model_path,
-                       aux_files=['%s/synset.txt' % (model_path)])
+#         export_serving(mod, 'test', signature, export_path=model_path,
+#                        aux_files=['%s/synset.txt' % (model_path)])
 
     def _write_image(self, img_arr):
         img_arr = mx.nd.transpose(img_arr, (1, 2, 0)).astype(np.uint8).asnumpy()

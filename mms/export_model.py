@@ -32,13 +32,17 @@ except NameError:
 
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']
 VALID_MIME_TYPE = ['image/jpeg', 'application/json']
+MANIFEST_DIR = "manifest_schema"
 MANIFEST_SCHEMA = 'manifest-schema.json'
 SIGNATURE_FILE = 'signature.json'
+MODEL_ARCHIVE_VERSION = 0.1
+MODEL_SERVER_VERSION = 0.1
 
 def validate_signature(model_path):
     '''Internal helper to check signature error when exporting model with CLI.
     '''
-    sig_file = '%s/%s' % (SIGNATURE_FILE, model_path)
+    signature_file = os.path.join(model_path, SIGNATURE_FILE)
+
     assert os.path.isfile(signature_file), \
         "signature.json is not found in %s." % (model_path)
     with open(signature_file) as js_file:
@@ -80,35 +84,34 @@ def validate_symbol(model_path):
     Checks if a single Symbol file ending with '-symbol.json' file exists within the model_path
     '''
     symbol_file_postfix = '-symbol.json'
-    
-    sym_files = glob.glob(model_path + symbol_file_postfix)
+    sym_files = glob.glob(model_path + "*" + symbol_file_postfix)
     
     assert(len(sym_files) == 1, \
            "should have 1 symbol file ending with -symbol.json in the filename, given:%s in model_path:%s" \
-           %str(sym_files), model_path)
+           % (str(sym_files), model_path))
     
     return sym_files[0]
 
-def validate_params(params_file):
+def validate_params(model_path):
     '''
     Checks if a single parameter file ending with .params extension in the model_path
     and returns that file
     '''
     params_file_postfix = '.params'
     
-    param_files = glob.glob(model_path + symbol_file_postfix)
+    param_files = glob.glob(model_path + "*" + params_file_postfix)
     
     assert(len(param_files) == 1, \
-           "should have 1 parameter file ending with .params in the filename, given:%s in model_path:%s" \
-           %str(param_files), model_path)
+           "should have 1 parameter file ending with .params , given:%s in model_path:%s" \
+           %(str(param_files), model_path))
     
     return param_files[0]
 
 def validate_service(model_path, service_file, signature_file):    
     
-    if not service_file:
+    if service_file:
 
-        assert (os.path.isfile(service_file) or (len(glob.glob(model_path + service_file)) == 1)), \
+        assert (os.path.isfile(service_file) or os.path.isfile(os.path.join(model_path, service_file))), \
             "Service File not found in %s or in %s." % (service_file, model_path)
             
         service_file = service_file if os.path.isfile(service_file) \
@@ -130,8 +133,13 @@ def validate_service(model_path, service_file, signature_file):
                 "There should be 1 Service class derived from MXNetBaseService, found %s classes" % str(service_classes))
     
     else:
-        input_type = json.load(signature_file)['input_type']
+        input_type = None
+        with open(signature_file) as js_file:
+            input_type = json.load(js_file)['input_type']
+<<<<<<< HEAD
+=======
         
+>>>>>>> update exporter, remove export_serving test
         if input_type == 'image/jpeg':
             service_file = vision_service.__file__
         elif input_type == 'application/json':
@@ -150,10 +158,10 @@ def validate_service(model_path, service_file, signature_file):
     
 def generate_manifest(symbol_file, params_file, service_file, signature_file, model_name):
     manifest = {}
-    manifest["Model-Archive-Version"] = 0.2
+    manifest["Model-Archive-Version"] = MODEL_ARCHIVE_VERSION
     manifest["Model-Archive-Description"] = model_name
     manifest["License"] = "Apache 2.0"
-    manifest["Created-By"] = {"Model-Server": 0.2}
+    manifest["Created-By"] = {"Model-Server": MODEL_SERVER_VERSION}
     
     manifest["Model"] = {}
     manifest["Model"]["Symbol"] = os.path.split(symbol_file)[1]
@@ -174,8 +182,8 @@ def export_model(model_name, model_path, service_file=None):
     if model_path.startswith('~'):
         model_path = os.path.expanduser(model_path)
     
-    model_path = os.path.join(model_path, os.sep) if model_path[-1] != '/' else model_path
-    
+    model_path = model_path + os.sep if model_path[-1] != os.sep else model_path
+
     signature_file = validate_signature(model_path)
     
     service_file = validate_service(model_path, service_file, signature_file)
@@ -187,12 +195,13 @@ def export_model(model_name, model_path, service_file=None):
     manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name)
     manifest_file = os.path.join(model_path, "manifest.json")
     with open(manifest_file, 'w') as m:
-        json.dump(manifest, m)
+        json.dump(manifest, m, indent=4)
 
     #manifest schema
     import mms
-    mms_pkg_loc = mms.__file__.split('mms')[0]
-    manifest_schema_file = os.path.join(mms_pkg_loc, MANIFEST_SCHEMA)
+    mms_pkg_loc = os.path.split(mms.__file__)[0]
+    manifest_schema_file = os.path.join(mms_pkg_loc, MANIFEST_DIR, MANIFEST_SCHEMA)
+
     assert(os.path.isfile(manifest_schema_file), \
            "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc)
 
@@ -200,12 +209,11 @@ def export_model(model_name, model_path, service_file=None):
     
     #add all the auxillary files    
     for dirpath, _, filenames in os.walk(model_path):
-        for file_name in filenames:
-            file_name = os.path.join(model_path, file_name)
+        for filename in filenames:
+            filename = os.path.join(model_path, filename)
             
-            if os.path.isfile(file_name) and filename not in file_list:
-                file_list.append(file_name)
-
+            if os.path.isfile(filename) and filename not in file_list:
+                file_list.append(filename)
     export_file = os.path.join(destination,'%s.model' % model_name)
 
     assert(os.path.isfile(export_file), \

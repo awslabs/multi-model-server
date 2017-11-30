@@ -20,7 +20,7 @@ import zipfile
 import shutil
 
 from model_service.mxnet_vision_service import MXNetVisionService as mx_vision_service
-from export_model import export_serving
+#from export_model import export_serving
 from mxnet.gluon import nn
 
 
@@ -109,8 +109,9 @@ class TestExport(unittest.TestCase):
         model_path = curr_path + '/' + path
         export_file = '%s/%s.model' % (os.getcwd(), model_name)
 
-        cmd = 'python %s/../../export_model.py --model-name %s --model-path %s ' \
+        cmd = 'python %s/../../export_model.py --model-name %s --model-path %s' \
               % (curr_path, model_name, model_path)
+        print ('cmd:%s', cmd)
         os.system(cmd)
         assert os.path.isfile(export_file), "No model file is found. Export failed!"
         
@@ -125,80 +126,5 @@ class TestExport(unittest.TestCase):
         }
         os.system('rm -rf %s %s %s/%s' % (export_file, model_path, os.getcwd(), model_name))
 
-    def test_export_API(self):
-        # Test module export
-        path = 'test'
-        model_path = curr_path + '/' + path
-        os.mkdir(model_path)
-        sym = mx.sym.Variable('data')
-        sym = mx.sym.FullyConnected(sym, num_hidden=100)
-        sym = mx.symbol.Activation(name="act_1", data=sym, act_type='sigmoid')
-        sym = mx.symbol.LinearRegressionOutput(data=sym, name='softmax', grad_scale=2)
-
-        mod = mx.mod.Module(sym, ('data',))
-        mod.bind(data_shapes=[('data', (10, 10))])
-        mod.init_params()
-        mod.init_optimizer(optimizer_params={'learning_rate': 0.1, 'momentum': 0.9})
-        mod.update()
-
-        signature = {'input_type': 'application/json', 'output_type': 'application/json'}
-        with open('%s/synset.txt' % (model_path), 'w') as synset:
-            synset.write('test label')
-        export_serving(mod, path, signature, export_path=model_path, aux_files=['%s/synset.txt' % model_path])
-        self._extract_zip('%s/%s.model' % (model_path, path), model_path)
-        assert os.path.isfile('%s/%s.model' % (model_path, path)), "No zip file found for export_serving."
-        assert os.path.isfile('%s/signature.json' % (model_path)), "No signature file found for export_serving."
-        with open('%s/signature.json' % (model_path)) as f:
-            sig = json.load(f)
-        assert sig['input_type'] == signature['input_type'], \
-            "Input type incorrect. Expect %s but got %s" % (signature['input_type'], sig['input_type'])
-        assert sig['output_type'] == signature['output_type'], \
-            "Output type incorrect. Expect %s but got %s" % (signature['output_type'], sig['output_type'])
-        for input, data in zip(sig['inputs'], mod.data_shapes):
-            assert input['data_name'] == data[0], "Input name mistach. %s vs %s" % (input['data_name'], data[0])
-            assert input['data_shape'] == list(data[1]), "Input shape mistach. %s vs %s" % (
-            input['data_shape'], data[1])
-        for output, data in zip(sig['outputs'], mod.output_shapes):
-            assert output['data_name'] == data[0], "Output name mistach. %s vs %s" % (output['data_name'], data[0])
-            assert output['data_shape'] == list(data[1]), "Output shape mistach. %s vs %s" % (
-            output['data_shape'], data[1])
-        os.system('rm -rf %s' % (model_path))
-
-        # Test gluon block export
-        os.mkdir(model_path)
-        w_init = mx.init.Xavier()
-
-        netG = nn.HybridSequential()
-        with netG.name_scope():
-            netG.add(nn.Dense(units=200, activation='relu', weight_initializer=w_init))
-
-        netG.initialize()
-        netG.hybridize()
-        latent_z = mx.nd.random_normal(0, 1, shape=(1, 100))
-        netG(latent_z)
-
-        signature = {
-            "input_type": "application/json",
-            "inputs": [
-                {
-                    "data_name": "data",
-                    "data_shape": [1, 100]
-                }
-            ],
-            "outputs": [
-                {
-                    "data_name": "softmax",
-                    "data_shape": [1, 200]
-                }
-            ],
-            "output_type": "application/json"
-        }
-        export_serving(netG, path, signature, export_path=model_path)
-        self._extract_zip('%s/%s.model' % (model_path, path), model_path)
-        assert os.path.isfile('%s/%s.model' % (model_path, path)), "No zip file found for export_serving."
-        assert os.path.isfile('%s/signature.json' % (model_path)), "No signature file found for export_serving."
-        os.system('rm -rf %s' % (model_path))
-
     def runTest(self):
         self.test_export_CLI()
-        self.test_export_API()

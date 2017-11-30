@@ -35,8 +35,7 @@ sudo python setup.py install
 Once installed, you can get MMS model serving up and running very quickly. We've provided an example object classification model for you to use:
 ```bash
 mxnet-model-server \
-  --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model \
-  --service mms/model_service/mxnet_vision_service.py
+  --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
 With the command above executed, you have MMS running on your host, listening for inference requests.

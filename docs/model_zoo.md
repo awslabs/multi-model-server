@@ -11,6 +11,7 @@ These models were trained on the Imagenet dataset with an output of 1,000 image 
 | [ResNet50-SSD](https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model.model) | ImageNet | 124 MB |
 | [ResNext101-64x4d](https://s3.amazonaws.com/model-server/models/resnext-101-64x4d/resnext-101-64x4d.model) | ImageNet | 334 MB |
 | [SqueezeNet v1.1](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model) | ImageNet | 5 MB |
+| [LSTM PTB](https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm-ptb-model.model) | PennTreeBank | 16 MB |
 
 ## TBD
 

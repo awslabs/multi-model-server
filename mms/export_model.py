@@ -13,14 +13,18 @@
 
 import os
 import glob
-import logging
 import json
 import zipfile
 import imp
 import mxnet as mx
+import inspect
 from mms.arg_parser import ArgParser
 import mms.model_service.mxnet_model_service as base_service 
 import mms.model_service.mxnet_vision_service as vision_service
+from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.log import get_logger
+
+logger = get_logger()
 
 try:
     basestring
@@ -84,9 +88,9 @@ def validate_symbol(model_path):
     symbol_file_postfix = '-symbol.json'
     sym_files = glob.glob(model_path + "*" + symbol_file_postfix)
     
-    assert(len(sym_files) == 1, \
+    assert len(sym_files) == 1, \
            "should have 1 symbol file ending with -symbol.json in the filename, given:%s in model_path:%s" \
-           % (str(sym_files), model_path))
+           % (str(sym_files), model_path)
     
     return sym_files[0]
 
@@ -99,9 +103,9 @@ def validate_params(model_path):
     
     param_files = glob.glob(model_path + "*" + params_file_postfix)
     
-    assert(len(param_files) == 1, \
+    assert len(param_files) == 1, \
            "should have 1 parameter file ending with .params , given:%s in model_path:%s" \
-           %(str(param_files), model_path))
+           %(str(param_files), model_path)
     
     return param_files[0]
 
@@ -109,7 +113,7 @@ def validate_service(model_path, service_file, signature_file):
     
     if service_file:
 
-        assert (os.path.isfile(service_file) or os.path.isfile(os.path.join(model_path, service_file))), \
+        assert os.path.isfile(service_file) or os.path.isfile(os.path.join(model_path, service_file)), \
             "Service File not found in %s or in %s." % (service_file, model_path)
             
         service_file = service_file if os.path.isfile(service_file) \
@@ -127,26 +131,30 @@ def validate_service(model_path, service_file, signature_file):
         # Check if subclass of MXNetBaseService
         service_classes = list(filter(lambda cls: issubclass(cls, MXNetBaseService), classes))
         
-        assert (len(service_classes) == 1, \
-                "There should be 1 Service class derived from MXNetBaseService, found %s classes" % str(service_classes))
+        assert len(service_classes) > 1, \
+                "The Service class should be derived from MXNetBaseService, found %s classes" % str(service_classes)
+        
+        #remove the compiled python code
+        os.remove(service_file + 'c')
     
     else:
         input_type = None
         with open(signature_file) as js_file:
             input_type = json.load(js_file)['input_type']
+        
         if input_type == 'image/jpeg':
             service_file = vision_service.__file__
         elif input_type == 'application/json':
             service_file = base_service.__file__
         else:
-            assert(input_type in VALID_MIME_TYPE, \
-                   "input_type should be one of %s or have your own service file handling it" % str(VALID_MIME_TYPE))
+            assert input_type in VALID_MIME_TYPE, \
+                   "input_type should be one of %s or have your own service file handling it" % str(VALID_MIME_TYPE)
 
         #if service_file is a compile file, get the corresponding python code file
         if service_file.endswith('.pyc'):
             service_file = service_file[:-1]            
-            assert(os.path.isfile(service_file), \
-                   "Vision Service File is missing in mms installation")
+            assert os.path.isfile(service_file), \
+                   "Vision Service File is missing in mms installation" 
         
     return service_file
     
@@ -163,6 +171,7 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
     manifest["Model"]["Signature"] = os.path.split(signature_file)[1]
     manifest["Model"]["Service"] =  os.path.split(service_file)[1]
     manifest["Model"]["Description"] = model_name
+    manifest["Model"]["Model-Name"] = model_name
     manifest["Model"]["Model-Format"] = "MXNet-Symbolic"
     manifest["Engine"]  = {"MXNet":0.12}
     
@@ -196,8 +205,8 @@ def export_model(model_name, model_path, service_file=None):
     mms_pkg_loc = os.path.split(mms.__file__)[0]
     manifest_schema_file = os.path.join(mms_pkg_loc, MANIFEST_DIR, MANIFEST_SCHEMA)
 
-    assert(os.path.isfile(manifest_schema_file), \
-           "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc)
+    assert os.path.isfile(manifest_schema_file), \
+           "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc 
 
     file_list = [signature_file, service_file, symbol_file, params_file, manifest_file, manifest_schema_file]
     
@@ -210,14 +219,13 @@ def export_model(model_name, model_path, service_file=None):
                 file_list.append(filename)
     export_file = os.path.join(destination,'%s.model' % model_name)
 
-    assert(os.path.isfile(export_file), \
-           "%s.model already exists in %s directory." % (model_name, destination))
+    assert False == os.path.isfile(export_file), "%s.model already exists in %s directory." % (model_name, destination)
 
     with zipfile.ZipFile(export_file, 'w') as zip_file:
         for item in file_list:
             zip_file.write(item, os.path.basename(item))
 
-    logging.info('Successfully exported %s model. Model file is located in %s directory.'
+    logger.info('Successfully exported %s model. Model file is located in %s directory.'
           % (model_name, destination))
 
 def export():

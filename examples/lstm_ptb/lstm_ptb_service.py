@@ -1,4 +1,6 @@
 import mxnet as mx
+import os
+import json
 
 from mms.model_service.mxnet_model_service import MXNetBaseService
 from mms.utils.mxnet import nlp
@@ -8,14 +10,23 @@ class MXNetLSTMService(MXNetBaseService):
     from length 0 to 60 and generates a sentence with the same size.
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MXNetBaseService, self).__init__(model_name, model_dir, manifest, gpu)
-
+        self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
+        signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
+        if not os.path.isfile(signature_file_path):
+            raise RuntimeError('Signature file is not found. Please put signature.json '
+                               'into the model file directory...' + signature_file_path)
+        try:
+            signature_file = open(signature_file_path)
+            self._signature = json.load(signature_file)
+        except:
+            raise Exception('Failed to open model signiture file: %s' % signature_file_path)
+            
         self.data_names = []
         self.data_shapes = []
         for input in self._signature['inputs']:
             self.data_names.append(input['data_name'])
             self.data_shapes.append((input['data_name'], tuple(input['data_shape'])))
-
+        
         # Load pre-trained lstm bucketing module
         load_epoch = 100
         num_layers = 2
@@ -28,7 +39,7 @@ class MXNetLSTMService(MXNetBaseService):
         self.invalid_label = 0
         self.layout = 'NT'
 
-        vocab_dict_file = os.path.join(model_dir, manifest['Assets']['vocab'])
+        vocab_dict_file = os.path.join(model_dir, "vocab_dict.txt")
         self.vocab = {}
         self.idx2word = {}
         with open(vocab_dict_file, 'r') as vocab_file:
@@ -62,14 +73,15 @@ class MXNetLSTMService(MXNetBaseService):
         self.mx_model = mx.mod.BucketingModule(
             sym_gen=sym_gen,
             default_bucket_key=max(self.buckets),
-            context=self.context)
+            context=self.ctx)
+        
         self.mx_model.bind(data_shapes=self.data_shapes, for_training=False)
         _, arg_params, aux_params = mx.rnn.load_rnn_checkpoint(stack, '%s/%s' % (model_dir, model_name), load_epoch)
         self.mx_model.set_params(arg_params, aux_params)
 
     def _preprocess(self, data):
         # Convert a string of sentence to a list of string
-        sent = data[0]['input_sentence'].lower().split(' ')
+        sent = data[0][0]['input_sentence'].lower().split(' ')
         assert len(sent) <= self.buckets[-1], "Sentence length must be no greater than %d." % (self.buckets[-1])
         # Encode sentence to a list of int
         res, _ = nlp.encode_sentences([sent], vocab=self.vocab, start_label=self.start_label, invalid_label=self.invalid_label)

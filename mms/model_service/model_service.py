@@ -28,7 +28,7 @@ class ModelService(object):
     '''
     __metaclass__ = ABCMeta
 
-    def __init__(self, service_name, path, gpu=None):
+    def __init__(self, model_name, model_dir, manifest, gpu=None):
         self.ctx = None
 
     @abstractmethod

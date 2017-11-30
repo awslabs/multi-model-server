@@ -92,7 +92,7 @@ def _extract_zip(zip_file, destination):
 def _extract_model(service_name, path):
     curr_dir = os.getcwd()
     
-    model_file = download(url=path, path=os.path.join(curr_dir, service_name, '.model'), overwrite=True) \
+    model_file = download(url=path, overwrite=True) \
     if path.lower().startswith(URL_PREFIX) else path
 
     model_file = os.path.abspath(model_file)

@@ -42,7 +42,6 @@ def setup_ssd_server(tmpdir):
     _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/synset.txt")
     _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/signature.json")
     _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/ssd_service.py")
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/manifest-schema.json")
     _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/manifest.json")
 
     # Download input image.

@@ -62,7 +62,6 @@ class MXNetBaseService(SingleNodeService):
     '''
     def __init__(self, model_name, model_dir, manifest, gpu=None):
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
-        
         signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
         if not os.path.isfile(signature_file_path):
             raise RuntimeError('Signature file is not found. Please put signature.json '

@@ -14,6 +14,7 @@ wget https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-symbol.json 
 wget https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-0100.params -P lstm-model
 wget https://s3.amazonaws.com/model-server/models/lstm_ptb/signature.json -P lstm-model
 wget https://s3.amazonaws.com/model-server/models/lstm_ptb/vocab_dict.txt -P lstm-model
+wget https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb_service.py
 ```
 
 ## Step 2 - Check signature file
@@ -52,7 +53,7 @@ Loading a NLP model in MXNet is a bit more complicated than vision models. We ne
 With model files together with signature and vocab_dict files in lstm-model folder, we are ready to export them to MMS model file.
 
 ```bash
-mxnet-model-export --model-path lstm-model/ --model-name lstm_ptb
+mxnet-model-export --model-path lstm-model/ --model-name lstm_ptb --service-file-path lstm_ptb_service.py
 ```
 
 ## Step 6 - Establish inference service

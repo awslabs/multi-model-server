@@ -12,7 +12,6 @@ from setuptools import setup, find_packages
 
 pkgs = find_packages()
 pkgs.append('tools')
-pkgs.append('manifest_schema')
 
 setup(
     name='mxnet-model-server',

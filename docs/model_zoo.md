@@ -12,13 +12,6 @@ These models were trained on the Imagenet dataset with an output of 1,000 image 
 | [ResNext101-64x4d](https://s3.amazonaws.com/model-server/models/resnext-101-64x4d/resnext-101-64x4d.model) | ImageNet | 334 MB |
 | [SqueezeNet v1.1](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model) | ImageNet | 5 MB |
 | [LSTM PTB](https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb.model) | PennTreeBank | 16 MB |
-
-## TBD
-
-These models need correct signature files (serving fails).
-
-| Model File | Dataset |
-| --- | --- |
-| [CaffeNet]() | ImageNet |
-| [VGG16]() | ImageNet |
-| [VGG19]() | ImageNet |
+| [VGG16](https://s3.amazonaws.com/model-server/models/vgg16/vgg16.model) | ImageNet | 490 MB |
+| [VGG19](https://s3.amazonaws.com/model-server/models/vgg19/vgg19.model) | ImageNet | 509 MB |
+| [CaffeNet](https://s3.amazonaws.com/model-server/models/caffenet/caffenet.model) | ImageNet | 216 MB |

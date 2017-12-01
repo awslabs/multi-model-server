@@ -11,6 +11,8 @@
 import ast
 import traceback
 import time
+import json
+import base64
 
 from functools import partial
 from flask import abort
@@ -437,12 +439,15 @@ class ServingFrontend(object):
                 for name in input_names:
                     logger.info('Request input: ' + name +  ' should be image with jpeg format.')
                     input_file = self.handler.get_file_data(name)
-                    mime_type = input_file.content_type
-                    assert mime_type == input_type, 'Input data for request argument: %s is not correct. ' \
-                                                    '%s is expected but %s is given.' % (name, input_type, mime_type)
-                    file_data = input_file.read()
-                    assert isinstance(file_data, (str, bytes)), 'Image file buffer should be type str or ' \
-                                                                'bytes, but got %s' % (type(file_data))
+                    if input_file:
+                        mime_type = input_file.content_type
+                        assert mime_type == input_type, 'Input data for request argument: %s is not correct. ' \
+                                                        '%s is expected but %s is given.' % (name, input_type, mime_type)
+                        file_data = input_file.read()
+                        assert isinstance(file_data, (str, bytes)), 'Image file buffer should be type str or ' \
+                                                                    'bytes, but got %s' % (type(file_data))
+                    else:
+                        file_data = base64.decodestring(self.handler.get_form_data(name))
                     input_data.append(file_data)
             except Exception as e:
                 if 'error_metric' in MetricsManager.metrics:

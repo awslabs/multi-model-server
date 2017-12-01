@@ -34,8 +34,6 @@ except NameError:
 
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']
 VALID_MIME_TYPE = ['image/jpeg', 'application/json']
-MANIFEST_DIR = "manifest_schema"
-MANIFEST_SCHEMA = 'manifest-schema.json'
 SIGNATURE_FILE = 'signature.json'
 MODEL_ARCHIVE_VERSION = 0.1
 MODEL_SERVER_VERSION = 0.1
@@ -201,15 +199,7 @@ def export_model(model_name, model_path, service_file=None):
     with open(manifest_file, 'w') as m:
         json.dump(manifest, m, indent=4)
 
-    #manifest schema
-    import mms
-    mms_pkg_loc = os.path.split(mms.__file__)[0]
-    manifest_schema_file = os.path.join(mms_pkg_loc, MANIFEST_DIR, MANIFEST_SCHEMA)
-
-    assert os.path.isfile(manifest_schema_file), \
-           "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc 
-
-    file_list = [signature_file, service_file, symbol_file, params_file, manifest_file, manifest_schema_file]
+    file_list = [signature_file, service_file, symbol_file, params_file, manifest_file]
     
     #add all the auxillary files    
     for dirpath, _, filenames in os.walk(model_path):

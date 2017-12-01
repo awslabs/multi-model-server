@@ -23,6 +23,8 @@ from jsonschema import validate
 logger = get_logger()
 
 URL_PREFIX = ('http://', 'https://', 's3://')
+MANIFEST_DIR = "manifest_schema"
+MANIFEST_SCHEMA_FILE = 'manifest-schema.json'
 
 
 def download(url, path=None, overwrite=False):
@@ -107,7 +109,15 @@ def _extract_model(service_name, path):
         raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
                         % (model_file, model_file_prefix , e))
     try:
-        schema = json.load(open(os.path.join(model_dir, 'manifest-schema.json')))
+        #manifest schema
+        import mms
+        mms_pkg_loc = os.path.split(mms.__file__)[0]
+        manifest_schema_file = os.path.join(mms_pkg_loc, MANIFEST_DIR, MANIFEST_SCHEMA_FILE)
+
+        assert os.path.isfile(manifest_schema_file), \
+               "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc
+
+        schema = json.load(open(manifest_schema_file))
         manifest = json.load(open(os.path.join(model_dir, 'manifest.json')))
     except Exception as e:
         raise Exception('Failed to open manifest file. Stacktrace: ' + str(e))

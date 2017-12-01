@@ -77,8 +77,9 @@ mxnet-model-export --model-name squeezenet_v1.1 --model-path models/squeezenet_v
 ### Arguments
 
 ```bash
-mxnet-model-export -h
+$ mxnet-model-export -h
 usage: mxnet-model-export [-h] --model-name MODEL_NAME --model-path MODEL_PATH
+                          [--service-file-path SERVICE_FILE_PATH]
 
 MXNet Model Export
 
@@ -90,9 +91,15 @@ optional arguments:
                         directory.
   --model-path MODEL_PATH
                         Path to the folder containing model related files.
-                        Signature file is required
+                        Signature file is required.
+  --service-file-path SERVICE_FILE_PATH
+                        Service file path to handle custom MMS inference
+                        logic. if not provided, this tool will package
+                        MXNetBaseService if input in signature.json is
+                        application/json or MXNetVisionService if input is
+                        image/jpeg
 ```
-
+**Required Arguments**
 1. model-name: required, prefix of exported model archive file.
 2. model-path: required, directory which contains files to be packed into exported archive.
 

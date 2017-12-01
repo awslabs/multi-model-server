@@ -25,7 +25,7 @@ python -m pytest mms/tests/unit_tests/
 ## CI Tests
 
 You can run the integration tests with the following:
- 
+
 ```bash
-python -m pytest mms/test/integration_tests/
+python -m pytest mms/tests/integration_tests/
 ```

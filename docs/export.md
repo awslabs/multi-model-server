@@ -39,31 +39,22 @@ In the quick start export example on the main [README](../README.md), we provide
 **Once the model archive has been extracted you can review the following files:**
 
 * **Model Definition** (json file) - contains the description of the layers and overall structure of the neural network.
-  * Example: [squeezenet_v1.1-symbol.json](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-symbol.json) - the name, or prefix, here is "squeezenet_v1.1".
+  * Example: [squeezenet_v1.1-symbol.json](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1-symbol.json) - the name, or prefix, here is "squeezenet_v1.1".
 
 
 * **Model Parameters and Weights** (binary params file) - contains the parameters and the weights.
-  * Example: [squeezenet_v1.1-0000.params](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-0000.params) - again, the prefix is "squeezenet_v1.1".
+  * Example: [squeezenet_v1.1-0000.params](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1-0000.params) - again, the prefix is "squeezenet_v1.1".
 
 
 * **Model Signature** (json file) - defines the inputs and outputs that MMS is expecting to hand-off to the API.
-  * Example: [signature.json](https://s3.amazonaws.com/model-server/models/model-example/signature.json) - in this case for squeezenet_v1, it expects images of 224x224 pixels and will output a tensor of 1,000 probabilities.
+  * Example: [signature.json](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/signature.json) - in this case for squeezenet_v1, it expects images of 224x224 pixels and will output a tensor of 1,000 probabilities.
 
 
 * **Custom Service** (py file) - customizes the inference request handling for both pre-processing and post-processing.
-  * Example: [custom-service.py](#) - in this case, it is a copy of the [MXNet vision service](https://github.com/awslabs/mxnet-model-server/blob/master/mms/model_service/mxnet_vision_service.py) which does standard image pre-processing to match the input required and limits the output results to the top 5 instead of the full 1,000.
-
-
-* **Manifest** (json file) - contains metadata about the files in the model archive. Inspired by the [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) manifest.
-  * Example: [MANIFEST.json](#)
-
-
-* **Manifest Schema** (json file) - used to validate the manifest.
-  * Example: [manifest-schema.json](#)
-
+  * Example: [custom-service.py](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/mxnet_vision_service.py) - in this case, it is a copy of the [MXNet vision service](https://github.com/awslabs/mxnet-model-server/blob/master/mms/model_service/mxnet_vision_service.py) which does standard image pre-processing to match the input required and limits the output results to the top 5 instead of the full 1,000.
 
 * **assets** (folder) - folder containing auxiliary files that support model inference such as vocabularies, labels, etc. Will vary depending on the model.
-  * Example:  [synset.txt](https://s3.amazonaws.com/model-server/models/model-example/synset.txt) - an *optional* list of labels (one per line) specific to a image recognition model, in this case based on the ImageNet dataset.
+  * Example:  [synset.txt](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/synset.txt) - an *optional* list of labels (one per line) specific to a image recognition model, in this case based on the ImageNet dataset.
   * Example:  [vocab_dict.txt](https://s3.amazonaws.com/model-server/models/lstm_ptb/vocab_dict.txt) - an *optional* list of word/index pairs specific to an LSTM model, in this case based on the PenTreeBank dataset.
 
 ## Export Example
@@ -187,97 +178,6 @@ class MXNetBaseService(SingleNodeService):
 ```
 
 Further details and specifications are found on the [custom service](custom_service.md) page.
-
-### Manifest
-```
-MANIFEST.json
-```
-
-This is an example manifest. This json is validated against `manifest-schema.json`.
-
-```json
-{
-    "Model-Archive-Version": 0.1,
-    "Model-Archive-Description": "Resnet-18",
-    "License": "Apache 2.0",
-    "Created-By": {
-        "Model-Server": 0.2,
-        "Author": "mxnet-sdk",
-        "Author-Email": "mxnet-sdk-dev@amazon.com"
-    },
-    "Model": {
-        "Parameters": "resnet-18-0000.params",
-        "Symbol": "resnet-18-symbol.json",
-        "Signature": "signature.json",
-        "Description": "Resnet-18",
-        "Model-Format": "MXNet-Symbolic",
-        "Service": "mxnet_vision_service.py"
-    },
-    "Engine": {
-        "MXNet": "0.12.1"
-    }
-}
-```
-
-### Manifest Schema
-```
-manifest-schema.json
-```
-
-This is used to validate the `MANIFEST.json` file.
-
-```json
-{
-    "$schema": "http://json-schema.org/schema#",
-    "type": "object",
-    "definitions": {
-        "Created-By": {
-            "type": "object",
-            "properties": {
-                "Model-Server": {"type": "number"},
-                "Author": {"type": "string"},
-                "Author-Email": {"type": "string"}
-            },
-            "required": ["Model-Server"]
-        },
-        "Model": {
-            "type": "object",
-            "properties": {
-                "Parameters": {"type": "string"},
-                "Symbol": {"type": "string"},
-                "Signature": {"type": "string"},
-                "Description": {"type": "string"},
-                "Model-Format": {"type": "string"},
-                "Model-Name": {"type": "string"}
-            },
-            "required": ["Parameters", "Symbol", "Signature", "Model-Format", "Model-Name"]
-        },
-        "Service-Files": {
-            "type": "object",
-            "properties": {
-                "File-Name": {"type": "string"},
-                "Description": {"type": "string"}
-            },
-            "required": ["File-Name"]
-        },
-        "Engine": {
-            "type": "object"
-        },
-        "Assets": {
-            "type": "array"
-        }
-    },
-    "properties": {
-        "Model-Archive-Version": {"type": "number"},
-        "Model-Archive-Description": {"type": "string"},
-        "License": {"type": "string"},
-        "Created-By": { "$ref": "#/definitions/Created-By" },
-        "Model": { "$ref": "#/definitions/Model" },
-        "Engine": { "$ref": "#/definitions/Engine" }
-    },
-    "required": ["Model-Archive-Version", "License", "Created-By", "Model", "Engine"]
-}
-```
 
 ### Labels (synset.txt)
 ```

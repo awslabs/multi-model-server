@@ -126,7 +126,7 @@ In this next step we'll run `mxnet-model-export` and tell it our model's prefix 
 mxnet-model-export --model-name squeezenet_v1.1 --model-path .
 ```
 
-This will output `squeezenet_v1.1.model` in the current working directory. This file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the Serve a Model tutorial above and try to run this model that you just exported!
+This will output `squeezenet_v1.1.model` in the current working directory, and it assumes all of the model artifacts are also in the current working directory. Otherwise, instead of `.` you would use a path to the artifacts. This file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the Serve a Model tutorial above and try to run this model that you just exported!
 
 To learn more about exporting, check out [MMS export documentation](docs/export.md)
 

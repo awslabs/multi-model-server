@@ -65,7 +65,7 @@ optional arguments:
   --gpu GPU             ID of GPU device to use for inference. If your machine
                         has N gpus, this number can be 0 to N - 1. If it is
                         not set, cpu will be used.
-  --log-file LOG_FILE   Log file name. By default it is "mms_app.log".
+  --log-file LOG_FILE   Log file name. By default it is "mms_app.log" in the current folder.
   --log-rotation-time LOG_ROTATION_TIME
                         Log rotation time. By default it is "1 H", which means
                         one hour. Valid format is "interval when", where
@@ -80,9 +80,9 @@ optional arguments:
                         https://docs.python.org/2/library/logging.html
                         #logging-levelsfor detailed information on values.
   --metrics-write-to {log,csv}
-                        Target location to write MMS metrics. Log file
-                        specified in --log-file or to local CSV files per
-                        metric type.
+                        By default writes to the Log file specified in --log-file. 
+                        If you pass `csv`, various metric files in `csv` format are created in 
+                        metrics folder in the current directory. 
 ```
 
 ### Required Arguments & Defaults
@@ -101,7 +101,7 @@ The rest of these arguments are optional and will have the following defaults:
 * [--log-file mms_app.log]
 * [--log-rotation-time "1 H"] - one hour
 * [--log-level INFO]
-* [--metrics-write-to log] - will write to `mms_app.log`
+* [--metrics-write-to log] - write metrics to the Log file specified in --log-file or mms_app.log. 
 
 Advanced logging, GPU-based inference, and exporting an SDK can also be triggered with additional arguments. Details are in the following Arguments section.
 
@@ -191,7 +191,7 @@ The are four arguments for MMS that facilitate logging of the model serving and 
 
 1. **log-level**: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR and CRITICAL. Check the [Python docs for logging levels](https://docs.python.org/2/library/logging.html#logging-levels) for more information.
 
-1. **metrics-write-to**: various server metrics are gathered and are written to the default log file, but if the `csv` value is passed to this argument, the metrics are recorded every 30 seconds in separate CSV files as follows.
+1. **metrics-write-to**: various server metrics are gathered and are written to the default log file, but if the `csv` value is passed to this argument, the metrics are recorded every 30 seconds in separate CSV files in a metrics folder in the current directory as follows.
 
       a) **mms_cpu.csv** - CPU load
 

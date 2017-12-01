@@ -55,7 +55,7 @@ class ArgParser(object):
                                           'If your machine has N gpus, this number can be 0 to N - 1. '
                                           'If it is not set, cpu will be used.')
 
-        parser.add_argument('--log-file', help='Log file name. By default it is "mms_app.log".')
+        parser.add_argument('--log-file', help='Log file name. By default it is "mms_app.log" in the current folder.')
 
         parser.add_argument('--log-rotation-time',
                             help='Log rotation time. By default it is "1 H", which means one Hour. '
@@ -73,8 +73,9 @@ class ArgParser(object):
         parser.add_argument('--metrics-write-to',
                             default='log',
                             choices=['log', 'csv'],
-                            help='Target location to write MMS metrics. '
-                                 'Log file specified in --log-file or to local CSV files per metric type. ')
+                            help='By default writes to the Log file specified in `--log-file`.'
+                                 'If you pass "csv", various metric files in "csv" format are created in '
+                                 'metrics folder in the current directory. ')
 
         return parser
 

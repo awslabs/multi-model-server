@@ -13,9 +13,18 @@ from setuptools import setup, find_packages
 pkgs = find_packages()
 pkgs.append('tools')
 
+# To build and upload a new version, follow the steps below.
+# Notes:
+# - this is a "Universal Wheels" package that is pure Python and supports both Python2 and Python3
+# - Twine is a secure PyPi upload package
+# $ pip install twine
+# $ pip install wheel
+# $ python setup.py bdist_wheel --universal
+# $ twine upload dist/*
+
 setup(
     name='mxnet-model-server',
-    version='0.1.4',
+    version='0.1.5',
     description='Model Server for Apache MXNet is a tool for deploying neural net models for inference',
     url='https://github.com/awslabs/mxnet-model-server',
     keywords='MXNet Model Server Serving Deep Learning Inference AI',

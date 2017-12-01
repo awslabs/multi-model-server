@@ -84,29 +84,37 @@ Now you've seen how easy it can be to serve a deep learning model with MMS! [Wou
 
 ### Export a Model
 
-MMS enables you to package up all of your model artifacts into a single model archive, that you can then easily share or distribute. To export a model, follow these steps:
+MMS enables you to package up all of your model artifacts into a single model archive, that you can then easily share or distribute. To export a model, follow these **two** steps:
 
-**1. Download a Model (if you don't have one handy)**
+**1. Download Model Artifacts (if you don't have them handy)**
 
-First you'll need to obtain a trained model, which typically consist of a set of files such as the files listed below. Go ahead and download these files into a new and empty folder, or you can [download a model file from the model zoo](doc/model_zoo.md), rename it to have a .zip extension and extract it to see these files:
+[Model-Artifacts.zip](https://s3.amazonaws.com/model-server/models/model-example/Model-Artifacts.zip) - 5 MB
 
-* [squeezenet_v1.1-symbol.json](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-symbol.json) - contains the layers and overall structure of the neural network; the name, or prefix, here is "squeezenet_v1.1"
-* [squeezenet_v1.1-0000.params](https://s3.amazonaws.com/model-server/models/model-example/squeezenet_v1.1-0000.params) - contains the parameters and the weights; again, the prefix is "squeezenet_v1.1"
-* [signature.json](https://s3.amazonaws.com/model-server/models/model-example/signature.json) - defines the inputs and outputs that MMS is expecting to hand-off to the API
-* [synset.txt](https://s3.amazonaws.com/model-server/models/model-example/synset.txt) - an *optional* list of labels (one per line)
+ Then extract the zip file to see the following model artifacts:
 
+* **Model Definition** (json file) - contains the layers and overall structure of the neural network
+* **Model Params and Weights** (params file) - contains the parameters and the weights
+* **Model Signature** (json file) - defines the inputs and outputs that MMS is expecting to hand-off to the API
+* **Custom Service** (py file) - [custom-service.py](#) - customizes the inference request handling for both pre-processing and post-processing
+* **Manifest** (json file) - contains metadata about the files in the model archive
+* **Manifest Schema** (json file) - used to validate the manifest
+* **assets** (folder) - folder containing auxiliary files that support model inference such as vocabularies, labels, etc. and vary depending on the model
+
+Further details on these files, customizations, and advanced exporting features can be found on the [Exporting Models for Use with MMS](docs/export.md) page in the [docs folder](docs).
 
 **2. Export Your Model**
 
-With the model files available locally, you can use the `mxnet-model-export` CLI to generate a `.model` file that can be used to serve inference with MMS.
+With the model artifacts available locally, you can use the `mxnet-model-export` CLI to generate a `.model` file that can be used to serve an inference API with MMS.
 
-Open your terminal and go to the folder that has the files you just downloaded. In this next step we'll run `mxnet-model-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+Open your terminal and go to the folder that has the files you just downloaded.
+
+In this next step we'll run `mxnet-model-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
 
 ```bash
 mxnet-model-export --model-name squeezenet_v1.1 --model-path .
 ```
 
-This will output `squeezenet_v1.1.model` in the current working directory. This file is all you need to run MMS, serving inference requests for a simple image recognition API.
+This will output `squeezenet_v1.1.model` in the current working directory. This file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the Serve a Model tutorial above and try to run this model that you just exported!
 
 To learn more about exporting, check out [MMS export documentation](docs/export.md)
 

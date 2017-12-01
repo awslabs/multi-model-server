@@ -17,5 +17,5 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 | [VGG16](https://s3.amazonaws.com/model-server/models/vgg16/vgg16.model) | Image Classification | ImageNet | 490 MB |
 | [VGG19](https://s3.amazonaws.com/model-server/models/vgg19/vgg19.model) | Image Classification | ImageNet | 509 MB |
 | [CaffeNet](https://s3.amazonaws.com/model-server/models/caffenet/caffenet.model) | Image Classification | ImageNet | 216 MB |
-| [ResNet50-SSD](https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model.model) | SSD (Single Shot MultiBox Detector | ImageNet | 124 MB |
+| [ResNet50-SSD](https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model.model) | SSD (Single Shot MultiBox Detector) | ImageNet | 124 MB |
 | [LSTM PTB](https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb.model) | Language Modeling | PennTreeBank | 16 MB |

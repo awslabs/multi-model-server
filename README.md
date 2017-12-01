@@ -22,6 +22,20 @@ Make sure you have Python installed, then run:
 pip install mxnet-model-server
 ```
 
+If you get an error because of the missing [LibGFortran](https://gcc.gnu.org/onlinedocs/gfc-internals/LibGFortran.html) library, please use the following command to install.
+
+Ubuntu:
+
+```bash
+apt-get install libgfortran3
+```
+
+Amazon Linux:
+
+```bash
+yum install gcc-gfortran
+```
+
 ### Install from Source
 
 Alternatively, you may install MMS from source:

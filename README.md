@@ -22,7 +22,7 @@ Make sure you have Python installed, then run:
 pip install mxnet-model-server
 ```
 
-If you have libgfortran.so.3 cannot be found issue when using Linux, please use the following command to install libgfortran.
+If you get an error because of the missing [LibGFortran](https://gcc.gnu.org/onlinedocs/gfc-internals/LibGFortran.html) library, please use the following command to install.
 
 Ubuntu:
 

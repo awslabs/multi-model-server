@@ -37,6 +37,7 @@ VALID_MIME_TYPE = ['image/jpeg', 'application/json']
 SIGNATURE_FILE = 'signature.json'
 MODEL_ARCHIVE_VERSION = 0.1
 MODEL_SERVER_VERSION = 0.1
+MANIFEST_FILE_NAME = 'MANIFEST.json'
 
 def validate_signature(model_path):
     '''Internal helper to check signature error when exporting model with CLI.
@@ -195,7 +196,7 @@ def export_model(model_name, model_path, service_file=None):
     params_file = validate_params(model_path)
     
     manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name)
-    manifest_file = os.path.join(model_path, "manifest.json")
+    manifest_file = os.path.join(model_path, MANIFEST_FILE_NAME)
     with open(manifest_file, 'w') as m:
         json.dump(manifest, m, indent=4)
 

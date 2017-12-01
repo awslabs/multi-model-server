@@ -25,7 +25,7 @@ logger = get_logger()
 URL_PREFIX = ('http://', 'https://', 's3://')
 MANIFEST_DIR = "manifest_schema"
 MANIFEST_SCHEMA_FILE = 'manifest-schema.json'
-
+MANIFEST_FILENAME = 'MANIFEST.json'
 
 def download(url, path=None, overwrite=False):
     """Download an given URL
@@ -118,7 +118,7 @@ def _extract_model(service_name, path):
                "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc
 
         schema = json.load(open(manifest_schema_file))
-        manifest = json.load(open(os.path.join(model_dir, 'manifest.json')))
+        manifest = json.load(open(os.path.join(model_dir, MANIFEST_FILENAME)))
     except Exception as e:
         raise Exception('Failed to open manifest file. Stacktrace: ' + str(e))
 

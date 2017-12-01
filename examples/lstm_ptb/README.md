@@ -61,7 +61,7 @@ mxnet-model-export --model-path lstm-model/ --model-name lstm_ptb --service-file
 lstm_ptb.model file is created by exporting model files. We also provided custom service script lstm_ptb_service.py. We are ready to establish the LSTM inference service:
 
 ```bash
-mxnet-model-server --models lstm_ptb=lstm_ptb.model  --service lstm_ptb_service.py
+mxnet-model-server --models lstm_ptb=lstm_ptb.model
 ```
 You will see the following outputs which means the service is successfully established:
 

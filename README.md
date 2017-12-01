@@ -16,8 +16,6 @@ A quick overview and examples are below. Detailed documentation and examples are
 
 ### Install with pip
 
-**Note: pip package currently unstable**
-
 Make sure you have Python installed, then run:
 
 ```bash

@@ -76,7 +76,7 @@ mxnet-model-export --model-name squeezenet_v1.1 --model-path models/squeezenet_v
 
 ### Arguments
 
-```bash
+```
 $ mxnet-model-export -h
 usage: mxnet-model-export [-h] --model-name MODEL_NAME --model-path MODEL_PATH
                           [--service-file-path SERVICE_FILE_PATH]
@@ -99,7 +99,9 @@ optional arguments:
                         application/json or MXNetVisionService if input is
                         image/jpeg
 ```
+
 **Required Arguments**
+
 1. model-name: required, prefix of exported model archive file.
 2. model-path: required, directory which contains files to be packed into exported archive.
 
@@ -156,11 +158,13 @@ Once the model file is exported, unzip it and take a look. Your custom service s
 
 You may have noticed that we required the `synset.txt` file in this example, but didn't mention it as part of the process. It's not even in the manifest. This is because it is required by the service file or the upstream classes that the service file is extending. In our example here it uses those labels in the post-processing step to provide human-readable inference results.
 
-If you're curious you can look in the service file and note the line that "sort of" mentions it by require a labels file, and then if you look upstream at the `mxnet_model_service` you will see it specifically mentioned:
+If you're curious you can look in the service file and note the line that "sort of" mentions it by require a labels file, and then if you look upstream at the [mxnet_model_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/mms/model_service/mxnet_model_service.py) you will see it specifically mentioned:
 ```
 archive_synset = os.path.join(model_dir, 'synset.txt')
 ```
-Of course, if you [write your own custom service](custom_service.md), you can handle labels in another way.
+Of course, if you [write your own custom service](custom_service.md), you can handle labels in another way. You may want to take look at the examples too. One is for an LSTM which uses a [vocabulary labels file](https://s3.amazonaws.com/model-server/models/lstm_ptb/vocab_dict.txt), or the SSD example which uses a [much shorter synset.txt](https://github.com/awslabs/mxnet-model-server/blob/master/examples/ssd/synset.txt) than our SqueezeNet examples for the short list of objects it is intended to identify.
+
+**Note**: You may get an error about a missing synset if you use a custom service that is `expecting one and you didn't provide one in the folder with the other artifacts. Each sysnet correlates to the model, so make sure you have one in the directory with your other artifacts when you try to export your model.
 
 ## Export Example with Customizations
 

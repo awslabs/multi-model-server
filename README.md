@@ -89,19 +89,16 @@ MMS enables you to package up all of your model artifacts into a single model ar
 
 **1. Download Model Artifacts (if you don't have them handy)**
 
-[Model-Artifacts.zip](https://s3.amazonaws.com/model-server/models/model-example/Model-Artifacts.zip) - 5 MB
+[Model-Artifacts.zip](https://s3.amazonaws.com/model-server/inputs/Model-Artifacts.zip) - 5 MB
 
  Then extract the zip file to see the following model artifacts:
 
 * **Model Definition** (json file) - contains the layers and overall structure of the neural network
 * **Model Params and Weights** (params file) - contains the parameters and the weights
 * **Model Signature** (json file) - defines the inputs and outputs that MMS is expecting to hand-off to the API
-* **Custom Service** (py file) - [custom-service.py](#) - customizes the inference request handling for both pre-processing and post-processing
-* **Manifest** (json file) - contains metadata about the files in the model archive
-* **Manifest Schema** (json file) - used to validate the manifest
-* **assets** (folder) - folder containing auxiliary files that support model inference such as vocabularies, labels, etc. and vary depending on the model
+* **assets** (text files) - auxiliary files that support model inference such as vocabularies, labels, etc. and vary depending on the model
 
-Further details on these files, customizations, and advanced exporting features can be found on the [Exporting Models for Use with MMS](docs/export.md) page in the [docs folder](docs).
+Further details on these files, custom services, and advanced exporting features can be found on the [Exporting Models for Use with MMS](docs/export.md) page in the [docs folder](docs).
 
 **2. Export Your Model**
 

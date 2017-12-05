@@ -93,6 +93,7 @@ The predictor endpoint will return a prediction response in JSON. It will look s
   ]
 }
 ```
+Other models can be downloaded from the [model zoo](docs/model_zoo.md), so try out some of those as well.
 
 Now you've seen how easy it can be to serve a deep learning model with MMS! [Would you like to know more?](docs/server.md)
 

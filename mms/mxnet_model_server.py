@@ -132,7 +132,7 @@ class MMS(object):
         """
         try:
             # Port
-            self.port = self.args.port or 8080
+            self.port = int(self.args.port) or 8080
             self.host = self.args.host or '127.0.0.1'
 
             # Load models

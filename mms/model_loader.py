@@ -104,7 +104,8 @@ def _extract_model(service_name, path):
     if not os.path.isdir(model_dir):
         os.mkdir(model_dir)
     try:
-        _extract_zip(model_file, model_dir)
+        if '.model' in model_file:
+            _extract_zip(model_file, model_dir)
     except Exception as e:
         raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
                         % (model_file, model_file_prefix , e))

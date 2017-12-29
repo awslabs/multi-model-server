@@ -11,7 +11,13 @@
 
 import logging
 import os
-import SocketServer
+import sys
+
+if sys.version_info[0] == 3:
+    import socketserver as SocketServer
+else:
+    import SocketServer
+
 
 from mms.arg_parser import ArgParser
 from mms.client_sdk_generator import ClientSDKGenerator

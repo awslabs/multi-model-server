@@ -98,7 +98,6 @@ class ArgParser(object):
                                         'Signature file is required.')
 
         parser_export.add_argument('--from-type',
-                                   required=True,
                                    default='mxnet',
                                    choices=['mxnet', 'onnx'],
                                    help='Model type to be packed into model archive.')

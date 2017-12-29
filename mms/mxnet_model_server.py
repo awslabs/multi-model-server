@@ -11,6 +11,7 @@
 
 import logging
 import os
+import SocketServer
 
 from mms.arg_parser import ArgParser
 from mms.client_sdk_generator import ClientSDKGenerator
@@ -103,6 +104,12 @@ class MMS(object):
                 logger.info('Service health endpoint: ' + self.host + ':' + str(self.port) + '/ping')
                 
                 self.serving_frontend.start_handler(self.host, self.port)
+        
+        except SocketServer.socket.error as exc:
+            if exc.args[0] != 48:
+                raise
+            logger.error('Port: ' + str(self.port) + " already in use. exiting...")
+            exit(1)
 
         except Exception as e:
             logger.error('Failed to start model serving host: ' + str(e))

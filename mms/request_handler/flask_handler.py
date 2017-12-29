@@ -47,7 +47,7 @@ class FlaskRequestHandler(RequestHandler):
         try:
             self.app.run(host=host, port=port)
         except Exception as e:
-            raise Exception('Flask handler failed to start: ' + str(e))
+            raise 
 
     def add_endpoint(self, api_name, endpoint, callback, methods):
         """
@@ -72,7 +72,7 @@ class FlaskRequestHandler(RequestHandler):
             assert isinstance(methods, list), 'methods should be a list: [GET, POST] by Flask.'
             self.app.add_url_rule(endpoint, api_name, callback, methods=methods)
         except Exception as e:
-            raise Exception('Flask handler failed to add endpoints: ' + str(e))
+            raise
         
     def get_query_string(self, field=None):
         """

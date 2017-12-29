@@ -122,8 +122,7 @@ def validate_params(model_path):
     
     return param_files[0]
 
-def validate_service(model_path, service_file, signature_file):    
-    
+def validate_service(model_path, service_file, signature_file):
     if service_file:
 
         assert os.path.isfile(service_file) or os.path.isfile(os.path.join(model_path, service_file)), \
@@ -131,7 +130,7 @@ def validate_service(model_path, service_file, signature_file):
             
         service_file = service_file if os.path.isfile(service_file) \
             else glob.glob(model_path + service_file)[0]
-        
+
         module = None
         try:
             module =  imp.load_source(

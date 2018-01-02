@@ -52,9 +52,10 @@ optional arguments:
   -h, --help            show this help message and exit
   --models KEY1=VAL1 KEY2=VAL2... [KEY1=VAL1 KEY2=VAL2... ...]
                         Models to be deployed using name=model_location
-                        format. Location can be a URL or a local path to a
-                        .model file. Name is arbitrary and used as the API
-                        endpoints base name.
+                        format. Location can be a URL, a local path to a
+                        .model file or a folder which contains all files
+                        needed for serving.Name is arbitrary and used as the
+                        API endpoint's base name.
   --service SERVICE     Path to a user defined model service.
   --gen-api GEN_API     Generates API client for the supplied language.
                         Options include Java, C#, JavaScript and Go. For
@@ -79,11 +80,12 @@ optional arguments:
                         NOTEST, DEBUG, INFO, ERROR AND CRITICAL. Check
                         https://docs.python.org/2/library/logging.html
                         #logging-levelsfor detailed information on values.
-  --metrics-write-to {log,csv}
-                        By default writes to the Log file specified in --log-file. 
-                        If you pass `csv`, various metric files in `csv` format are created in 
-                        metrics folder in the current directory. 
-```
+  --metrics-write-to {log,csv,cloudwatch}
+                        By default writes to the Log file specified in `--log-
+                        file`.If you pass "csv", various metric files in "csv"
+                        format are created in metrics folder in the current
+                        directory. If you pass "cloudwatch", metrics will be
+                        pushed to AWS CloudWatch Service.
 
 ### Required Arguments & Defaults
 
@@ -93,7 +95,7 @@ Example single model usage:
 mxnet-model-server --models name=model_location
 ```
 
-`--models` is the only required argument. You can pass one or more models in a key value pair format: `name` you want to call the model and `model_location` for the local file path or URI to the model. The name is what appears in your REST API's endpoints. In the first example we used `squeezenet_v1.1` for the name, e.g. `mxnet-model-server --models squeezenet_v1.1=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/squeezenet_v1.1/predict`. In the first example this was `squeezenet=https://s3.amazonaws.com/mms-models/squeezenet_v1.1.model`. Alternatively, we could have downloaded the file and used a local file path like `squeezenet=mms_models/squeezenet_v1.1.model`.
+`--models` is the only required argument. You can pass one or more models in a key value pair format: `name` you want to call the model and `model_location` for the local file path or URI to the model. The name is what appears in your REST API's endpoints. In the first example we used `squeezenet_v1.1` for the name, e.g. `mxnet-model-server --models squeezenet_v1.1=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/squeezenet_v1.1/predict`. In the first example this was `squeezenet=https://s3.amazonaws.com/mms-models/squeezenet_v1.1.model`. Alternatively, we could have downloaded the file and used a local file path like `squeezenet=mms_models/squeezenet_v1.1.model` or use the extracted folder `squeezenet=mms_models/squeezenet_v1.1`.
 
 The rest of these arguments are optional and will have the following defaults:
 * [--port 8080]
@@ -191,23 +193,20 @@ The are four arguments for MMS that facilitate logging of the model serving and 
 
 1. **log-level**: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR and CRITICAL. Check the [Python docs for logging levels](https://docs.python.org/2/library/logging.html#logging-levels) for more information.
 
-1. **metrics-write-to**: various server metrics are gathered and are written to the default log file, but if the `csv` value is passed to this argument, the metrics are recorded every 30 seconds in separate CSV files in a metrics folder in the current directory as follows.
+1. **metrics-write-to**: various server metrics are gathered and are written to the default log file.
+
+  If the `csv` value is passed to this argument, the metrics are recorded every 30 seconds in separate CSV files in a metrics folder in the current directory as follows.
 
       a) **mms_cpu.csv** - CPU load
-
       b) **mms_errors.csv** - number of errors
-
-      c) **mms_memory.csv**	- memory utilization
-
+      c) **mms_memory.csv** - memory utilization
       d) **mms_preprocess_latency.csv** - any custom pre-processing latency
-
       e) **mms_disk.csv** - disk utilization
-
       f) **mms_inference_latency.csv** - any inference latency
-
       g) **mms_overall_latency.csv** - collective latency
-
       h) **mms_requests.csv** - number of inference requests
+
+  If the `cloudwatch` value is passed, the above metrics will write to [AWS CloudWatch Service](https://aws.amazon.com/cloudwatch/) every 30 seconds with namespace 'mxnet-model-server'. After [configuring AWS crediential](https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html), you will see the metrics are pushed to AWS CloudWatch Service.
 
 ### Client API Code Generation
 

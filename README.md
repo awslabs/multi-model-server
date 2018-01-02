@@ -121,7 +121,7 @@ With the model artifacts available locally, you can use the `mxnet-model-export`
 
 Open your terminal and go to the folder that has the files you just downloaded.
 
-In this next step we'll run `mxnet-model-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+In this next step we'll run `mxnet-model-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets. We also have an optional `from-type` argument, currently MXNet model and Onnx model can be exported.
 
 ```bash
 mxnet-model-export --model-name squeezenet_v1.1 --model-path .

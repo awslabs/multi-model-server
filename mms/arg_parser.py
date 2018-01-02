@@ -37,7 +37,8 @@ class ArgParser(object):
                             metavar='KEY1=VAL1 KEY2=VAL2...',
                             nargs='+',
                             help='Models to be deployed using name=model_location format. '
-                                 'Location can be a URL or a local path to a .model file. '
+                                 'Location can be a URL, a local path to a .model file '
+                                 'or a folder which contains all files needed for serving.'
                                  'Name is arbitrary and used as the API endpoint\'s base name. ')
 
         parser.add_argument('--service', help='Path to a user defined model service.')
@@ -72,10 +73,11 @@ class ArgParser(object):
 
         parser.add_argument('--metrics-write-to',
                             default='log',
-                            choices=['log', 'csv'],
+                            choices=['log', 'csv', 'cloudwatch'],
                             help='By default writes to the Log file specified in `--log-file`.'
                                  'If you pass "csv", various metric files in "csv" format are created in '
-                                 'metrics folder in the current directory. ')
+                                 'metrics folder in the current directory. '
+                                 'If you pass "cloudwatch", metrics will be pushed to AWS CloudWatch Service.')
 
         return parser
 

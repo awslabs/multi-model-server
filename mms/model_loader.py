@@ -98,7 +98,8 @@ def _extract_model(service_name, path):
     if path.lower().startswith(URL_PREFIX) else path
 
     model_file = os.path.abspath(model_file)
-    model_file_prefix = os.path.splitext(os.path.basename(model_file))[0]
+    [model_name, model_extenstion] = os.path.splitext(os.path.basename(model_file))
+    model_file_prefix = model_name if model_extenstion == '.model' else model_file
     model_dir = os.path.join(os.path.dirname(model_file), model_file_prefix)
 
     if not os.path.isdir(model_dir):

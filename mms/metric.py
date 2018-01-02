@@ -12,8 +12,14 @@ import csv
 import datetime
 import threading
 import os
+import warnings
 
 from mms.log import get_logger
+
+try:
+    import boto3 as boto
+except ImportError:
+    boto = None
 
 
 logger = get_logger()
@@ -56,6 +62,16 @@ class Metric(object):
         self.aggregate_method = aggregate_method
         self.mutex = mutex
         self.write_to = write_to
+
+        # Setup cloudwatch handle
+        if boto:
+            try:
+                self.client = boto.client('cloudwatch')
+            except Exception as e:
+                warnings.warn('Failed to connect to AWS CloudWatch, \
+                    metrics will be written to log.\n \
+                    Failure reason ' + str(e))
+                self.write_to = 'log'
 
         if update_func is not None:
             update_func(self)
@@ -113,6 +129,23 @@ class Metric(object):
                 with open(filename, 'a') as csvfile:
                     csvwriter = csv.writer(csvfile, delimiter=',')
                     csvwriter.writerow([utcnow, metric])
+            elif self.write_to == 'cloudwatch':
+                logger.info('Metric %s for last %s seconds is %f, writing to AWS CloudWatch...' %
+                    (self.name, self.interval_sec, metric))
+                try:
+                    self.client.put_metric_data(
+                        Namespace='mxnet-model-server',
+                        MetricData=[
+                            {
+                                'MetricName': self.name,
+                                'Timestamp': utcnow,
+                                'Value': metric,
+                                'Unit': 'Count'
+                            },
+                        ]
+                    )
+                except Exception as e:
+                    raise Exception("Failed to write metrics to cloudwatch " + str(e))
             else:
                 logger.info('Metric %s for last %s seconds is %f' % 
                     (self.name, self.interval_sec, metric))

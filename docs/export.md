@@ -92,6 +92,8 @@ optional arguments:
   --model-path MODEL_PATH
                         Path to the folder containing model related files.
                         Signature file is required.
+  --from-type {mxnet,onnx}
+                        Model type to be packed into model archive.
   --service-file-path SERVICE_FILE_PATH
                         Service file path to handle custom MMS inference
                         logic. if not provided, this tool will package
@@ -105,6 +107,8 @@ optional arguments:
 1. model-name: required, prefix of exported model archive file.
 2. model-path: required, directory which contains files to be packed into exported archive.
 
+**Optional Arguments**
+1. from-type: optional, model type to be packed into model archive
 
 ## Export Example
 
@@ -120,11 +124,13 @@ The export tool is going to look for the following at a minimum:
 
 Now, we could export just with these artifacts an would get a .model file. It's going to look at the signature file and see that you're using `"input_type": "image/jpeg"`, and assume that you want the default vision service, so it will include `mxnet_vision_service.py` for you. It will also generate the manifest. Let's try it out.
 
-We're going to tell it our model's name is `squeezenet_v1.1` with the `--model-name` argument. The name works like a prefix, so it will assume that you've named the symbol file and the params file according to the pattern _name_-symbol.json and _name_-0000.params. The "0000" can be another checkpoint if that's what you have. Then we're giving it the `--model-path` to the model's assets, which are in the current working directory, so we'll use `.` for the path.
+We're going to tell it our model's name is `squeezenet_v1.1` with the `--model-name` argument. The name works like a prefix, so it will assume that you've named the symbol file and the params file according to the pattern _name_-symbol.json and _name_-0000.params. The "0000" can be another checkpoint if that's what you have. Then we're giving it the `--model-path` to the model's assets, which are in the current working directory, so we'll use `.` for the path. We also provide an optional argument `from-type` to indicate which model type we want to pack into model archive. Currently, MXNet model and ONNX model can be exported.
 
 ```bash
 mxnet-model-export --model-name squeezenet_v1.1 --model-path .
+[--from-type mxnet]
 ```
+To export an ONNX model, exporter will search file with *.onnx extension in the model path and convert it to MXNet compatible model format using [onnx-mxnet converter](https://github.com/onnx/onnx-mxnet).
 
 This will output `squeezenet_v1.1.model` in the current working directory. Try serving it with:
 

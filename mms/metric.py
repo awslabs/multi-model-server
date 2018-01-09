@@ -29,6 +29,7 @@ class Metric(object):
     """Metric class for model server
     """
     def __init__(self, name, mutex,
+                 namespace,
                  interval_sec=30,
                  update_func=None,
                  aggregate_method='interval_average',
@@ -50,6 +51,7 @@ class Metric(object):
         """
         self.name = name
         self.interval_sec = interval_sec
+        self.namespace = namespace
 
         # Metrics within interval
         self.interval_datapoints_count = 0
@@ -64,7 +66,7 @@ class Metric(object):
         self.write_to = write_to
 
         # Setup cloudwatch handle
-        if boto:
+        if self.write_to == 'cloudwatch':
             try:
                 self.client = boto.client('cloudwatch')
             except Exception as e:
@@ -134,7 +136,7 @@ class Metric(object):
                     (self.name, self.interval_sec, metric))
                 try:
                     self.client.put_metric_data(
-                        Namespace='mxnet-model-server',
+                        Namespace=self.namespace,
                         MetricData=[
                             {
                                 'MetricName': self.name,

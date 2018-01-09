@@ -53,8 +53,8 @@ optional arguments:
   --models KEY1=VAL1 KEY2=VAL2... [KEY1=VAL1 KEY2=VAL2... ...]
                         Models to be deployed using name=model_location
                         format. Location can be a URL, a local path to a
-                        .model file or a folder which contains all files
-                        needed for serving.Name is arbitrary and used as the
+                        .model file or the extracted folder.
+                        Name is arbitrary and used as the
                         API endpoint's base name.
   --service SERVICE     Path to a user defined model service.
   --gen-api GEN_API     Generates API client for the supplied language.
@@ -82,7 +82,7 @@ optional arguments:
                         #logging-levelsfor detailed information on values.
   --metrics-write-to {log,csv,cloudwatch}
                         By default writes to the Log file specified in `--log-
-                        file`.If you pass "csv", various metric files in "csv"
+                        file`. If you pass "csv", various metric files in "csv"
                         format are created in metrics folder in the current
                         directory. If you pass "cloudwatch", metrics will be
                         pushed to AWS CloudWatch Service.

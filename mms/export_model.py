@@ -39,7 +39,7 @@ MODEL_ARCHIVE_VERSION = 0.1
 MODEL_SERVER_VERSION = 0.1
 MANIFEST_FILE_NAME = 'MANIFEST.json'
 MXNET_TYPE = 'mxnet'
-ONNX_TYPE = 'onnx'
+ONNX_TYPE = '.onnx'
 
 def validate_signature(model_path):
     '''Internal helper to check signature error when exporting model with CLI.
@@ -87,12 +87,12 @@ def validate_onnx(model_path):
     Checks if a single onnx file ending with '*.onnx' file exists within the model_path
     '''
     symbol_file_postfix = '.onnx'
-    onnx_files = glob.glob(model_path + "*" + symbol_file_postfix)
-    assert len(onnx_files) == 1, \
-           "should have 1 onnx file ending with *.onnx in the filename, given:%s in model_path:%s" \
-           % (str(onnx_files), model_path)
 
-    return onnx_files[0]
+    onnx_files = glob.glob(model_path + "/*" + symbol_file_postfix)
+
+    if len(onnx_files) == 1:
+        return onnx_files[0]
+    return None
 
 def validate_symbol(model_path):
     '''
@@ -191,10 +191,11 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
     return manifest
     
 
-def convert_to_mxnet(model_path, from_type):
-    if from_type == ONNX_TYPE:
+def convert_to_mxnet(model_path):
+    onnx_file = validate_onnx(model_path)
+
+    if onnx_file:
         import onnx_mxnet
-        onnx_file = validate_onnx(model_path)
         model_name = os.path.splitext(os.path.split(onnx_file)[-1])[0]
         sym, params = onnx_mxnet.import_model(onnx_file)
         sym_file = open(os.path.join(model_path,'%s-symbol.json' % model_name), 'w')
@@ -203,10 +204,10 @@ def convert_to_mxnet(model_path, from_type):
         mx.nd.save(os.path.join(model_path,'%s-0000.params' % model_name), save_dict)
 
 
-def export_model(model_name, model_path, from_type, service_file=None):
+def export_model(model_name, model_path, service_file=None):
     '''Internal helper for the exporting model command line interface.
     '''
-    convert_to_mxnet(model_path, from_type)
+    convert_to_mxnet(model_path)
 
     destination = os.getcwd()
     
@@ -234,9 +235,8 @@ def export_model(model_name, model_path, from_type, service_file=None):
     for dirpath, _, filenames in os.walk(model_path):
         for filename in filenames:
             filename = os.path.join(model_path, filename)
-            
             if os.path.isfile(filename) and filename not in file_list:
-                if from_type == ONNX_TYPE and ONNX_TYPE in filename:
+                if ONNX_TYPE in filename:
                     continue
                 file_list.append(filename)
     export_file = os.path.join(destination,'%s.model' % model_name)
@@ -252,7 +252,7 @@ def export_model(model_name, model_path, from_type, service_file=None):
 
 def export():
     args = ArgParser.export_parser().parse_args()
-    export_model(args.model_name, args.model_path, args.from_type, args.service_file_path)
+    export_model(args.model_name, args.model_path, args.service_file_path)
 
 if __name__ =='__main__':
     export()

@@ -179,7 +179,7 @@ class MMS(object):
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
 
             # Generate metrics to target location (log, csv ...), default to log
-            MetricsManager.start(self.args.metrics_write_to, Lock())
+            MetricsManager.start(self.args.metrics_write_to, mode_class_name, Lock())
 
         except Exception as e:
             logger.error('Failed to process arguments: ' + str(e))

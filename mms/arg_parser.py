@@ -99,11 +99,6 @@ class ArgParser(object):
                                    help='Path to the folder containing model related files. '
                                         'Signature file is required.')
 
-        parser_export.add_argument('--from-type',
-                                   default='mxnet',
-                                   choices=['mxnet', 'onnx'],
-                                   help='Model type to be packed into model archive.')
-
         parser_export.add_argument('--service-file-path',
                                    required=False,
                                    type=str,

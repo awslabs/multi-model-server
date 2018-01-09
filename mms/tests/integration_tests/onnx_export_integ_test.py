@@ -30,56 +30,47 @@ def _download_file(download_dir, url):
     except URLError as e:
         print("Failed to download {}. HTTP Error {}".format(url, e.reason))
 
+def cleanup(tmpdir):
+    print("Deleting all downloaded resources for SSD MXNet Model Server Integration Test")
+    shutil.rmtree(tmpdir)
 
-def setup_ssd_server(tmpdir):
+def setup_onnx_integ(tmpdir):
     """
-        Downloads and Setup the SSD model server.
+        Downloads and Setup the onnx integration tests.
     :return: None
     """
-    # Download the files required for SSD model in temp folder.
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-symbol.json")
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-0000.params")
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/synset.txt")
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/signature.json")
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/ssd_service.py")
+    # Download the files required for onnx integ tests.
+    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/onnx-squeezenet/squeezenet.onnx")
+    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/onnx-squeezenet/signature.json")
+    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/onnx-squeezenet/synset.txt")
 
     # Download input image.
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/street.jpg")
+    _download_file(tmpdir, "https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg")
 
     # Export the model.
     print("Exporting the mxnet model server model...")
     sys.argv = ['mxnet-model-export']
     sys.argv.append("--model-name")
-    sys.argv.append("{}/resnet50_ssd_model".format(tmpdir))
+    sys.argv.append("{}/squeezenet".format(tmpdir))
     sys.argv.append("--model-path")
     sys.argv.append(tmpdir)
-    sys.argv.append("--service-file-path")
-    sys.argv.append("{}/ssd_service.py".format(tmpdir))
     export_model.export()
 
-    # Start the mxnet model server for SSD
-    print("Starting SSD MXNet Model Server for test..")
+    # Start the mxnet model server for onnx integ tests.
+    print("Starting MXNet Model Server for onnx integ test..")
 
     # Set argv parameters
     sys.argv = ['mxnet-model-server']
     sys.argv.append("--models")
-    sys.argv.append("SSD={}/resnet50_ssd_model.model".format(tmpdir))
-    sys.argv.append("--service")
-    sys.argv.append("{}/ssd_service.py".format(tmpdir))
+    sys.argv.append("squeezenet={}/squeezenet.model".format(tmpdir))
     mxnet_model_server.start_serving()
 
-
-def cleanup(tmpdir):
-    print("Deleting all downloaded resources for SSD MXNet Model Server Integration Test")
-    shutil.rmtree(tmpdir)
-
-
-def test_ssd_extend_export_predict_service(tmpdir):
-    start_test_server_thread = Thread(target = setup_ssd_server, args=(str(tmpdir),))
+def test_onnx_integ(tmpdir):
+    start_test_server_thread = Thread(target = setup_onnx_integ, args=(str(tmpdir),))
     start_test_server_thread.daemon = True
     start_test_server_thread.start()
     time.sleep(15)
-    output = subprocess.check_output('curl -X POST http://127.0.0.1:8080/SSD/predict -F "data=@{}/street.jpg"'.format(str(tmpdir)), shell=True)
+    output = subprocess.check_output('curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "input_0=@{}/Cute-kittens-12929201-1600-1200.jpg"'.format(str(tmpdir)), shell=True)
     if sys.version_info[0] >= 3:
         output = output.decode("utf-8")
     predictions = json.dumps(json.loads(output))

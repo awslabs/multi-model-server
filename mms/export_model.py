@@ -39,7 +39,7 @@ MODEL_ARCHIVE_VERSION = 0.1
 MODEL_SERVER_VERSION = 0.1
 MANIFEST_FILE_NAME = 'MANIFEST.json'
 MXNET_TYPE = 'mxnet'
-ONNX_TYPE = '.onnx'
+ONNX_TYPE = 'onnx'
 
 def validate_signature(model_path):
     '''Internal helper to check signature error when exporting model with CLI.
@@ -236,7 +236,8 @@ def export_model(model_name, model_path, service_file=None):
         for filename in filenames:
             filename = os.path.join(model_path, filename)
             if os.path.isfile(filename) and filename not in file_list:
-                if ONNX_TYPE in filename:
+                onnx_extension = '.' + ONNX_TYPE
+                if onnx_extension in filename:
                     continue
                 file_list.append(filename)
     export_file = os.path.join(destination,'%s.model' % model_name)

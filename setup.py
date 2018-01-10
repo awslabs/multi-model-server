@@ -24,7 +24,7 @@ pkgs.append('tools')
 
 setup(
     name='mxnet-model-server',
-    version='0.1.5',
+    version='0.2',
     description='Model Server for Apache MXNet is a tool for deploying neural net models for inference',
     url='https://github.com/awslabs/mxnet-model-server',
     keywords='MXNet Model Server Serving Deep Learning Inference AI',

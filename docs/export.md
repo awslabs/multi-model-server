@@ -127,12 +127,20 @@ This will output `squeezenet_v1.1.model` in the current working directory. Try s
 mxnet-model-server --models squeezenet=squeezenet_v1.1.model
 ```
 
-## ONNX Export Example
+## Export ONNX Model Example
 
-MMS supports the ONNX format and using ONNX models is very simple. If the model has the .onnx extension it will be detected and the managed accordingly using [onnx-mxnet converter](https://github.com/onnx/onnx-mxnet).
+MMS supports the ONNX format now and using ONNX models is very simple. To export a `squeezenet` onnx model, we just need to download [squeezenet model](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/squeezenet.onnx), [signature file](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/signature.json) and [label file](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/synset.txt) and put them into the model assets directory. Since the model has the .onnx extension it will be detected and the managed accordingly using [onnx-mxnet converter](https://github.com/onnx/onnx-mxnet).
+
+Then we can use the same command to export, this will output `squeezenet.model` in the current working directory.
 
 ```bash
 mxnet-model-export --model-name squeezenet --model-path
+```
+
+After your server started, you can use the following command to see the prediction results.
+
+```bash
+curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "input_0=@kitten.jpg"
 ```
 
 ## Export Example with Specified Custom Service

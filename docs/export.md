@@ -129,7 +129,7 @@ mxnet-model-server --models squeezenet=squeezenet_v1.1.model
 
 ## Export ONNX Model Example
 
-MMS supports the ONNX format now and using ONNX models is very simple. To export a `squeezenet` onnx model, we just need to download [squeezenet model](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/squeezenet.onnx), [signature file](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/signature.json) and [label file](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/synset.txt) and put them into the model assets directory. Since the model has the .onnx extension it will be detected and the managed accordingly using [onnx-mxnet converter](https://github.com/onnx/onnx-mxnet).
+MMS supports the ONNX format now and using ONNX models is very simple. To export a `squeezenet` onnx model, we just need to download [squeezenet model](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/squeezenet.onnx), [signature file](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/signature.json) and [label file](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/synset.txt) and put them under the model assets directory. Since the model has the .onnx extension, it will be detected and the managed accordingly using [onnx-mxnet converter](https://github.com/onnx/onnx-mxnet).
 
 Then we can use the same command to export, this will output `squeezenet.model` in the current working directory.
 

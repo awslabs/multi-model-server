@@ -69,7 +69,7 @@ def test_onnx_integ(tmpdir):
     start_test_server_thread = Thread(target = setup_onnx_integ, args=(str(tmpdir),))
     start_test_server_thread.daemon = True
     start_test_server_thread.start()
-    time.sleep(15)
+    time.sleep(60)
     output = subprocess.check_output('curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "input_0=@{}/Cute-kittens-12929201-1600-1200.jpg"'.format(str(tmpdir)), shell=True)
     if sys.version_info[0] >= 3:
         output = output.decode("utf-8")

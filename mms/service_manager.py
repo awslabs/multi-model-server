@@ -8,14 +8,12 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import ast
 import inspect
-import os
-import imp
 
-from mms.storage import KVStorage
-from mms.model_service.mxnet_model_service import MXNetBaseService
 import mms.model_service.mxnet_model_service as mxnet_model_service
+from mms.model_service.model_service import load_service
+from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.storage import KVStorage
 
 
 class ServiceManager(object):
@@ -24,6 +22,7 @@ class ServiceManager(object):
     In later phase, ServiceManager will also be responsible for model versioning,
     prediction batching and caching.
     """
+
     def __init__(self):
         """
         Initialize Service Manager.
@@ -56,9 +55,9 @@ class ServiceManager(object):
             return self.modelservice_registry
 
         return {
-                    modelservice_name: self.modelservice_registry[modelservice_name]
-                    for modelservice_name in modelservice_names
-                }
+            modelservice_name: self.modelservice_registry[modelservice_name]
+            for modelservice_name in modelservice_names
+        }
 
     def add_modelservice_to_registry(self, modelservice_name, ModelServiceClassDef):
         """
@@ -93,9 +92,9 @@ class ServiceManager(object):
             return self.loaded_modelservices
 
         return {
-                    modelservice_name: self.loaded_modelservices[modelservice_name]
-                    for modelservice_name in modelservice_names
-                }
+            modelservice_name: self.loaded_modelservices[modelservice_name]
+            for modelservice_name in modelservice_names
+        }
 
     def load_model(self, service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu=None):
         """
@@ -134,14 +133,7 @@ class ServiceManager(object):
         List of model service class definitions.
             Those parsed python class can be used to initialize model service.
         """
-        try:
-            module =  imp.load_source(
-                os.path.splitext(os.path.basename(service_file))[0],
-                service_file) if service_file \
-                else mxnet_model_service
-        except Exception as e:
-            raise Exception('Incorrect or missing service file: ' + service_file)
-
+        module = load_service(service_file) if service_file else mxnet_model_service
         # Parsing the module to get all defined classes
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]
         # Check if class is subclass of base ModelService class

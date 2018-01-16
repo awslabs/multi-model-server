@@ -91,7 +91,7 @@ class MXNetBaseService(SingleNodeService):
             param_filename = manifest['Model']['Parameters']
             epoch = int(param_filename[len(model_name) + 1: -len('.params')])
         except Exception as e:
-            logger.warn('Failed to parse epoch from param file, setting epoch to 0')
+            logger.warning('Failed to parse epoch from param file, setting epoch to 0')
 
         sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' % (model_dir, manifest['Model']['Symbol'][:-12]), epoch)
         self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,

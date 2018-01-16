@@ -11,15 +11,17 @@
 """`ModelService` defines an API for base model service.
 """
 
+import os
+import sys
 import time
-
 from abc import ABCMeta, abstractmethod, abstractproperty
+
 from mms.log import get_logger
 from mms.metrics_manager import MetricsManager
 
-
 logger = get_logger()
 URL_PREFIX = ('http://', 'https://', 's3://')
+
 
 class ModelService(object):
     '''ModelService wraps up all preprocessing, inference and postprocessing
@@ -75,6 +77,7 @@ class SingleNodeService(ModelService):
     '''SingleNodeModel defines abstraction for model service which loads a
     single model.
     '''
+
     def inference(self, data):
         '''
         Wrapper function to run preprocess, inference and postprocess functions.
@@ -168,3 +171,23 @@ class SingleNodeService(ModelService):
 class MultiNodesService(ModelService):
     pass
 
+
+def load_service(path, name=None):
+    try:
+        if not name:
+            name = os.path.splitext(os.path.basename(path))[0]
+
+        module = None
+        if sys.version_info[0] > 2:
+            import importlib
+            spec = importlib.util.spec_from_file_location(name, path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+        else:
+            import imp
+            module = imp.load_source(name, path)
+
+        return module
+    except Exception:
+        raise Exception('Incorrect or missing service file: ' + path)

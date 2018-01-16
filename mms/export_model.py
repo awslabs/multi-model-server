@@ -15,13 +15,13 @@ import os
 import glob
 import json
 import zipfile
-import imp
 import mxnet as mx
 import inspect
 from mms.arg_parser import ArgParser
 import mms.model_service.mxnet_model_service as base_service 
 import mms.model_service.mxnet_vision_service as vision_service
 from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.model_service.model_service import load_service
 from mms.log import get_logger
 
 logger = get_logger()
@@ -131,14 +131,8 @@ def validate_service(model_path, service_file, signature_file):
         service_file = service_file if os.path.isfile(service_file) \
             else glob.glob(model_path + service_file)[0]
 
-        module = None
-        try:
-            module =  imp.load_source(
-                os.path.splitext(os.path.basename(service_file))[0],
-                service_file)
-        except Exception as e:
-            raise Exception('Incorrect or missing service file: ' + service_file)
-    
+        module = load_service(service_file)
+
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]
         # Check if subclass of MXNetBaseService
         service_classes = list(filter(lambda cls: issubclass(cls, MXNetBaseService), classes))

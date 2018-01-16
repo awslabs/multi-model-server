@@ -92,14 +92,15 @@ def _extract_zip(zip_file, destination):
                 shutil.copyfileobj(source, target)
 
 def _extract_model(service_name, path):
-    curr_dir = os.getcwd()
-    
+    if path.endswith('.onnx') or path.endswith('.pb2'):
+        raise ValueError('Convert ONNX model using mxnet-model-export before serving.')
+
     model_file = download(url=path, overwrite=True) \
     if path.lower().startswith(URL_PREFIX) else path
 
     model_file = os.path.abspath(model_file)
-    [model_name, model_extenstion] = os.path.splitext(os.path.basename(model_file))
-    model_file_prefix = model_name if model_extenstion == '.model' else model_file
+    [model_name, model_extension] = os.path.splitext(os.path.basename(model_file))
+    model_file_prefix = model_name if model_extension == '.model' else model_file
     model_dir = os.path.join(os.path.dirname(model_file), model_file_prefix)
 
     if not os.path.isdir(model_dir):

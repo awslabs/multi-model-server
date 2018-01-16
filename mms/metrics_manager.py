@@ -33,13 +33,28 @@ def memory(metric_instance):
     timer.daemon = True
     timer.start()
 
-def disk(metric_instance):
+def disk_percentage(metric_instance):
     disk_usage = psutil.disk_usage('/').percent / 100.0
+    metric_instance.update(disk_usage)
+
+    timer = threading.Timer(intervalSec, disk_percentage, [metric_instance])
+    timer.daemon = True
+    timer.start()
+
+def disk(metric_instance):
+    disk_usage = psutil.disk_usage('/').used / (1024 * 1024) # in MB
     metric_instance.update(disk_usage)
 
     timer = threading.Timer(intervalSec, disk, [metric_instance])
     timer.daemon = True
     timer.start()
+
+MetricUnit = {
+  'ms': "Milliseconds",
+  'percent': 'Percent',
+  'count': 'Count',
+  'MB': 'Megabytes'
+}
 
 class MetricsManager(object):
     """Metrics Manager
@@ -47,7 +62,7 @@ class MetricsManager(object):
     metrics = {}
 
     @staticmethod
-    def start(metrics_write_to, namespace, mutex):
+    def start(metrics_write_to, models, mutex):
         """Start service routing.
 
         Parameters
@@ -57,39 +72,64 @@ class MetricsManager(object):
         mutex: object
             Mutex to prevent double thread writing on same resource
         """
-        MetricsManager.metrics['error_metric'] = Metric('errors', mutex,
-                                                        namespace=namespace,
-                                                        aggregate_method='interval_sum',
-                                                        write_to=metrics_write_to)
-        MetricsManager.metrics['request_metric'] = Metric('requests', mutex,
-                                                          namespace=namespace,
-                                                          aggregate_method='interval_sum',
-                                                          write_to=metrics_write_to)
-        MetricsManager.metrics['cpu_metric'] = Metric('cpu', mutex,
-                                                      namespace=namespace,
+        for model_name, model_class in models.items():
+            MetricsManager.metrics['5XX_errors'] = Metric('5XX_errors', mutex,
+                                                                model_name=model_name,
+                                                                unit=MetricUnit['count'],
+                                                                aggregate_method='interval_sum',
+                                                                write_to=metrics_write_to)
+            MetricsManager.metrics['4XX_errors'] = Metric('4XX_errors', mutex,
+                                                                model_name=model_name,
+                                                                unit=MetricUnit['count'],
+                                                                aggregate_method='interval_sum',
+                                                                write_to=metrics_write_to)
+            MetricsManager.metrics['requests'] = Metric('requests', mutex,
+                                                              model_name=model_name,
+                                                              unit=MetricUnit['count'],
+                                                              aggregate_method='interval_sum',
+                                                              write_to=metrics_write_to)
+            MetricsManager.metrics['overall_latency'] = Metric('overall_latency', mutex,
+                                                                      model_name=model_name,
+                                                                      unit=MetricUnit['MB'],
+                                                                      aggregate_method='interval_average',
+                                                                      write_to=metrics_write_to)
+            MetricsManager.metrics['inference_latency'] = Metric('inference_latency', mutex,
+                                                                        model_name=model_name,
+                                                                        unit=MetricUnit['ms'],
+                                                                        aggregate_method='interval_average',
+                                                                        write_to=metrics_write_to)
+            MetricsManager.metrics['pre_latency'] = Metric('preprocess_latency', mutex,
+                                                                  model_name=model_name,
+                                                                  unit=MetricUnit['ms'],
+                                                                  aggregate_method='interval_average',
+                                                                  write_to=metrics_write_to)
+
+        MetricsManager.metrics['host_cpu'] = Metric('host_cpu', mutex,
+                                                      model_name=None,
+                                                      unit=MetricUnit['percent'],
+                                                      is_resource=True,
                                                       aggregate_method='interval_average',
                                                       write_to=metrics_write_to,
                                                       update_func=cpu)
-        MetricsManager.metrics['memory_metric'] = Metric('memory', mutex,
-                                                         namespace=namespace,
+        MetricsManager.metrics['host_memory'] = Metric('host_memory', mutex,
+                                                         model_name=None,
+                                                         unit=MetricUnit['percent'],
+                                                         is_resource=True,
                                                          aggregate_method='interval_average',
                                                          write_to=metrics_write_to,
                                                          update_func=memory)
-        MetricsManager.metrics['disk_metric'] = Metric('disk', mutex,
-                                                        namespace=namespace,
+        MetricsManager.metrics['host_disk_percentage'] = Metric('host_disk_percentage', mutex,
+                                                                  model_name=None,
+                                                                  unit=MetricUnit['percent'],
+                                                                  is_resource=True,
+                                                                  aggregate_method='interval_average',
+                                                                  write_to=metrics_write_to,
+                                                                  update_func=disk_percentage)
+        MetricsManager.metrics['host_disk'] = Metric('host_disk', mutex,
+                                                        model_name=None,
+                                                        unit=MetricUnit['MB'],
+                                                        is_resource=True,
                                                         aggregate_method='interval_average',
                                                         write_to=metrics_write_to,
                                                         update_func=disk)
-        MetricsManager.metrics['overall_latency_metric'] = Metric('overall_latency', mutex,
-                                                                  namespace=namespace,
-                                                                  aggregate_method='interval_average',
-                                                                  write_to=metrics_write_to)
-        MetricsManager.metrics['inference_latency_metric'] = Metric('inference_latency', mutex,
-                                                                    namespace=namespace,
-                                                                    aggregate_method='interval_average',
-                                                                    write_to=metrics_write_to)
-        MetricsManager.metrics['pre_latency_metric'] = Metric('preprocess_latency', mutex,
-                                                              namespace=namespace,
-                                                              aggregate_method='interval_average',
-                                                              write_to=metrics_write_to)
 

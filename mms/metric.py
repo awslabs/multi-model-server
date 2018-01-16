@@ -13,6 +13,7 @@ import datetime
 import threading
 import os
 import warnings
+import socket
 
 from mms.log import get_logger
 
@@ -29,17 +30,31 @@ class Metric(object):
     """Metric class for model server
     """
     def __init__(self, name, mutex,
-                 namespace,
+                 model_name,
+                 unit,
+                 is_resource=False,
                  interval_sec=30,
                  update_func=None,
                  aggregate_method='interval_average',
                  write_to='log'):
         """Constructor for Metric class
 
+           Metric class will spawn a thread and report collected metrics to local disk 
+           or AWS cloudwatch between given intervals.
+
         Parameters
         ----------
         name : str
             Name of the metric
+        mutex: object
+            Lock between metric threads when they are writing local disk
+        model_name: str
+            Model name
+        unit: str
+            CloudWatch compatible unit
+        is_resource: boolean
+            Whether the metric is collecting host resource, 
+            if not we will add host, model_name dimensions
         interval_sec : int, optional
             Interval seconds between each data points, default 5 min
         update_func : func, optional
@@ -51,7 +66,7 @@ class Metric(object):
         """
         self.name = name
         self.interval_sec = interval_sec
-        self.namespace = namespace
+        self.model_name = model_name
 
         # Metrics within interval
         self.interval_datapoints_count = 0
@@ -64,6 +79,8 @@ class Metric(object):
         self.aggregate_method = aggregate_method
         self.mutex = mutex
         self.write_to = write_to
+        self.unit = unit
+        self.is_resource = is_resource
 
         # Setup cloudwatch handle
         if self.write_to == 'cloudwatch':
@@ -135,15 +152,28 @@ class Metric(object):
                 logger.info('Metric %s for last %s seconds is %f, writing to AWS CloudWatch...' %
                     (self.name, self.interval_sec, metric))
                 try:
+                    metric_data = {
+                        'MetricName': self.name,
+                        'Timestamp': utcnow,
+                        'Value': metric,
+                        'Unit': self.unit
+                    }
+                    if not self.is_resource:
+                        metric_data.update({
+                            'Dimensions': [
+                                {
+                                    'Name': 'host',
+                                    'Value': socket.gethostname()
+                                },
+                                {
+                                    'Name': 'model_name',
+                                    'Value': self.model_name
+                                }]
+                        })
                     self.client.put_metric_data(
-                        Namespace=self.namespace,
+                        Namespace='ModelServer',
                         MetricData=[
-                            {
-                                'MetricName': self.name,
-                                'Timestamp': utcnow,
-                                'Value': metric,
-                                'Unit': 'Count'
-                            },
+                            metric_data
                         ]
                     )
                 except Exception as e:

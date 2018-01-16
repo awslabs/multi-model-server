@@ -187,8 +187,13 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
     manifest["Model"]["Description"] = model_name
     manifest["Model"]["Model-Name"] = model_name
     manifest["Model"]["Model-Format"] = "MXNet-Symbolic"
+<<<<<<< HEAD
     manifest["Engine"] = {"MXNet": 0.12}
 
+=======
+    manifest["Engine"]  = {"MXNet":mx.__version__}
+    
+>>>>>>> Fix
     return manifest
 
 

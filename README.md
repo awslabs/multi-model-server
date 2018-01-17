@@ -22,20 +22,6 @@ Make sure you have Python installed, then run:
 pip install mxnet-model-server
 ```
 
-If you get an error because of the missing [LibGFortran](https://gcc.gnu.org/onlinedocs/gfc-internals/LibGFortran.html) library, please use the following command to install.
-
-Ubuntu:
-
-```bash
-apt-get install libgfortran3
-```
-
-Amazon Linux:
-
-```bash
-yum install gcc-gfortran
-```
-
 ### Install from Source
 
 Alternatively, you may install MMS from source:
@@ -44,6 +30,17 @@ Alternatively, you may install MMS from source:
 git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server
 sudo python setup.py install
 ```
+
+
+### Installation Troubleshooting
+
+| Issue | Platform | Solution |
+|---|---|---|
+| Could not find "protoc" executable! | Ubuntu: | `sudo apt-get install protobuf-compiler libprotoc-dev` |
+|   | MacOS: | `conda install -c conda-forge protobuf` |
+| Missing [LibGFortran](https://gcc.gnu.org/onlinedocs/gfc-internals/LibGFortran.html) library | Ubuntu: | `apt-get install libgfortran3` |
+|   | Amazon Linux: | `yum install gcc-gfortran` |
+
 
 ### Serve a Model
 

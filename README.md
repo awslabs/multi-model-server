@@ -16,21 +16,35 @@ A quick overview and examples are below. Detailed documentation and examples are
 
 ### Install with pip
 
-Make sure you have Python installed, then run:
+Make sure you have [Python installed](https://conda.io/docs/user-guide/install/index.html), then run:
 
 ```bash
 pip install mxnet-model-server
 ```
 
+If you're upgrading from a previous version of MMS, use the following:
+
+```bash
+pip install -U mxnet-model-server
+```
+
 ### Install from Source
 
-Alternatively, you may install MMS from source:
+Alternatively, you may clone MMS from source:
 
 ```bash
 git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server
-sudo python setup.py install
 ```
 
+Then using the following will install from source:
+```bash
+pip install -e .
+```
+
+Or use the following to upgrade from source:
+```bash
+pip install -U -e .
+```
 
 ### Installation Troubleshooting
 

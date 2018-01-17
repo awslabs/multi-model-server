@@ -5,11 +5,11 @@ Model Server for Apache MXNet
 |---------|---------|
 | ![Python3 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoicGZ6dXFmMU54UGxDaGsxUDhXclJLcFpHTnFMNld6cW5POVpNclc4Vm9BUWJNamZKMGdzbk1lOU92Z0VWQVZJTThsRUttOW8rUzgxZ2F0Ull1U1VkSHo0PSIsIml2UGFyYW1ldGVyU3BlYyI6IkJJaFc1QTEwRGhwUXY1dDgiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) | ![Python2 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiYVdIajEwVW9uZ3cvWkZqaHlaRGNUU2M0clE2aUVjelJranJoYTI3S1lHT3R5THJXdklzejU2UVM5NWlUTWdwaVVJalRwYi9GTnJ1aUxiRXIvTGhuQ2g0PSIsIml2UGFyYW1ldGVyU3BlYyI6IjArcHVCaFgvR1pTN1JoSG4iLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) |
 
-Model Server for Apache MXNet (MMS) is a flexible and easy to use tool for serving Deep Learning models.
+Apache MXNet Model Server (MMS) is a flexible and easy to use tool for serving deep learning models exported from [MXNet](https://onnx.ai/) or the Open Neural Network Exchange ([ONNX](https://mxnet.io/)).
 
-Use MMS Server CLI, or the pre-configured Docker images, to start a service that sets up HTTP endpoints to handle model inference requests.
+Use the MMS Server CLI, or the pre-configured Docker images, to start a service that sets up HTTP endpoints to handle model inference requests.
 
-A quick overview and examples are below. Detailed documentation and examples are provided in the [docs folder](docs/README.md).
+A quick overview and examples for both serving and exporting are provided below. Detailed documentation and examples are provided in the [docs folder](docs/README.md).
 
 
 ## Quick Start
@@ -58,7 +58,15 @@ pip install -U -e .
 
 ### Serve a Model
 
-Once installed, you can get MMS model serving up and running very quickly. We've provided an example object classification model for you to use:
+Once installed, you can get MMS model serving up and running very quickly. Try out `--help` to see the kind of features that are available.
+
+```bash
+mxnet-model-server --help
+```
+
+For this quick start, we'll skip over most of the features, but be sure to take a look at the [full server docs](docs/server.md) when you're ready.
+
+Here is an easy example for serving an object classification model:
 ```bash
 mxnet-model-server \
   --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
@@ -66,15 +74,15 @@ mxnet-model-server \
 
 With the command above executed, you have MMS running on your host, listening for inference requests.
 
-To test it out, download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post an inference request with the image. In the example below both of these steps are provided.
+To test it out, you will need to open a new terminal window next to the one running MMS. Then we will use `curl` to download one of these [cute pictures of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and curl's `-o` flag will name it `kitten.jpg` for us. Then we will `curl` a `POST` to the MMS predict endpoint with the kitten's image. In the example below, both of these steps are provided.
 
 ```bash
-wget -O kitten.jpg \
+curl -o kitten.jpg \
   https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg
 curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
 ```
 
-The predictor endpoint will return a prediction response in JSON. It will look something like the following result:
+The predict endpoint will return a prediction response in JSON. It will look something like the following result:
 
 ```
 {
@@ -104,6 +112,8 @@ The predictor endpoint will return a prediction response in JSON. It will look s
   ]
 }
 ```
+You will see this result in the response to your `curl` call to the predict endpoint, and in the server logs in the terminal window running MMS. It's also being [logged locally with metrics](docs/metrics.md).
+
 Other models can be downloaded from the [model zoo](docs/model_zoo.md), so try out some of those as well.
 
 Now you've seen how easy it can be to serve a deep learning model with MMS! [Would you like to know more?](docs/server.md)

@@ -143,6 +143,8 @@ After your server started, you can use the following command to see the predicti
 curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "input_0=@kitten.jpg"
 ```
 
+**Note**: The data name for ONNX models is `input_0` instead of `data` as with other examples. Make sure you update this in your `curl` call. The reason is that ONNX models' input layer defaults to `input_0`, and you can't override this in your `signature.json` file when you define `data_name`. You can compare this by looking at the signature file you downloaded for this ONNX example, versus the signature you downloaded for an MXNet model example.
+
 ## Export Example with Specified Custom Service
 
 Let's try the export again, but this time we will also pass the `--service` argument. So that it is very clear what is happening with the export process, we'll copy the service file to a different name and specify it when we call the export tool.

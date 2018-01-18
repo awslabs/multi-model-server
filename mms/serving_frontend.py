@@ -297,7 +297,8 @@ class ServingFrontend(object):
             self.add_endpoint(predict_api, 
                               self.predict_callback, 
                               modelservice=modelservice,
-                              input_names=input_names)
+                              input_names=input_names,
+                              model_name=model_name)
 
 
         # 2. Ping endpoints
@@ -364,14 +365,12 @@ class ServingFrontend(object):
         Response
             Http response for ping endpiont.
         """
-        if 'request_metric' in MetricsManager.metrics:
-            MetricsManager.metrics['request_metric'].update(metric=1)
+        if 'PingTotal' in MetricsManager.metrics:
+            MetricsManager.metrics['PingTotal'].update(metric=1)
         try:
             for model in self.service_manager.get_loaded_modelservices().values():
                 model.ping()
         except Exception:
-            if '5XX_error' in MetricsManager.metrics:
-                MetricsManager.metrics['5XX_error'].update(metric=1)
             logger.warn('Model serving is unhealthy.')
             return self.handler.jsonify({'health': 'unhealthy!'})
 
@@ -386,8 +385,8 @@ class ServingFrontend(object):
         Response
             Http response for api description endpiont.
         """
-        if 'requests' in MetricsManager.metrics:
-            MetricsManager.metrics['requests'].update(metric=1)
+        if 'APIDescriptionTotal' in MetricsManager.metrics:
+            MetricsManager.metrics['APIDescriptionTotal'].update(metric=1)
         return self.handler.jsonify({'description': self.openapi_endpoints})
 
     def predict_callback(self, **kwargs):
@@ -407,12 +406,14 @@ class ServingFrontend(object):
         Response
             Http response for predict endpiont.
         """
-        if 'requests' in MetricsManager.metrics:
-            MetricsManager.metrics['requests'].update(metric=1)
 
         handler_start_time = time.time()
         modelservice = kwargs['modelservice']
         input_names = kwargs['input_names']
+        model_name = kwargs['model_name']
+
+        if model_name + '_PredictionTotal' in MetricsManager.metrics:
+            MetricsManager.metrics[model_name + '_PredictionTotal'].update(metric=1)
 
         input_type = modelservice.signature['input_type']
         output_type = modelservice.signature['output_type']
@@ -430,8 +431,8 @@ class ServingFrontend(object):
                                                         % (name, input_type, type(form_data))
                     input_data.append(form_data)
             except Exception as e:
-                if '4XX_error' in MetricsManager.metrics:
-                    MetricsManager.metrics['4XX_error'].update(metric=1)
+                if model_name + '_Prediction4XX' in MetricsManager.metrics:
+                    MetricsManager.metrics[model_name + '_Prediction4XX'].update(metric=1)
                 logger.error(str(e))
                 abort(400, str(e))
         elif input_type == 'image/jpeg':
@@ -450,14 +451,14 @@ class ServingFrontend(object):
                         file_data = base64.decodestring(self.handler.get_form_data(name))
                     input_data.append(file_data)
             except Exception as e:
-                if '4XX_errors' in MetricsManager.metrics:
-                    MetricsManager.metrics['4XX_errors'].update(metric=1)
+                if model_name + '_Prediction4XX' in MetricsManager.metrics:
+                    MetricsManager.metrics[model_name + '_Prediction4XX'].update(metric=1)
                 logger.error(str(e))
                 abort(400, str(e))
         else:
             msg = '%s is not supported for input content-type' % (input_type)
-            if '5XX_errors' in MetricsManager.metrics:
-                MetricsManager.metrics['5XX_errors'].update(metric=1)
+            if model_name + '_Prediction5XX' in MetricsManager.metrics:
+                MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)
             logger.error(msg)
             abort(500, "Service setting error. %s" % (msg))
 
@@ -465,8 +466,8 @@ class ServingFrontend(object):
         try:
             response = modelservice.inference(input_data)
         except Exception:
-            if '5XX_errors' in MetricsManager.metrics:
-                MetricsManager.metrics['5XX_errors'].update(metric=1)
+            if model_name + '_Prediction5XX' in MetricsManager.metrics:
+                MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)
             logger.error(str(traceback.format_exc()))
             abort(500, "Error occurs while inference was executed on server.")
 
@@ -477,8 +478,8 @@ class ServingFrontend(object):
             logger.info('Response is jpeg image encoded in base64 string.')
         else:
             msg = '%s is not supported for input content-type.' % (output_type)
-            if '5XX_errors' in MetricsManager.metrics:
-                MetricsManager.metrics['5XX_errors'].update(metric=1)
+            if model_name + '_Prediction5XX' in MetricsManager.metrics:
+                MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)
             logger.error(msg)
             abort(500, "Service setting error. %s" % (msg))
 

@@ -5,7 +5,7 @@ Model Server for Apache MXNet
 |---------|---------|
 | ![Python3 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoicGZ6dXFmMU54UGxDaGsxUDhXclJLcFpHTnFMNld6cW5POVpNclc4Vm9BUWJNamZKMGdzbk1lOU92Z0VWQVZJTThsRUttOW8rUzgxZ2F0Ull1U1VkSHo0PSIsIml2UGFyYW1ldGVyU3BlYyI6IkJJaFc1QTEwRGhwUXY1dDgiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) | ![Python2 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiYVdIajEwVW9uZ3cvWkZqaHlaRGNUU2M0clE2aUVjelJranJoYTI3S1lHT3R5THJXdklzejU2UVM5NWlUTWdwaVVJalRwYi9GTnJ1aUxiRXIvTGhuQ2g0PSIsIml2UGFyYW1ldGVyU3BlYyI6IjArcHVCaFgvR1pTN1JoSG4iLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) |
 
-Apache MXNet Model Server (MMS) is a flexible and easy to use tool for serving deep learning models exported from [MXNet](https://onnx.ai/) or the Open Neural Network Exchange ([ONNX](https://mxnet.io/)).
+Apache MXNet Model Server (MMS) is a flexible and easy to use tool for serving deep learning models exported from [MXNet](https://mxnet.io/) or the Open Neural Network Exchange ([ONNX](https://onnx.ai/)).
 
 Use the MMS Server CLI, or the pre-configured Docker images, to start a service that sets up HTTP endpoints to handle model inference requests.
 
@@ -16,44 +16,13 @@ A quick overview and examples for both serving and exporting are provided below.
 
 ### Install with pip
 
-Make sure you have [Python installed](https://conda.io/docs/user-guide/install/index.html), then run:
+Make sure you have Python installed, then run:
 
 ```bash
 pip install mxnet-model-server
 ```
 
-If you're upgrading from a previous version of MMS, use the following:
-
-```bash
-pip install -U mxnet-model-server
-```
-
-### Install from Source
-
-Alternatively, you may clone MMS from source:
-
-```bash
-git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server
-```
-
-Then using the following will install from source:
-```bash
-pip install -e .
-```
-
-Or use the following to upgrade from source:
-```bash
-pip install -U -e .
-```
-
-### Installation Troubleshooting
-
-| Issue | Platform | Solution |
-|---|---|---|
-| Could not find "protoc" executable! | Ubuntu: | `sudo apt-get install protobuf-compiler libprotoc-dev` |
-|   | MacOS: | `conda install -c conda-forge protobuf` |
-| Missing [LibGFortran](https://gcc.gnu.org/onlinedocs/gfc-internals/LibGFortran.html) library | Ubuntu: | `apt-get install libgfortran3` |
-|   | Amazon Linux: | `yum install gcc-gfortran` |
+See the [advanced installation](install.md) page for more options and troubleshooting.
 
 
 ### Serve a Model

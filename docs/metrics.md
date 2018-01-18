@@ -1,7 +1,7 @@
 # Metrics on Model Server
 
 ## Basic Logging
-The are four arguments for MMS that facilitate logging of the model serving and inference activity.
+There are four arguments for MMS that facilitate logging of the model serving and inference activity.
 
 1. **log-file**: optional, log file name. By default it is "mms_app.log". You may also specify a path and a custom file name such as `logs/squeezenet_inference`. This is the root file name that is used in file rotation.
 
@@ -9,9 +9,9 @@ The are four arguments for MMS that facilitate logging of the model serving and 
 
 1. **log-level**: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR and CRITICAL. Check the [Python docs for logging levels](https://docs.python.org/2/library/logging.html#logging-levels) for more information.
 
-1. **metrics-write-to**: various server metrics are gathered and are written to the default log file.
+1. **metrics-write-to**: optional, metrics output destination. By default, various metrics are collected and written to the default log file.
 
-  If the `csv` value is passed to this argument, the metrics are recorded every 30 seconds in separate CSV files in a metrics folder in the current directory as follows.
+  If the `csv` value is passed to this argument, the metrics are recorded every minute in separate CSV files in a metrics folder in the current directory as follows.
 
       a) **mms_cpu.csv** - CPU load
       b) **mms_errors.csv** - number of errors
@@ -22,4 +22,4 @@ The are four arguments for MMS that facilitate logging of the model serving and 
       g) **mms_overall_latency.csv** - collective latency
       h) **mms_requests.csv** - number of inference requests
 
-  If the `cloudwatch` value is passed, the above metrics will write to [AWS CloudWatch Service](https://aws.amazon.com/cloudwatch/) every 30 seconds with namespace 'mxnet-model-server'. After [configuring AWS crediential](https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html), you will see the metrics are pushed to AWS CloudWatch Service.
+  If the `cloudwatch` value is passed, the above metrics will write to [AWS CloudWatch Service](https://aws.amazon.com/cloudwatch/) every minute with namespace 'mxnet-model-server'. After [configuring AWS crediential](https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html), you will see the metrics are pushed to AWS CloudWatch Service.

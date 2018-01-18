@@ -43,11 +43,10 @@ mxnet-model-server \
 
 With the command above executed, you have MMS running on your host, listening for inference requests.
 
-To test it out, you will need to open a new terminal window next to the one running MMS. Then we will use `curl` to download one of these [cute pictures of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and curl's `-o` flag will name it `kitten.jpg` for us. Then we will `curl` a `POST` to the MMS predict endpoint with the kitten's image. In the example below, both of these steps are provided.
+To test it out, you will need to open a new terminal window next to the one running MMS. Then you can use `curl` to download one of these [cute pictures of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and curl's `-o` flag will name it `kitten.jpg` for you. Then you will `curl` a `POST` to the MMS predict endpoint with the kitten's image. In the example below, we provide a shortcut for these steps.
 
 ```bash
-curl -o kitten.jpg \
-  https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg
+curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
 curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
 ```
 

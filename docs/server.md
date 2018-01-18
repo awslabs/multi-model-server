@@ -16,19 +16,57 @@ mxnet-model-server --models squeezenet=https://s3.amazonaws.com/model-server/mod
 
 With the command above executed, you have MMS running on your host, listening for inference requests.
 
-To test it out, download a [cute picture of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and name it `kitten.jpg`. Then run the following `curl` command to post an inference request with the image. In the example below both of these steps are provided.
+To test it out, you will need to open a new terminal window next to the one running MMS. Then we will use `curl` to download one of these [cute pictures of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and curl's `-o` flag will name it `kitten.jpg` for us. Then we will `curl` a `POST` to the MMS predict endpoint with the kitten's image. In the example below, both of these steps are provided.
 
 ```bash
-wget -O kitten.jpg \
+curl -o kitten.jpg \
   https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg
 curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
 ```
 
-Then check the [API description](http://127.0.0.1:8080/api-description). For info on other endpoints check out the [REST API documentation](rest_api.md).
+![kitten](https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg)
 
-For more models, check out the [model zoo](model_zoo.md).
+The predict endpoint will return a prediction response in JSON. Each of the probabilities are percentages, and the classes are coming from a `synset` file included inside the model archive which holds the thousand ImageNet classes this model is matching against. It will look something like the following result, where the 0.94 result is a 94% probable match with an Egyptian cat:
 
-To learn about serving different kinds of model and inference types, take a look at [custom services](custom_service.md).
+```
+{
+  "prediction": [
+    [
+      {
+        "class": "n02124075 Egyptian cat",
+        "probability": 0.9408261179924011
+      },
+      {
+        "class": "n02127052 lynx, catamount",
+        "probability": 0.055966004729270935
+      },
+      {
+        "class": "n02123045 tabby, tabby cat",
+        "probability": 0.0025502564385533333
+      },
+      {
+        "class": "n02123159 tiger cat",
+        "probability": 0.00034320182749070227
+      },
+      {
+        "class": "n02123394 Persian cat",
+        "probability": 0.00026897044153884053
+      }
+    ]
+  ]
+}
+```
+You will see this result in the response to your `curl` call to the predict endpoint, and depending on the logging options selected, in the terminal window running MMS, and/or log files.
+
+After this deep dive, you might also be interested in:
+* [Metrics](metrics.md): what kind of metrics and logs are available
+
+* [REST API Description](rest_api.md): more detail about the server's endpoints
+
+* [Model Zoo](model_zoo.md): try serving different models
+
+* [Custom Services](custom_service.md): learn about serving different kinds of model and inference types
+
 
 ## Model Files
 
@@ -44,7 +82,7 @@ usage: mxnet-model-server [-h] --models KEY1=VAL1 KEY2=VAL2...
                           [--gpu GPU] [--log-file LOG_FILE]
                           [--log-rotation-time LOG_ROTATION_TIME]
                           [--log-level LOG_LEVEL]
-                          [--metrics-write-to {log,csv}]
+                          [--metrics-write-to {log,csv,cloudwatch}]
 
 MXNet Model Server
 
@@ -55,7 +93,7 @@ optional arguments:
                         format. Location can be a URL, a local path to a
                         .model file or the extracted folder.
                         Name is arbitrary and used as the
-                        API endpoint's base name.
+                        API endpoint base name.
   --service SERVICE     Path to a user defined model service.
   --gen-api GEN_API     Generates API client for the supplied language.
                         Options include Java, C#, JavaScript and Go. For
@@ -86,6 +124,7 @@ optional arguments:
                         format are created in metrics folder in the current
                         directory. If you pass "cloudwatch", metrics will be
                         pushed to AWS CloudWatch Service.
+```
 
 ### Required Arguments & Defaults
 
@@ -95,7 +134,7 @@ Example single model usage:
 mxnet-model-server --models name=model_location
 ```
 
-`--models` is the only required argument. You can pass one or more models in a key value pair format: `name` you want to call the model and `model_location` for the local file path or URI to the model. The name is what appears in your REST API's endpoints. In the first example we used `squeezenet_v1.1` for the name, e.g. `mxnet-model-server --models squeezenet_v1.1=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/squeezenet_v1.1/predict`. In the first example this was `squeezenet=https://s3.amazonaws.com/mms-models/squeezenet_v1.1.model`. Alternatively, we could have downloaded the file and used a local file path like `squeezenet=mms_models/squeezenet_v1.1.model` or use the extracted folder `squeezenet=mms_models/squeezenet_v1.1`.
+`--models` is the only required argument. You can pass one or more models in a key value pair format: `name` you want to call the model and `model_location` for the local file path or URI to the model. The name is what appears in your REST APIs endpoints. In the first example we used `squeezenet_v1.1` for the name, e.g. `mxnet-model-server --models squeezenet_v1.1=...`, and accordingly the predict endpoint was called by `http://127.0.0.1:8080/squeezenet_v1.1/predict`. In the first example this was `squeezenet=https://s3.amazonaws.com/mms-models/squeezenet_v1.1.model`. Alternatively, we could have downloaded the file and used a local file path like `squeezenet=mms_models/squeezenet_v1.1.model` or use the extracted folder `squeezenet=mms_models/squeezenet_v1.1`.
 
 The rest of these arguments are optional and will have the following defaults:
 * [--port 8080]
@@ -148,13 +187,13 @@ This topic is covered in much more detail on the [custom service documentation p
 Let's say you have a model named `super-fancy-net.model` that can detect a lot of things, but you want an API endpoint that detects only hotdogs. You would use a name that makes sense for it, such as the "not-hot-dog" API. In this case we might invoke MMS like this:
 
 ```bash
-mxnet-model-server --models not-hot-dog=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/super-fancy-net.model
+mxnet-model-server --models not-hot-dog=super-fancy-net.model
 ```
 
 You would also want to customize and limit MMS inference with a custom service, put that code into a Python file (e.g. nothotdog.py) along with the model file, and call that script with the `--service` argument as in this example:
 
 ```bash
-mxnet-model-server --models not-hot-dog=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/super-fancy-net.model --service nothotdog.py
+mxnet-model-server --models not-hot-dog=super-fancy-net.model --service nothotdog.py
 ```
 
 This would serve a prediction endpoint at `/not-hot-dog/predict` and run your custom service code that is located in `nothotdog.py`. For more info on custom services, check out the [object detection example](../examples/ssd/README.md) and the [custom service documentation](custom_service.md).
@@ -183,30 +222,9 @@ This will setup a local host serving resnet-18 model and squeezenet model on the
 
 Note that if you supply a [custom service](custom_service.md) for pre or post-processing, both models will use that same pipeline. There is currently no support for using different pipelines per-model.
 
-### Logging Features
+### Logging and Metrics
 
-The are four arguments for MMS that facilitate logging of the model serving and inference activity.
-
-1. **log-file**: optional, log file name. By default it is "mms_app.log". You may also specify a path and a custom file name such as `logs/squeezenet_inference`. This is the root file name that is used in file rotation.
-
-1. **log-rotation-time**: optional, log rotation time. By default it is "1 H", which means one Hour. Valid format is "interval when", where _when_ can be "S", "M", "H", or "D". For a particular weekday use only "W0" - "W6". For midnight use only "midnight". When a file is rotated a timestamp is appended, for example, `squeezenet_inference` would look like `squeezenet_inference.2017-11-27_17-26` after log rotation. Check the [Python docs on logging handlers](https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler) for detailed information on values.
-
-1. **log-level**: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR and CRITICAL. Check the [Python docs for logging levels](https://docs.python.org/2/library/logging.html#logging-levels) for more information.
-
-1. **metrics-write-to**: various server metrics are gathered and are written to the default log file.
-
-  If the `csv` value is passed to this argument, the metrics are recorded every 30 seconds in separate CSV files in a metrics folder in the current directory as follows.
-
-      a) **mms_cpu.csv** - CPU load
-      b) **mms_errors.csv** - number of errors
-      c) **mms_memory.csv** - memory utilization
-      d) **mms_preprocess_latency.csv** - any custom pre-processing latency
-      e) **mms_disk.csv** - disk utilization
-      f) **mms_inference_latency.csv** - any inference latency
-      g) **mms_overall_latency.csv** - collective latency
-      h) **mms_requests.csv** - number of inference requests
-
-  If the `cloudwatch` value is passed, the above metrics will write to [AWS CloudWatch Service](https://aws.amazon.com/cloudwatch/) every 30 seconds with namespace 'mxnet-model-server'. After [configuring AWS crediential](https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html), you will see the metrics are pushed to AWS CloudWatch Service.
+For details on metrics and logging see the [metrics docs](metrics.md).
 
 ### Client API Code Generation
 

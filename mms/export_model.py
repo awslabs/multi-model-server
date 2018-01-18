@@ -47,6 +47,8 @@ MODEL_SERVER_VERSION = 0.1
 MANIFEST_FILE_NAME = 'MANIFEST.json'
 MXNET_TYPE = 'mxnet'
 ONNX_TYPE = 'onnx'
+MXNET_ATTRS = 'attrs'
+MXNET_VERSION = 'mxnet_version'
 
 NO_MODEL_FILES_MESSAGE = '''
 No model files found in the model directory {}.
@@ -187,13 +189,17 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
     manifest["Model"]["Description"] = model_name
     manifest["Model"]["Model-Name"] = model_name
     manifest["Model"]["Model-Format"] = "MXNet-Symbolic"
-<<<<<<< HEAD
-    manifest["Engine"] = {"MXNet": 0.12}
-
-=======
-    manifest["Engine"]  = {"MXNet":mx.__version__}
     
->>>>>>> Fix
+    mxnet_version = mx.__version__
+
+    if os.path.exists(symbol_file):
+        symbol_json = json.load(open(symbol_file))
+        if MXNET_ATTRS in symbol_json:
+            if MXNET_VERSION in symbol_json[MXNET_ATTRS]:
+                mxnet_version = symbol_json[MXNET_ATTRS][MXNET_VERSION]
+
+    manifest["Engine"]  = {"MXNet": mxnet_version}           
+
     return manifest
 
 

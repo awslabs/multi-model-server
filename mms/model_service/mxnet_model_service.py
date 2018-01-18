@@ -61,6 +61,7 @@ class MXNetBaseService(SingleNodeService):
        inherited.
     '''
     def __init__(self, model_name, model_dir, manifest, gpu=None):
+        self.model_name = model_name
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
         signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
         if not os.path.isfile(signature_file_path):

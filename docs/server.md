@@ -56,7 +56,7 @@ The predict endpoint will return a prediction response in JSON. Each of the prob
   ]
 }
 ```
-You will see this result in the response to your `curl` call to the predict endpoint, and in the server logs in the terminal window running MMS.
+You will see this result in the response to your `curl` call to the predict endpoint, and depending on the logging options selected, in the terminal window running MMS, and/or log files.
 
 After this deep dive, you might also be interested in:
 * [Metrics](metrics.md): what kind of metrics and logs are available
@@ -74,7 +74,7 @@ The rest of this topic focus on serving of model files without much discussion o
 
 ## Command Line Interface
 
-```bashrc
+```bash
 $ mxnet-model-server --help
 usage: mxnet-model-server [-h] --models KEY1=VAL1 KEY2=VAL2...
                           [KEY1=VAL1 KEY2=VAL2... ...] [--service SERVICE]
@@ -82,7 +82,7 @@ usage: mxnet-model-server [-h] --models KEY1=VAL1 KEY2=VAL2...
                           [--gpu GPU] [--log-file LOG_FILE]
                           [--log-rotation-time LOG_ROTATION_TIME]
                           [--log-level LOG_LEVEL]
-                          [--metrics-write-to {log,csv}]
+                          [--metrics-write-to {log,csv,cloudwatch}]
 
 MXNet Model Server
 
@@ -222,7 +222,7 @@ This will setup a local host serving resnet-18 model and squeezenet model on the
 
 Note that if you supply a [custom service](custom_service.md) for pre or post-processing, both models will use that same pipeline. There is currently no support for using different pipelines per-model.
 
-### Logging Features
+### Logging and Metrics
 
 For details on metrics and logging see the [metrics docs](metrics.md).
 

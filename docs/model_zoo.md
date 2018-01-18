@@ -8,10 +8,10 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 
 | Model File | Type | Dataset | Source | Size | Download |
 | --- | --- | --- | --- | --- | --- |
-| [AlexNet](#alexnet) | Image Classification | ImageNet | ONNX | 233 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-alexnet.alexnet.model) |
+| [AlexNet](#alexnet) | Image Classification | ImageNet | ONNX | 233 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-alexnet/alexnet.model) |
 | [CaffeNet](#caffenet) | Image Classification | ImageNet | MXNet | 216 MB | [.model](https://s3.amazonaws.com/model-server/models/caffenet/caffenet.model) |
 | [Inception v1](#inception_v1) | Image Classification | ImageNet | ONNX | 27 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-inception_v1/inception_v1.model) |
-| [Inception v3 w/BatchNorm](#inception) | Image Classification | ImageNet | MXNet | 45 MB |  [.model](https://s3.amazonaws.com/model-server/models/inception-bn/Inception-BN.model) |
+| [Inception v3 w/BatchNorm](#inception_v3) | Image Classification | ImageNet | MXNet | 45 MB |  [.model](https://s3.amazonaws.com/model-server/models/inception-bn/Inception-BN.model) |
 | [LSTM PTB](#lstm-ptb) | Language Modeling | PennTreeBank | MXNet | 16 MB | [.model](https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb.model) |
 | [Network in Network (NiN)](#nin) | Image Classification | ImageNet | MXNet | 30 MB | [.model](https://s3.amazonaws.com/model-server/models/nin/nin.model) |
 | [ResNet-152](#resnet-152) | Image Classification | ImageNet | MXNet | 241 MB | [.model](https://s3.amazonaws.com/model-server/models/resnet-152/resnet-152.model) |
@@ -69,7 +69,7 @@ curl -X POST http://127.0.0.1:8080/caffenet/predict -F "data=@kitten.jpeg"
 ```
 
 
-## <a name="inception"></a>Inception v1
+## <a name="inception_v1"></a>Inception v1
 * **Type**: Image classification trained on ImageNet
 
 * **Reference**: [Szegedy, et al., Google](https://arxiv.org/pdf/1512.00567.pdf)
@@ -87,7 +87,7 @@ curl -X POST http://127.0.0.1:8080/inception-v1/predict -F "input_0=@kitten.jpeg
 ```
 
 
-## <a name="inception"></a>Inception v3
+## <a name="inception_v3"></a>Inception v3
 * **Type**: Image classification trained on ImageNet
 
 * **Reference**: [Szegedy, et al., Google](https://arxiv.org/pdf/1512.00567.pdf)
@@ -286,7 +286,7 @@ curl -X POST http://127.0.0.1:8080/vgg19/predict -F "data=@kitten.jpeg"
 ```
 
 ## <a name="vgg19_onnx"></a>VGG19
-* **Type**: Image classification trained on ImageNet
+* **Type**: Image classification trained on ImageNet (imported from ONNX)
 
 * **Reference**: [Simonyan, et al.](https://arxiv.org/pdf/1409.1556v6.pdf)
 

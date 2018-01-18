@@ -1,6 +1,6 @@
 # Running the Model Server
 
-The primary feature of MMS is the model server. It can be used for many types of inference in production settings. It provides an easy-to-use command line interface and utilizes an industry standard [OpenAPI interface](rest_api.md). It has features for pre-processing and post-processing inputs and outputs for customized applications.
+The primary feature of MMS is the model server. It can be used for many types of inference in production settings. It provides an easy-to-use command line interface and utilizes an industry standard [OpenAPI interface](rest_api.md). It has features for pre-processing and post-processing inputs and outputs for customized applications. Support for models from a wide range of deep learning frameworks is achieved through its [ONNX model](https://onnx.ai) export feature.
 
 For example, you want to make an app that lets your users snap a picture, and it will tell them what what objects were detected in the scene and predictions on what the objects might be. You can use MMS to serve a prediction endpoint for a object detection and identification model that intakes images, then returns predictions. You can also modify MMS behavior with custom services and run multiple models. There are examples of custom services, pre-processing, post-processing in the [examples](../examples) folder. The object detection example is in [examples/ssd](../examples/ssd/README.md).
 
@@ -103,7 +103,7 @@ The rest of these arguments are optional and will have the following defaults:
 * [--log-file mms_app.log]
 * [--log-rotation-time "1 H"] - one hour
 * [--log-level INFO]
-* [--metrics-write-to log] - write metrics to the Log file specified in --log-file or mms_app.log. 
+* [--metrics-write-to log] - write metrics to the Log file specified in --log-file or mms_app.log.
 
 Advanced logging, GPU-based inference, and exporting an SDK can also be triggered with additional arguments. Details are in the following Arguments section.
 
@@ -210,4 +210,4 @@ The are four arguments for MMS that facilitate logging of the model serving and 
 
 ### Client API Code Generation
 
-Detailed info on using the `gen-api` argument and its outputs is found on the [Code Generation page](code_gen.md). 
+Detailed info on using the `gen-api` argument and its outputs is found on the [Code Generation page](code_gen.md).

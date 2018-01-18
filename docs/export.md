@@ -3,7 +3,7 @@
 ## Contents of this Document
 * [Overview](#overview)
 * [Technical Highlights on Creating a Model Archive](#technical-highlights-on-creating-a-model-archive)
-* [MMS Export CLI](#mms-export-cli)
+* [MMS Export CLI](#mms-export-command-line-interface)
 * [Artifact Details](#artifact-details)
     * [Model Archive Overview](#model-archive-overview)
     * [Model Definition](#model-definition)
@@ -169,7 +169,7 @@ class MXNetBaseService(SingleNodeService):
 
 Further details and specifications are found on the [custom service](custom_service.md) page.
 
-### Labels (synset.txt)
+### Labels
 ```
 synset.txt
 ```

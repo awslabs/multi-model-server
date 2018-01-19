@@ -6,4 +6,4 @@ RUN /install.sh
 
 ADD mms_docker_cpu mms_docker_cpu
 
-LABEL maintainer="yuruofei@amazon.com, wayao@amazon.com"
+LABEL maintainer="yuruofei@amazon.com, esterhaz@amazon.com, hag@amazon.com"

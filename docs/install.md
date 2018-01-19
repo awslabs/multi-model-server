@@ -46,6 +46,12 @@ Or use the following to upgrade from source and make your changes executable:
 pip install -U -e .
 ```
 
+## Prerequisites
+
+* **curl**: it's used in all of the examples, so install it via your package manager of choice
+* **python**: MMS works with Python 2 or 3; you may also want to use environments when installing MMS, so it doesn't conflict with your other MXNet or ONNX installations
+* **unzip**: optional; it's nice to have and to associate with `.model` extensions, so you can easily extract model files and inspect their contents
+
 ## Installation Troubleshooting
 
 | Issue | Platform | Solution |

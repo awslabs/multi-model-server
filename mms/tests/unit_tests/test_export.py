@@ -8,123 +8,183 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import os
-import sys
-curr_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(curr_path + '/../..')
-
-import unittest
-import mxnet as mx
 import json
+import os
 import zipfile
-import shutil
 
-from model_service.mxnet_vision_service import MXNetVisionService as mx_vision_service
-#from export_model import export_serving
-from mxnet.gluon import nn
+import mxnet as mx
+import pytest
+from mock import patch, MagicMock
+
+from mms.export_model import export_model, generate_manifest
 
 
-class TestExport(unittest.TestCase):
-    def _extract_zip(self, zip_file, destination):
-        with zipfile.ZipFile(zip_file) as file_buf:
-            for item in file_buf.namelist():
-                filename = os.path.basename(item)
-                # skip directories
-                if not filename:
-                    continue
+def list_zip(path):
+    return [f.filename for f in zipfile.ZipFile(path).infolist()]
 
-                # copy file (taken from zipfile's extract)
-                source = file_buf.open(item)
-                target = open(os.path.join(destination, filename), 'wb')
-                with source, target:
-                    shutil.copyfileobj(source, target)
 
-    def _train_and_save(self, path):
-        model_path = curr_path + '/' + path
-        if not os.path.isdir(model_path):
-            os.mkdir(model_path)
+def empty_file(path):
+    open(path, 'a').close()
 
-        num_class = 10
-        data1 = mx.sym.Variable('data1')
-        data2 = mx.sym.Variable('data2')
-        conv1 = mx.sym.Convolution(data=data1, kernel=(2, 2), num_filter=2, stride=(2, 2))
-        conv2 = mx.sym.Convolution(data=data2, kernel=(3, 3), num_filter=3, stride=(1, 1))
-        pooling1 = mx.sym.Pooling(data=conv1, kernel=(2, 2), stride=(1, 1), pool_type="avg")
-        pooling2 = mx.sym.Pooling(data=conv2, kernel=(2, 2), stride=(1, 1), pool_type="max")
-        flatten1 = mx.sym.flatten(data=pooling1)
-        flatten2 = mx.sym.flatten(data=pooling2)
-        sum = mx.sym.sum(data=flatten1, axis=1) + mx.sym.sum(data=flatten2, axis=1)
-        fc = mx.sym.FullyConnected(data=sum, num_hidden=num_class)
-        sym = mx.sym.SoftmaxOutput(data=fc, name='softmax')
 
-        dshape1 = (10, 3, 64, 64)
-        dshape2 = (10, 3, 32, 32)
-        lshape = (10,)
+@pytest.fixture()
+def onnx_mxnet():
+    mock = MagicMock()
+    modules = {
+        'onnx_mxnet': mock,
+    }
 
-        mod = mx.mod.Module(symbol=sym, data_names=('data1', 'data2'),
-                            label_names=('softmax_label',))
-        mod.bind(data_shapes=[('data1', dshape1), ('data2', dshape2)],
-                 label_shapes=[('softmax_label', lshape)])
-        mod.init_params()
-        mod.init_optimizer(optimizer_params={'learning_rate': 0.01})
+    patcher = patch.dict('sys.modules', modules)
+    patcher.start()
+    import onnx_mxnet
+    yield onnx_mxnet
+    patcher.stop()
 
-        data_batch = mx.io.DataBatch(data=[mx.random.uniform(0, 9, dshape1),
-                                           mx.random.uniform(5, 15, dshape2)],
-                                     label=[mx.nd.ones(lshape)])
-        mod.forward(data_batch)
-        mod.backward()
-        mod.update()
-        with open('%s/synset.txt' % (model_path), 'w') as synset:
-            for i in range(10):
-                synset.write('test label %d\n' % (i))
-        with open('%s/signature.json' % (model_path), 'w') as sig:
-            signature = {
-                "input_type": "image/jpeg",
-                "inputs": [
-                    {
-                        'data_name': 'data1',
-                        'data_shape': [1, 3, 64, 64]
-                    },
-                    {
-                        'data_name': 'data2',
-                        'data_shape': [1, 3, 32, 32]
-                    }
-                ],
-                "output_type": "application/json",
-                "outputs": [
-                    {
-                        'data_name': 'softmax',
-                        'data_shape': [1, 10]
-                    }
-                ]
-            }
-            json.dump(signature, sig)
-        
-        mod.save_checkpoint('%s/test' % (model_path), 0)
 
-    def test_export_CLI(self):
-        path = 'test'
-        self._train_and_save(path)
-        model_name = 'test1'
-        model_path = curr_path + '/' + path
-        export_file = '%s/%s.model' % (os.getcwd(), model_name)
+@pytest.fixture
+def module_dir(tmpdir):
+    path = '{}/test'.format(tmpdir)
+    os.mkdir(path)
+    empty_file('{}/test-symbol.json'.format(path))
+    empty_file('{}/test-0000.params'.format(path))
+    empty_file('{}/synset.txt'.format(path))
 
-        cmd = 'python %s/../../export_model.py --model-name %s --model-path %s' \
-              % (curr_path, model_name, model_path)
-        print ('cmd:%s', cmd)
-        os.system(cmd)
-        assert os.path.isfile(export_file), "No model file is found. Export failed!"
-        
-        manifest = {
-            "Model": {
-                "Parameters": 'test-0000.params',
-                "Signature": "signature.json"
-            },
-            "Assets": {
-                "Synset": "synset.txt"
-            }
+    with open('{}/signature.json'.format(path), 'w') as sig:
+        signature = {
+            "input_type": "image/jpeg",
+            "inputs": [
+                {
+                    'data_name': 'data1',
+                    'data_shape': [1, 3, 64, 64]
+                },
+                {
+                    'data_name': 'data2',
+                    'data_shape': [1, 3, 32, 32]
+                }
+            ],
+            "output_type": "application/json",
+            "outputs": [
+                {
+                    'data_name': 'softmax',
+                    'data_shape': [1, 10]
+                }
+            ]
         }
-        os.system('rm -rf %s %s %s/%s' % (export_file, model_path, os.getcwd(), model_name))
+        json.dump(signature, sig)
 
-    def runTest(self):
-        self.test_export_CLI()
+    return path
+
+
+def test_generate_manifest():
+    manifest = generate_manifest('dir/symbol', 'dir/params', 'dir/service', 'dir/signature', 'name')
+    assert 'Model-Archive-Version' in manifest
+    assert manifest['Model-Archive-Description'] == 'name'
+    assert 'Model-Server' in manifest
+    assert 'Engine' in manifest
+
+    assert manifest['Model'] == {
+        'Symbol': 'symbol',
+        'Parameters': 'params',
+        'Signature': 'signature',
+        'Service': 'service',
+        'Description': 'name',
+        'Model-Name': 'name',
+        'Model-Format': 'MXNet-Symbolic'
+    }
+
+
+def test_export_module(tmpdir, module_dir):
+    export_path = '{}/test.model'.format(tmpdir)
+    export_model('test', module_dir, None, export_path)
+
+    assert os.path.exists(export_path), 'no model created - export failed'
+    zip_contents = list_zip(export_path)
+
+    for f in ['signature.json', 'test-0000.params', 'test-symbol.json', 'synset.txt', 'MANIFEST.json']:
+        assert f in zip_contents
+
+    assert [f for f in zip_contents if f.endswith('.py')], 'missing service file'
+
+
+def test_export_onnx(tmpdir, module_dir, onnx_mxnet):
+    os.remove(os.path.join(module_dir, 'test-symbol.json'))
+    os.remove(os.path.join(module_dir, 'test-0000.params'))
+    empty_file(os.path.join(module_dir, 'test.onnx'))
+
+    sym = mx.symbol.Variable('data')
+    params = {'param_0': mx.ndarray.empty(0)}
+    onnx_mxnet.import_model.return_value = (sym, params)
+
+    export_path = '{}/test.model'.format(tmpdir)
+    export_model('test', module_dir, None, export_path)
+
+    assert os.path.exists(export_path), 'no model created - export failed'
+    zip_contents = list_zip(export_path)
+    for f in ['signature.json', 'test-0000.params', 'test-symbol.json', 'synset.txt', 'MANIFEST.json']:
+        assert f in zip_contents
+
+    assert [f for f in zip_contents if f.endswith('.py')], 'missing service file'
+
+
+def test_export_model_no_model_files(tmpdir, module_dir):
+    export_path = '{}/test.model'.format(tmpdir)
+    os.remove(os.path.join(module_dir, 'test-0000.params'))
+    os.remove(os.path.join(module_dir, 'test-symbol.json'))
+    with pytest.raises(ValueError) as e:
+        export_model('test', module_dir, None, export_path)
+
+    assert 'models are expected as' in str(e.value)
+
+
+def test_export_model_no_params(module_dir):
+    os.remove(os.path.join(module_dir, 'test-0000.params'))
+    with pytest.raises(ValueError) as e:
+        export_model('test', module_dir)
+
+    assert 'Incomplete MXNet model found' in str(e.value)
+
+
+def test_export_model_no_symbol(module_dir):
+    os.remove(os.path.join(module_dir, 'test-symbol.json'))
+    with pytest.raises(ValueError) as e:
+        export_model('test', module_dir)
+
+    assert 'Incomplete MXNet model found' in str(e.value)
+
+
+@pytest.mark.parametrize('suffix', ['-symbol.json', '-0000.params', '.onnx'])
+def test_export_too_many_files(suffix, module_dir):
+    empty_file('{}/a{}'.format(module_dir, suffix))
+    empty_file('{}/b{}'.format(module_dir, suffix))
+
+    with pytest.raises(ValueError) as e:
+        export_model('test', module_dir)
+
+    assert 'expects only one' in str(e.value)
+    assert 'expects only one' in str(e.value)
+
+
+def test_export_onnx_and_module(module_dir):
+    empty_file('{}/test.onnx'.format(module_dir))
+    with pytest.raises(ValueError) as e:
+        export_model('test', module_dir)
+
+    assert 'More than one model type is present' in str(e.value)
+
+
+def test_export_no_epoch(module_dir):
+    os.remove(os.path.join(module_dir, 'test-0000.params'))
+    empty_file('{}/test.params'.format(module_dir))
+    with pytest.raises(ValueError) as e:
+        export_model('test', module_dir)
+
+    assert 'No epoch number found' in str(e.value)
+
+
+def test_export_params_symbol_mismatch(module_dir):
+    os.remove(os.path.join(module_dir, 'test-0000.params'))
+    empty_file('{}/notest-0000.params'.format(module_dir))
+    with pytest.raises(ValueError) as e:
+        export_model('test', module_dir)
+
+    assert 'prefix do not match' in str(e.value)

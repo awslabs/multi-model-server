@@ -31,7 +31,7 @@ To export a model in MMS, you will need:
 
 1. Model file(s)
     * **MXNet**: a `model-symbol.json` file, which describes the neural network, and much larger `model-0000.params` file containing the parameters and their weights
-    * **ONNX**: an `.onnx` file (rename `.pb2` files to `.onnx`)
+    * **ONNX**: an `.onnx` file (rename `.pb` or `.pb2` files to `.onnx`)
 
 
 2. For MMS to understand your model, you must provide a `signature.json` file, which describes the model's inputs and outputs.

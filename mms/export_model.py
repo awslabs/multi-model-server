@@ -200,7 +200,7 @@ def convert_onnx_model(model_path, onnx_file):
     symbol_file = '%s-symbol.json' % model_name
     params_file = '%s-0000.params' % model_name
 
-    sym, params = onnx_mxnet.import_model(onnx_file)
+    sym, params = onnx_mxnet.import_model(os.path.join(model_path, onnx_file))
     with open(os.path.join(model_path, symbol_file), 'w') as f:
         f.write(sym.tojson())
 
@@ -282,18 +282,17 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
     params_file = find_unique(files, '.params')
 
     validate_model_files(model_path, onnx_file, params_file, symbol_file)
+    signature_file = validate_signature(model_path)
+    service_file = validate_service(model_path, service_file, signature_file)
+    if os.path.basename(service_file) not in files:
+        files.append(os.path.basename(service_file))
+        shutil.copyfile(service_file, os.path.join(model_path, os.path.basename(service_file)))
+    service_file = os.path.basename(service_file)
 
     if onnx_file:
         symbol_file, params_file = convert_onnx_model(model_path, onnx_file)
         files.remove(onnx_file)
         files.extend([symbol_file, params_file])
-
-    signature_file = validate_signature(model_path)
-    service_file = validate_service(model_path, service_file, signature_file)
-    if service_file not in files:
-        shutil.copyfile(service_file, os.path.join(model_path, os.path.basename(service_file)))
-        service_file = os.path.basename(service_file)
-        files.append(service_file)
 
     manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name)
     with open(os.path.join(model_path, MANIFEST_FILE_NAME), 'w') as m:

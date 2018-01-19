@@ -4,8 +4,8 @@ COPY install.sh /
 
 RUN /install.sh
 
-RUN pip install mxnet-cu80
+RUN pip install mxnet-cu90
 
 ADD mms_docker_gpu mms_docker_gpu
 
-LABEL maintainer="yuruofei@amazon.com, wayao@amazon.com"
+LABEL maintainer="yuruofei@amazon.com, esterhaz@amazon.com, hag@amazon.com"

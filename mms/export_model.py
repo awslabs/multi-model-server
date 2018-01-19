@@ -79,7 +79,7 @@ No epoch number found in the parameter filename {}.
 
 When exporting an MXNet model, mxnet-model-export expects a parameters file
 that includes the epoch number in the filename. 0000 is usually sufficient, 
-but if known, you can supply any epoch number in the format: modelname-1234.params.'
+but if known, you can supply any epoch number in the format: modelname-1234.params.
 '''.strip()
 
 MODEL_PREFIX_MISMATCH_MESSAGE = '''

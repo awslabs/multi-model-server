@@ -61,8 +61,9 @@ def create_model(tmpdir):
 
 
 def test_onnx_integ(tmpdir):
+    tmpdir = str(tmpdir)
     create_model(tmpdir)
-    start_test_server_thread = Thread(target=setup_onnx_integ, args=(str(tmpdir),))
+    start_test_server_thread = Thread(target=setup_onnx_integ, args=(tmpdir,))
     start_test_server_thread.daemon = True
     start_test_server_thread.start()
     time.sleep(5)
@@ -75,4 +76,4 @@ def test_onnx_integ(tmpdir):
     assert predictions is not None
     assert len(predictions) > 0
     # Cleanup
-    cleanup(str(tmpdir))
+    cleanup(tmpdir)

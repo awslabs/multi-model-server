@@ -10,6 +10,7 @@ apt-get install -y software-properties-common
 add-apt-repository -y ppa:certbot/certbot
 apt-get update
 apt-get install -y python-certbot-nginx
+apt-get install protobuf-compiler libprotoc-dev
 
 pip install --upgrade pip
 pip install gunicorn

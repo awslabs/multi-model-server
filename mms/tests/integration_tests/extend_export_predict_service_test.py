@@ -1,17 +1,18 @@
 import json
-import subprocess
-import time
 import os
-import sys
 import shutil
-
+import subprocess
 from threading import Thread
+
+import sys
+import time
+
 try:
     from urllib2 import urlopen, URLError, HTTPError
 except:
     from urllib.request import urlopen, URLError, HTTPError
 
-from mms import export_model, mxnet_model_server
+from mms import mxnet_model_server
 
 
 def _download_file(download_dir, url):
@@ -31,32 +32,7 @@ def _download_file(download_dir, url):
         print("Failed to download {}. HTTP Error {}".format(url, e.reason))
 
 
-def setup_ssd_server(tmpdir):
-    """
-        Downloads and Setup the SSD model server.
-    :return: None
-    """
-    # Download the files required for SSD model in temp folder.
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-symbol.json")
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-0000.params")
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/synset.txt")
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/signature.json")
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/ssd_service.py")
-
-    # Download input image.
-    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/street.jpg")
-
-    # Export the model.
-    print("Exporting the mxnet model server model...")
-    sys.argv = ['mxnet-model-export']
-    sys.argv.append("--model-name")
-    sys.argv.append("{}/resnet50_ssd_model".format(tmpdir))
-    sys.argv.append("--model-path")
-    sys.argv.append(tmpdir)
-    sys.argv.append("--service-file-path")
-    sys.argv.append("{}/ssd_service.py".format(tmpdir))
-    export_model.export()
-
+def start_ssd_server(tmpdir):
     # Start the mxnet model server for SSD
     print("Starting SSD MXNet Model Server for test..")
 
@@ -64,8 +40,8 @@ def setup_ssd_server(tmpdir):
     sys.argv = ['mxnet-model-server']
     sys.argv.append("--models")
     sys.argv.append("SSD={}/resnet50_ssd_model.model".format(tmpdir))
-    sys.argv.append("--service")
-    sys.argv.append("{}/ssd_service.py".format(tmpdir))
+    # sys.argv.append("--service")
+    # sys.argv.append("{}/ssd_service.py".format(tmpdir))
     mxnet_model_server.start_serving()
 
 
@@ -75,16 +51,36 @@ def cleanup(tmpdir):
 
 
 def test_ssd_extend_export_predict_service(tmpdir):
-    start_test_server_thread = Thread(target = setup_ssd_server, args=(str(tmpdir),))
+    create_model(tmpdir)
+    start_test_server_thread = Thread(target=start_ssd_server, args=(str(tmpdir),))
     start_test_server_thread.daemon = True
     start_test_server_thread.start()
-    time.sleep(60)
-    output = subprocess.check_output('curl -X POST http://127.0.0.1:8080/SSD/predict -F "data=@{}/street.jpg"'.format(str(tmpdir)), shell=True)
+    time.sleep(5)
+    output = subprocess.check_output(
+        'curl -X POST http://127.0.0.1:8080/SSD/predict -F "data=@{}/street.jpg"'.format(str(tmpdir)),
+        shell=True)
     if sys.version_info[0] >= 3:
         output = output.decode("utf-8")
+
     predictions = json.dumps(json.loads(output))
     # Assert objects are detected.
     assert predictions is not None
     assert len(predictions) > 0
     # Cleanup
     cleanup(str(tmpdir))
+
+
+def create_model(tmpdir):
+    # Download the files required for SSD model in temp folder.
+    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-symbol.json")
+    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-0000.params")
+    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/synset.txt")
+    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/signature.json")
+    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/ssd_service.py")
+    # Download input image.
+    _download_file(tmpdir, "https://s3.amazonaws.com/model-server/models/resnet50_ssd/street.jpg")
+    # Export the model.
+    print("Exporting the mxnet model server model...")
+    subprocess.check_call(
+        ['mxnet-model-export', '--model-name', 'resnet50_ssd_model', '--model-path', tmpdir, '--service-file-path',
+         '{}/ssd_service.py'.format(tmpdir)], cwd=tmpdir)

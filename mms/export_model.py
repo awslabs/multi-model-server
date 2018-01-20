@@ -179,7 +179,6 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
     manifest["Model-Archive-Version"] = MODEL_ARCHIVE_VERSION
     manifest["Model-Archive-Description"] = model_name
     manifest["Model-Server"] = MODEL_SERVER_VERSION
-
     manifest["Model"] = {}
     manifest["Model"]["Symbol"] = os.path.split(symbol_file)[1]
     manifest["Model"]["Parameters"] = os.path.split(params_file)[1]

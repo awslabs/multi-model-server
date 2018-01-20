@@ -30,10 +30,9 @@
         "Model-Archive-Version": {"type": "number"},
         "Model-Archive-Description": {"type": "string"},
         "Model-Server": {"type": "number"},
-        "License": {"type": "string"},
         "Created-By": { "$ref": "#/definitions/Created-By" },
         "Model": { "$ref": "#/definitions/Model" },
         "Engine": { "$ref": "#/definitions/Engine" }
     },
-    "required": ["Model-Archive-Version", "License", "Model", "Engine", "Model-Server"]
+    "required": ["Model-Archive-Version", "Model", "Engine", "Model-Server"]
 }

@@ -137,16 +137,18 @@ Awesome! we have successfully exported a pre-trained MXNet model, extended MMS w
 
 ## Step 7 - Test sample inference
 
-Let us try the inference server we just started. Open another terminal on the same host. Download a sample image.
+Let us try the inference server we just started. Open another terminal on the same host. Download a sample image, or try any jpeg image that contains the one or more of the object classes mentioned earlier: 'aeroplane', 'bicycle', 'bird', 'boat', etc...
+
+![3 dogs on beach](https://farm9.staticflickr.com/8051/8081326814_64756479c6_z_d.jpg)
 
 ```bash
-wget https://www.dphotographer.co.uk/users/21963/thm1024/1337890426_Img_8133.jpg
+curl -o 3dogs.jpg https://farm9.staticflickr.com/8051/8081326814_64756479c6_z_d.jpg
 ```
 
 Use curl to make a prediction call by passing the downloaded image as input to the prediction request.
 
 ```bash
- curl -X POST http://127.0.0.1:8080/SSD/predict -F "data=@1337890426_Img_8133.jpg"
+curl -X POST http://127.0.0.1:8080/ssd/predict -F "data=@3dogs.jpg"
 ```
 
 You can expect the response similar to below. The output format is `[(object_class, xmin, ymin, xmax, ymax)]`.
@@ -154,71 +156,29 @@ Where, xmin, ymin, xmax and ymax are the bounding box coordinates of the detecte
 
 ```
 {
-"prediction": [
-  [
-    "person",
-    494,
-    153,
-    702,
-    630
-  ],
-  [
-    "person",
-    108,
-    108,
-    351,
-    591
-  ],
-  [
-    "dog",
-    306,
-    446,
-    468,
-    530
-  ],
-  [
-    "car",
-    9,
-    166,
-    96,
-    245
-  ],
-  [
-    "person",
-    826,
-    127,
-    1008,
-    601
-  ],
-  [
-    "person",
-    480,
-    177,
-    511,
-    253
-  ],
-  [
-    "person",
-    555,
-    175,
-    581,
-    242
-  ],
-  [
-    "person",
-    514,
-    177,
-    547,
-    250
-  ],
-  [
-    "person",
-    62,
-    334,
-    185,
-    467
+  "prediction": [
+    [
+      "dog",
+      399,
+      128,
+      570,
+      290
+    ],
+    [
+      "dog",
+      278,
+      196,
+      417,
+      286
+    ],
+    [
+      "cow",
+      205,
+      116,
+      297,
+      272
+    ]
   ]
-]
 }
 ```
 
@@ -228,11 +188,11 @@ For better visualization on the input and how we can use the inference output, s
 
 Input Image
 
-![Street Input Image](https://s3.amazonaws.com/model-server/models/resnet50_ssd/street.jpg)
+![Street Input Image](https://s3.amazonaws.com/model-server/inputs/dogs-before.png)
 
 Output Image
 
-![Street Output Image](https://s3.amazonaws.com/model-server/models/resnet50_ssd/street_output.jpg)
+![Street Output Image](https://s3.amazonaws.com/model-server/inputs/dogs-after.png)
 
 
 # References

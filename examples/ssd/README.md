@@ -13,14 +13,14 @@ The inference service would return the response in the format - '[(object_class,
 
 ## Step 1 - Download the pre-trained SSD Model
 
+You will need the model files to use for the export. Check this example's directory in case they're already downloaded. Otherwise, you can `curl` the files or download them via your browser:
+
 ```bash
- wget https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-symbol.json
- wget https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-0000.params
+ curl -O https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-symbol.json
+ curl -O https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-0000.params
 ```
 
-or
-
-Use these links to download the Symbol and Params files:
+Alternatively, use these links to download the Symbol and Params files via your browser:
 1. <a href="https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-symbol.json" download>resnet50_ssd_model-symbol.json</a>
 2. <a href="https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model-0000.params" download>resnet50_ssd_model-0000.params</a>
 
@@ -139,11 +139,8 @@ Awesome! we have successfully exported a pre-trained MXNet model, extended MMS w
 
 Let us try the inference server we just started. Open another terminal on the same host. Download a sample image, or try any jpeg image that contains the one or more of the object classes mentioned earlier: 'aeroplane', 'bicycle', 'bird', 'boat', etc...
 
-![3 dogs on beach](https://farm9.staticflickr.com/8051/8081326814_64756479c6_z_d.jpg)
-
-```bash
-curl -o 3dogs.jpg https://farm9.staticflickr.com/8051/8081326814_64756479c6_z_d.jpg
-```
+You can also use this image of three dogs on a beach.
+![3 dogs on beach](3dogs.jpg)
 
 Use curl to make a prediction call by passing the downloaded image as input to the prediction request.
 
@@ -188,11 +185,11 @@ For better visualization on the input and how we can use the inference output, s
 
 Input Image
 
-![Street Input Image](https://s3.amazonaws.com/model-server/inputs/dogs-before.png)
+![Street Input Image](dogs-before.jpg)
 
 Output Image
 
-![Street Output Image](https://s3.amazonaws.com/model-server/inputs/dogs-after.png)
+![Street Output Image](dogs-after.jpg)
 
 
 # References

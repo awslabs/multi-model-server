@@ -156,15 +156,15 @@ class MMS(object):
             service_file = os.path.join(models[0][2], manifest['Model']['Service'])
 
             class_defs = self.serving_frontend.register_module(self.args.service or service_file)
-            
-            if len(class_defs) < 1:
-                raise Exception('User defined module must derive base ModelService.')
-            # The overrided class is the last one in class_defs
-            mode_class_name = class_defs[-1].__name__
+            class_defs = list(filter(lambda c: len(c.__subclasses__()) == 0, class_defs))
+
+            if len(class_defs) != 1:
+                raise Exception('There should be one user defined service derived from ModelService.')
+            model_class_name = class_defs[0].__name__
 
             # Load models using registered model definitions
             registered_models = self.serving_frontend.get_registered_modelservices()
-            ModelClassDef = registered_models[mode_class_name]
+            ModelClassDef = registered_models[model_class_name]
             
             self.serving_frontend.load_models(models, ModelClassDef, self.gpu)
             
@@ -179,7 +179,7 @@ class MMS(object):
                 ClientSDKGenerator.generate(openapi_endpoints, self.args.gen_api)
 
             # Generate metrics to target location (log, csv ...), default to log
-            MetricsManager.start(self.args.metrics_write_to, mode_class_name, Lock())
+            MetricsManager.start(self.args.metrics_write_to, self.args.models, Lock())
 
         except Exception as e:
             logger.error('Failed to process arguments: ' + str(e))

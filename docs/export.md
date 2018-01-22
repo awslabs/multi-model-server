@@ -1,67 +1,48 @@
 # Exporting Models for Use with MMS
 
-A key feature of MMS is the ability to export all model artifacts into a single model archive file. It is a separate command line interface (CLI) that can take model checkpoints and package them into a `.model` file that can then be redistributed and served by anyone using MMS. It takes in the following model artifacts: network definitions in the form of a JSON file, the trained network weight in the form of a parameters file, the description of the models' inputs and outputs in the form of a signature file, a service file describing how to handle inputs and outputs, and other optional assets that may be required to serve the model. The CLI creates a `.model` file that MMS's server CLI uses to serve the models.
+## Contents of this Document
+* [Overview](#overview)
+* [Technical Highlights on Creating a Model Archive](#technical-highlights-on-creating-a-model-archive)
+* [MMS Export CLI](#mms-export-command-line-interface)
+* [Artifact Details](#artifact-details)
+    * [Model Archive Overview](#model-archive-overview)
+    * [Model Definition](#model-definition)
+    * [Model Parameters and Weights](#model-parameters-and-weights)
+    * [Signature](#signature)
+    * [Service](#service)
+    * [Labels](#labels)
 
-## Technical Details of a Model Archive
+## Other Relevant Documents
+* [Export Examples](export_examples.md)
+* [Export a Model Checkpoint from MXNet](export_from_mxnet.md)
+* [Export an ONNX Model](export_from_onnx.md)
+* [Exported MMS Model File Tour](export_model_file_tour.md)
+
+## Overview
+
+A key feature of MMS is the ability to export all model artifacts into a single model archive file. It is a separate command line interface (CLI), `mxnet-model-export`, that can take model checkpoints and package them into a `.model` file that can then be redistributed and served by anyone using MMS. It takes in the following model artifacts: a model composed of one or more files, the description of the models' inputs and outputs in the form of a signature file, a service file describing how to handle inputs and outputs, and other optional assets that may be required to serve the model. The CLI creates a `.model` file that MMS's server CLI uses to serve the models.
+
+**Important**: Make sure you try the [Quick Start: Export a Model](../README.md#export-a-model) tutorial for a short example of using `mxnet-model-export`.
+
+
+## Technical Highlights on Creating a Model Archive
 
 To export a model in MMS, you will need:
 
-1. A `model-symbol.json` file, which describes the neural network,
-
-2. A much larger `model-0000.params` file containing the parameters and their weights
-
-    * For the purpose of a quick example, we'll pretend that you've already saved a checkpoint which is numbered by those digits in the middle of `model-0000.params` filename.
+1. Model file(s)
+    * **MXNet**: a `model-symbol.json` file, which describes the neural network, and much larger `model-0000.params` file containing the parameters and their weights
+    * **ONNX**: an `.onnx` file (rename `.pb` or `.pb2` files to `.onnx`)
 
 
-3. For MMS to understand your model, you must provide a `signature.json` file, which describes the model's inputs and outputs.
+2. For MMS to understand your model, you must provide a `signature.json` file, which describes the model's inputs and outputs.
 
-4. Most models will require the inputs to go through some pre-processing, and your application will likely benefit from post-processing of the inference results. These functions go into `custom-service.py`.
+3. Most models will require the inputs to go through some pre-processing, and your application will likely benefit from post-processing of the inference results. These functions go into `custom-service.py`. In the cases of image classification, MMS provides one for you.
 
-5. You also have *the option* of providing assets that assist with the inference process. These can be labels for the inference outputs, key/value vocabulary pairs used in an LSTM model, and so forth.
+4. You also have *the option* of providing assets that assist with the inference process. These can be labels for the inference outputs (e.g. synset.txt), key/value vocabulary pairs used in an LSTM model, and so forth.
 
-This gives you the first two assets by providing those files for you to download, or that you've acquired the trained models from a [model zoo](model_zoo.md). We'll also provide the latter two files that you would create on your own based on the model you're trying to serve. Don't worry if that sounds ominous; creating those last two files is easy. More details on this can be found in later the **Required Assets** section.
+This gives you the first two assets by providing those files for you to download, or that you've acquired the trained models from a [model zoo](model_zoo.md). In the export examples we provide the latter two files that you would create on your own based on the model you're trying to serve. Don't worry if that sounds ominous; creating those last two files is easy. More details on this can be found in later the **Required Assets** section.
 
 The files in the `model-example.model` file are human-readable in a text editor, with the exception of the `.params` file: this file is binary, and is usually quite large.
-
-## Example Model File Exploration
-
-In the quick start export example on the main [README](../README.md), we provide a zip file of all of the artifacts you need to run your first export. However, when you start using MMS and downloading and sharing models you will be using `.model` files, so here we'll start with one of those.
-
-**Download and extract a model file:**
-
-* [SqueezeNet v1.1](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model) - 5 MB
-* Or choose a model file from the [model zoo](model_zoo.md)
-
-**Note**: A `.model` file is a zip file under the hood, so if you have trouble extracting it, change the extension to `.zip` first and then extract it. It might be worth assigning your favorite unzip program to the `.model` filetype. You also might be able to just use unzip from the terminal:
-
-```bash
-unzip squeezenet_v1.model
-```
-
-**Once the model archive has been extracted you can review the following files:**
-
-* **Manifest** (json file) - a description of the files in the archive that is generated by `mxnet-model-export`.
-  * Example: [MANIFEST.json](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/manifest.json) - it describes each of the artifacts, the deep learning engine to use, and metadata about versions, and more.
-
-
-* **Model Definition** (json file) - contains the description of the layers and overall structure of the neural network.
-  * Example: [squeezenet_v1.1-symbol.json](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1-symbol.json) - the name, or prefix, here is "squeezenet_v1.1".
-
-
-* **Model Parameters and Weights** (binary params file) - contains the parameters and the weights.
-  * Example: [squeezenet_v1.1-0000.params](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1-0000.params) - again, the prefix is "squeezenet_v1.1".
-
-
-* **Model Signature** (json file) - defines the inputs and outputs that MMS is expecting to hand-off to the API.
-  * Example: [signature.json](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/signature.json) - in this case for squeezenet_v1, it expects images of 224x224 pixels and will output a tensor of 1,000 probabilities.
-
-
-* **Custom Service** (py file) - customizes the inference request handling for both pre-processing and post-processing.
-  * Example: [custom-service.py](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/mxnet_vision_service.py) - in this case, it is a copy of the [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/mms/model_service/mxnet_vision_service.py) which does standard image pre-processing to match the input required and limits the output results to the top 5 instead of the full 1,000.
-
-* **assets** (text files) - auxiliary files that support model inference such as vocabularies, labels, etc. Will vary depending on the model.
-  * Example:  [synset.txt](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/synset.txt) - an *optional* list of labels (one per line) specific to a image recognition model, in this case based on the ImageNet dataset.
-  * Example:  [vocab_dict.txt](https://s3.amazonaws.com/model-server/models/lstm_ptb/vocab_dict.txt) - an *optional* list of word/index pairs specific to an LSTM model, in this case based on the PenTreeBank dataset.
 
 
 ## MMS Export Command Line Interface
@@ -105,116 +86,6 @@ optional arguments:
 1. model-name: required, prefix of exported model archive file.
 2. model-path: required, directory which contains files to be packed into exported archive.
 
-## Export Example
-
-Given the files downloaded in the exploration section above, you can use the `mxnet-model-export` CLI to generate a `.model` file that can be used with MMS.
-
-To try this out, open your terminal and go to the folder you just extracted. You may have already taken a look at the MANIFEST.json file, but it isn't necessary at this step, so you may delete it. A new one will be injected into the model file when you run the export.
-
-The export tool is going to look for the following at a minimum:
-* symbol file (_name_-symbol.json) - in our example it will be: `squeezenet_v1.1-symbol.json`
-* params file (_name_-_checkpoint#_.params) - in our example it will be: `squeezenet_v1.1-0000.params`
-* signature file (signature.json)
-* labels file (synset.txt)
-
-Now, we could export just with these artifacts an would get a .model file. It's going to look at the signature file and see that you're using `"input_type": "image/jpeg"`, and assume that you want the default vision service, so it will include `mxnet_vision_service.py` for you. It will also generate the manifest. Let's try it out.
-
-We're going to tell it our model's name is `squeezenet_v1.1` with the `--model-name` argument. The name works like a prefix, so it will assume that you've named the symbol file and the params file according to the pattern _name_-symbol.json and _name_-0000.params. The "0000" can be another checkpoint if that's what you have. Then we're giving it the `--model-path` to the model's assets, which are in the current working directory, so we'll use `.` for the path.
-
-This will output `squeezenet_v1.1.model` in the current working directory. Try serving it with:
-
-```bash
-mxnet-model-server --models squeezenet=squeezenet_v1.1.model
-```
-
-## Export ONNX Model Example
-
-MMS supports the ONNX format now and using ONNX models is very simple. To export a `squeezenet` onnx model, we just need to download [squeezenet model](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/squeezenet.onnx), [signature file](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/signature.json) and [label file](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/synset.txt) and put them under the model assets directory. Since the model has the .onnx extension, it will be detected and the managed accordingly using [onnx-mxnet converter](https://github.com/onnx/onnx-mxnet).
-
-Then we can use the same command to export, this will output `squeezenet.model` in the current working directory.
-
-```bash
-mxnet-model-export --model-name squeezenet --model-path
-```
-
-After your server started, you can use the following command to see the prediction results.
-
-```bash
-curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "input_0=@kitten.jpg"
-```
-
-**Note**: The data name for ONNX models is `input_0` instead of `data` as with other examples. Make sure you update this in your `curl` call. The reason is that ONNX models' input layer defaults to `input_0`, and you can't override this in your `signature.json` file when you define `data_name`. You can compare this by looking at the signature file you downloaded for this ONNX example, versus the signature you downloaded for an MXNet model example.
-
-## Export Example with Specified Custom Service
-
-Let's try the export again, but this time we will also pass the `--service` argument. So that it is very clear what is happening with the export process, we'll copy the service file to a different name and specify it when we call the export tool.
-
-```bash
-cp mxnet_vision_service.py my_awesome_service.py
-mxnet-model-export --model-name squeezenet_v1.1 --model-path . --service my_awesome_service.py
-```
-
-Once the model file is exported, unzip it and take a look. Your custom service should be in there. The other service file is in there too! This means you can pack up an entire application, and specify the custom service entry point with the `--service` argument. You can also verify the `manifest.json` and see that it setup the model based on the provided files and your service specification. Here's an example extract from the manifest:
-
-```
-"Model": {
-    "Description": "squeezenet",
-    "Service": my_awesome_service.py",
-    "Symbol": "squeezenet_v1.1-symbol.json",
-    "Parameters": "squeezenet_v1.1-0000.params",
-    "Signature": "signature.json",
-    "Model-Name": "squeezenet_v1.1",
-    "Model-Format": "MXNet-Symbolic"
-```
-
-## Exporting with Labels and Other Assets
-
-You may have noticed that we required the `synset.txt` file in this example, but didn't mention it as part of the process. It's not even in the manifest. This is because it is required by the service file or the upstream classes that the service file is extending. In our example here it uses those labels in the post-processing step to provide human-readable inference results.
-
-If you're curious you can look in the service file and note the line that "sort of" mentions it by require a labels file, and then if you look upstream at the [mxnet_model_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/mms/model_service/mxnet_model_service.py) you will see it specifically mentioned:
-```
-archive_synset = os.path.join(model_dir, 'synset.txt')
-```
-Of course, if you [write your own custom service](custom_service.md), you can handle labels in another way. You may want to take look at the examples too. One is for an LSTM which uses a [vocabulary labels file](https://s3.amazonaws.com/model-server/models/lstm_ptb/vocab_dict.txt), or the SSD example which uses a [much shorter synset.txt](https://github.com/awslabs/mxnet-model-server/blob/master/examples/ssd/synset.txt) than our SqueezeNet examples for the short list of objects it is intended to identify.
-
-**Note**: You may get an error about a missing synset if you use a custom service that is `expecting one and you didn't provide one in the folder with the other artifacts. Each sysnet correlates to the model, so make sure you have one in the directory with your other artifacts when you try to export your model.
-
-## Export Example with Customizations
-
-To give you an idea of how you might download another's model, modify it, then serve it, let's try out a simple use case. The example we have been using will serve the SqueezeNet model, and upon inference requests it will return the top 5 results. Let's change the **custom service** so that it returns 10 results instead.
-
-Open the `my_awesome_service.py` file in your text editor.
-
-Find the function for `_postprocess` and the line that says the following:
-
-```python
-return [ndarray.top_probability(d, self.labels, top=5) for d in data]
-```
-
-Change the `top=5` to `top=10`, then save the file.
-
-Run the export process again:
-```bash
-mxnet-model-export --model-name squeezenet_v1.1 --model-path . --service my_awesome_service.py
-```
-
-Run the server on the updated model:
-```bash
-mxnet-model-server --models squeezenet=squeezenet_v1.1.model
-```
-
-Then in a different terminal window, upload an image file the API, and see your results.
-```bash
-curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
-```
-
-Instead of the top 5 results, you will now get the top 10!
-
-This is just one example of customization. There are many variations, but here are a couple of ideas to get your creative juices flowing:
-
-* You might decide that you want to take a model, grab the params as a checkpoint and retrain it using additional training images. This is often called fine tuning a model. A fine tuning tutorial using MXNet with Gluon can be found in [The Straight Dope's computer vision section](https://github.com/zackchase/mxnet-the-straight-dope/blob/master/chapter08_computer-vision/fine-tuning.ipynb).
-
-* You also might decide that you want to change the labels - maybe by simplifying the results without having to retrain the entire model. A result like `"class": "n02123045 tabby, tabby cat",` could just be `cat`. You would go through the `synset.txt` file, make your edits and then export the model.
 
 ## Artifact Details
 
@@ -248,12 +119,12 @@ This is the model's hyper-parameters and weights. It will be created when you us
 signature.json
 ```
 
-1. **input**: Contains MXNet model input names and input shapes. It is a list contains { data_name : name, data_shape : shape } maps. Client side inputs should have the same order with the input order defined here.
+1. **input**: Contains MXNet model input names and input shapes. It is a list contains { data_name : name, data_shape : shape } maps. Client side inputs should have the same order with the input order defined here. **Note**: the default `data_name` for MXNet is `data`, and for ONNX it is `input_0`.
 1. **input_type**: Defines the MIME content type for client side inputs. Currently all inputs must have the same content type. Only two MIME types are currently supported: "image/jpeg" and "application/json".
 1. **output**: Similar to input, it contains MXNet model output names and output shapes.
 1. **output_type**: Similar to input_type. Currently all outputs must have the same content type. Only two MIME types are currently supported: "image/jpeg" and "application/json".
 
-Using the squeezenet_v1.1 example, you can view the `signature.json` file in the folder that was extracted once you dowloaded and served the model for the first time. The input is an image with 3 color channels and size 224 by 224. The output is named 'softmax' with length 1000 (one for every class that the model can recognize).
+Using the squeezenet_v1.1 example, you can view the [signature.json](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/signature.json) file in the folder that was extracted once you dowloaded and served the model for the first time. The input is an image with 3 color channels and size 224 by 224. The output is named 'softmax' with length 1000 (one for every class that the model can recognize).
 
 ```json
 {
@@ -298,7 +169,7 @@ class MXNetBaseService(SingleNodeService):
 
 Further details and specifications are found on the [custom service](custom_service.md) page.
 
-### Labels (synset.txt)
+### Labels
 ```
 synset.txt
 ```
@@ -306,61 +177,3 @@ This optional text file is for classification labels. Simply put, if it were for
 
 
 If `synset.txt` is included in exported archive file and each line represents a category, `MXNetBaseModel` will load this file and create `labels` attribute automatically. If this file is named differently or has a different format, you need to override `__init__` method and manually load it.
-
-
-## Using Your Own Trained Models and Checkpoints
-
-While all of these features are super exciting you've probably been asking yourself, so how do I create these fabulous MMS model files for my own trained models? We'll provide some MXNet code examples for just this task.
-
-There are two main routes for this: 1) export a checkpoint or use the new `.export` function, or 2) using a MMS Python class to export your model directly.
-
-The Python method to export model is to use `export_serving` function while completing training:
-
-```python
-   import mxnet as mx
-   from mms.export_model import export_serving
-
-   mod = mx.mod.Module(...)
-   # Training process
-   ...
-
-   # Export model
-   signature = { "input_type": "image/jpeg", "output_type": "application/json" }
-   export_serving(mod, 'resnet-18', signature, aux_files=['synset.txt'])
-```
-
-In MXNet with version higher than 0.12.0, you can export a Gluon model directly, as long as your model is Hybrid:
-
-```python
-from mxnet import gluon
-net = gluon.nn.HybridSequential() # this mode will allow you to export the model
-
-with net.name_scope():
-    net.add(gluon.nn.Dense(128, activation="relu")) # an example first layer
-    # Add the rest of your network architecture here
-
-net.hybridize() # hybridize your network so that it can be exported
-
-# Then train your network before moving on to exporting
-
-signature = {
-                "input_type": "application/json",
-                "inputs" : [
-                    {
-                        "data_name": "data",
-                        "data_shape": [1, 100]
-                    }
-                ],
-                "outputs" : [
-                    {
-                        "data_name": "softmax",
-                        "data_shape": [1, 128]
-                    }
-                ],
-                "output_type": "application/json"
-            }
-
-export_serving(net, 'gluon_model', signature, aux_files=['synset.txt'])
-```
-
-**Note**: be careful with versions. If you export a v0.12 model and try to run it with MMS running v0.11 of MXNet, the server will probably throw errors and you won't be able to use the model.

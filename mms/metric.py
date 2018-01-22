@@ -13,8 +13,10 @@ import datetime
 import threading
 import os
 import warnings
+import socket
 
 from mms.log import get_logger
+
 
 try:
     import boto3 as boto
@@ -24,22 +26,41 @@ except ImportError:
 
 logger = get_logger()
 
+MetricUnit = {
+  'ms': "Milliseconds",
+  'percent': 'Percent',
+  'count': 'Count',
+  'MB': 'Megabytes'
+}
 
 class Metric(object):
     """Metric class for model server
     """
     def __init__(self, name, mutex,
-                 namespace,
-                 interval_sec=30,
+                 model_name,
+                 unit,
+                 is_model_metric=True,
+                 interval_sec=60,
                  update_func=None,
                  aggregate_method='interval_average',
                  write_to='log'):
         """Constructor for Metric class
 
+           Metric class will spawn a thread and report collected metrics to local disk 
+           or AWS cloudwatch between given intervals.
+
         Parameters
         ----------
         name : str
             Name of the metric
+        mutex: object
+            Lock between metric threads when they are writing local disk
+        model_name: str
+            Model name
+        unit: str
+            CloudWatch compatible unit
+        is_model_metric: boolean
+            Whether it is a metric for model eg. inference latency, requests count
         interval_sec : int, optional
             Interval seconds between each data points, default 5 min
         update_func : func, optional
@@ -51,11 +72,13 @@ class Metric(object):
         """
         self.name = name
         self.interval_sec = interval_sec
-        self.namespace = namespace
+        self.model_name = model_name
 
         # Metrics within interval
         self.interval_datapoints_count = 0
         self.interval_metric_aggregate = 0.0
+        self.min_value = None
+        self.max_value = None
 
         # Metrics for the whole session
         self.total_datapoints_count = 0
@@ -64,6 +87,8 @@ class Metric(object):
         self.aggregate_method = aggregate_method
         self.mutex = mutex
         self.write_to = write_to
+        self.unit = unit
+        self.is_model_metric = is_model_metric
 
         # Setup cloudwatch handle
         if self.write_to == 'cloudwatch':
@@ -88,6 +113,16 @@ class Metric(object):
         metric : float
             metric to be updated
         """
+        if self.min_value == None:
+            self.min_value = metric
+        else:
+            self.min_value = min(self.min_value, metric)
+
+        if self.max_value == None:
+            self.max_value = metric
+        else:
+            self.max_value = min(self.max_value, metric)
+
         self.interval_metric_aggregate += metric
         # Increment data points
         self.interval_datapoints_count += 1
@@ -124,35 +159,62 @@ class Metric(object):
 
         # Start recording metrics
         with self.mutex:
-            if self.write_to == 'csv':
-                filename = os.path.join('metrics', 'mms_' + self.name + '.csv')
-                if not os.path.exists(os.path.dirname(filename)):
-                     os.makedirs(os.path.dirname(filename))
-                with open(filename, 'a') as csvfile:
-                    csvwriter = csv.writer(csvfile, delimiter=',')
-                    csvwriter.writerow([utcnow, metric])
-            elif self.write_to == 'cloudwatch':
-                logger.info('Metric %s for last %s seconds is %f, writing to AWS CloudWatch...' %
-                    (self.name, self.interval_sec, metric))
-                try:
-                    self.client.put_metric_data(
-                        Namespace=self.namespace,
-                        MetricData=[
-                            {
-                                'MetricName': self.name,
-                                'Timestamp': utcnow,
-                                'Value': metric,
-                                'Unit': 'Count'
-                            },
-                        ]
-                    )
-                except Exception as e:
-                    raise Exception("Failed to write metrics to cloudwatch " + str(e))
-            else:
-                logger.info('Metric %s for last %s seconds is %f' % 
-                    (self.name, self.interval_sec, metric))
+            # metric starts being reported
+            if self.interval_datapoints_count != 0:
+                if self.write_to == 'csv':
+                    filename = os.path.join('metrics', 'mms_' + self.name + '.csv')
+                    if not os.path.exists(os.path.dirname(filename)):
+                         os.makedirs(os.path.dirname(filename))
+                    with open(filename, 'a') as csvfile:
+                        csvwriter = csv.writer(csvfile, delimiter=',')
+                        csvwriter.writerow([utcnow, metric])
+                elif self.write_to == 'cloudwatch':
+                    logger.info('Metric %s for last %s seconds is %f, writing to AWS CloudWatch...' %
+                        (self.name, self.interval_sec, metric))
+                    try:
+                        update_entry = {'Value': metric}
+                        if self.unit == MetricUnit['MB']:
+                            update_entry = {
+                                'StatisticValues': {
+                                    'SampleCount': self.interval_datapoints_count,
+                                    'Sum': self.interval_metric_aggregate,
+                                    'Minimum': self.min_value,
+                                    'Maximum': self.max_value
+                                }
+                            }
+                        
+                        metric_data = {
+                            'MetricName': self.name,
+                            'Timestamp': utcnow,
+                            'Unit': self.unit,
+                            'Dimensions': [
+                                {
+                                    'Name': 'host',
+                                    'Value': socket.gethostname()
+                                }
+                            ]
+                        }
+                        metric_data.update(update_entry)
+                        if self.is_model_metric:
+                            metric_data['Dimensions'].append({
+                                'Name': 'model_name',
+                                'Value': self.model_name
+                            })
+                        self.client.put_metric_data(
+                            Namespace='MXNetModelServer',
+                            MetricData=[
+                                metric_data
+                            ]
+                        )
+                    except Exception as e:
+                        raise Exception("Failed to write metrics to cloudwatch " + str(e))
+                else:
+                    logger.info('Metric %s for last %s seconds is %f' %
+                        (self.name, self.interval_sec, metric))
 
         # Clear interval metrics
         self.interval_metric_aggregate = 0.0
         self.interval_datapoints_count = 0 
+        self.min_value = None
+        self.max_value = None
 

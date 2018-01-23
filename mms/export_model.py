@@ -240,7 +240,7 @@ def find_unique(files, suffix):
 
 
 def validate_epoch_number(params_file):
-    if re.match(r'^.+-\d+\.params$', params_file) is None:
+    if re.match(r'^[\w\-\.]+-\d+\.params$', params_file) is None:
         raise ValueError(NO_EPOCH_NUMBER_MESSAGE.format(params_file))
 
 

@@ -18,7 +18,6 @@ if sys.version_info[0] == 3:
 else:
     import SocketServer
 
-
 from mms.arg_parser import ArgParser
 from mms.client_sdk_generator import ClientSDKGenerator
 from mms.log import get_logger, LOG_LEVEL_DICT, _Formatter

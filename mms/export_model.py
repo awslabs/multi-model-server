@@ -94,7 +94,7 @@ Example: modelname-0000.params and modelname-symbol.json.
 '''.strip()
 
 
-def validate_signaure(model_path):
+def validate_signature(model_path):
     """
     Internal helper to check signature error when exporting model with CLI.
     """

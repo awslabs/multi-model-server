@@ -15,6 +15,7 @@ import zipfile
 import shutil
 import json
 import jsonschema
+import fasteners
 
 from mms.log import get_logger
 from jsonschema import validate
@@ -26,14 +27,16 @@ URL_PREFIX = ('http://', 'https://', 's3://')
 MANIFEST_DIR = "manifest_schema"
 MANIFEST_SCHEMA_FILE = 'manifest-schema.json'
 MANIFEST_FILENAME = 'MANIFEST.json'
+LOCK_FILE = '/tmp/tmp_lock_file'
 
-def download(url, path=None, overwrite=False):
+@fasteners.interprocess_locked(LOCK_FILE)
+def _download_and_extract(model_location, path=None, overwrite=False):
     """Download an given URL
 
     Parameters
     ----------
-    url : str
-        URL to download
+    model_location : str
+        Location for local model or URL to download
     path : str, optional
         Destination path to store downloaded file. By default stores to the
         current directory with same name as in url.
@@ -45,28 +48,45 @@ def download(url, path=None, overwrite=False):
     str
         The file path of the downloaded file.
     """
-    if path is None:
-        fname = url.split('/')[-1]
-    elif os.path.isdir(path):
-        fname = os.path.join(path, url.split('/')[-1])
-    else:
-        fname = path
+    model_file = model_location
+    if model_location.lower().startswith(URL_PREFIX):
+        if path is None:
+            model_file = model_location.split('/')[-1]
+        elif os.path.isdir(path):
+            model_file = os.path.join(path, model_location.split('/')[-1])
+        else:
+            model_file = path
 
-    if overwrite or not os.path.exists(fname):
-        dirname = os.path.dirname(os.path.abspath(os.path.expanduser(fname)))
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
+        if overwrite or not os.path.exists(model_file):
+            dirname = os.path.dirname(os.path.abspath(os.path.expanduser(model_file)))
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
 
-        print('Downloading %s from %s...' % (fname, url))
-        r = requests.get(url, stream=True)
-        if r.status_code != 200:
-            raise RuntimeError("Failed downloading url %s" % url)
-        with open("%s.temp" % (fname), 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-        os.rename("%s.temp" % (fname), fname)
-    return fname
+            print('Downloading %s from %s...' % (model_file, model_location))
+            r = requests.get(model_location, stream=True)
+            if r.status_code != 200:
+                raise RuntimeError("Failed downloading url %s" % model_location)
+            with open("%s.temp" % (model_file), 'wb') as f:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+            os.rename("%s.temp" % (model_file), model_file)
+
+    model_file = os.path.abspath(model_file)
+    [model_name, model_extension] = os.path.splitext(os.path.basename(model_file))
+    model_file_prefix = model_name if model_extension == '.model' else model_file
+
+    model_dir = os.path.join(os.path.dirname(model_file), model_file_prefix)
+
+    if not os.path.isdir(model_dir):
+        os.mkdir(model_dir)
+        try:
+            if '.model' in model_file:
+                _extract_zip(model_file, model_dir)
+        except Exception as e:
+            raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
+                            % (model_file, model_file_prefix , e))
+    return model_dir
 
 def _extract_zip(zip_file, destination):
     '''Extract zip to destination without keeping directory structure
@@ -95,22 +115,8 @@ def _extract_model(service_name, path):
     if path.endswith('.onnx') or path.endswith('.pb2'):
         raise ValueError('Convert ONNX model using mxnet-model-export before serving.')
 
-    model_file = download(url=path, overwrite=True) \
-    if path.lower().startswith(URL_PREFIX) else path
-
-    model_file = os.path.abspath(model_file)
-    [model_name, model_extension] = os.path.splitext(os.path.basename(model_file))
-    model_file_prefix = model_name if model_extension == '.model' else model_file
-    model_dir = os.path.join(os.path.dirname(model_file), model_file_prefix)
-
-    if not os.path.isdir(model_dir):
-        os.mkdir(model_dir)
-    try:
-        if '.model' in model_file:
-            _extract_zip(model_file, model_dir)
-    except Exception as e:
-        raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
-                        % (model_file, model_file_prefix , e))
+    model_dir = _download_and_extract(model_location=path, overwrite=True)
+        
     try:
         #manifest schema
         import mms

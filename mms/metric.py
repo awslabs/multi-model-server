@@ -10,32 +10,33 @@
 
 import csv
 import datetime
-import threading
 import os
-import warnings
 import socket
+import threading
+import warnings
 
 from mms.log import get_logger
-
 
 try:
     import boto3 as boto
 except ImportError:
     boto = None
 
-
 logger = get_logger()
 
 MetricUnit = {
-  'ms': "Milliseconds",
-  'percent': 'Percent',
-  'count': 'Count',
-  'MB': 'Megabytes'
+    'ms': "Milliseconds",
+    'percent': 'Percent',
+    'count': 'Count',
+    'MB': 'Megabytes',
+    'GB': 'Gigabytes'
 }
+
 
 class Metric(object):
     """Metric class for model server
     """
+
     def __init__(self, name, mutex,
                  model_name,
                  unit,
@@ -164,13 +165,13 @@ class Metric(object):
                 if self.write_to == 'csv':
                     filename = os.path.join('metrics', 'mms_' + self.name + '.csv')
                     if not os.path.exists(os.path.dirname(filename)):
-                         os.makedirs(os.path.dirname(filename))
+                        os.makedirs(os.path.dirname(filename))
                     with open(filename, 'a') as csvfile:
                         csvwriter = csv.writer(csvfile, delimiter=',')
                         csvwriter.writerow([utcnow, metric])
                 elif self.write_to == 'cloudwatch':
                     logger.info('Metric %s for last %s seconds is %f, writing to AWS CloudWatch...' %
-                        (self.name, self.interval_sec, metric))
+                                (self.name, self.interval_sec, metric))
                     try:
                         update_entry = {'Value': metric}
                         if self.unit == MetricUnit['MB']:
@@ -182,7 +183,7 @@ class Metric(object):
                                     'Maximum': self.max_value
                                 }
                             }
-                        
+
                         metric_data = {
                             'MetricName': self.name,
                             'Timestamp': utcnow,
@@ -210,11 +211,10 @@ class Metric(object):
                         raise Exception("Failed to write metrics to cloudwatch " + str(e))
                 else:
                     logger.info('Metric %s for last %s seconds is %f' %
-                        (self.name, self.interval_sec, metric))
+                                (self.name, self.interval_sec, metric))
 
         # Clear interval metrics
         self.interval_metric_aggregate = 0.0
-        self.interval_datapoints_count = 0 
+        self.interval_datapoints_count = 0
         self.min_value = None
         self.max_value = None
-

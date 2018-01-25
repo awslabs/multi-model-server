@@ -5,13 +5,23 @@ Model Server for Apache MXNet
 |---------|---------|
 | ![Python3 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoicGZ6dXFmMU54UGxDaGsxUDhXclJLcFpHTnFMNld6cW5POVpNclc4Vm9BUWJNamZKMGdzbk1lOU92Z0VWQVZJTThsRUttOW8rUzgxZ2F0Ull1U1VkSHo0PSIsIml2UGFyYW1ldGVyU3BlYyI6IkJJaFc1QTEwRGhwUXY1dDgiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) | ![Python2 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiYVdIajEwVW9uZ3cvWkZqaHlaRGNUU2M0clE2aUVjelJranJoYTI3S1lHT3R5THJXdklzejU2UVM5NWlUTWdwaVVJalRwYi9GTnJ1aUxiRXIvTGhuQ2g0PSIsIml2UGFyYW1ldGVyU3BlYyI6IjArcHVCaFgvR1pTN1JoSG4iLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) |
 
-Apache MXNet Model Server (MMS) is a flexible and easy to use tool for serving deep learning models exported from [MXNet](https://mxnet.io/) or the Open Neural Network Exchange ([ONNX](https://onnx.ai/)).
+Apache MXNet Model Server (MMS) is a flexible and easy to use tool for serving deep learning models exported from [MXNet](http://mxnet.io/) or the Open Neural Network Exchange ([ONNX](http://onnx.ai/)).
+
 
 Use the MMS Server CLI, or the pre-configured Docker images, to start a service that sets up HTTP endpoints to handle model inference requests.
 
 A quick overview and examples for both serving and exporting are provided below. Detailed documentation and examples are provided in the [docs folder](docs/README.md).
 
+## Contents of this Document
+* [Quick Start](#quick-start)
+* [Serve a Model](#serve-a-model)
+* [Export a Model](#export-a-model)
+* [Other Features](#other-features)
+* [Contributing](#contributing)
 
+## Other Relevant Documents
+* [Latest Version Docs](docs/README.md)
+* [v0.1.5 Docs](https://github.com/awslabs/mxnet-model-server/blob/v0.1.5/docs/README.md)
 ## Quick Start
 
 ### Install with pip
@@ -43,7 +53,11 @@ mxnet-model-server \
 
 With the command above executed, you have MMS running on your host, listening for inference requests.
 
-To test it out, you will need to open a new terminal window next to the one running MMS. Then you can use `curl` to download one of these [cute pictures of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and curl's `-o` flag will name it `kitten.jpg` for you. Then you will `curl` a `POST` to the MMS predict endpoint with the kitten's image. In the example below, we provide a shortcut for these steps.
+To test it out, you will need to open a new terminal window next to the one running MMS. Then you can use `curl` to download one of these [cute pictures of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and curl's `-o` flag will name it `kitten.jpg` for you. Then you will `curl` a `POST` to the MMS predict endpoint with the kitten's image.
+
+![kitten](docs/images/kitten_small.jpg)
+
+In the example below, we provide a shortcut for these steps.
 
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
@@ -132,3 +146,6 @@ For production deployments, we recommend using containers, and for this purpose 
 We welcome all contributions!
 
 To file a bug or request a feature, please file a GitHub issue. Pull requests are welcome.
+
+
+[![mxnet](docs/images/mxnet_logo_100.png)](http://mxnet.io) ---  [![onnx](docs/images/onnx_logo_50.png)](http://onnx.ai)

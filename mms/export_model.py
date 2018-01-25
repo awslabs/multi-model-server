@@ -246,7 +246,7 @@ def validate_epoch_number(params_file):
 
 def validate_prefix_match(symbol_file, params_file):
     symbol_prefix = symbol_file.replace('-symbol.json', '')
-    params_prefix = params_file.split('-')[0]  # safe because of preceding regex
+    params_prefix = re.sub(r'-\d+\.params$', '', params_file)
     if symbol_prefix != params_prefix:
         raise ValueError(MODEL_PREFIX_MISMATCH_MESSAGE.format(symbol_file, params_file))
 

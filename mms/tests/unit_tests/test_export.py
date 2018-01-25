@@ -106,11 +106,15 @@ def test_export_module(tmpdir, module_dir):
     assert [f for f in zip_contents if f.endswith('.py')], 'missing service file'
 
 
-def test_export_onnx(tmpdir, module_dir, onnx_mxnet):
-    os.remove(os.path.join(module_dir, 'test-symbol.json'))
-    os.remove(os.path.join(module_dir, 'test-0000.params'))
-    empty_file(os.path.join(module_dir, 'test.onnx'))
+def test_export_module_hyphenated_basename(tmpdir, module_dir):
+    os.rename(os.path.join(module_dir, 'test-symbol.json'), os.path.join(module_dir, 'test-hyphens-symbol.json'))
+    os.rename(os.path.join(module_dir, 'test-0000.params'), os.path.join(module_dir, 'test-hyphens-0000.params'))
+    export_path = '{}/test-hyphens.model'.format(tmpdir)
+    export_model('test-hyphens', module_dir, None, export_path)
+    assert os.path.exists(export_path), 'no model created - export failed'
 
+
+def test_export_onnx(tmpdir, module_dir, onnx_mxnet):
     sym = mx.symbol.Variable('data')
     params = {'param_0': mx.ndarray.empty(0)}
     onnx_mxnet.import_model.return_value = (sym, params)
@@ -188,3 +192,4 @@ def test_export_params_symbol_mismatch(module_dir):
         export_model('test', module_dir)
 
     assert 'prefix do not match' in str(e.value)
+

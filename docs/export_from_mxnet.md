@@ -1,4 +1,6 @@
-# Export from a Model Checkpoint from MXNet and Into MMS
+# Exporting from MXNet
+
+[![mxnet](images/mxnet_logo_100.png)](http://mxnet.io)
 
 ## Using Your Own Trained Models and Checkpoints
 

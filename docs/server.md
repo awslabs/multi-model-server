@@ -1,5 +1,14 @@
 # Running the Model Server
 
+## Contents of this Document
+* [Overview](#overview)
+* [Technical Details](#technical-details)
+* [Model Files](#model-files)
+* [Command Line Interface](#command-line-interface)
+* [Advanced Features](#advanced-features)
+
+## Overview
+
 The primary feature of MMS is the model server. It can be used for many types of inference in production settings. It provides an easy-to-use command line interface and utilizes an industry standard [OpenAPI interface](rest_api.md). It has features for pre-processing and post-processing inputs and outputs for customized applications. Support for models from a wide range of deep learning frameworks is achieved through its [ONNX model](https://onnx.ai) export feature.
 
 For example, you want to make an app that lets your users snap a picture, and it will tell them what what objects were detected in the scene and predictions on what the objects might be. You can use MMS to serve a prediction endpoint for a object detection and identification model that intakes images, then returns predictions. You can also modify MMS behavior with custom services and run multiple models. There are examples of custom services, pre-processing, post-processing in the [examples](../examples) folder. The object detection example is in [examples/ssd](../examples/ssd/README.md).

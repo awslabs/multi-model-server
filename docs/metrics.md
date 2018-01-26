@@ -49,7 +49,7 @@ There are four arguments for MMS that facilitate logging of the model serving an
 
 ## CloudWatch Metrics
 
-AWS CloudWatch metrics enables a web-based dashboard where engineers can monitor a service status in real time. Engineers can also create triggers to alert when certain thresholds are exceeded, enabling an effective and fast response to issues in production. MMS has implemented the CloudWatch API so that metrics that are collected can be automatically delivered to a CloudWatch dashboard.
+AWS CloudWatch enables a web-based dashboard where engineers can monitor a service status in real time. Engineers can also create triggers to alert when certain thresholds are exceeded, enabling an effective and fast response to issues in production. MMS has implemented the CloudWatch API so that metrics that are collected can be published to CloudWatch.
 
 ![cloudwatch dashboard](images/cw_dash_800.png)
 *Figure 1: Example CloudWatch dashboard with MMS metrics*

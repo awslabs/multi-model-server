@@ -1,6 +1,6 @@
 # Export an ONNX Model
 
- <img style="margin-right: 0.25em;" src="images/onnx_logo_50.png">
+ <img style="margin-right: 0.25em; float: left" src="images/onnx_logo_50.png">
 ONNX model serving with MMS is very simple. You can download a model from the [ONNX Model Zoo](https://github.com/onnx/models) then use `mxnet-model-export` to covert it to a `.model` file.
 
 **Note**: Some ONNX model authors upload their models to the zoo in the `.pb` or `.pb2` format. Just change the extension to `.onnx` before attempting an export.

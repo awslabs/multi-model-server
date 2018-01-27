@@ -1,7 +1,5 @@
 # Exporting from MXNet
 
-[![mxnet](images/mxnet_logo_100.png)](http://mxnet.io)
-
 ## Using Your Own Trained Models and Checkpoints
 
 While all of these features are super exciting you've probably been asking yourself, so how do I create these fabulous MMS model files for my own trained models? We'll provide some MXNet code examples for just this task.

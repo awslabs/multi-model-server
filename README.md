@@ -146,6 +146,3 @@ For production deployments, we recommend using containers, and for this purpose 
 We welcome all contributions!
 
 To file a bug or request a feature, please file a GitHub issue. Pull requests are welcome.
-
-
-[![mxnet](docs/images/mxnet_logo_100.png)](http://mxnet.io) ---  [![onnx](docs/images/onnx_logo_50.png)](http://onnx.ai)

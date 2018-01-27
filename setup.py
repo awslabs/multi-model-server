@@ -24,13 +24,13 @@ pkgs.append('tools')
 
 setup(
     name='mxnet-model-server',
-    version='0.2',
+    version='0.2.0',
     description='Model Server for Apache MXNet is a tool for deploying neural net models for inference',
     url='https://github.com/awslabs/mxnet-model-server',
     keywords='MXNet Model Server Serving Deep Learning Inference AI',
     packages=pkgs,
     install_requires=['mxnet>=1.0', 'Flask', 'Pillow', 'requests', 'flask-cors', 'psutil', 'jsonschema',
-                      'onnx-mxnet>=0.2', 'boto3', 'importlib2', 'fasteners'],
+                      'onnx-mxnet>=0.4.1', 'boto3', 'importlib2', 'fasteners'],
     entry_points={
         'console_scripts': ['mxnet-model-server=mms.mxnet_model_server:start_serving',
                             'mxnet-model-export=mms.export_model:export']

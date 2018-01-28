@@ -116,7 +116,7 @@ class MetricsManager(object):
                                                                              write_to=metrics_write_to)
             MetricsManager.metrics[model_name + '_LatencyOverall'] = Metric('LatencyOverall', mutex,
                                                                             model_name=model_name,
-                                                                            unit=MetricUnit['MB'],
+                                                                            unit=MetricUnit['ms'],
                                                                             aggregate_method='interval_average',
                                                                             write_to=metrics_write_to)
             MetricsManager.metrics[model_name + '_LatencyInference'] = Metric('LatencyInference', mutex,

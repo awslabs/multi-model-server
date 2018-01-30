@@ -26,13 +26,23 @@ A quick overview and examples for both serving and exporting are provided below.
 
 ### Install with pip
 
-Make sure you have Python installed, then run:
+If you plan to use the ONNX features, you will need to have the [protobuf compiler installed](https://github.com/onnx/onnx#installation).
+
+To install MMS with ONNX support, make sure you have Python installed, then for Ubuntu run:
 
 ```bash
+sudo apt-get install protobuf-compiler libprotoc-dev
 pip install mxnet-model-server
 ```
 
-See the [advanced installation](install.md) page for more options and troubleshooting.
+Or for Mac run:
+
+```bash
+conda install -c conda-forge protobuf
+pip install mxnet-model-server
+```
+
+See the [advanced installation](docs/install.md) page for more options and troubleshooting.
 
 
 ### Serve a Model

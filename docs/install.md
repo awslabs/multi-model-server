@@ -1,5 +1,13 @@
 # Installation Options and Troubleshooting
 
+
+## Prerequisites
+
+* **python**: required; MMS works with Python 2 or 3; you may also want to use a Python/Conda environment when installing MMS, so it doesn't conflict with your other MXNet or ONNX installations.
+* **protoc**: optional; if you plan to use the ONNX features, you will need to have the [protobuf compiler installed](https://github.com/onnx/onnx#installation). Install this *before* installing MMS.
+* **curl**: optional; it's used in all of the examples, so install it via your package manager of choice.
+* **unzip**: optional; it's nice to have and to associate with `.model` extensions, so you can easily extract model files and inspect their contents.
+
 ## Install with pip
 
 Make sure you have Python installed, then run:
@@ -13,6 +21,7 @@ If you're upgrading from a previous version of MMS, use the following:
 ```bash
 pip install -U mxnet-model-server
 ```
+
 
 ## Install from Source
 
@@ -32,6 +41,7 @@ Or use the following to upgrade from source:
 pip install -U .
 ```
 
+
 ## Development Installation
 
 If you plan to develop with MMS and change some of the source, then use the `-e` option.
@@ -46,11 +56,6 @@ Or use the following to upgrade from source and make your changes executable:
 pip install -U -e .
 ```
 
-## Prerequisites
-
-* **curl**: it's used in all of the examples, so install it via your package manager of choice
-* **python**: MMS works with Python 2 or 3; you may also want to use environments when installing MMS, so it doesn't conflict with your other MXNet or ONNX installations
-* **unzip**: optional; it's nice to have and to associate with `.model` extensions, so you can easily extract model files and inspect their contents
 
 ## Installation Troubleshooting
 

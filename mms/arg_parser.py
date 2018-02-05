@@ -106,7 +106,7 @@ class ArgParser(object):
                                    help='Service file path to handle custom MMS inference logic. '
                                         'If path is not provided and the input defined in signature.json '
                                         'is application/json, this tool will include the MXNetBaseService in the archive. '
-                                        'Altneratively, if the input defined in signature.json is image/jpeg '
+                                        'Alternatively, if the input defined in signature.json is image/jpeg '
                                         'this tool will include the MXNetVisionService in the archive.')
 
         return parser_export

@@ -8,7 +8,6 @@
 
 ## Other Relevant Documents
 * [Export Overview](export.md)
-* [Export a Model from MXNet](export_from_mxnet.md)
 * [Export an ONNX Model](export_from_onnx.md)
 * [Exported MMS Model File Tour](export_model_file_tour.md)
 

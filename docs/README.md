@@ -9,7 +9,6 @@
   * [Model Zoo](model_zoo.md) - A collection of MMS .model files that you can use with MMS
 * [Exporting Models](export.md) - How to use `mxnet-model-export`
     * [Export Examples](export_examples.md)
-    * [Export a Model Checkpoint from MXNet](export_from_mxnet.md)
     * [Export an ONNX Model](export_from_onnx.md)
     * [Exported MMS Model File Tour](export_model_file_tour.md)
 * [Docker](../docker/README.md) - How to use MMS with Docker and cloud services

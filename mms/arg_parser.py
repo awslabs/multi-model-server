@@ -53,8 +53,8 @@ class ArgParser(object):
         parser.add_argument('--host', help='Host. By default it is localhost.')
 
         parser.add_argument('--gpu', help='ID of GPU device to use for inference. '
-                                          'If your machine has N gpus, this number can be 0 to N - 1. '
-                                          'If it is not set, cpu will be used.')
+                                          'If your machine has N GPUs, this number can be 0 to N - 1. '
+                                          'If it is not set, CPU will be used.')
 
         parser.add_argument('--log-file', help='Log file name. By default it is "mms_app.log" in the current folder.')
 
@@ -76,7 +76,7 @@ class ArgParser(object):
                             choices=['log', 'csv', 'cloudwatch'],
                             help='By default writes to the Log file specified in `--log-file`.'
                                  'If you pass "csv", various metric files in "csv" format are created in '
-                                 'metrics folder in the current directory. '
+                                 'the current directory. '
                                  'If you pass "cloudwatch", metrics will be pushed to AWS CloudWatch Service.')
 
         return parser
@@ -104,7 +104,9 @@ class ArgParser(object):
                                    type=str,
                                    default=None,
                                    help='Service file path to handle custom MMS inference logic. '
-                                        'if not provided, this tool will package MXNetBaseService if input in signature.json is application/json or '
-                                        'MXNetVisionService if input is image/jpeg')
+                                        'If path is not provided and the input defined in signature.json '
+                                        'is application/json, this tool will include the MXNetBaseService in the archive. '
+                                        'Alternatively, if the input defined in signature.json is image/jpeg '
+                                        'this tool will include the MXNetVisionService in the archive.')
 
         return parser_export

@@ -1,67 +1,1 @@
-# Installation Options and Troubleshooting
-
-
-## Prerequisites
-
-* **python**: required; MMS works with Python 2 or 3; you may also want to use a Python/Conda environment when installing MMS, so it doesn't conflict with your other MXNet or ONNX installations.
-* **protoc**: optional; if you plan to use the ONNX features, you will need to have the [protobuf compiler installed](https://github.com/onnx/onnx#installation). Install this *before* installing MMS.
-* **curl**: optional; it's used in all of the examples, so install it via your package manager of choice.
-* **unzip**: optional; it's nice to have and to associate with `.model` extensions, so you can easily extract model files and inspect their contents.
-
-## Install with pip
-
-Make sure you have Python installed, then run:
-
-```bash
-pip install mxnet-model-server
-```
-
-If you're upgrading from a previous version of MMS, use the following:
-
-```bash
-pip install -U mxnet-model-server
-```
-
-
-## Install from Source
-
-Alternatively, you may clone MMS from source:
-
-```bash
-git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server
-```
-
-Then using the following will install from source:
-```bash
-pip install .
-```
-
-Or use the following to upgrade from source:
-```bash
-pip install -U .
-```
-
-
-## Development Installation
-
-If you plan to develop with MMS and change some of the source, then use the `-e` option.
-Then using the following will install from source and make your changes executable:
-
-```bash
-pip install -e .
-```
-
-Or use the following to upgrade from source and make your changes executable:
-```bash
-pip install -U -e .
-```
-
-
-## Installation Troubleshooting
-
-| Issue | Platform | Solution |
-|---|---|---|
-| Could not find "protoc" executable! | Ubuntu: | `sudo apt-get install protobuf-compiler libprotoc-dev` |
-|   | MacOS: | `conda install -c conda-forge protobuf` |
-| Missing [LibGFortran](https://gcc.gnu.org/onlinedocs/gfc-internals/LibGFortran.html) library | Ubuntu: | `apt-get install libgfortran3` |
-|   | Amazon Linux: | `yum install gcc-gfortran` |
+﻿# Install MMS## Prerequisites* **Python**: Required. MMS works with Python 2 or 3.  When installing Model Server for Apache MXNet (MMS), you can use a Python and Conda environment to avoid conflicts with your other Apache MXNet or Open Neural Network Exchange (ONNX) installations.* **protoc**: Optional. If you plan to use ONNX features, you need the [protobuf compiler](https://github.com/onnx/onnx#installation). Install it *before* installing MMS.* **Curl**: Optional. Curl is used in all of the examples, so install it with your preferred package manager.* **Unzip**: Optional. Unzip allows you to easily extract model files and inspect their content. If you choose to use it, associate it with `.model` extensions.## Install MMS with pipTo install MMS for the first time, install Python, then run the following command:```bashpip install mxnet-model-server```To upgrade from a previous version of MMS, run this command:```bashpip install -U mxnet-model-server```## Install MMS from Source CodeIf you prefer, you can clone MMS from source code. Run the following command:```bashgit clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server```To install MMS from source code, run this command:```bashpip install .```To upgrade MMS from source code, run this command:```bashpip install -U .```## Development InstallationIf you plan to develop with MMS and change some of the source code, install it from source code and make your changes executable with  this command:```bashpip install -e .```To upgrade MMS from source code and make your changes executable, run this command:```bashpip install -U -e .```## Troubleshooting Installation | Issue | Platform | Solution ||---|---|---|| Could not find "protoc" executable! | Ubuntu | `sudo apt-get install protobuf-compiler libprotoc-dev` ||   | macOS | `conda install -c conda-forge protobuf` || Missing [LibGFortran](https://gcc.gnu.org/onlinedocs/gfc-internals/LibGFortran.html) library | Ubuntu | `apt-get install libgfortran3` ||   | Amazon Linux | `yum install gcc-gfortran` |

@@ -48,7 +48,7 @@ To upgrade MMS from source code and make changes executable, run:
 
 | Issue | Platform | Solution |
 |---|---|---|
-|Could not find "protoc" executable! | Ubuntu |Run `sudo apt-get install protobuf-compiler libprotoc-dev`. |
+|Could not find "protoc" executable! | Ubuntu |Run `sudo apt-get install protobuf-compiler libprotoc-dev`. |   
 || macOS | Run `conda install -c conda-forge protobuf`.
 |Missing [LibGFortran](https://gcc.gnu.org/onlinedocs/gfc-internals/LibGFortran.html) library| Ubuntu | Run `apt-get install libgfortran3`. |
 || Amazon Linux |Run `yum install gcc-gfortran`. |

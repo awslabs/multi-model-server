@@ -285,7 +285,7 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
         model_path = os.path.expanduser(model_path)
 
     files = os.listdir(model_path)
-
+    temp_files=[]
     onnx_file = find_unique(files, '.onnx')
     symbol_file = find_unique(files, '-symbol.json')
     params_file = find_unique(files, '.params')
@@ -294,27 +294,26 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
     signature_file = validate_signature(model_path)
     service_file = validate_service(model_path, service_file, signature_file)
     if os.path.basename(service_file) not in files:
-        files.append(os.path.basename(service_file))
+        temp_files.append(os.path.basename(service_file))
         shutil.copyfile(service_file, os.path.join(model_path, os.path.basename(service_file)))
     service_file = os.path.basename(service_file)
 
     if onnx_file:
         symbol_file, params_file = convert_onnx_model(model_path, onnx_file)
         files.remove(onnx_file)
-        files.extend([symbol_file, params_file])
+        temp_files.extend([symbol_file, params_file])
 
     manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name)
     with open(os.path.join(model_path, MANIFEST_FILE_NAME), 'w') as m:
         json.dump(manifest, m, indent=4)
-    files.append(MANIFEST_FILE_NAME)
+    temp_files.append(MANIFEST_FILE_NAME)
 
     with zipfile.ZipFile(export_file, 'w') as z:
         for f in files:
             z.write(os.path.join(model_path, f), f)
-    os.remove(service_file)
-    os.remove(MANIFEST_FILE_NAME)
-    os.remove(symbol_file)
-    os.remove(params_file)
+        for f in temp_files:
+            z.write(os.path.join(model_path, f), f)
+            os.remove(os.path.join(model_path,f))
     logger.info('Successfully exported model {} to file {}.'.format(model_name, export_file))
 
 

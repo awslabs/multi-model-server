@@ -311,7 +311,10 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
     with zipfile.ZipFile(export_file, 'w') as z:
         for f in files:
             z.write(os.path.join(model_path, f), f)
-
+    os.remove(service_file)
+    os.remove(MANIFEST_FILE_NAME)
+    os.remove(symbol_file)
+    os.remove(params_file)
     logger.info('Successfully exported model {} to file {}.'.format(model_name, export_file))
 
 

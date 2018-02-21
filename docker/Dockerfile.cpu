@@ -2,7 +2,7 @@ FROM ubuntu:latest
 
 COPY install.sh /
 
-RUN /install.sh
+RUN /install.sh && pip uninstall --yes mxnet && pip install mxnet-mkl
 
 ADD mms_docker_cpu mms_docker_cpu
 

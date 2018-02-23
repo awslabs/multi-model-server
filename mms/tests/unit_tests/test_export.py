@@ -92,11 +92,49 @@ def test_generate_manifest():
         'Model-Format': 'MXNet-Symbolic'
     }
 
+def test_temp_files_cleanup_no_export_path(tmpdir, module_dir):
+    if module_dir.startswith('~'):
+        model_path = os.path.expanduser(module_dir)
+    else:
+        model_path = module_dir
+    initial_user_files = set(os.listdir(model_path))
+    initial_export_files= set(os.listdir(os.getcwd()))
+    export_model('test', module_dir, None, None)
+    export_path='{}/test.model'.format(os.getcwd())
+    assert os.path.exists(export_path), 'no model created - export failed'
+    final_user_files = set(os.listdir(model_path))
+    final_export_files = set(os.listdir(os.getcwd()))
+    
+    user_files_created = final_user_files-initial_user_files
+    user_files_deleted = initial_user_files-final_user_files
+    assert len(user_files_created)==0 , 'temporary files not deleted'
+    assert len(user_files_deleted)==0,'user files deleted'
+    
+    export_files_created= final_export_files- initial_export_files
+    assert len(export_files_created)==1 and list(export_files_created)[0].endswith('.model'), 'something other than the model file got generated'
+    export_files_deleted = initial_export_files- final_export_files
+    assert len(export_files_deleted)==0, 'user files deleted'
+    
+    os.remove(export_path)
+
+def test_temp_files_cleanup_export_path(tmpdir, module_dir):
+    export_path = '{}/test.model'.format(tmpdir)
+    if module_dir.startswith('~'):
+        model_path = os.path.expanduser(module_dir)
+    else:
+        model_path = module_dir
+    initial_files = os.listdir(model_path)
+    export_model('test', module_dir, None, export_path)
+    assert os.path.exists(export_path), 'no model created - export failed'
+    final_files = os.listdir(model_path)
+    files_created = set(final_files)-set(initial_files)
+    assert len(files_created)==0, 'temporary files not deleted'
+    
 
 def test_export_module(tmpdir, module_dir):
     export_path = '{}/test.model'.format(tmpdir)
     export_model('test', module_dir, None, export_path)
-
+    
     assert os.path.exists(export_path), 'no model created - export failed'
     zip_contents = list_zip(export_path)
 

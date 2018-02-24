@@ -98,7 +98,7 @@ class MXNetBaseService(SingleNodeService):
         self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
                                       data_names=data_names, label_names=None)
         self.mx_model.bind(for_training=False, data_shapes=data_shapes)
-        self.mx_model.set_params(arg_params, aux_params, allow_missing=True)
+        self.mx_model.set_params(arg_params, aux_params, allow_missing=True, allow_extra=True)
 
         # Read synset file
         # If synset is not specified, check whether model archive contains synset file.

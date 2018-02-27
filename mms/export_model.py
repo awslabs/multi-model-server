@@ -276,44 +276,47 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
     """
     Internal helper for the exporting model command line interface.
     """
+    temp_files=[]
+    try:
+        if export_file is None:
+            export_file = '{}/{}.model'.format(os.getcwd(), model_name)
+        assert not os.path.exists(export_file), "model file {} already exists.".format(export_file)
 
-    if export_file is None:
-        export_file = '{}/{}.model'.format(os.getcwd(), model_name)
-    assert not os.path.exists(export_file), "model file {} already exists.".format(export_file)
+        if model_path.startswith('~'):
+            model_path = os.path.expanduser(model_path)
 
-    if model_path.startswith('~'):
-        model_path = os.path.expanduser(model_path)
+        files = os.listdir(model_path)
+        onnx_file = find_unique(files, '.onnx')
+        symbol_file = find_unique(files, '-symbol.json')
+        params_file = find_unique(files, '.params')
 
-    files = os.listdir(model_path)
+        validate_model_files(model_path, onnx_file, params_file, symbol_file)
+        signature_file = validate_signature(model_path)
+        service_file = validate_service(model_path, service_file, signature_file)
+        if os.path.basename(service_file) not in files:
+            temp_files.append(os.path.basename(service_file))
+            shutil.copyfile(service_file, os.path.join(model_path, os.path.basename(service_file)))
+        service_file = os.path.basename(service_file)
 
-    onnx_file = find_unique(files, '.onnx')
-    symbol_file = find_unique(files, '-symbol.json')
-    params_file = find_unique(files, '.params')
+        if onnx_file:
+            symbol_file, params_file = convert_onnx_model(model_path, onnx_file)
+            files.remove(onnx_file)
+            temp_files.extend([symbol_file, params_file])
 
-    validate_model_files(model_path, onnx_file, params_file, symbol_file)
-    signature_file = validate_signature(model_path)
-    service_file = validate_service(model_path, service_file, signature_file)
-    if os.path.basename(service_file) not in files:
-        files.append(os.path.basename(service_file))
-        shutil.copyfile(service_file, os.path.join(model_path, os.path.basename(service_file)))
-    service_file = os.path.basename(service_file)
+        manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name)
+        with open(os.path.join(model_path, MANIFEST_FILE_NAME), 'w') as m:
+            json.dump(manifest, m, indent=4)
+        temp_files.append(MANIFEST_FILE_NAME)
 
-    if onnx_file:
-        symbol_file, params_file = convert_onnx_model(model_path, onnx_file)
-        files.remove(onnx_file)
-        files.extend([symbol_file, params_file])
-
-    manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name)
-    with open(os.path.join(model_path, MANIFEST_FILE_NAME), 'w') as m:
-        json.dump(manifest, m, indent=4)
-    files.append(MANIFEST_FILE_NAME)
-
-    with zipfile.ZipFile(export_file, 'w') as z:
-        for f in files:
-            z.write(os.path.join(model_path, f), f)
-
-    logger.info('Successfully exported model {} to file {}.'.format(model_name, export_file))
-
+        with zipfile.ZipFile(export_file, 'w') as z:
+            for f in files + temp_files:
+                z.write(os.path.join(model_path, f), f)
+        logger.info('Successfully exported model {} to file {}.'.format(model_name, export_file))
+   
+    finally:
+        for f in temp_files:
+            os.remove(os.path.join(model_path,f))
+   
 
 def export():
     args = ArgParser.export_parser().parse_args()

@@ -4,6 +4,8 @@ COPY install.sh /
 
 RUN /install.sh && pip uninstall --yes mxnet && pip install mxnet-mkl
 
-ADD mms_docker_cpu mms_docker_cpu
+ADD mms_docker_cpu mxnet-model-server
+
+ENV PATH="/mxnet-model-server:${PATH}"
 
 LABEL maintainer="yuruofei@amazon.com, esterhaz@amazon.com, hag@amazon.com"

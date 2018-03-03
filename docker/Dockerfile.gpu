@@ -6,6 +6,8 @@ RUN /install.sh
 
 RUN pip install mxnet-cu90
 
-ADD mms_docker_gpu mms_docker_gpu
+ADD mms_docker_gpu mxnet-model-server
+
+ENV PATH="/mxnet-model-server:${PATH}"
 
 LABEL maintainer="yuruofei@amazon.com, esterhaz@amazon.com, hag@amazon.com"

@@ -138,7 +138,6 @@ class MMS(object):
             logger.error('Failed to start model serving host: ' + str(e))
             exit(1)
 
-
     def _arg_process(self):
         """Process arguments before starting service or create application.
         """

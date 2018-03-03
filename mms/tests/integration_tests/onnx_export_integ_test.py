@@ -114,7 +114,7 @@ def create_model(tmpdir,URL, onnx_source_model_zoo = True):
         _download_file(tmpdir, "https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg")
         shutil.rmtree(download_dir)
     except Exception as e:
-        logger.error(str(e))
+        print("Failed to create models. {}".format(str(e)))
         raise 
 
 def test_onnx_integ(tmpdir):

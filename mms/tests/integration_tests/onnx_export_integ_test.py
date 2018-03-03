@@ -119,7 +119,7 @@ def create_model(tmpdir,URL, onnx_source_model_zoo = True):
 
 def test_onnx_integ(tmpdir):
     start_test(tmpdir,onnx_mxnet_model_URLs,port='8081', onnx_source_model_zoo= False)
-    start_test(tmpdir,onnx_model_URLs, port = '8082',onnx_source_model_zoo = True)
+    #start_test(tmpdir,onnx_model_URLs, port = '8082',onnx_source_model_zoo = True)
     #cleanup
     cleanup(tmpdir)
 

@@ -167,8 +167,8 @@ class MMS(object):
             
             self.serving_frontend.load_models(models, ModelClassDef, self.gpu)
             
-            if len(self.args.models) > 5:
-                raise Exception('Model number exceeds our system limits: 5')
+            #if len(self.args.models) > 5:
+            #    raise Exception('Model number exceeds our system limits: 5')
             
             # Setup endpoint
             openapi_endpoints = self.serving_frontend.setup_openapi_endpoints(self.host, self.port)

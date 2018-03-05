@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -10,8 +10,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-MMS_DIR='/mxnet-model-server'
-CONFIG_FILE=$MMS_DIR'/mms_app.conf'
 GUNICORN_ARGS='gunicorn'
 MXNET_ARGS='mxnet'
 NGINX_ARGS='nginx'

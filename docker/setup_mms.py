@@ -2,7 +2,7 @@ from mms.model_loader import ModelLoader
 import json
 import sys
 
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -20,10 +20,11 @@ def write_models_to_file(models=None):
     :param models: models metadata (service name, model dir, manifest file ...)
     :return: void
     """
+    mxnet_model_metatadata_file = "/mxnet_model_server/.models"
     if models is None:
         sys.exit(1)
 
-    with (open("/mxnet_model_server/.models", 'w')) as fp:
+    with (open(mxnet_model_metatadata_file, 'w')) as fp:
         json.dump(models, fp)
 
 

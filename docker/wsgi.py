@@ -4,7 +4,7 @@ import json
 import os
 from mms.arg_parser import ArgParser
 
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -16,7 +16,7 @@ from mms.arg_parser import ArgParser
 mms_arg_header = 'MMS Argument'
 args = []
 found_mms_args = 0
-config_file = os.environ['MXNET_MODEL_SERVER_CONFIG']
+mms_config_path = os.environ['MXNET_MODEL_SERVER_CONFIG']
 is_gpu_image = os.environ['GPU_IMAGE']
 
 
@@ -25,19 +25,20 @@ def read_models_from_file():
     This method reads the model's meta-data from a local file. This is used for MMS in
     :return: model's meta-data
     """
-    models = json.load(open("/mxnet_model_server/.models"))
+    mxnet_model_metadata_file = "/mxnet_model_server/.models"
+    models = json.load(open(mxnet_model_metadata_file))
     return models
 
 
 try:
-    f = open(config_file)
+    mms_config_file = open(mms_config_path)
 except IOError as e:
-    sys.exit("ERROR: File %s could not be located" % config_file)
+    sys.exit("ERROR: File %s could not be located" % mms_config_path)
 else:
-    print("INFO: Successfully read config file %s.." % config_file)
-    with f:
+    print("INFO: Successfully read config file %s.." % mms_config_path)
+    with mms_config_file:
         try:
-            content = f.readlines()
+            content = mms_config_file.readlines()
             content = [line.rstrip() for line in content]
 
             for i, line in enumerate(content):

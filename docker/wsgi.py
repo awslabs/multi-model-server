@@ -1,9 +1,3 @@
-from mms import mxnet_model_server
-import sys
-import json
-import os
-from mms.arg_parser import ArgParser
-
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
@@ -13,9 +7,17 @@ from mms.arg_parser import ArgParser
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
+
+from mms import mxnet_model_server
+import sys
+import json
+import os
+from mms.arg_parser import ArgParser
+
 mms_arg_header = 'MMS Argument'
 args = []
 found_mms_args = 0
+
 mms_config_path = os.environ['MXNET_MODEL_SERVER_CONFIG']
 is_gpu_image = os.environ['GPU_IMAGE']
 

@@ -54,36 +54,33 @@ start_mms()
      	then
     	    continue
 	    fi
-	
-	    if [[ "$line" =~ ^\[[A-Za-z\ ] ]] # new header
+	    # If a line starts with '[' treat it as a header
+	    if [[ "$line" =~ ^\[[A-Za-z\ ] ]]
 	    then
-    	    VAR=$line
-	        if [[ ( "$VAR" =~ "$NGINX_ARGS" ) ]] ; then
+    	    HEADER=$line
+	        if [[ ( "$HEADER" =~ "$NGINX_ARGS" ) ]] ; then
 	            rm -f $NGINX_CONFIG_FILE
 	            touch $NGINX_CONFIG_FILE
 	        fi
 	        continue
 	    fi
-	
-	    if [[ "$VAR" =~ "$GUNICORN_ARGS" ]]
+
+	    if [[ "$HEADER" =~ "$GUNICORN_ARGS" ]] # Gunicorn args
 	    then
     	    gunicorn_arguments="${gunicorn_arguments} $line "
-    	elif [[ "$VAR" =~ "$MXNET_ARGS" ]]
+    	elif [[ "$HEADER" =~ "$MXNET_ARGS" ]] # MxNet Engine Args
     	then
     	    export $line
-    	elif [[ "$VAR" =~ "$NGINX_ARGS" ]]
+    	elif [[ "$HEADER" =~ "$NGINX_ARGS" ]] # Nginx Args
     	then
-    	    # Check if nginx config file exists. Else create one.
-    	    if [[ -f $NGINX_CONFIG_FILE ]]
-    	    then
-    	        if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MMS_HOST// } ) ]]
-    	        then
-    	            host_name=$MMS_HOST
-    	            line="server_name $host_name;"
-    	        fi
-    	    fi
+    	    # MMS_HOST gets updated when you run Docker (run/exec) command with the environment variables MMS_HOST=$HOSTNAME
+  	        if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MMS_HOST// } ) ]]
+   	        then
+   	            host_name=$MMS_HOST
+   	            line="server_name $host_name;"
+   	        fi
     		echo "$line" >> $NGINX_CONFIG_FILE
-        elif [[ "$VAR" =~ "$MMS_ARG" ]]
+        elif [[ "$HEADER" =~ "$MMS_ARG" ]] # MMS Args
         then
             if [[ "$line" =~ "--model" ]] ; then
                 models_found=1
@@ -92,7 +89,7 @@ start_mms()
                 models_found=0
             fi
     	else
-    	    echo "ERROR: Invalid config header seen $VAR"
+    	    echo "ERROR: Invalid config header seen $HEADER"
     	    exit 1
     	fi
 
@@ -101,7 +98,9 @@ start_mms()
 
     app_script='wsgi'
     service nginx restart
+    # Download and extract all the models
     python /mxnet_model_server/setup_mms.py $models
+    # If successful run gunicorn
     if [[ `echo $?` == 0 ]] ; then
         gunicorn $gunicorn_arguments --chdir /mxnet_model_server --env MXNET_MODEL_SERVER_CONFIG=$MMS_CONFIG_FILE $app_script
     fi

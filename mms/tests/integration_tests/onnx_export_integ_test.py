@@ -29,15 +29,15 @@ onnx_mxnet_model_URLs = {
 
 ### models from onnx model zoo
 onnx_model_URLs = {
-    'bvlc_alexnet'    : 'https://s3.amazonaws.com/download.onnx/models/bvlc_alexnet.tar.gz',
-    'densenet121'     : 'https://s3.amazonaws.com/download.onnx/models/densenet121.tar.gz',
-    'inception_v1'    : 'https://s3.amazonaws.com/download.onnx/models/inception_v1.tar.gz',
-    'inception_v2'    : 'https://s3.amazonaws.com/download.onnx/models/inception_v2.tar.gz',
-    'resnet50'        : 'https://s3.amazonaws.com/download.onnx/models/resnet50.tar.gz',
-    'shufflenet'      : 'https://s3.amazonaws.com/download.onnx/models/shufflenet.tar.gz',
+    #'bvlc_alexnet'    : 'https://s3.amazonaws.com/download.onnx/models/bvlc_alexnet.tar.gz',
+    #'densenet121'     : 'https://s3.amazonaws.com/download.onnx/models/densenet121.tar.gz',
+    #'inception_v1'    : 'https://s3.amazonaws.com/download.onnx/models/inception_v1.tar.gz',
+    #'inception_v2'    : 'https://s3.amazonaws.com/download.onnx/models/inception_v2.tar.gz',
+    #'resnet50'        : 'https://s3.amazonaws.com/download.onnx/models/resnet50.tar.gz',
+    #'shufflenet'      : 'https://s3.amazonaws.com/download.onnx/models/shufflenet.tar.gz',
     'squeezenet'      : 'https://s3.amazonaws.com/download.onnx/models/squeezenet.tar.gz',
-    'vgg16'           : 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
-    'vgg19'           : 'https://s3.amazonaws.com/download.onnx/models/vgg19.tar.gz'
+    #'vgg16'           : 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
+    #'vgg19'           : 'https://s3.amazonaws.com/download.onnx/models/vgg19.tar.gz'
 }
 
 def _download_file(download_dir, url):
@@ -132,7 +132,7 @@ def start_test(tmpdir, URL, port='8081', onnx_source_model_zoo= False):
     start_test_server_thread = Thread(target=setup_onnx_integ, args=(tmpdir, URL, port))
     start_test_server_thread.daemon = True
     start_test_server_thread.start()
-    time.sleep(20)
+    time.sleep(60)
     for onnx_model in URL.keys():
         output = subprocess.check_output(['curl', '-X', 'POST', 'http://127.0.0.1:'+port+'/'+ onnx_model+ '/predict', '-F',
                                       'input_0=@{}/Cute-kittens-12929201-1600-1200.jpg'.format(tmpdir)])

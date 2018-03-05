@@ -445,7 +445,11 @@ class ServingFrontend(object):
                         assert isinstance(file_data, (str, bytes)), 'Image file buffer should be type str or ' \
                                                                     'bytes, but got %s' % (type(file_data))
                     else:
-                        file_data = base64.decodestring(self.handler.get_form_data(name))
+                        form_data=self.handler.get_form_data(name)
+                        if form_data:
+                            file_data = base64.decodestring(self.handler.get_form_data(name))
+                        else:
+                            raise ValueError('This end point is expecting a data_name of %s. End point details can be found here:http://<host>:<port>/api-description' %name)    
                     input_data.append(file_data)
             except Exception as e:
                 if model_name + '_Prediction4XX' in MetricsManager.metrics:

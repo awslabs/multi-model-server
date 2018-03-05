@@ -95,7 +95,8 @@ def create_model(tmpdir,URL, onnx_source_model_zoo = True):
                 new_path = os.path.join(model_dir, '{}.onnx'.format(onnx_model))
                 os.rename(model_path, new_path)
                 shutil.move(new_path, download_dir)
-                
+                print('model dir is {}'.format(os.listdir(model_dir)))
+                print('download is {}'.format(os.listdir(download_dir)))
             else:
                 _download_file(download_dir, URL[onnx_model])
                 _download_file(download_dir, "https://s3.amazonaws.com/model-server/models/" + onnx_model + "/signature.json")
@@ -105,6 +106,8 @@ def create_model(tmpdir,URL, onnx_source_model_zoo = True):
             print("Exporting the mxnet model server model...")
             subprocess.check_call(['mxnet-model-export', '--model-name', onnx_model, '--model-path', download_dir], cwd=download_dir)
             shutil.move('{}/{}.model'.format(download_dir, onnx_model), tmpdir)
+            print('tmdir is {}'.format(os.listdir(tmpdir)))
+            print('download is {}'.format(os.listdir(download_dir)))
             for root, dirs, files in os.walk(download_dir):
                 for f in files:
                     os.unlink(os.path.join(root, f))

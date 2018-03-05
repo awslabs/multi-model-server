@@ -144,12 +144,19 @@ This will output `squeezenet_v1.1.model` in the current working directory, and i
 
 To learn more about exporting, check out [MMS export documentation](docs/export.md)
 
+## Production Deployments
+
+When launched directly, MMS uses a standalone [Flask](http://flask.pocoo.org/) server.  This is handy for testing and development.
+But for production deployments, we recommend using [Gunicorn](http://gunicorn.org/) which should provide lower latency, higher throughput, and more efficient
+use of memory.
+
+This project includes Dockerfiles to build containers recommended for production deployments.  These containers demonstrate how to set up a production
+stack consisting of nginx, gunicorn, and MMS.
+The basic usage can be found on the [Docker readme](docker/README.md).
 
 ## Other Features
 
 Browse over to the [Docs readme](docs/README.md) for the full index of documentation. This includes more examples, how to customize the API service, API endpoint details, and more.
-
-For production deployments, we recommend using containers, and for this purpose we include pre-configured docker images for you to use. The basic usage can be found on the [Docker readme](docker/README.md).
 
 ## Contributing
 

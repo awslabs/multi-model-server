@@ -17,7 +17,7 @@ apt-get install -y \
     libprotoc-dev \
     python-certbot-nginx \
     curl \
-    emacs \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 cd /tmp && curl -O https://bootstrap.pypa.io/get-pip.py && python get-pip.py

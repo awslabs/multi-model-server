@@ -16,10 +16,11 @@ class StoreDictKeyPair(argparse.Action):
     """
     def __call__(self, parser, namespace, values, option_string=None):
         try:
-          setattr(namespace, 'models', {kv.split('=', 1)[0]: kv.split('=', 1)[1] for kv in values})
+            setattr(namespace, 'models', {kv.split('=', 1)[0]: kv.split('=', 1)[1] for kv in values})
         except Exception:
           raise Exception('Failed to parse <model=path>: ' + str(values) +
                           ' Format should be <model-name>=<model-path> (Local file path, URL, S3).')
+
 
 class ArgParser(object):
     """Argument parser for mxnet-model-server and mxnet-model-export commands
@@ -110,3 +111,8 @@ class ArgParser(object):
                                         'this tool will include the MXNetVisionService in the archive.')
 
         return parser_export
+
+    @staticmethod
+    def extract_args(args=None):
+        parser = ArgParser.mms_parser()
+        return parser.parse_args(args) if args else parser.parse_args()

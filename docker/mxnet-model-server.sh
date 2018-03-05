@@ -17,6 +17,7 @@ MXNET_ARGS='mxnet'
 NGINX_ARGS='nginx'
 MMS_ARG='mms'
 NGINX_CONFIG_FILE='/etc/nginx/conf.d/virtual.conf'
+MMS_CONFIG_FILE=''
 
 # Start MxNet model server. This function expects one argument which is the application config file.
 start_mms() 
@@ -27,17 +28,21 @@ start_mms()
     # This function expects one argument.
     if [[ "$#" != 1 ]]
     then
-        echo "Wrong arguments given ($#) \"$@\""
-        exit 100
+        echo "ERROR: Wrong arguments given ($#) \"$@\""
+        exit 1
     fi
 
     MMS_CONFIG_FILE=$1
+    models=""
+    models_found=0
+
+    echo "INFO: Reading file $MMS_CONFIG_FILE"
 
     # if the MMS CONFIG FILE is an empty string or if the file doesn't exist, throw error and exit
     if [[ ( -z "${MMS_CONFIG_FILE##*( )}" ) || ( ! -f "$MMS_CONFIG_FILE" ) ]]
     then
-        echo "No configuration file given... $MMS_CONFIG_FILE"
-        exit 100
+        echo "ERROR: No configuration file given... $MMS_CONFIG_FILE"
+        exit 1
     fi
 
     while read -r line || [ -n "$line" ]
@@ -54,9 +59,9 @@ start_mms()
 	    then
     	    VAR=$line
 	        if [[ ( "$VAR" =~ "$NGINX_ARGS" ) ]] ; then
-                rm -f $NGINX_CONFIG_FILE
-                touch $NGINX_CONFIG_FILE
-            fi
+	            rm -f $NGINX_CONFIG_FILE
+	            touch $NGINX_CONFIG_FILE
+	        fi
 	        continue
 	    fi
 	
@@ -80,10 +85,15 @@ start_mms()
     		echo "$line" >> $NGINX_CONFIG_FILE
         elif [[ "$VAR" =~ "$MMS_ARG" ]]
         then
-            continue
+            if [[ "$line" =~ "--model" ]] ; then
+                models_found=1
+            elif [[ $models_found == 1 ]] ; then
+                models=$line
+                models_found=0
+            fi
     	else
-    	    echo "Invalid config header seen $VAR"
-    	    exit 100
+    	    echo "ERROR: Invalid config header seen $VAR"
+    	    exit 1
     	fi
 
     done < "$MMS_CONFIG_FILE"
@@ -91,8 +101,13 @@ start_mms()
 
     app_script='wsgi'
     service nginx restart
-    export gpu_id=0
-    gunicorn $gunicorn_arguments --chdir /mxnet-model-server --env MXNET_MODEL_SERVER_CONFIG=$MMS_CONFIG_FILE $app_script
+    python /mxnet_model_server/setup_mms.py $models
+    if [[ `echo $?` == 0 ]] ; then
+        gunicorn $gunicorn_arguments --chdir /mxnet_model_server --env MXNET_MODEL_SERVER_CONFIG=$MMS_CONFIG_FILE $app_script
+    fi
+
+    rm -f /mxnet_model_server/.models
+    echo "INFO: Ending the program"
 }
 
 stop_mms() {
@@ -141,7 +156,7 @@ main() {
         "none" | "*")
              echo "Invalid options given"
              usage_help
-             exit 100;;
+             exit 1;;
     esac
 
     shopt -u nocasematch

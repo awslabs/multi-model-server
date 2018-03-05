@@ -2,10 +2,10 @@ FROM ubuntu:latest
 
 COPY install.sh /
 
-RUN /install.sh && pip uninstall --yes mxnet && pip install mxnet-mkl
+RUN /install.sh && pip uninstall --yes mxnet && pip install mxnet-mkl && mkdir /mxnet_model_server
 
-ADD mms_docker_cpu mxnet-model-server
+COPY wsgi.py setup_mms.py mxnet-model-server.sh /mxnet_model_server/
 
-ENV PATH="/mxnet-model-server:${PATH}"
+ENV PATH="/mxnet_model_server:${PATH}" GPU_IMAGE=0
 
 LABEL maintainer="yuruofei@amazon.com, esterhaz@amazon.com, hag@amazon.com"

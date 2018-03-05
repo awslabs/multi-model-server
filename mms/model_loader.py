@@ -29,7 +29,7 @@ MANIFEST_SCHEMA_FILE = 'manifest-schema.json'
 MANIFEST_FILENAME = 'MANIFEST.json'
 LOCK_FILE = '/tmp/tmp_lock_file'
 
-@fasteners.interprocess_locked(LOCK_FILE)
+
 def _download_and_extract(model_location, path=None, overwrite=False):
     """Download an given URL
 
@@ -88,6 +88,7 @@ def _download_and_extract(model_location, path=None, overwrite=False):
                             % (model_file, model_file_prefix , e))
     return model_dir
 
+
 def _extract_zip(zip_file, destination):
     '''Extract zip to destination without keeping directory structure
 
@@ -111,6 +112,7 @@ def _extract_zip(zip_file, destination):
             with source, target:
                 shutil.copyfileobj(source, target)
 
+
 def _extract_model(service_name, path):
     if path.endswith('.onnx') or path.endswith('.pb2'):
         raise ValueError('Convert ONNX model using mxnet-model-export before serving.')
@@ -118,7 +120,7 @@ def _extract_model(service_name, path):
     model_dir = _download_and_extract(model_location=path, overwrite=True)
         
     try:
-        #manifest schema
+        # manifest schema
         import mms
         mms_pkg_loc = os.path.split(mms.__file__)[0]
         manifest_schema_file = os.path.join(mms_pkg_loc, MANIFEST_DIR, MANIFEST_SCHEMA_FILE)
@@ -148,6 +150,7 @@ def _extract_model(service_name, path):
     model_name = manifest['Model']['Model-Name']
             
     return service_name, model_name, model_dir, manifest
+
 
 class ModelLoader(object):
     """Model Loader

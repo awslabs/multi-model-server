@@ -59,7 +59,7 @@ def _download_file(download_dir, url):
 
 def cleanup(tmpdir):
     print("Deleting all downloaded resources for SSD MXNet Model Server Integration Test")
-    shutil.rmtree(tmpdir)
+    shutil.rmtree(str(tmpdir))
 
 
 def setup_onnx_integ(tmpdir, URL,port):
@@ -121,7 +121,7 @@ def test_onnx_integ(tmpdir):
     start_test(tmpdir,onnx_mxnet_model_URLs,port='8081', onnx_source_model_zoo= False)
     #start_test(tmpdir,onnx_model_URLs, port = '8082',onnx_source_model_zoo = True)
     #cleanup
-    cleanup(tmpdir)
+    cleanup(str(tmpdir))
 
 def start_test(tmpdir, URL, port='8081', onnx_source_model_zoo= False):
     tmpdir = str(tmpdir)

@@ -22,12 +22,9 @@ def write_models_to_file(models=None):
     """
     if models is None:
         sys.exit(1)
-    try:
-        with (open("/mxnet_model_server/.models", 'w')) as fp:
-            json.dump(models, fp)
-    except Exception as e:
-        print("ERROR: {}".format(e))
-        raise e
+
+    with (open("/mxnet_model_server/.models", 'w')) as fp:
+        json.dump(models, fp)
 
 
 def main():

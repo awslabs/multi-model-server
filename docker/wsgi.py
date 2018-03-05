@@ -13,6 +13,11 @@ from mms.arg_parser import ArgParser
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
+mms_arg_header = 'MMS Argument'
+args = []
+found_mms_args = 0
+config_file = os.environ['MXNET_MODEL_SERVER_CONFIG']
+is_gpu_image = os.environ['GPU_IMAGE']
 
 
 def read_models_from_file():
@@ -23,12 +28,6 @@ def read_models_from_file():
     models = json.load(open("/mxnet_model_server/.models"))
     return models
 
-
-mms_arg_header = 'MMS Argument'
-args = []
-found_mms_args = 0
-config_file = os.environ['MXNET_MODEL_SERVER_CONFIG']
-is_gpu_image = os.environ['GPU_IMAGE']
 
 try:
     f = open(config_file)
@@ -43,10 +42,10 @@ else:
 
             for i, line in enumerate(content):
                 line = line.lstrip()
-                if line.startswith('['):
-                    found_mms_args = 1 if mms_arg_header.lower() in line.lower() else 0
                 if line.startswith('#') or line.startswith('$'):
                     continue
+                if line.startswith('['):
+                    found_mms_args = 1 if mms_arg_header.lower() in line.lower() else 0
                 if found_mms_args is 1:
                     if line.startswith('--') and content[i+1] != 'optional':
                         args.append(line)

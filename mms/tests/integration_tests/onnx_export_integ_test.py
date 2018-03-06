@@ -36,7 +36,7 @@ onnx_model_URLs = {
     #'resnet50'        : 'https://s3.amazonaws.com/download.onnx/models/resnet50.tar.gz',
     #'shufflenet'      : 'https://s3.amazonaws.com/download.onnx/models/shufflenet.tar.gz',
     #'squeezenet'      : 'https://s3.amazonaws.com/download.onnx/models/squeezenet.tar.gz',
-    #'vgg16'           : 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
+    'vgg16'           : 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
     'vgg19'           : 'https://s3.amazonaws.com/download.onnx/models/vgg19.tar.gz'
 }
 

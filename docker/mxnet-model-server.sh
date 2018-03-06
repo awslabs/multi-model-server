@@ -49,28 +49,28 @@ start_mms()
 	    shopt -s nocasematch
 	    # Comments and empty lines should be ignored . # and $ are comment starters.
 	    if [[ ( -z "$line" ) || ( "$line" =~ ^\# ) || ( "$line" =~ ^\$ ) ]]
-     	then
-    	    continue
+     	    then
+    		continue
 	    fi
 	    # If a line starts with '[' treat it as a header
 	    if [[ "$line" =~ ^\[[A-Za-z\ ] ]]
 	    then
-    	    HEADER=$line
+    		HEADER=$line
 	        if [[ ( "$HEADER" =~ "$NGINX_ARGS" ) ]] ; then
 	            rm -f $NGINX_CONFIG_FILE
 	            touch $NGINX_CONFIG_FILE
 	        fi
 	        continue
 	    fi
-
+	    
 	    if [[ "$HEADER" =~ "$GUNICORN_ARGS" ]] # Gunicorn args
 	    then
-    	    gunicorn_arguments="${gunicorn_arguments} $line "
-    	elif [[ "$HEADER" =~ "$MXNET_ARGS" ]] # MxNet Engine Args
-    	then
-    	    export $line
-    	elif [[ "$HEADER" =~ "$NGINX_ARGS" ]] # Nginx Args
-    	then
+    		gunicorn_arguments="${gunicorn_arguments} $line "
+    	    elif [[ "$HEADER" =~ "$MXNET_ARGS" ]] # MxNet Engine Args
+    	    then
+    		export $line
+    	    elif [[ "$HEADER" =~ "$NGINX_ARGS" ]] # Nginx Args
+    	    then
     	    # MMS_HOST gets updated when you run Docker (run/exec) command with the environment variables MMS_HOST=$HOSTNAME
   	        if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MMS_HOST// } ) ]]
    	        then
@@ -78,22 +78,22 @@ start_mms()
    	            line="server_name $host_name;"
    	        fi
     		echo "$line" >> $NGINX_CONFIG_FILE
-        elif [[ "$HEADER" =~ "$MMS_ARG" ]] # MMS Args
-        then
-            if [[ "$line" =~ "--model" ]] ; then
-                models_found=1
-            elif [[ $models_found == 1 ]] ; then
-                models=$line
-                models_found=0
-            fi
-    	else
-    	    echo "ERROR: Invalid config header seen $HEADER"
-    	    exit 1
-    	fi
-
+            elif [[ "$HEADER" =~ "$MMS_ARG" ]] # MMS Args
+            then
+		if [[ "$line" =~ "--model" ]] ; then
+                    models_found=1
+		elif [[ $models_found == 1 ]] ; then
+                    models=$line
+                    models_found=0
+		fi
+    	    else
+    		echo "ERROR: Invalid config header seen $HEADER"
+    		exit 1
+    	    fi
+	    
     done < "$MMS_CONFIG_FILE"
     shopt -u nocasematch
-
+    
     app_script='wsgi'
     service nginx restart
     # Download and extract all the models
@@ -102,7 +102,7 @@ start_mms()
     if [[ `echo $?` == 0 ]] ; then
         gunicorn $gunicorn_arguments --chdir /mxnet_model_server --env MXNET_MODEL_SERVER_CONFIG=$MMS_CONFIG_FILE $app_script
     fi
-
+    
     rm -f /mxnet_model_server/.models
     echo "INFO: Ending the program"
 }
@@ -135,27 +135,27 @@ usage_help() {
 main() {
     option='none'
     mms_config_file='default'
-
+    
     shopt -s nocasematch
     while true ; do
         case "$1" in
-    	"start" | "stop" | "help" | "restart" ) option=$1 ; shift ;;
+    	    "start" | "stop" | "help" | "restart" ) option=$1 ; shift ;;
 	    "--mms-config" )  mms_config_file=$2 ; shift 2 ;;
 	    * ) break ;;
         esac
     done
-
+    
     case "$option" in
         "start" ) start_mms $mms_config_file ;;
         "stop" ) stop_mms ;;
         "restart" ) stop_mms && sleep 5 && start_mms $mms_config_file ;;
         "help" ) usage_help ;;
         "none" | "*")
-             echo "Invalid options given"
-             usage_help
-             exit 1;;
+            echo "Invalid options given"
+            usage_help
+            exit 1;;
     esac
-
+    
     shopt -u nocasematch
 }
 

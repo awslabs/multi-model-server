@@ -29,7 +29,7 @@ onnx_mxnet_model_URLs = {
 
 ### models from onnx model zoo
 onnx_model_URLs = {
-     'bvlc_alexnet'    : 'https://s3.amazonaws.com/download.onnx/models/bvlc_alexnet.tar.gz',
+    # 'bvlc_alexnet'    : 'https://s3.amazonaws.com/download.onnx/models/bvlc_alexnet.tar.gz',
     'densenet121'     : 'https://s3.amazonaws.com/download.onnx/models/densenet121.tar.gz',
     'inception_v1'    : 'https://s3.amazonaws.com/download.onnx/models/inception_v1.tar.gz',
     'inception_v2'    : 'https://s3.amazonaws.com/download.onnx/models/inception_v2.tar.gz',
@@ -37,7 +37,7 @@ onnx_model_URLs = {
     'shufflenet'      : 'https://s3.amazonaws.com/download.onnx/models/shufflenet.tar.gz',
     'squeezenet'      : 'https://s3.amazonaws.com/download.onnx/models/squeezenet.tar.gz',
     'vgg16'           : 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
-    'vgg19'           : 'https://s3.amazonaws.com/download.onnx/models/vgg19.tar.gz'
+    #'vgg19'           : 'https://s3.amazonaws.com/download.onnx/models/vgg19.tar.gz'
 }
 
 def _download_file(download_dir, url):
@@ -121,7 +121,7 @@ def create_model(tmpdir,URL, onnx_source_model_zoo = True):
         raise 
 
 def test_onnx_integ(tmpdir):
-    #start_test(tmpdir,onnx_mxnet_model_URLs,port='8081', onnx_source_model_zoo= False)
+    start_test(tmpdir,onnx_mxnet_model_URLs,port='8081', onnx_source_model_zoo= False)
     start_test(tmpdir,onnx_model_URLs, port = '8082',onnx_source_model_zoo = True)
     #cleanup
     cleanup(str(tmpdir))

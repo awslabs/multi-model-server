@@ -36,8 +36,8 @@ onnx_model_URLs = {
     'resnet50'        : 'https://s3.amazonaws.com/download.onnx/models/resnet50.tar.gz',
     'shufflenet'      : 'https://s3.amazonaws.com/download.onnx/models/shufflenet.tar.gz',
     'squeezenet'      : 'https://s3.amazonaws.com/download.onnx/models/squeezenet.tar.gz',
-    #'vgg16'           : 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
-    #'vgg19'           : 'https://s3.amazonaws.com/download.onnx/models/vgg19.tar.gz'
+    'vgg16'           : 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
+    'vgg19'           : 'https://s3.amazonaws.com/download.onnx/models/vgg19.tar.gz'
 }
 
 def _download_file(download_dir, url):
@@ -121,7 +121,7 @@ def create_model(tmpdir,URL, onnx_source_model_zoo = True):
         raise 
 
 def test_onnx_integ(tmpdir):
-    start_test(tmpdir,onnx_mxnet_model_URLs,port='8081', onnx_source_model_zoo= False)
+    #start_test(tmpdir,onnx_mxnet_model_URLs,port='8081', onnx_source_model_zoo= False)
     start_test(tmpdir,onnx_model_URLs, port = '8082',onnx_source_model_zoo = True)
     #cleanup
     cleanup(str(tmpdir))

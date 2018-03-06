@@ -21,7 +21,7 @@ MMS_CONFIG_FILE=''
 start_mms() 
 {
     gunicorn_arguments=''
-    # TODO: Check if this process is already running . If yes ignore start and throw warning.
+    # TODO (#337): Check if this process is already running . If yes ignore start and throw warning.
 
     # This function expects one argument.
     if [[ "$#" != 1 ]]

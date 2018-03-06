@@ -71,10 +71,11 @@ start_mms()
     		export $line
     	    elif [[ "$HEADER" =~ "$NGINX_ARGS" ]] # Nginx Args
     	    then
-    	    # MMS_HOST gets updated when you run Docker (run/exec) command with the environment variables MMS_HOST=$HOSTNAME
-  	        if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MMS_HOST// } ) ]]
+    	    # MXNET_MODEL_SERVER_HOST gets updated when you run Docker (run/exec) command with the environment
+    	    #    variables MXNET_MODEL_SERVER_HOST=$HOSTNAME
+  	        if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MXNET_MODEL_SERVER// } ) ]]
    	        then
-   	            host_name=$MMS_HOST
+   	            host_name=$MXNET_MODEL_SERVER_HOST
    	            line="server_name $host_name;"
    	        fi
     		echo "$line" >> $NGINX_CONFIG_FILE
@@ -125,7 +126,7 @@ usage_help() {
     echo "To start the MxNet model server, run"
     echo "$0 start --mms-config <path-to-config-file>"
     echo ""
-    echo "To stop the running instnce of MxNet model server, run"
+    echo "To stop the running instance of MxNet model server, run"
     echo "$0 stop"
     echo ""
     echo "To restart the running instance of MxNet model server, run"

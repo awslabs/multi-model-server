@@ -40,8 +40,8 @@ git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-se
 
 We can optionally update the **nginx** section of the `mms_app_*.conf` file for your target environment. If you're going to run the Docker image locally you can leave this alone and skip to the **Build Step**. If you want to run it on a publicly accessible IP or DNS name then continue with this setup step.
 
-* For CPU builds, use [mms_app_cpu.conf](docker/mms_app_cpu.conf) and [Dockerfile.cpu](docker/Dockerfile.cpu).
-* For GPU builds, use [mms_app_gpu.conf](docker/mms_app_gpu.conf) and [Dockerfile.gpu](docker/Dockerfile.cpu).
+* For CPU builds, use [mms_app_cpu.conf](mms_app_cpu.conf) and [Dockerfile.cpu](Dockerfile.cpu).
+* For GPU builds, use [mms_app_gpu.conf](mms_app_gpu.conf) and [Dockerfile.gpu](Dockerfile.gpu).
 
 Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker image. (Server Name can be updated at run-time. 
 This option is mentioned in steps to run.)
@@ -94,16 +94,11 @@ docker build -f Dockerfile.gpu -t mms_image_gpu .
 ```
 
 ## Preparing `models` and `mms_app.conf` files for running the Model Server
-Create a `models` directory on the host machine and add the models to be used along with the mms_app_[cpu/gpu].conf file into the directory. Modify the `mms_app[cpu/gpu].conf` file to reflect the model files to be used along with updated options for other `gunicorn`, `nginx` and `MMS` configurations.
+Create a `models` directory on the host machine and add the models to be used along with the mms_app_[cpu|gpu].conf file into the directory. Modify the `mms_app[cpu/gpu].conf` file to reflect the model files to be used along with updated options for other `gunicorn`, `nginx` and `MMS` configurations.
  ```bash
- $ mkdir models
  # Modify the mms_app_cpu.conf or mms_app_gpu.conf and add it to this folder
- $ cd models
- $ pwd
-/home/user/models
- $ cp ~/mxnet-model-server/docker/mms_app_cpu.conf .
- $ ls
- mms_app_cpu.conf
+ $ mkdir models
+ $ cp ~/mxnet-model-server/docker/mms_app_cpu.conf models/
  ```
 ## Running the MMS Docker
 
@@ -114,22 +109,23 @@ You may also want to modify the `-p 80:80` to utilize other ports instead. Refer
 **Note**: if you're using the GPU Docker, skip ahead to the next section.
 
 ```bash
-$ docker run -i -t -d -p 80:80 --name mms -v /home/user/models:/models mms_image:latest
-# This runs the docker image in a detached mode
+# Run the docker image in a detached mode
+$ docker run -itd -p 80:80 --name mms -v /home/user/models:/models mms_image:latest
 ```
 
 To run the MMS with $HOSTNAME as its endpoint, or for `nginx's server_name` to be configured to `$HOSTNAME` run the following command.
 ```bash
-$ echo $HOSTNAME
-user.ant.amazon.com
-
-$ docker run -i -t -d -p 80:80 --name mms -v /home/user/models:/models -e MMS_HOST=$HOSTNAME mms_image:latest
+# Start docker with nginx's server_name configured to $HOSTNAME
+$ docker run -itd -p 80:80 --name mms -v /home/user/models:/models -e MXNET_MODEL_SERVER_HOST=$HOSTNAME mms_image:latest
 ```
 The above command lets you run inference with `$HOSTNAME` as 'server_name'.  
    
 Verify that this image is running by running 
 ```bash
 $ docker ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS                NAMES
+a6141053ef51        mms_cpu             "/bin/bash"         15 minutes ago      Up 15 minutes       0.0.0.0:80->80/tcp   mms
+$
 ```
 You should see that the image is running.
 
@@ -149,28 +145,30 @@ help         : Usage help for /mxnet_model_server/mxnet-model-server.sh
 To start the MxNet model server, run
 /mxnet_model_server/mxnet-model-server.sh start --mms-config <path-to-config-file\>
 
-To stop the running instnce of MxNet model server, run
+To stop the running instance of MxNet model server, run
 /mxnet_model_server/mxnet-model-server.sh stop
 
 To restart the running instance of MxNet model server, run
 /mxnet_model_server/mxnet-model-server.sh restart --mms-config <path-to-config-file\>
-```
-```bash
-# To start the MMS run the following
-$ docker exec mms bash -c "mxnet-model-server.sh start --mms-config /models/mms-app-cpu.conf"
 ```
 
 Verify that the docker image is still running by running 
 ```bash
 $ docker ps -a
 ```
+
+```bash
+# To start the MMS run the following
+$ docker exec mms bash -c "mxnet-model-server.sh start --mms-config /models/mms_app_cpu.conf"
+```
+
 This will setup the MMS endpoint, gunicorn wsgi entry point, and nginx proxy_pass. 
 At this point you should be able to run inference on `localhost` port `80`
 
 ### Running the MMS GPU Docker
 
 ```bash
-$ nvidia-docker run -i -t -d -p 80:80 --name mms -v /home/user/models/:/models mms_image_gpu:latest
+$ nvidia-docker run -itd -p 80:80 --name mms -v /home/user/models/:/models mms_image_gpu:latest
 ```
 
 To configure the nginx hostname to the $HOSTNAME, run the following command
@@ -179,9 +177,8 @@ $ echo $HOSTNAME
 user.ant.amazon.com
 ```
 ```bash
-$ nvidia-docker run -t -i -d -p 80:80 --name mms -v /home/user/models:/models -e MMS_HOST=$HOSTNAME mms_image_gpu:latest
-
 # To run inference, use the $HOSTNAME instead of 'localhost' or '127.0.0.1' to ping. This Hostname can be the public DNS/IP. 
+$ nvidia-docker run -itd -p 80:80 --name mms -v /home/user/models:/models -e MXNET_MODEL_SERVER_HOST=$HOSTNAME mms_image_gpu:latest
 ```
 
 N
@@ -190,7 +187,7 @@ This command starts the docker instance in a detached mode and mounts `/home/use
 Considering that you modified and copied `mms_app_gpu.conf` file into the models directory, before you ran the above `nvidia-docker` command, you would have this configuration file ready to use in the docker instance.
 
 ```bash
-$ nvidia-docker exec mms bash -c "mxnet-model-server.sh start --mms-config /models/mms-app-gpu.conf"
+$ nvidia-docker exec mms bash -c "mxnet-model-server.sh start --mms-config /models/mms_app_gpu.conf"
 ```
 You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance.
 
@@ -295,13 +292,13 @@ server {
 Now we can try both https://your_public_host_name:8080/ping or http://your_public_host_name:8081/ping to test the service.
 
 ```bash
-curl -X GET https://your_public_host_name:8080/ping
+curl -X GET https://your_public_host_name:80/ping
 ```
 
 or
 
 ```bash
-curl -X GET http://your_public_host_name:8081/ping
+curl -X GET http://your_public_host_name:80/ping
 ```
 
 ## Stopping the current MMS instance

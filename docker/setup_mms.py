@@ -24,6 +24,7 @@ def write_models_to_file(models=None):
     if models is None:
         sys.exit(1)
 
+    print("INFO: Writing models metatdata...")
     with (open(mxnet_model_metatadata_file, 'w')) as fp:
         json.dump(models, fp)
 
@@ -36,8 +37,9 @@ def main():
 
     model_list = []
     models = ' '
-
     models = models.join(sys.argv[1:])
+
+    print("INFO: Getting model files {}\n".format(models))
     model_list += models.split(' ')
     models_dict = ModelLoader.load(dict(s.split('=') for s in model_list))
     write_models_to_file(models_dict)

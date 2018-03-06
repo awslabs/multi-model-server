@@ -27,7 +27,6 @@ URL_PREFIX = ('http://', 'https://', 's3://')
 MANIFEST_DIR = "manifest_schema"
 MANIFEST_SCHEMA_FILE = 'manifest-schema.json'
 MANIFEST_FILENAME = 'MANIFEST.json'
-LOCK_FILE = '/tmp/tmp_lock_file'
 
 
 def _download_and_extract(model_location, path=None, overwrite=False):

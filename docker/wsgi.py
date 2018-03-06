@@ -19,13 +19,13 @@ args = []
 found_mms_args = 0
 
 mms_config_path = os.environ['MXNET_MODEL_SERVER_CONFIG']
-is_gpu_image = os.environ['GPU_IMAGE']
+is_gpu_image = os.environ['MXNET_MODEL_SERVER_GPU_IMAGE']
 
 
 def read_models_from_file():
     """
-    This method reads the model's meta-data from a local file. This is used for MMS in
-    :return: model's meta-data
+    This method reads the models meta-data from a local file. This is used for MMS in
+    :return: models meta-data
     """
     mxnet_model_metadata_file = "/mxnet_model_server/.models"
     models = json.load(open(mxnet_model_metadata_file))

@@ -20,23 +20,23 @@ from mms import mxnet_model_server
 
 ### models from onnx-mxnet model zoo
 onnx_mxnet_model_URLs = {
-    'onnx-alexnet'    : 'https://s3.amazonaws.com/model-server/models/onnx-alexnet/alexnet.onnx',
+    #'onnx-alexnet'    : 'https://s3.amazonaws.com/model-server/models/onnx-alexnet/alexnet.onnx',
     'onnx-squeezenet' : 'https://s3.amazonaws.com/model-server/models/onnx-squeezenet/squeezenet.onnx',
     'onnx-inception_v1' : 'https://s3.amazonaws.com/model-server/models/onnx-inception_v1/inception_v1.onnx',
-    'onnx-vgg19' : 'https://s3.amazonaws.com/model-server/models/onnx-vgg19/vgg19.onnx'
+    #'onnx-vgg19' : 'https://s3.amazonaws.com/model-server/models/onnx-vgg19/vgg19.onnx'
 }
 
 
 ### models from onnx model zoo
 onnx_model_URLs = {
-     'bvlc_alexnet'    : 'https://s3.amazonaws.com/download.onnx/models/bvlc_alexnet.tar.gz',
+     #'bvlc_alexnet'    : 'https://s3.amazonaws.com/download.onnx/models/bvlc_alexnet.tar.gz',
     'densenet121'     : 'https://s3.amazonaws.com/download.onnx/models/densenet121.tar.gz',
     'inception_v1'    : 'https://s3.amazonaws.com/download.onnx/models/inception_v1.tar.gz',
     'inception_v2'    : 'https://s3.amazonaws.com/download.onnx/models/inception_v2.tar.gz',
     'resnet50'        : 'https://s3.amazonaws.com/download.onnx/models/resnet50.tar.gz',
     'shufflenet'      : 'https://s3.amazonaws.com/download.onnx/models/shufflenet.tar.gz',
     'squeezenet'      : 'https://s3.amazonaws.com/download.onnx/models/squeezenet.tar.gz',
-    'vgg16'           : 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
+    #'vgg16'           : 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
     #'vgg19'           : 'https://s3.amazonaws.com/download.onnx/models/vgg19.tar.gz'
 }
 

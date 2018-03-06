@@ -21,7 +21,7 @@ MMS_CONFIG_FILE=''
 start_mms() 
 {
     gunicorn_arguments=''
-    # TODO (#337): Check if this process is already running . If yes ignore start and throw warning.
+    # TODO issue:https://github.com/awslabs/mxnet-model-server/issues/337. Check if MMS is already running.
 
     # This function expects one argument.
     if [[ "$#" != 1 ]]

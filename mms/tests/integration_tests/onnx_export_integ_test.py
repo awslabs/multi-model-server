@@ -132,7 +132,7 @@ def start_test(tmpdir, URL, port='8081', onnx_source_model_zoo= False):
     start_test_server_thread = Thread(target=setup_onnx_integ, args=(tmpdir, URL, port))
     start_test_server_thread.daemon = True
     start_test_server_thread.start()
-    time.sleep(90)
+    time.sleep(180)
     for onnx_model in URL.keys():
         output = subprocess.check_output(['curl', '-X', 'POST', 'http://127.0.0.1:'+port+'/'+ onnx_model+ '/predict', '-F',
                                       'input_0=@{}/Cute-kittens-12929201-1600-1200.jpg'.format(tmpdir)])

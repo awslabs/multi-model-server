@@ -173,15 +173,9 @@ $ nvidia-docker run -itd -p 80:80 --name mms -v /home/user/models/:/models mms_i
 
 To configure the nginx hostname to the $HOSTNAME, run the following command
 ```bash
-$ echo $HOSTNAME
-user.ant.amazon.com
-```
-```bash
 # To run inference, use the $HOSTNAME instead of 'localhost' or '127.0.0.1' to ping. This Hostname can be the public DNS/IP. 
 $ nvidia-docker run -itd -p 80:80 --name mms -v /home/user/models:/models -e MXNET_MODEL_SERVER_HOST=$HOSTNAME mms_image_gpu:latest
 ```
-
-N
 
 This command starts the docker instance in a detached mode and mounts `/home/user/models` of the host system into `/models` directory inside the Docker instance. 
 Considering that you modified and copied `mms_app_gpu.conf` file into the models directory, before you ran the above `nvidia-docker` command, you would have this configuration file ready to use in the docker instance.
@@ -267,7 +261,7 @@ First of all, we need to get a SSL certificate. It includes a server certificate
 Second step is to create a docker container which exposes TCP port 443 for SSL:
 
 ```bash
-docker run -i -t -d --name mms -v /home/user/models/:/models -p 8080:443 -p 8081:80 mms_image:latest
+docker run -itd --name mms -v /home/user/models/:/models -p 8080:443 -p 8081:80 mms_image:latest
 ```
 
 Note that we expose both https and normal http ports.
@@ -309,14 +303,18 @@ $ docker exec mms bash -c "mxnet-model-server.sh stop"
 ## Debugging or logging into the running docker instance
 To debug the docker instance further you could run the following commands
 
-##### docker logs mms
+#### docker logs mms
 This provides the console logs from the latest run of the MMS command.
 
-##### docker attach mms
+#### docker attach mms
 This attaches the `detached` docker running instance and since we run the docker instance in interactive mode, we will land up in console. If a version of MMS is running, you would have to kill it with `Ctrl-c` or put it in the background with `Ctrl-z` to get to the console.
-To exit the docker instance without quitting, type `Ctrl-p-q`. **Do not quit by typing `exit` as this will exit the docker instance**.
+To exit the docker instance without quitting, type `Ctrl-p-Ctrl-q`. **Do not quit by typing `exit` as this will exit the docker instance**.
+```bash
+# To come out of an attached docker instance
+$ Ctrl-p-Ctrl-q
+```
 
-##### docker rm -f mms
+#### docker rm -f mms
 If you find any issue with the current running instance (named mms) of docker, you could kill it by running the above command.
 
 For other useful CLI commands, please visit [Docker docs](https://docs.docker.com/edge/engine/reference/commandline/docker/)

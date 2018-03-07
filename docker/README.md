@@ -1,6 +1,30 @@
 # MMS with Docker
 
-You will need to build the image yourself. The Docker image is not available on Docker Hub yet.
+You have two ways of getting the Docker image.
+1. Through Docker hub. Get the image through the following command
+```bash
+# For beta CPU image
+$ docker pull awsdeeplearningteam/mms_cpu:beta
+```
+
+```bash
+# For beta GPU image
+$ docker pull  awsdeeplearningteam/mms_gpu:beta
+```
+
+Currently these contain the latest changes made to the MXNet Model Server.
+
+Verify that the image was pulled
+```bash
+# Verify the image
+$ docker images
+ 
+REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
+awsdeeplearningteam/mms_cpu   beta                869a68f574a5        4 hours ago         1.71GB
+ubuntu                        latest              f975c5035748        10 hours ago        112MB
+```
+
+If you want to build the Docker image manually, follow the next sections in the document.
 
 ## Prerequisites
 

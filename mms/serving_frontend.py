@@ -11,7 +11,6 @@
 import ast
 import traceback
 import time
-import json
 import base64
 
 from functools import partial
@@ -75,7 +74,6 @@ class ServingFrontend(object):
         """
         for service_name, model_name, model_path, manifest in models:
             self.service_manager.load_model(service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu)
-
 
     def register_module(self, user_defined_module_file_path):
         """
@@ -406,7 +404,6 @@ class ServingFrontend(object):
         Response
             Http response for predict endpiont.
         """
-
         handler_start_time = time.time()
         modelservice = kwargs['modelservice']
         input_names = kwargs['input_names']
@@ -466,7 +463,7 @@ class ServingFrontend(object):
             logger.error(msg)
             abort(500, "Service setting error. %s" % (msg))
 
-        # Doing prediciton on model
+        # Doing prediction on model
         try:
             response = modelservice.inference(input_data)
         except Exception:

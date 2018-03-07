@@ -8,16 +8,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-
-import logging
-import os
-import sys
-
-if sys.version_info[0] == 3:
-    import socketserver as SocketServer
-else:
-    import SocketServer
-
 from mms.arg_parser import ArgParser
 from mms.client_sdk_generator import ClientSDKGenerator
 from mms.log import get_logger, LOG_LEVEL_DICT, _Formatter
@@ -26,7 +16,14 @@ from multiprocessing import Lock
 from mms.serving_frontend import ServingFrontend
 from mms.metrics_manager import MetricsManager
 from mms.model_loader import ModelLoader
+import logging
+import os
+import sys
 
+if sys.version_info[0] == 3:
+    import socketserver as SocketServer
+else:
+    import SocketServer
 
 VALID_ROTATE_UNIT = ['S', 'M', 'H', 'D', 'midnight'] + ['W%d' % (i) for i in range(7)]
 logger = get_logger()
@@ -61,7 +58,7 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
 class MMS(object):
     """MXNet Model Serving
     """
-    def __init__(self, app_name='mms', args=None):
+    def __init__(self, app_name='mms', args=None, models=None):
         """Initialize mxnet model server application.
 
         Parameters
@@ -79,11 +76,11 @@ class MMS(object):
         """
         # Initialize serving frontend and arg parser
         try:
-            parser = ArgParser.mms_parser()
-            self.args = parser.parse_args(args) if args else parser.parse_args()
+            # Args passed as Namespace object
+            self.args = args if args else ArgParser.extract_args()
             self.serving_frontend = ServingFrontend(app_name)
             self.gpu = self.args.gpu
-
+            self.models = models
             # Setup root logger handler and level.
             log_file = self.args.log_file
             log_level = self.args.log_level or "INFO"
@@ -138,7 +135,6 @@ class MMS(object):
             logger.error('Failed to start model serving host: ' + str(e))
             exit(1)
 
-
     def _arg_process(self):
         """Process arguments before starting service or create application.
         """
@@ -147,12 +143,9 @@ class MMS(object):
             self.port = int(self.args.port) if self.args.port else 8080
             self.host = self.args.host or '127.0.0.1'
 
-            # Load models
-            models = ModelLoader.load(self.args.models)
-
             # Register user defined model service or default mxnet_vision_service
-            manifest = models[0][3]
-            service_file = os.path.join(models[0][2], manifest['Model']['Service'])
+            manifest = self.models[0][3]
+            service_file = os.path.join(self.models[0][2], manifest['Model']['Service'])
 
             class_defs = self.serving_frontend.register_module(self.args.service or service_file)
             class_defs = list(filter(lambda c: len(c.__subclasses__()) == 0, class_defs))
@@ -165,7 +158,7 @@ class MMS(object):
             registered_models = self.serving_frontend.get_registered_modelservices()
             ModelClassDef = registered_models[model_class_name]
             
-            self.serving_frontend.load_models(models, ModelClassDef, self.gpu)
+            self.serving_frontend.load_models(self.models, ModelClassDef, self.gpu)
             
             if len(self.args.models) > 5:
                 raise Exception('Model number exceeds our system limits: 5')
@@ -201,8 +194,15 @@ def start_serving(app_name='mms', args=None):
         ['--models', 'resnet-18=path1', 'inception_v3=path2',
          '--gen-api', 'java', '--port', '8080']
         """
-    mms = MMS(app_name, args=args)
+
+    # Parse the given arguments
+    arguments = ArgParser.extract_args(args)
+    # Download and/or Extract the given model files
+    models = ModelLoader.load(arguments.models)
+    # Instantiate an MMS object and prepare to start serving
+    mms = MMS(app_name, args=arguments, models=models)
     mms.start_model_serving()
+
 
 if __name__ == '__main__':
     start_serving()

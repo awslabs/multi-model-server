@@ -20,12 +20,12 @@ def write_models_to_file(models=None):
     :param models: models metadata (service name, model dir, manifest file ...)
     :return: void
     """
-    mxnet_model_metatadata_file = "/mxnet_model_server/.models"
+    mxnet_model_metadata_file = "/mxnet_model_server/.models"
     if models is None:
         sys.exit(1)
 
-    print("INFO: Writing models metatdata...")
-    with (open(mxnet_model_metatadata_file, 'w')) as fp:
+    print("INFO: Writing models metadata...")
+    with (open(mxnet_model_metadata_file, 'w')) as fp:
         json.dump(models, fp)
 
 

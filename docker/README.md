@@ -137,18 +137,18 @@ Usage:
 
 /mxnet_model_server/mxnet-model-server.sh [start | stop | restart | help] [--mms-config <MMS config file>]
 
-start        : Start a new instance of MxNet model server.
-stop         : Stop the current running instance of MxNet model server
-restart      : Restarts all the MMS worker instances.
+start        : Start a new instance of MXNet model server.
+stop         : Stop the current running instance of MXNet model server
+restart      : Restarts all the MXNet Model Server worker instances.
 help         : Usage help for /mxnet_model_server/mxnet-model-server.sh
---mms-config : Location pointing to the MxNet model server configuration file.
-To start the MxNet model server, run
+--mms-config : Location pointing to the MXNet model server configuration file.
+To start the MXNet model server, run
 /mxnet_model_server/mxnet-model-server.sh start --mms-config <path-to-config-file\>
 
-To stop the running instance of MxNet model server, run
+To stop the running instance of MXNet model server, run
 /mxnet_model_server/mxnet-model-server.sh stop
 
-To restart the running instance of MxNet model server, run
+To restart the running instance of MXNet model server, run
 /mxnet_model_server/mxnet-model-server.sh restart --mms-config <path-to-config-file\>
 ```
 
@@ -183,7 +183,7 @@ Considering that you modified and copied `mms_app_gpu.conf` file into the models
 ```bash
 $ nvidia-docker exec mms bash -c "mxnet-model-server.sh start --mms-config /models/mms_app_gpu.conf"
 ```
-You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance.
+You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance for CPU and this should be set to the `number of GPUs` in case of running MXNet Model Server on GPU instances.
 
 ## Testing the MMS Docker
 

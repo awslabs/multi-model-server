@@ -117,6 +117,7 @@ def create_model(tmpdir,URL,onnx_model, onnx_source_model_zoo = True):
         raise 
 
 def test_onnx_integ(tmpdir):
+    tmpdir= str(tmpdir)
     _download_file(tmpdir, "https://upload.wikimedia.org/wikipedia/commons/8/8f/Cute-kittens-12929201-1600-1200.jpg")
     for onnx_model in onnx_mxnet_model_URLs.keys():
         start_test(tmpdir,onnx_mxnet_model_URLs,onnx_model,port='8081', onnx_source_model_zoo= False)
@@ -124,14 +125,14 @@ def test_onnx_integ(tmpdir):
     for onnx_model in onnx_model_URLs.keys():
         start_test(tmpdir,onnx_model_URLs,onnx_model, port = '8082',onnx_source_model_zoo = True)
         os.remove("{}/{}.model".format(tmpdir, onnx_model))
-    cleanup(str(tmpdir))
+    cleanup(tmpdir)
 
 def start_test(tmpdir, URL,onnx_model, port='8081', onnx_source_model_zoo= False):
-    tmpdir = str(tmpdir)
+    #tmpdir = str(tmpdir)
     create_model(tmpdir,URL, onnx_model, onnx_source_model_zoo)
 
     server_pid = subprocess.Popen(['mxnet-model-server', '--models', '{}={}/{}.model'.format(onnx_model, tmpdir, onnx_model),'--port',port]).pid
-    time.sleep(50)
+    time.sleep(30)
     output = subprocess.check_output(['curl', '-X', 'POST', 'http://127.0.0.1:'+port+'/'+ onnx_model+ '/predict', '-F',
                                       'input_0=@{}/Cute-kittens-12929201-1600-1200.jpg'.format(tmpdir)])
     if sys.version_info[0] >= 3:

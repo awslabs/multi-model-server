@@ -106,9 +106,6 @@ def start_test(tmpdir, URL, onnx_model, port = '8080', onnx_source_model_zoo = F
         else:
             data_name = 'data'
         for models in model_list:
-            print("model is {}".format(models))
-            print ('http://127.0.0.1:'+port+'/'+ models+ '/predict', '-F',
-                                      '{}=@{}/kitten.jpg'.format(data_name,tmpdir))
             output = subprocess.check_output(['curl', '-X', 'POST', 'http://127.0.0.1:'+port+'/'+ models+ '/predict', '-F',
                                       '{}=@{}/kitten.jpg'.format(data_name,tmpdir)])
             if sys.version_info[0] >= 3:

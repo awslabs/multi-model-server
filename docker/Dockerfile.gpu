@@ -1,11 +1,32 @@
 FROM nvidia/cuda:9.0-cudnn7-devel
 
-COPY install.sh /
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:certbot/certbot && \
+    apt-get update && \
+    apt-get install -y \
+    build-essential \
+    libatlas-base-dev \
+    libopencv-dev \
+    graphviz \
+    python-dev \
+    openjdk-8-jdk \
+    nginx \
+    protobuf-compiler \
+    libprotoc-dev \
+    python-certbot-nginx \
+    curl \
+    vim \
+    && rm -rf /var/lib/apt/lists/* \
+    && cd /tmp \
+    && curl -O https://bootstrap.pypa.io/get-pip.py \
+    && python get-pip.py \
+    && pip install gevent gunicorn mxnet-model-server \
+    && pip install --no-cache-dir mxnet-cu90 \
+    && mkdir /mxnet_model_server
 
-RUN /install.sh
+COPY wsgi.py setup_mms.py mxnet-model-server.sh /mxnet_model_server/
 
-RUN pip install mxnet-cu90
+ENV PATH="/mxnet_model_server:${PATH}" MXNET_MODEL_SERVER_GPU_IMAGE=1 gpu_id=0
 
-ADD mms_docker_gpu mms_docker_gpu
-
-LABEL maintainer="yuruofei@amazon.com, esterhaz@amazon.com, hag@amazon.com"
+LABEL maintainer="dantu@amazon.com, esterhaz@amazon.com, hag@amazon.com"

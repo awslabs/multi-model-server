@@ -1,33 +1,54 @@
-# MMS with Docker
+# MXNet Model Server with Docker
+Docker images are currently available on Docker Hub. Running MXNet Model Server in the docker instance can be done with four easy steps
 
-You have two ways of getting the Docker image.
-1. Through Docker hub. Get the image through the following command
-```bash
-# For beta CPU image
-$ docker pull awsdeeplearningteam/mms_cpu:beta
-```
+## Running MXNet Model Server with Docker-Hub image
 
-```bash
-# For beta GPU image
-$ docker pull  awsdeeplearningteam/mms_gpu:beta
-```
+1. Pull the Docker image from the Docker-Hub
+   ```bash
+    # CPU image
+    $ docker pull awsdeeplearningteam/mms_cpu
+    ```
+   For GPU Image
+   ```bash
+   # GPU Image
+   $ docker pull awsdeeplearningteam/mms_gpu
+   ```
+   Verify the image is downloaded
+   ```bash
+   $ docker images
+   REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
+   awsdeeplearningteam/mms_cpu   latest              869a68f574a5        2 days ago          1.71GB
+   ubuntu                        latest              f975c5035748        2 days ago          112MB
+   ```
 
-Currently these contain the latest changes made to the MXNet Model Server.
+2. Create a directory for `models` and update the `mms_app.conf` file that MXNet Model Server should use with the models. There are example 
+   configuration files in the `docker` folder of `mxnet-model-server` repository. Refer [mms_app_cpu.conf](mms_app_cpu.conf) or [mms_app_gpu.conf](mms_app_gpu.conf).
+   Update the `--models` option in the configuration and add it to the newly created directory.
+   ```bash
+   $ mkdir /home/user/models
+   $ cp ~/mxnet-model-server/docker/mms_app_cpu.conf /home/user/models/.
+   ``` 
+   Verify the models and configuration file is in this newly created directory. Also verify that the `mms_app_*.conf` is updated.
 
-Verify that the image was pulled
-```bash
-# Verify the image
-$ docker images
- 
-REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
-awsdeeplearningteam/mms_cpu   beta                869a68f574a5        4 hours ago         1.71GB
-ubuntu                        latest              f975c5035748        10 hours ago        112MB
-```
+2. Run the downloaded Docker image
+   ```bash
+   $ docker run --name mms -p 80:80 -itd -v /home/users/models/:/models awsdeeplearningteam/mms_cpu
+   0c1862a2c30edd0f33391f7277b2c8bcba4a5f4cf22669f3b308b4078a5d3ce8
+   # Verify the image is running
+   $ docker ps -a
+   CONTAINER ID        IMAGE               COMMAND             CREATED                  STATUS              PORTS                NAMES
+   b4bab087f2a8        mms_cpu             "/bin/bash"         Less than a second ago   Up 2 seconds        0.0.0.0:80->80/tcp   mms
+   ```
 
-If you want to build the Docker image manually, follow the next sections in the document.
+3. Run MXNet Model Server in the running instance of Docker
+   ```bash
+   $ docker exec mms bash -c "mxnet-model-server.sh start --mms-config /models/mms_app_cpu.conf"
+   ``` 
+
+# Building personal docker image from the repository   
+The following are the steps to build a docker image
 
 ## Prerequisites
-
 In order to build the Docker image yourself you need the following:
 
 * Install Docker
@@ -56,7 +77,6 @@ If you haven't already, clone the MMS repo and go into the `docker` folder.
 ```bash
 git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server/docker
 ```
-
 
 ## Building the Docker Image
 
@@ -90,7 +110,7 @@ The `location` section defines the proxy server to which all the requests are pa
 Now we'll go through how to build a Docker image with MMS and establish a public accessible endpoint on EC2 instance. You should be able to adapt this information for any cloud provider. This Docker image can be used in other production environments as well. Skip this section if you're building for local use.
 
 The first step is to create an (EC2 instance)[https://aws.amazon.com/ec2/].
-Before we start to build the Docker image, change the `server_name` entry of `nginx` configuration section in the [mms_app.conf](mms_docker_cpu/mms_app.conf) file to be your public hostname: `localhost` should be replaced with the public DNS of the EC2 instance.
+Before we start to build the Docker image, change the `server_name` entry of `nginx` configuration section in the [mms_app.conf](mms_app_cpu.conf) file to be your public hostname: `localhost` should be replaced with the public DNS of the EC2 instance.
 
 ## Build Step for CPU
 
@@ -124,7 +144,7 @@ Create a `models` directory on the host machine and add the models to be used al
  $ mkdir models
  $ cp ~/mxnet-model-server/docker/mms_app_cpu.conf models/
  ```
-## Running the MMS Docker
+## Running MXNet Model Server as a Docker instance
 
 Since we used a general tag, `mms_image` we're go to run it using the default tag assignment of `mms_image:latest`. Or, if you used a specific tag, make sure you swap that out for the Docker ID, or how your image appears when your run `docker images`.
 
@@ -153,28 +173,8 @@ $
 ```
 You should see that the image is running.
 
-## Starting MMS in the docker instance
+### Starting MMS in the docker instance
 To interact with the docker image named `mms` we run the following command
-```bash
-$ docker exec mms bash -c "mxnet-model-server.sh help"
-Usage:
-
-/mxnet_model_server/mxnet-model-server.sh [start | stop | restart | help] [--mms-config <MMS config file>]
-
-start        : Start a new instance of MXNet model server.
-stop         : Stop the current running instance of MXNet model server
-restart      : Restarts all the MXNet Model Server worker instances.
-help         : Usage help for /mxnet_model_server/mxnet-model-server.sh
---mms-config : Location pointing to the MXNet model server configuration file.
-To start the MXNet model server, run
-/mxnet_model_server/mxnet-model-server.sh start --mms-config <path-to-config-file\>
-
-To stop the running instance of MXNet model server, run
-/mxnet_model_server/mxnet-model-server.sh stop
-
-To restart the running instance of MXNet model server, run
-/mxnet_model_server/mxnet-model-server.sh restart --mms-config <path-to-config-file\>
-```
 
 Verify that the docker image is still running by running 
 ```bash
@@ -209,7 +209,7 @@ $ nvidia-docker exec mms bash -c "mxnet-model-server.sh start --mms-config /mode
 ```
 You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance for CPU and this should be set to the `number of GPUs` in case of running MXNet Model Server on GPU instances.
 
-## Testing the MMS Docker
+# Testing the MMS Docker
 
 Now you can send a request to your server's [api-description endpoint](http://localhost/api-description) to see the list of MMS endpoints or [ping endpoint](http://localhost/ping) to check the health status of the MMS API. Remember to add the port if you used a custom one or the IP or DNS of your server if you configured it for that instead of localhost. Here are some handy test links for common configurations:
 
@@ -217,7 +217,45 @@ Now you can send a request to your server's [api-description endpoint](http://lo
 * [http://localhost:8080/api-description](http://localhost:8080/api-description)
 * [http://localhost/ping](http://localhost/ping)
 
-## Advanced Settings
+If the `mms_app_[gpu|cpu].conf` is used as is, the following commands can be run to verify that the MXNet Model Server is running.
+```bash
+$ curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
+$ curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
+```
+
+The predict endpoint will return a prediction response in JSON. It will look something like the following result:
+
+```
+{
+  "prediction": [
+    [
+      {
+        "class": "n02124075 Egyptian cat",
+        "probability": 0.9408261179924011
+      },
+      {
+        "class": "n02127052 lynx, catamount",
+        "probability": 0.055966004729270935
+      },
+      {
+        "class": "n02123045 tabby, tabby cat",
+        "probability": 0.0025502564385533333
+      },
+      {
+        "class": "n02123159 tiger cat",
+        "probability": 0.00034320182749070227
+      },
+      {
+        "class": "n02123394 Persian cat",
+        "probability": 0.00026897044153884053
+      }
+    ]
+  ]
+}
+```
+
+
+# Advanced Settings
 
 ### Description of Settings in mms_app.conf
 
@@ -324,6 +362,29 @@ To stop the MMS running inside the docker instance, run the following
 ```bash
 $ docker exec mms bash -c "mxnet-model-server.sh stop"
 ```
+
+## Usage help for MMS
+```bash
+$ docker exec mms bash -c "mxnet-model-server.sh help"
+Usage:
+
+/mxnet_model_server/mxnet-model-server.sh [start | stop | restart | help] [--mms-config <MMS config file>]
+
+start        : Start a new instance of MXNet model server.
+stop         : Stop the current running instance of MXNet model server
+restart      : Restarts all the MXNet Model Server worker instances.
+help         : Usage help for /mxnet_model_server/mxnet-model-server.sh
+--mms-config : Location pointing to the MXNet model server configuration file.
+To start the MXNet model server, run
+/mxnet_model_server/mxnet-model-server.sh start --mms-config <path-to-config-file\>
+
+To stop the running instance of MXNet model server, run
+/mxnet_model_server/mxnet-model-server.sh stop
+
+To restart the running instance of MXNet model server, run
+/mxnet_model_server/mxnet-model-server.sh restart --mms-config <path-to-config-file\>
+```
+
 ## Debugging or logging into the running docker instance
 To debug the docker instance further you could run the following commands
 

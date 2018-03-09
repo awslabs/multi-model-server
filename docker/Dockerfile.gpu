@@ -21,7 +21,7 @@ RUN apt-get update && \
     && cd /tmp \
     && curl -O https://bootstrap.pypa.io/get-pip.py \
     && python get-pip.py \
-    && pip install gevent gunicorn mxnet-model-server \
+    && pip install gevent gunicorn mxnet-model-server==0.3.0b1 \
     && pip install --no-cache-dir mxnet-cu90 \
     && mkdir /mxnet_model_server
 

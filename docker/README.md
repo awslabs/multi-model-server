@@ -1,6 +1,30 @@
 # MMS with Docker
 
-You will need to build the image yourself. The Docker image is not available on Docker Hub yet.
+You have two ways of getting the Docker image.
+1. Through Docker hub. Get the image through the following command
+```bash
+# For beta CPU image
+$ docker pull awsdeeplearningteam/mms_cpu:beta
+```
+
+```bash
+# For beta GPU image
+$ docker pull  awsdeeplearningteam/mms_gpu:beta
+```
+
+Currently these contain the latest changes made to the MXNet Model Server.
+
+Verify that the image was pulled
+```bash
+# Verify the image
+$ docker images
+ 
+REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
+awsdeeplearningteam/mms_cpu   beta                869a68f574a5        4 hours ago         1.71GB
+ubuntu                        latest              f975c5035748        10 hours ago        112MB
+```
+
+If you want to build the Docker image manually, follow the next sections in the document.
 
 ## Prerequisites
 
@@ -38,12 +62,13 @@ git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-se
 
 ### Configuration Setup
 
-We can optionally update the **nginx** section of the `mms_app.conf` file for your target environment. If you're going to run the Docker image locally you can leave this alone and skip to the **Build Step**. If you want to run it on a publicly accessible IP or DNS name then continue with this setup step.
+We can optionally update the **nginx** section of the `mms_app_*.conf` file for your target environment. If you're going to run the Docker image locally you can leave this alone and skip to the **Build Step**. If you want to run it on a publicly accessible IP or DNS name then continue with this setup step.
 
-* For CPU builds, use [mms_docker_cpu/mms_app.conf](mms_docker_cpu/mms_app.conf).
-* For GPU builds, use [mms_docker_gpu/mms_app.conf](mms_docker_gpu/mms_app.conf).
+* For CPU builds, use [mms_app_cpu.conf](mms_app_cpu.conf) and [Dockerfile.cpu](Dockerfile.cpu).
+* For GPU builds, use [mms_app_gpu.conf](mms_app_gpu.conf) and [Dockerfile.gpu](Dockerfile.gpu).
 
-Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker image.
+Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker image. (Server Name can be updated at run-time. 
+This option is mentioned in steps to run.)
 
 The **nginx** section will look like this:
 
@@ -75,8 +100,7 @@ By default Docker expects a Dockerfile, so we'll make a copy leaving the origina
 The next command will build the Docker image. The `-t` flag and following value will give the image the tag `mms_image`, however you can specify `mms_image:v0.11` or whatever you want for your tag. If you use just `mms_image` it will be assigned the default `latest` tag and be runnable with `mms_image:latest`.
 
 ```bash
-cp Dockerfile.cpu Dockerfile
-docker build -t mms_image .
+docker build -f Dockerfile.cpu -t mms_image .
 ```
 
 Once this completes, run `docker images` from your terminal. You should see the Docker image listed with the tag, `mms_image:latest`. Skip down to the section **Running the MMS Docker** to continue, or peruse the EC2 instructions if you're curious how to configure it for the cloud.
@@ -90,10 +114,16 @@ You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-dock
 Once you install `nvidia-docker`, run following commands (for info modifying the tag, see the CPU section above):
 
 ```bash
-cp Dockerfile.gpu Dockerfile
-docker build -t mms_image_gpu .
+docker build -f Dockerfile.gpu -t mms_image_gpu .
 ```
 
+## Preparing `models` and `mms_app.conf` files for running the Model Server
+Create a `models` directory on the host machine and add the models to be used along with the mms_app_[cpu|gpu].conf file into the directory. Modify the `mms_app[cpu/gpu].conf` file to reflect the model files to be used along with updated options for other `gunicorn`, `nginx` and `MMS` configurations.
+ ```bash
+ # Modify the mms_app_cpu.conf or mms_app_gpu.conf and add it to this folder
+ $ mkdir models
+ $ cp ~/mxnet-model-server/docker/mms_app_cpu.conf models/
+ ```
 ## Running the MMS Docker
 
 Since we used a general tag, `mms_image` we're go to run it using the default tag assignment of `mms_image:latest`. Or, if you used a specific tag, make sure you swap that out for the Docker ID, or how your image appears when your run `docker images`.
@@ -103,29 +133,81 @@ You may also want to modify the `-p 80:80` to utilize other ports instead. Refer
 **Note**: if you're using the GPU Docker, skip ahead to the next section.
 
 ```bash
-docker run -it -p 80:80 mms_image:latest
+# Run the docker image in a detached mode
+$ docker run -itd -p 80:80 --name mms -v /home/user/models:/models mms_image:latest
 ```
-Now that you have a prompt inside the container, the final step is to run the following command:
+
+To run the MMS with $HOSTNAME as its endpoint, or for `nginx's server_name` to be configured to `$HOSTNAME` run the following command.
+```bash
+# Start docker with nginx's server_name configured to $HOSTNAME
+$ docker run -itd -p 80:80 --name mms -v /home/user/models:/models -e MXNET_MODEL_SERVER_HOST=$HOSTNAME mms_image:latest
+```
+The above command lets you run inference with `$HOSTNAME` as 'server_name'.  
+   
+Verify that this image is running by running 
+```bash
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS                NAMES
+a6141053ef51        mms_cpu             "/bin/bash"         15 minutes ago      Up 15 minutes       0.0.0.0:80->80/tcp   mms
+$
+```
+You should see that the image is running.
+
+## Starting MMS in the docker instance
+To interact with the docker image named `mms` we run the following command
+```bash
+$ docker exec mms bash -c "mxnet-model-server.sh help"
+Usage:
+
+/mxnet_model_server/mxnet-model-server.sh [start | stop | restart | help] [--mms-config <MMS config file>]
+
+start        : Start a new instance of MXNet model server.
+stop         : Stop the current running instance of MXNet model server
+restart      : Restarts all the MXNet Model Server worker instances.
+help         : Usage help for /mxnet_model_server/mxnet-model-server.sh
+--mms-config : Location pointing to the MXNet model server configuration file.
+To start the MXNet model server, run
+/mxnet_model_server/mxnet-model-server.sh start --mms-config <path-to-config-file\>
+
+To stop the running instance of MXNet model server, run
+/mxnet_model_server/mxnet-model-server.sh stop
+
+To restart the running instance of MXNet model server, run
+/mxnet_model_server/mxnet-model-server.sh restart --mms-config <path-to-config-file\>
+```
+
+Verify that the docker image is still running by running 
+```bash
+$ docker ps -a
+```
 
 ```bash
-cd mms_docker_cpu && ./launch.sh
+# To start the MMS run the following
+$ docker exec mms bash -c "mxnet-model-server.sh start --mms-config /models/mms_app_cpu.conf"
 ```
+
 This will setup the MMS endpoint, gunicorn wsgi entry point, and nginx proxy_pass. 
-At this point you should see the typical MMS CLI output indicating that the server is running.
+At this point you should be able to run inference on `localhost` port `80`
 
 ### Running the MMS GPU Docker
 
 ```bash
-nvidia-docker run -it -p 80:80 mms_image_gpu:latest
+$ nvidia-docker run -itd -p 80:80 --name mms -v /home/user/models/:/models mms_image_gpu:latest
 ```
 
-Now you should be inside the docker container at a bash prompt. The config file, `mms_app.conf` is located in the `mms_docker_gpu` folder. Run following command to launch the MMS service:
+To configure the nginx hostname to the $HOSTNAME, run the following command
+```bash
+# To run inference, use the $HOSTNAME instead of 'localhost' or '127.0.0.1' to ping. This Hostname can be the public DNS/IP. 
+$ nvidia-docker run -itd -p 80:80 --name mms -v /home/user/models:/models -e MXNET_MODEL_SERVER_HOST=$HOSTNAME mms_image_gpu:latest
+```
+
+This command starts the docker instance in a detached mode and mounts `/home/user/models` of the host system into `/models` directory inside the Docker instance. 
+Considering that you modified and copied `mms_app_gpu.conf` file into the models directory, before you ran the above `nvidia-docker` command, you would have this configuration file ready to use in the docker instance.
 
 ```bash
-cd mms_docker_gpu && ./launch.sh
+$ nvidia-docker exec mms bash -c "mxnet-model-server.sh start --mms-config /models/mms_app_gpu.conf"
 ```
-You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance.
-
+You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance for CPU and this should be set to the `number of GPUs` in case of running MXNet Model Server on GPU instances.
 
 ## Testing the MMS Docker
 
@@ -148,7 +230,7 @@ Notes on a couple of the parameters:
 * **limit-request-line** - this is a security-related configuration that limits the [length of the request URI](http://docs.gunicorn.org/en/stable/settings.html#limit-request-line). It is useful preventing DDoS attacks.
 
 ```
-    # mxnet-model-server arguments
+    [MMS arguments]
     --models
     resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
 
@@ -167,7 +249,7 @@ Notes on a couple of the parameters:
     --log-level
     optional
 
-    # Gunicorn arguments
+    [Gunicorn arguments]
     --bind
     unix:/tmp/mms_app.sock
 
@@ -180,7 +262,7 @@ Notes on a couple of the parameters:
     --limit-request-line
     0
 
-    # Nginx configurations
+    [Nginx configurations]
     server {
         listen       80;
         server_name  localhost;
@@ -190,7 +272,7 @@ Notes on a couple of the parameters:
         }
     }
 
-    # MXNet environment variables
+    [MXNet environment variables]
     OMP_NUM_THREADS=4
 ```
 
@@ -203,7 +285,7 @@ First of all, we need to get a SSL certificate. It includes a server certificate
 Second step is to create a docker container which exposes TCP port 443 for SSL:
 
 ```bash
-docker run -it -p 8080:443 -p 8081:80 mms_image:latest
+docker run -itd --name mms -v /home/user/models/:/models -p 8080:443 -p 8081:80 mms_image:latest
 ```
 
 Note that we expose both https and normal http ports.
@@ -225,19 +307,38 @@ server {
 }
 ```
 
-Launch service by typing:
-```bash
-./launch.sh
-```
-
 Now we can try both https://your_public_host_name:8080/ping or http://your_public_host_name:8081/ping to test the service.
 
 ```bash
-curl -X GET https://your_public_host_name:8080/ping
+curl -X GET https://your_public_host_name:80/ping
 ```
 
 or
 
 ```bash
-curl -X GET http://your_public_host_name:8081/ping
+curl -X GET http://your_public_host_name:80/ping
 ```
+
+## Stopping the current MMS instance
+To stop the MMS running inside the docker instance, run the following
+```bash
+$ docker exec mms bash -c "mxnet-model-server.sh stop"
+```
+## Debugging or logging into the running docker instance
+To debug the docker instance further you could run the following commands
+
+#### docker logs mms
+This provides the console logs from the latest run of the MMS command.
+
+#### docker attach mms
+This attaches the `detached` docker running instance and since we run the docker instance in interactive mode, we will land up in console. If a version of MMS is running, you would have to kill it with `Ctrl-c` or put it in the background with `Ctrl-z` to get to the console.
+To exit the docker instance without quitting, type `Ctrl-p-Ctrl-q`. **Do not quit by typing `exit` as this will exit the docker instance**.
+```bash
+# To come out of an attached docker instance
+$ Ctrl-p-Ctrl-q
+```
+
+#### docker rm -f mms
+If you find any issue with the current running instance (named mms) of docker, you could kill it by running the above command.
+
+For other useful CLI commands, please visit [Docker docs](https://docs.docker.com/edge/engine/reference/commandline/docker/)

@@ -100,7 +100,7 @@ def start_test(tmpdir, URL, onnx_model, port = '8080', onnx_source_model_zoo = F
    
     #server_pid = subprocess.Popen(['mxnet-model-server', '--models', '{}={}/{}.model'.format(onnx_model, tmpdir, onnx_model),'--port',port]).pid
    try:  
-        time.sleep(30)
+        time.sleep(50)
         if is_onnx_model:
             data_name = 'input_0'
         else:
@@ -114,6 +114,9 @@ def start_test(tmpdir, URL, onnx_model, port = '8080', onnx_source_model_zoo = F
             # Assert objects are detected.
             assert predictions is not None
             assert len(predictions) > 0
+   except Exception as e:
+        print("Failed to test models. {}".format(str(e)))
+        raise
    finally:
         os.kill(server_pid, signal.SIGQUIT)
 

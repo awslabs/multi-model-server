@@ -25,8 +25,6 @@ mxnet_model_URLs = {
     'Inception-BN'    : 'https://s3.amazonaws.com/model-server/models/inception-bn/Inception-BN.model',
     'nin'             : 'https://s3.amazonaws.com/model-server/models/nin/nin.model',
     'resnet-152'      : 'https://s3.amazonaws.com/model-server/models/resnet-152/resnet-152.model',
-    'resnet-18'       : 'https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model',
-    'resnext-101-64x4d' : 'https://s3.amazonaws.com/model-server/models/resnext-101-64x4d/resnext-101-64x4d.model',
     'squeezenet_v1.1' : 'https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model',
       }
 

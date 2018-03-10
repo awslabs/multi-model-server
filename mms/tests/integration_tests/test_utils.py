@@ -193,7 +193,7 @@ def start_test(
             assert predictions is not None
             assert len(predictions) > 0
     except Exception as e:
-        print("Failed to test models. {}".format(str(e)))
+        print("Failed to test models. {} ".format(str(e)))
         raise
     finally:
         os.kill(server_pid, signal.SIGQUIT)

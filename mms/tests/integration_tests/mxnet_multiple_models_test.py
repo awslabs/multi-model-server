@@ -4,7 +4,6 @@ import test_utils as utils
 # models from onnx-mxnet model zoo
 
 mxnet_models = ['caffenet', 'Inception-BN', 'nin', 'squeezenet_v1.1']
-mxnet_model_urls = {}
 
 
 def test_onnx_integ(tmpdir):
@@ -12,14 +11,11 @@ def test_onnx_integ(tmpdir):
     utils._download_file(
         tmpdir,
         "https://s3.amazonaws.com/model-server/inputs/kitten.jpg")
-    for models in mxnet_models:
-        mxnet_model_urls[models] = utils.mxnet_model_urls[models]
+    urls = utils.filtered_urls(mxnet_models, utils.mxnet_model_urls)
     utils.start_test(
         tmpdir,
-        mxnet_model_urls,
-        None,
+        urls,
         port='8080',
         onnx_source_model_zoo=False,
-        is_onnx_model=False,
-        test_multiple_models=True)
+        is_onnx_model=False)
     utils.cleanup(tmpdir)

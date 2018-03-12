@@ -7,16 +7,15 @@ def model_data(request):
     return request.param
 
 
-def test_onnx_integ(tmpdir, model_data):
+def test_onnx_mxnet_integ(tmpdir, model_data):
     tmpdir = str(tmpdir)
-    urls = utils.filtered_urls([model_data], utils.onnx_mxnet_model_urls)
+    model_urls = utils.filtered_urls([model_data], utils.onnx_mxnet_model_urls)
     utils._download_file(
         tmpdir,
         "https://s3.amazonaws.com/model-server/inputs/kitten.jpg")
     utils.start_test(
         tmpdir,
-        urls,
+        model_urls,
         port='8080',
-        onnx_source_model_zoo=False,
-        is_onnx_model=True)
+        model_type='onnx_mxnet')
     utils.cleanup(tmpdir)

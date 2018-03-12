@@ -46,11 +46,8 @@ mxnet_model_urls = {
 }
 
 
-def filtered_urls(model_list, url):
-    filtered_url = {}
-    for models in model_list:
-        filtered_url[models] = url[models]
-    return filtered_url
+def filtered_urls(model_list, model_urls):
+    return {model: model_urls[model] for model in model_list}
 
 
 def _download_file(download_dir, url):
@@ -75,58 +72,58 @@ def cleanup(tmpdir):
     shutil.rmtree(str(tmpdir))
 
 
-def create_model_onnx_zoo(download_dir, url, onnx_model):
-    _download_file(download_dir, url[onnx_model])
+def create_model_onnx_zoo(download_dir, model_urls, model_name):
+    _download_file(download_dir, model_urls[model_name])
     _download_file(
         download_dir,
         "https://s3.amazonaws.com/model-server/models/onnx-squeezenet/signature.json")
     _download_file(
         download_dir,
         "https://s3.amazonaws.com/model-server/models/onnx-squeezenet/synset.txt")
-    model_tar = '{}/{}.tar.gz'.format(download_dir, onnx_model)
+    model_tar = '{}/{}.tar.gz'.format(download_dir, model_name)
     tar = tarfile.open(model_tar, "r:*")
     tar.extractall(path=download_dir)
     tar.close()
-    model_dir = '{}/{}'.format(download_dir, onnx_model)
+    model_dir = '{}/{}'.format(download_dir, model_name)
     model_path = os.path.join(model_dir, 'model.onnx')
     new_path = os.path.join(
-        model_dir, '{}.onnx'.format(onnx_model))
+        model_dir, '{}.onnx'.format(model_name))
     os.rename(model_path, new_path)
     shutil.move(new_path, download_dir)
 
 
-def create_model_onnx_mxnet_zoo(download_dir, url, onnx_model):
-    _download_file(download_dir, url[onnx_model])
+def create_model_onnx_mxnet_zoo(download_dir, model_urls, model_name):
+    _download_file(download_dir, model_urls[model_name])
     _download_file(
         download_dir,
         "https://s3.amazonaws.com/model-server/models/" +
-        onnx_model +
+        model_name +
         "/signature.json")
     _download_file(
         download_dir,
         "https://s3.amazonaws.com/model-server/models/" +
-        onnx_model +
+        model_name +
         "/synset.txt")
 
 
-def export_onnx_models(tmpdir, onnx_source_model_zoo, url, onnx_model):
+def export_onnx_models(tmpdir, model_type, model_urls, model_name):
     download_dir = tmpdir + '/mxnet_model_server'
     os.mkdir(download_dir)
-    if onnx_source_model_zoo:
-        create_model_onnx_zoo(download_dir, url, onnx_model)
+    if model_type == 'onnx':
+        create_model_onnx_zoo(download_dir, model_urls, model_name)
     else:
-        create_model_onnx_mxnet_zoo(download_dir, url, onnx_model)
+        create_model_onnx_mxnet_zoo(download_dir, model_urls, model_name)
 
-    print('model files prepared for model {} '.format(onnx_model))
+    print('model files prepared for model {} '.format(model_name))
     # Export the model.
     print("Exporting the mxnet model server model...")
     subprocess.check_call(['mxnet-model-export',
                            '--model-name',
-                           onnx_model,
+                           model_name,
                            '--model-path',
                            download_dir],
                           cwd=download_dir)
-    shutil.move('{}/{}.model'.format(download_dir, onnx_model), tmpdir)
+    shutil.move('{}/{}.model'.format(download_dir, model_name), tmpdir)
     for root, dirs, files in os.walk(download_dir):
         for f in files:
             os.unlink(os.path.join(root, f))
@@ -137,16 +134,15 @@ def export_onnx_models(tmpdir, onnx_source_model_zoo, url, onnx_model):
 
 def create_model(
         tmpdir,
-        url,
-        onnx_model,
-        onnx_source_model_zoo=True,
-        is_onnx_model=True):
+        model_urls,
+        model_name,
+        model_type):
     # Download the files required for onnx integ tests.
     try:
-        if is_onnx_model:
-            export_onnx_models(tmpdir, onnx_source_model_zoo, url, onnx_model)
+        if model_type == 'mxnet':
+            _download_file(tmpdir, model_urls[model_name])
         else:
-            _download_file(tmpdir, url[onnx_model])
+            export_onnx_models(tmpdir, model_type, model_urls, model_name)
     except Exception as e:
         print("Failed to create models. {}".format(str(e)))
         raise
@@ -154,19 +150,17 @@ def create_model(
 
 def start_test(
         tmpdir,
-        url,
+        model_urls,
         port='8080',
-        onnx_source_model_zoo=False,
-        is_onnx_model=True):
+        model_type='mxnet'):
     model_list = []
     model_names = []
-    for model in url.keys():
+    for model in model_urls.keys():
         create_model(
             tmpdir,
-            url,
+            model_urls,
             model,
-            onnx_source_model_zoo,
-            is_onnx_model)
+            model_type)
         model_names.append('{}={}/{}.model'.format(model, tmpdir, model))
         model_list.append(model)
     server_pid = subprocess.Popen(
@@ -174,10 +168,10 @@ def start_test(
 
     try:
         time.sleep(30)
-        if is_onnx_model:
-            data_name = 'input_0'
-        else:
+        if model_type == 'mxnet':
             data_name = 'data'
+        else:
+            data_name = 'input_0'
         for models in model_list:
             output = subprocess.check_output(['curl',
                                               '-X',

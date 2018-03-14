@@ -1,18 +1,16 @@
-import pytest
 import test_utils as utils
 
 
-@pytest.fixture(params=utils.onnx_model_urls.keys())
-def model_data(request):
-    return request.param
+# models from onnx model zoo
+onnx_models = ['inception_v1', 'inception_v2', 'shufflenet', 'squeezenet']
 
 
-def test_onnx_integ(tmpdir, model_data):
+def test_onnx_integ(tmpdir):
     tmpdir = str(tmpdir)
-    model_urls = utils.filtered_urls([model_data], utils.onnx_model_urls)
     utils._download_file(
         tmpdir,
         "https://s3.amazonaws.com/model-server/inputs/kitten.jpg")
+    model_urls = utils.filtered_urls(onnx_models, utils.onnx_model_urls)
     utils.start_test(
         tmpdir,
         model_urls,

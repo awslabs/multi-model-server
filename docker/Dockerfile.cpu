@@ -23,6 +23,7 @@ RUN apt-get update && \
     && python get-pip.py \
     && pip install gevent gunicorn \
     && pip install --pre mxnet-model-server \
+    && pip uninstall --yes mxnet \
     && pip install mxnet-mkl \
     && mkdir /mxnet_model_server
 

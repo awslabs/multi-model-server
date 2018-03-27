@@ -73,7 +73,7 @@ start_mms()
     	    then
     	    # MXNET_MODEL_SERVER_HOST gets updated when you run Docker (run/exec) command with the environment
     	    #    variables MXNET_MODEL_SERVER_HOST=$HOSTNAME
-  	        if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MXNET_MODEL_SERVER// } ) ]]
+  	        if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MXNET_MODEL_SERVER_HOST// } ) ]]
    	        then
    	            host_name=$MXNET_MODEL_SERVER_HOST
    	            line="server_name $host_name;"
@@ -118,11 +118,11 @@ usage_help() {
     echo ""
     echo "$0 [start | stop | restart | help] [--mms-config <MMS config file>]"
     echo ""
-    echo "start        : Start a new instance of MXNet model server."
+    echo "start        : Start a new instance of MXNet model server"
     echo "stop         : Stop the current running instance of MXNet model server"
-    echo "restart      : Restarts all the MXNet Model Server worker instances."
+    echo "restart      : Restarts all the MXNet Model Server worker instances"
     echo "help         : Usage help for $0"
-    echo "--mms-config : Location pointing to the MXNet model server configuration file."
+    echo "--mms-config : Location pointing to the MXNet model server configuration file"
     echo "To start the MXNet model server, run"
     echo "$0 start --mms-config <path-to-config-file>"
     echo ""

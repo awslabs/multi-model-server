@@ -20,7 +20,7 @@ wget https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb_service.py
 ## Step 2 - Check signature file
 
 Let's take a look at signature file:
-```
+```json
 {
   "inputs": [
     {
@@ -65,7 +65,7 @@ mxnet-model-server --models lstm_ptb=lstm_ptb.model
 ```
 You will see the following outputs which means the service is successfully established:
 
-```
+```bash
 I1102 11:25:58 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/mxnet_model_server.py:__init__:75] Initialized model serving.
 I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: lstm_ptb_predict to Flask
 I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: ping to Flask
@@ -89,7 +89,7 @@ curl -X POST http://127.0.0.1:8080/lstm_ptb/predict -F "data=[{'input_sentence':
 
 Prediction result will be:
 
-```
+```bash
 {
   "prediction": "the <unk> 's the the as the 's the the 're to a <unk> <unk> <unk> analyst company trading at "
 }
@@ -97,13 +97,13 @@ Prediction result will be:
 
 Let's try another sentence:
 
-```
+```bash
 curl -X POST http://127.0.0.1:8080/lstm_ptb/predict -F "data=[{'input_sentence': 'while friday \'s debacle involved mainly professional traders rather than investors it left the market vulnerable to continued selling this morning traders said '}]"
 ```
 
 Prediction result will be:
 
-```
+```bash
 {
   "prediction": "the 's stock were <unk> in <unk> say than <unk> were will to <unk> to to the <unk> the week \n \n \n \n \n \n \n \n \n \n "
 }

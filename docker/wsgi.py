@@ -13,15 +13,26 @@ import sys
 import json
 import os
 from mms.arg_parser import ArgParser
-
+import fasteners
 mms_arg_header = 'MMS Argument'
 args = []
 found_mms_args = 0
 
 mms_config_path = os.environ['MXNET_MODEL_SERVER_CONFIG']
 is_gpu_image = os.environ['MXNET_MODEL_SERVER_GPU_IMAGE']
-
-
+num_gpu = 1
+LOCK_FILE = '/tmp/tmp_lock_file'
+@fasteners.interprocess_locked(LOCK_FILE)
+def get_gpu_ids(args, n_gpu):
+    args.append('--gpu')
+    gpu_id=0
+    n_gpu =4
+    with open('/mxnet_model_server/.gpu_id', 'r') as file:
+        gpu_id = file.read()
+        args.append(str(int(gpu_id )% n_gpu))
+    with open('/mxnet_model_server/.gpu_id', 'w') as file:
+        file.write(str(int(gpu_id) + 1))
+        file.truncate()
 def read_models_from_file():
     """
     This method reads the models meta-data from a local file. This is used for MMS in
@@ -50,20 +61,21 @@ else:
                 if line.startswith('['):
                     found_mms_args = 1 if mms_arg_header.lower() in line.lower() else 0
                 if found_mms_args is 1:
-                    if line.startswith('--') and content[i+1] != 'optional':
-                        args.append(line)
-                        if line.startswith('--model'):
-                            args += content[i + 1].split(' ')
-                        else:
-                            args.append(content[i + 1])
+                    if line.startswith('--num-GPUs') and content[i+1] != 'optional':
+                        num_gpu = int(content[i+1])
+                    else:
+                        if line.startswith('--') and content[i+1] != 'optional':
+                            args.append(line)
+                            if line.startswith('--model'):
+                                args += content[i + 1].split(' ')
+                            else:
+                                args.append(content[i + 1])  
         except Exception as e:
             sys.exit("ERROR: Cannot read the open file.")
 
-if is_gpu_image == 1:
-    args.append('--gpu')
-    args.append(int(os.environ['gpu_id']))
-    os.environ['gpu_id'] = str(int(os.environ['gpu_id']) + 1)
-
+if is_gpu_image == '1':
+    
+    get_gpu_ids(args, num_gpu)
 # Extract the model's metadata from the file
 models = read_models_from_file()
 # Parse the arguments

@@ -34,11 +34,12 @@ Docker images are currently available on Docker Hub [CPU](https://hub.docker.com
    ``` 
    Verify the models and configuration file is in this newly created directory. Also verify that the `mms_app_[cpu|gpu].conf` is updated.
 
-3. Run the downloaded Docker image
+3. Run the downloaded CPU container image
    ```bash
    docker run --name mms -p 80:8080 -itd -v /home/users/models/:/models awsdeeplearningteam/mms_cpu
    0c1862a2c30edd0f33391f7277b2c8bcba4a5f4cf22669f3b308b4078a5d3ce8
    ```
+   Note, to run GPU image refer [this section](#running-the-mms-gpu-docker)
    
    Verify the image is running
    ```bash
@@ -48,13 +49,13 @@ Docker images are currently available on Docker Hub [CPU](https://hub.docker.com
    ```
    Refer [Docker CLI](https://docs.docker.com/engine/reference/commandline/run/) to understand each parameter. 
 
-4. Run MXNet Model Server in the running instance of Docker
+4. Run MXNet Model Server in the running instance of the container
    ```bash
    docker exec mms bash -c "mxnet-model-server start --mms-config /models/mms_app_cpu.conf"
    ``` 
 
-## Building `MMS docker` image from scratch
-The following are the steps to build a docker image
+## Building `MMS container` image from scratch
+The following are the steps to build a container image from scratch.
 
 ### Prerequisites
 In order to build the Docker image yourself you need the following:
@@ -86,7 +87,7 @@ If you haven't already, clone the MMS repo and go into the `docker` folder.
 git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server/docker
 ```
 
-### Building the Docker Image
+### Building the Container Image
 
 #### Configuration Setup
 
@@ -126,7 +127,7 @@ The next command will build the Docker image. The `-t` flag and following value 
 docker build -f Dockerfile.cpu -t mms_image .
 ```
 
-Once this completes, run `docker images` from your terminal. You should see the Docker image listed with the tag, `mms_image:latest`. Skip down to the section **Running the MMS Docker** to continue, or peruse the EC2 instructions if you're curious how to configure it for the cloud.
+Once this completes, run `docker images` from your terminal. You should see the Docker image listed with the tag, `mms_image:latest`. 
 
 ### Build Step for GPU
 
@@ -244,7 +245,6 @@ The predict endpoint will return a prediction response in JSON. It will look som
   ]
 }
 ```
-
 
 ## Advanced Settings
 

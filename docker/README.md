@@ -69,7 +69,7 @@ We can optionally update the **nginx** section of the `mms_app_*.conf` file for 
 
 Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker image. (Server Name can be updated at run-time. 
 This option is mentioned in steps to run.)
-
+ The CPU and GPU configs have been optimised for C5.2xlarge and p3.8xlarge respectively for Resnet-18 model. You can modify the parameters according to your use case.
 The **nginx** section will look like this:
 
 ```
@@ -228,7 +228,7 @@ Notes on a couple of the parameters:
 * **models** - the model used when setting up service. By default it uses resnet-18, chnage this argument to use customized model.
 * **worker-class** - the type of Gunicorn worker processes. We configure by default to gevent which is a type of async worker process. Options are [described in the Gunicorn docs](http://docs.gunicorn.org/en/stable/settings.html#worker-class).
 * **limit-request-line** - this is a security-related configuration that limits the [length of the request URI](http://docs.gunicorn.org/en/stable/settings.html#limit-request-line). It is useful preventing DDoS attacks.
-
+* **num-GPUs** - Number of GPUs available for use.
 ```
     [MMS arguments]
     --models

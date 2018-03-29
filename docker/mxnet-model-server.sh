@@ -98,8 +98,8 @@ start_mms()
     app_script='wsgi'
     service nginx restart
     # Download and extract all the models
-    python /mxnet_model_server/setup_mms.py $models
     echo "0" >& /mxnet_model_server/.gpu_id
+    python /mxnet_model_server/setup_mms.py $models
     # If successful run gunicorn
     if [[ `echo $?` == 0 ]] ; then
         gunicorn $gunicorn_arguments --chdir /mxnet_model_server --env MXNET_MODEL_SERVER_CONFIG=$MMS_CONFIG_FILE $app_script

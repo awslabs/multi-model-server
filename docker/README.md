@@ -94,16 +94,12 @@ We can optionally update the **nginx** section of `mms_app_cpu.conf` or `mms_app
 * For CPU builds, use [mms_app_cpu.conf](mms_app_cpu.conf) and [Dockerfile.cpu](Dockerfile.cpu).
 * For GPU builds, use [mms_app_gpu.conf](mms_app_gpu.conf) and [Dockerfile.gpu](Dockerfile.gpu).
 
-<<<<<<< HEAD
 Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker image. (Server Name can be updated at run-time. 
 This option is mentioned in steps to run.)
- The CPU and GPU configs have been optimised for C5.2xlarge and p3.8xlarge respectively for Resnet-18 model. You can modify the parameters namely number of workers and number of GPUs (in case of GPU usage) according to your use case.
-=======
+The CPU and GPU configs have been optimised for C5.2xlarge and p3.8xlarge respectively for Resnet-18 model. You can modify the parameters namely number of workers and number of GPUs (in case of GPU usage) according to your use case.
 
 
- The CPU and GPU configs have been optimised for C5.2xlarge and p3.8xlarge respectively for Resnet-18 model. You can modify the parameters according to your use case.
 
->>>>>>> 0d87ad751a7ffead271cd7ba6b69bdf13876e76a
 The **nginx** section will look like this:
 
 ```text

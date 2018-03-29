@@ -27,7 +27,7 @@ RUN apt-get update && \
     && pip install mxnet-mkl \
     && mkdir /mxnet_model_server
 
-COPY wsgi.py setup_mms.py mxnet-model-server.sh /mxnet_model_server/
+COPY mms_app_cpu.conf wsgi.py setup_mms.py mxnet-model-server.sh /mxnet_model_server/
 
 ENV PATH="/mxnet_model_server:${PATH}" MXNET_MODEL_SERVER_GPU_IMAGE=0
 

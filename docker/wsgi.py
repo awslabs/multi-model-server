@@ -28,12 +28,16 @@ LOCK_FILE = '/tmp/tmp_lock_file'
 def get_gpu_ids(args, n_gpu):
     args.append('--gpu')
     gpu_id=0
-    with open('/mxnet_model_server/.gpu_id', 'r') as file:
-        gpu_id = file.read()
-        args.append(str(int(gpu_id )% n_gpu))
-    with open('/mxnet_model_server/.gpu_id', 'w') as file:
-        file.write(str(int(gpu_id) + 1))
-        file.truncate()
+    try:
+        with open('/mxnet_model_server/.gpu_id', 'r') as file:
+            gpu_id = file.read()
+            args.append(str(int(gpu_id )% n_gpu))
+        with open('/mxnet_model_server/.gpu_id', 'w') as file:
+            file.write(str(int(gpu_id) + 1))
+            file.truncate()
+    except IOError as e:
+        sys.exit("ERROR: failed to setup GPU context")
+
 def read_models_from_file():
     """
     This method reads the models meta-data from a local file. This is used for MMS in

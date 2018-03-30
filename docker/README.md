@@ -29,14 +29,14 @@ Docker images are currently available on Docker Hub [CPU](https://hub.docker.com
    Update the `--models` option in the configuration in the mms_app_[cpu|gpu].conf file. Also update the `--log-file` to point to a the file-path `/models/mms_app.log`.
 
    ```bash
-   mkdir /home/user/models
-   cp ~/mxnet-model-server/docker/mms_app_cpu.conf /home/user/models/.
+   mkdir /tmp/models
+   cp ~/mxnet-model-server/docker/mms_app_cpu.conf /tmp/models/.
    ``` 
    Verify the models and configuration file is in this newly created directory. Also verify that the `mms_app_[cpu|gpu].conf` is updated.
 
 3. Run the downloaded CPU container image
    ```bash
-   docker run --name mms -p 80:8080 -itd -v /home/users/models/:/models awsdeeplearningteam/mms_cpu
+   docker run --name mms -p 80:8080 -itd -v /tmp/models/:/models awsdeeplearningteam/mms_cpu
    0c1862a2c30edd0f33391f7277b2c8bcba4a5f4cf22669f3b308b4078a5d3ce8
    ```
    Note, to run GPU image refer to [this section](#running-the-mms-gpu-docker)
@@ -151,8 +151,8 @@ docker build -f Dockerfile.gpu -t mms_image_gpu .
 Create a `models` directory on the host machine and add the models to be used along with the mms_app_[cpu|gpu].conf file into the directory. Modify the `mms_app[cpu/gpu].conf` file to reflect the model files to be used along with updated options for other `gunicorn`, `nginx` and `MMS` configurations.
  ```bash
  # Modify the mms_app_cpu.conf or mms_app_gpu.conf and add it to this folder
- $ mkdir models
- $ cp ~/mxnet-model-server/docker/mms_app_cpu.conf models/
+ $ mkdir /tmp/models
+ $ cp ~/mxnet-model-server/docker/mms_app_cpu.conf /tmp/models/
  ```
 ### Running MXNet Model Server as a Docker instance
 
@@ -164,7 +164,7 @@ You may also want to modify the `-p 80:8080` to utilize other ports instead. Ref
 
 ```bash
 # Run the docker image in a detached mode
-$ docker run -itd -p 80:8080 --name mms -v /home/user/models:/models mms_image:latest
+$ docker run -itd -p 80:8080 --name mms -v /tmp/models:/models mms_image:latest
 ```
    
 Verify that this image is running by running 
@@ -195,11 +195,12 @@ At this point you should be able to run inference on `localhost` port `80`
 #### Running the MMS GPU Docker
 
 ```bash
-$ nvidia-docker run -itd -p 80:8080 --name mms -v /home/user/models/:/models mms_image_gpu:latest
+$ nvidia-docker run -itd -p 80:8080 --name mms -v /tmp/models/:/models mms_image_gpu:latest
 ```
 
-This command starts the docker instance in a detached mode and mounts `/home/user/models` of the host system into `/models` directory inside the Docker instance. 
-Considering that you modified and copied `mms_app_gpu.conf` file into the models directory, before you ran the above `nvidia-docker` command, you would have this configuration file ready to use in the docker instance.
+This command starts the docker instance in a detached mode and mounts `/tmp/models` of the host system into `/models` directory inside the Docker instance. 
+Considering that you modified and copied `mms_app_gpu.conf` file into the `/tmp/models` directory, before you ran the above `nvidia-docker` command, 
+you would have this configuration file ready to use in the docker instance.
 
 ```bash
 $ nvidia-docker exec mms bash -c "mxnet-model-server start --mms-config /models/mms_app_gpu.conf"
@@ -324,7 +325,7 @@ First of all, we need to get a SSL certificate. It includes a server certificate
 Second step is to create a docker container which exposes TCP port 443 for SSL:
 
 ```bash
-docker run -itd --name mms -v /home/user/models/:/models -p 8080:443 -p 8081:80 mms_image:latest
+docker run -itd --name mms -v /tmp/models/:/models -p 8080:443 -p 8081:80 mms_image:latest
 ```
 
 Note that we expose both https and normal http ports.

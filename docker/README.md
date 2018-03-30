@@ -94,6 +94,12 @@ We can optionally update the **nginx** section of `mms_app_cpu.conf` or `mms_app
 * For CPU builds, use [mms_app_cpu.conf](mms_app_cpu.conf) and [Dockerfile.cpu](Dockerfile.cpu).
 * For GPU builds, use [mms_app_gpu.conf](mms_app_gpu.conf) and [Dockerfile.gpu](Dockerfile.gpu).
 
+Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker image. (Server Name can be updated at run-time. 
+This option is mentioned in steps to run.)
+The CPU and GPU configs have been optimised for C5.2xlarge and p3.8xlarge respectively for Resnet-18 model. You can modify the parameters namely number of workers and number of GPUs (in case of GPU usage) according to your use case.
+
+
+
 The **nginx** section will look like this:
 
 ```text
@@ -263,9 +269,13 @@ Notes on a couple of the parameters:
 * **models** - the model used when setting up service. By default it uses resnet-18, chnage this argument to use customized model.
 * **worker-class** - the type of Gunicorn worker processes. We configure by default to gevent which is a type of async worker process. Options are [described in the Gunicorn docs](http://docs.gunicorn.org/en/stable/settings.html#worker-class).
 * **limit-request-line** - this is a security-related configuration that limits the [length of the request URI](http://docs.gunicorn.org/en/stable/settings.html#limit-request-line). It is useful preventing DDoS attacks.
+* **num-gpu** - Optional parameter for number of GPUs available for use. MMS uses GPUs with id from 0 .. (num-gpu-1)   By default MMS uses all the available GPUs while this parameter can be configured if user want to use only few of them .
+```
+
 
 ```text
-    [MMS arguments]
+
+ [MMS arguments]
     --models
     resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
 
@@ -289,7 +299,7 @@ Notes on a couple of the parameters:
     unix:/tmp/mms_app.sock
 
     --workers
-    4
+    8
 
     --worker-class
     gevent

@@ -220,7 +220,7 @@ The `location` section defines the proxy server to which all the requests are pa
 
 Now you can examine how to build a Docker image with MMS and establish a public accessible endpoint on EC2 instance. You should be able to adapt this information for any cloud provider. This Docker image can be used in other production environments as well. Skip this section if you're building for local use.
 
-The first step is to create an (EC2 instance)[https://aws.amazon.com/ec2/].
+The first step is to create an [EC2 instance](https://aws.amazon.com/ec2/).
 
 ### Build Step for CPU
 

@@ -89,7 +89,7 @@ curl -X POST http://127.0.0.1:8080/lstm_ptb/predict -F "data=[{'input_sentence':
 
 Prediction result will be:
 
-```bash
+```json
 {
   "prediction": "the <unk> 's the the as the 's the the 're to a <unk> <unk> <unk> analyst company trading at "
 }
@@ -103,7 +103,7 @@ curl -X POST http://127.0.0.1:8080/lstm_ptb/predict -F "data=[{'input_sentence':
 
 Prediction result will be:
 
-```bash
+```json
 {
   "prediction": "the 's stock were <unk> in <unk> say than <unk> were will to <unk> to to the <unk> the week \n \n \n \n \n \n \n \n \n \n "
 }

@@ -24,7 +24,7 @@ Docker images are currently available on Docker Hub [CPU](https://hub.docker.com
    ```
 
 2. Create a directory for `models` and update the `mms_app.conf` file that MXNet Model Server should use with the models. There are example 
-   configuration files in the `docker` folder of `mxnet-model-server` repository. Refer [mms_app_cpu.conf](mms_app_cpu.conf) or [mms_app_gpu.conf](mms_app_gpu.conf).
+   configuration files in the `docker` folder of `mxnet-model-server` repository. Refer to [mms_app_cpu.conf](mms_app_cpu.conf) or [mms_app_gpu.conf](mms_app_gpu.conf).
    This directory would be volume-mounted into the `docker` instance and can act as a persistent storage for logs. In this example, this folder is mounted into the container at `/models`
    Update the `--models` option in the configuration in the mms_app_[cpu|gpu].conf file. Also update the `--log-file` to point to a the file-path `/models/mms_app.log`.
 
@@ -39,7 +39,7 @@ Docker images are currently available on Docker Hub [CPU](https://hub.docker.com
    docker run --name mms -p 80:8080 -itd -v /home/users/models/:/models awsdeeplearningteam/mms_cpu
    0c1862a2c30edd0f33391f7277b2c8bcba4a5f4cf22669f3b308b4078a5d3ce8
    ```
-   Note, to run GPU image refer [this section](#running-the-mms-gpu-docker)
+   Note, to run GPU image refer to [this section](#running-the-mms-gpu-docker)
    
    Verify the image is running
    ```bash
@@ -47,7 +47,7 @@ Docker images are currently available on Docker Hub [CPU](https://hub.docker.com
    CONTAINER ID        IMAGE               COMMAND             CREATED                  STATUS              PORTS                NAMES
    b4bab087f2a8        mms_cpu             "/bin/bash"         Less than a second ago   Up 2 seconds        0.0.0.0:80->80/tcp   mms
    ```
-   Refer [Docker CLI](https://docs.docker.com/engine/reference/commandline/run/) to understand each parameter. 
+   Refer to [Docker CLI](https://docs.docker.com/engine/reference/commandline/run/) to understand each parameter. 
 
 4. Run MXNet Model Server in the running instance of the container
    ```bash
@@ -87,14 +87,20 @@ If you haven't already, clone the MMS repo and go into the `docker` folder.
 git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server/docker
 ```
 
-### Building the Container Image
+### Building the container image
 
-#### Configuration Setup
+#### Configuration setup
 
 We can optionally update the **nginx** section of `mms_app_cpu.conf` or `mms_app_gpu.conf` files for your target environment. 
 
 * For CPU builds, use [mms_app_cpu.conf](mms_app_cpu.conf) and [Dockerfile.cpu](Dockerfile.cpu).
 * For GPU builds, use [mms_app_gpu.conf](mms_app_gpu.conf) and [Dockerfile.gpu](Dockerfile.gpu).
+
+Note the `server_name` entry. You can update `localhost` to be your public hostname, IP address, or just use the default `localhost`. This depends on where you expect to utilize the Docker image. (Server Name can be updated at run-time. 
+This option is mentioned in steps to run.)
+The CPU and GPU configs have been optimised for C5.2xlarge and p3.8xlarge respectively for Resnet-18 model. You can modify the parameters namely number of workers and number of GPUs (in case of GPU usage) according to your use case.
+
+
 
 The **nginx** section will look like this:
 
@@ -257,9 +263,13 @@ Notes on a couple of the parameters:
 * **models** - the model used when setting up service. By default it uses resnet-18, chnage this argument to use customized model.
 * **worker-class** - the type of Gunicorn worker processes. We configure by default to gevent which is a type of async worker process. Options are [described in the Gunicorn docs](http://docs.gunicorn.org/en/stable/settings.html#worker-class).
 * **limit-request-line** - this is a security-related configuration that limits the [length of the request URI](http://docs.gunicorn.org/en/stable/settings.html#limit-request-line). It is useful preventing DDoS attacks.
+* **num-gpu** - Optional parameter for number of GPUs available for use. MMS uses GPUs with id from 0 .. (num-gpu-1)   By default MMS uses all the available GPUs while this parameter can be configured if user want to use only few of them .
+```
+
 
 ```text
-    [MMS arguments]
+
+ [MMS arguments]
     --models
     resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
 
@@ -283,7 +293,7 @@ Notes on a couple of the parameters:
     unix:/tmp/mms_app.sock
 
     --workers
-    4
+    8
 
     --worker-class
     gevent
@@ -365,7 +375,7 @@ mxnet-model-server [start | stop | restart | help] [--mms-config <MMS config fil
 start        : Start a new instance of MXNet model server
 stop         : Stop the current running instance of MXNet model server
 restart      : Restarts all the MXNet Model Server worker instances
-help         : Usage help for /mxnet_model_server/mms
+help         : Usage help for /mxnet_model_server/mxnet-model-server
 --mms-config : Location pointing to the MXNet model server configuration file
 To start the MXNet model server, run
 /mxnet_model_server/mxnet-model-server start --mms-config <path-to-config-file>

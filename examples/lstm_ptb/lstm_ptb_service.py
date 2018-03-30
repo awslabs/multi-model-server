@@ -5,11 +5,13 @@ import json
 from mms.model_service.mxnet_model_service import MXNetBaseService
 from mms.utils.mxnet import nlp
 
+
 class MXNetLSTMService(MXNetBaseService):
     """LSTM service class. This service consumes a sentence
     from length 0 to 60 and generates a sentence with the same size.
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
+        self.model_name = model_name
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
         signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
         if not os.path.isfile(signature_file_path):
@@ -19,7 +21,7 @@ class MXNetLSTMService(MXNetBaseService):
             signature_file = open(signature_file_path)
             self._signature = json.load(signature_file)
         except:
-            raise Exception('Failed to open model signiture file: %s' % signature_file_path)
+            raise Exception('Failed to open model signature file: %s' % signature_file_path)
             
         self.data_names = []
         self.data_shapes = []

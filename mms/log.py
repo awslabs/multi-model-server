@@ -56,6 +56,7 @@ class _Formatter(logging.Formatter):
             self._fmt = fmt
         return super(_Formatter, self).format(record)
 
+
 def getLogger(name=None, filename=None, filemode=None, level='NOTSET'):
     """Gets a customized logger.
 
@@ -65,6 +66,7 @@ def getLogger(name=None, filename=None, filemode=None, level='NOTSET'):
     warnings.warn("getLogger is deprecated, Use get_logger instead.",
                   DeprecationWarning, stacklevel=2)
     return get_logger(name, filename, filemode, LOG_LEVEL_DICT[level])
+
 
 def get_logger(name=None, filename=None, level="NOTSET", rotate_value='H', rotate_interval=1):
     """Gets a customized logger.

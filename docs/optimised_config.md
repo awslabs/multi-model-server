@@ -1,4 +1,4 @@
-# Optimised configuration for EC2 instances for mms in containers
+# Optimised configuration for EC2 instances for MMS in containers
 We performed a series of experiments to come up with optimised configurations for ec2 instances for GPU and CPU usage and based on these experiments we published optimised configurations for c5.2xlarge(CPU instance) and p3.8xlarge (GPU instance). 
 ## Experiment details
 We came up with the configurations after performing experiments for CPU and GPU instances to study metrics like throughput and latencies when the server receives concurrent requests.  The experiment details are as discussed below.
@@ -27,7 +27,7 @@ The plots below shows how throughput and median latency varied for 100 requests 
 
 ![GPU_latency](docs/images/gpu_latency.png)
 
-We can see that we the throughput becomes constant after 32 workers while latency increases a bit suggesting 32 workers to be optimal for the instance.
+We can see that the throughput becomes constant after 32 workers while latency increases a bit suggesting 32 workers to be optimal for the instance.
 
 * **Experiments on CPU( c5.2xlarge with 8 vCPUs)**
 
@@ -46,8 +46,4 @@ The best performances are obtained using all the available GPUs available on the
 
 ## Performance on high loads 
 After setting number of workers and GPUs as described above, we ran experiments to understand scale of request which MMS can handle. The containerised GPU version of MMS was able to give throughput of 650 requests/second without any error when it was bombarded by request from 600 concurrent workers sending 100 request each. 
-
-
-
-
 

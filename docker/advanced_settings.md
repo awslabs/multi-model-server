@@ -2,7 +2,7 @@
 
 ## Contents of this Document
 * [GPU Inference](advanced_settings.md#gpu-inference)
-* [Reference Commands](advanced_settings.md#reference-commands
+* [Reference Commands](advanced_settings.md#reference-commands)
 * [Docker Details](advanced_settings.md#docker-details)
 * [Description of Config File Settings](advanced_settings.md#description-of-config-file-settings)
 * [Configuring SSL](advanced_settings.md#configuring-ssl)
@@ -30,13 +30,12 @@ Download the template a GPU config and place it in the `models` folder you just 
 
 **Step 3: Modify the configuration template.**
 
-Edit the file you downloaded, `mms_app_*pu.conf`. It will have the following section for `MMS Arguments`:
+Edit the file you downloaded, `mms_app_gpu.conf`. It will have the following section for `MMS Arguments`:
 
 ```
 [MMS Arguments]
 --models
 squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
-
 ...
 ```
 

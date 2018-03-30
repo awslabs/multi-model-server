@@ -14,12 +14,9 @@ import requests
 import zipfile
 import shutil
 import json
-import jsonschema
-import fasteners
 
 from mms.log import get_logger
 from jsonschema import validate
-
 
 logger = get_logger()
 

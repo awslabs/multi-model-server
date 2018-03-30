@@ -10,21 +10,30 @@ We came up with the configurations after performing experiments for CPU and GPU 
 * EC2 Instance Types: P3 8xlarge (4 GPUs, 32 vCPUs) / c5.2xlarge (8 CPUs)
 * GPU image used: [MMS GPU Docker image](https://hub.docker.com/r/awsdeeplearningteam/mms_gpu/)
 * CPU image used: [MMS CPU Docker image](https://hub.docker.com/r/awsdeeplearningteam/mms_cpu/)
+
+
 We varied number of concurrent workers(C) sending request (R) making a total (R*C) requests to server. We varied the parameters mentioned below and have discussed the results in respective sections.
 
 ## Number of Gunicorn workers (workers)
 The number of Gunicorn workers should be equal to the number of vCPUs in the ec2 instance. We varied number of Gunicorn workers and studied throughput and latencies for both GPU(p3.8xlarge) and CPU(c5.2xlarge) instance. The plots below shows how these metrics varies with number of workers.
 
-* Experiments on GPU( p3.8xlarge with 32 vCPUs and 4 GPUs)
+* **Experiments on GPU( p3.8xlarge with 32 vCPUs and 4 GPUs)**
+
+
 The plots below shows how throughput and median latency varied for 100 requests from 100 concurrent workers with number of Gunicorn workers on p3.8xlarge instance. 
+
+
 ![GPU_throughput](docs/images/gpu_throughput.png)
+
 ![GPU_latency](docs/images/gpu_latency.png)
 
 We can see that we the throughput becomes constant after 32 workers while latency increases a bit suggesting 32 workers to be optimal for the instance.
 
-* Experiments on CPU( c5.2xlarge with 8 vCPUs)
+* **Experiments on CPU( c5.2xlarge with 8 vCPUs)**
+
 We performed similar experiments for CPU (100 requests from 100 concurrent workers) and got the following results for latency and throughput when we varied number of Gunicorn workers.
 ![CPU_throughput](docs/images/cpu_throughput.png)
+
 ![CPU_latency](docs/images/cpu_latency.png)
 
 We also found similar results for CPU as shown in the above plots i.e throughput is highest when there are 8 workers(which equals number of vCPUs in c5.2xlarge)

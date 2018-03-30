@@ -35,7 +35,8 @@ However, the number published in [mms_app_gpu.conf](../docker/mms_app_gpu.conf) 
 ## Number of GPUs (num-gpu)
 The best performances are obtained using all the available GPUs available on the system. Experiments shows that it linearly scales throughput . By default, MMS identifies number of available GPUs and assign context of Gunicorn worker threads to each of them in round robin fashion. However, you can configure the number of GPUs in  you want to use in the [mms_app_gpu.conf](../docker/mms_app_gpu.conf) to use only few of the available instances.
 
-
+## Performance on high loads 
+After setting number of workers and GPUs as described above, we ran experiments to understand scale of request which MMS can handle. The containerised GPU version of MMS was able to give throughput of 650 requests/second without any error when it was bombarded by request from 600 concurrent workers sending 100 request each. 
 
 
 

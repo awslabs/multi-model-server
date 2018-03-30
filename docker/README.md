@@ -11,7 +11,7 @@ MXNet Model Server (MMS) can be used with any container service. In this guide, 
 ## Other Relevant Documents
 * [Advanced Settings](advanced_settings.md)
     * [GPU Inference](advanced_settings.md#gpu-inference)
-    * [Reference Commands](advanced_settings.md#reference-commands
+    * [Reference Commands](advanced_settings.md#reference-commands)
     * [Docker Details](advanced_settings.md#docker-details)
     * [Description of Config File Settings](advanced_settings.md#description-of-config-file-settings)
     * [Configuring SSL](advanced_settings.md#configuring-ssl)
@@ -161,5 +161,7 @@ Given that this is a different model, the same image yields a different inferenc
 Now that you have tried the default inference using Squeezenet and configuring inference to the resnet-18 model you are ready to try some other more advanced settings.
 
 * GPU inference
-* Log file settings
+* MMS settings
 * Optimizing inference with gunicorn configurations
+
+Next Step: [Advanced Settings](advanced_settings.md)

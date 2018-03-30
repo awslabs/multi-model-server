@@ -23,18 +23,19 @@ The number of Gunicorn workers should be equal to the number of vCPUs in the ec2
 The plots below shows how throughput and median latency varied for 100 requests from 100 concurrent workers with number of Gunicorn workers on p3.8xlarge instance. 
 
 
-![GPU_throughput](docs/images/gpu_throughput.png)
+![GPU_throughput](./images/gpu_throughput.png)
 
-![GPU_latency](docs/images/gpu_latency.png)
+![GPU_latency](./images/gpu_latency.png)
 
 We can see that the throughput becomes constant after 32 workers while latency increases a bit suggesting 32 workers to be optimal for the instance.
 
 * **Experiments on CPU( c5.2xlarge with 8 vCPUs)**
 
 We performed similar experiments for CPU (100 requests from 100 concurrent workers) and got the following results for latency and throughput when we varied number of Gunicorn workers.
-![CPU_throughput](docs/images/cpu_throughput.png)
 
-![CPU_latency](docs/images/cpu_latency.png)
+![CPU_throughput](./images/cpu_throughput.png)
+
+![CPU_latency](./images/cpu_latency.png)
 
 We also found similar results for CPU as shown in the above plots i.e throughput is highest when there are 8 workers(which equals number of vCPUs in c5.2xlarge)
 **Based on the results, we recommend setting number of Gunicorn workers equal to number of vCPUs present in the instance.**

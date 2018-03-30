@@ -98,6 +98,11 @@ start_mms()
     app_script='wsgi'
     service nginx restart
     # Download and extract all the models
+    echo "0" >& /mxnet_model_server/.gpu_id
+    if [[ `echo $?` != 0 ]] ; then
+        rm -f /mxnet_model_server/.models
+        echo "INFO: Ending the program"
+    fi
     python /mxnet_model_server/setup_mms.py $models
     # If successful run gunicorn
     if [[ `echo $?` == 0 ]] ; then

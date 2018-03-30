@@ -23,7 +23,7 @@ RUN apt-get update && \
     && python get-pip.py \
     && pip install gevent gunicorn \
     && pip install --pre mxnet-model-server \
-    && pip install --no-cache-dir mxnet-cu90 \
+    && pip install --no-cache-dir mxnet-cu90mkl \
     && mkdir /mxnet_model_server
 
 COPY mms_app_gpu.conf wsgi.py setup_mms.py mxnet-model-server /mxnet_model_server/

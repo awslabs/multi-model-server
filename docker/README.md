@@ -1,5 +1,4 @@
 # MXNet Model Server in a container
-
 Docker images are currently available on Docker Hub [CPU](https://hub.docker.com/r/awsdeeplearningteam/mms_cpu/), [GPU](https://hub.docker.com/r/awsdeeplearningteam/mms_gpu/). Running MXNet Model Server in the docker instance can be done with four easy steps
 
 ## Running MXNet Model Server with Docker-Hub image
@@ -255,22 +254,21 @@ The predict endpoint will return a prediction response in JSON. It will look som
 
 ## Advanced Settings
 
-#### Description of Settings in mms_app.conf
+#### Description of Settings in mms_app_cpu.conf
 
-The system settings are stored in `mms_docker_cpu/mms_app.conf`. You can modify these settings to use different models, or to apply other customized settings. The default settings were optimized for a C4.8xlarge instance.
+The system settings are stored in [mms_app_cpu.conf](./mms_app_cpu.conf). You can modify these settings to use different models, or to apply other customized settings. The default settings were optimized for a C5.2xlarge instance.
 
 Notes on a couple of the parameters:
 
-* **models** - the model used when setting up service. By default it uses resnet-18, chnage this argument to use customized model.
-* **worker-class** - the type of Gunicorn worker processes. We configure by default to gevent which is a type of async worker process. Options are [described in the Gunicorn docs](http://docs.gunicorn.org/en/stable/settings.html#worker-class).
+* **models** - the model used when setting up service. By default it uses resnet-18, change this argument to use customized model.
+* **worker-class** - the type of Gunicorn worker processes. We configure by default to gevent which is a type of async worker process. Options are [described in the Gunicorn docs](http://docs.gunicorn.org/en/stable/settings.html#worker-class). 
+* **workers** -the number of Gunicorn workers which gets started. We recommend setting number of workers equal to number of vCPUs in the instance you are using. A detailed discussion of experiments and results can be found [here](../docs/optimised_config.md##number-of-gunicorn-workers(workers))
 * **limit-request-line** - this is a security-related configuration that limits the [length of the request URI](http://docs.gunicorn.org/en/stable/settings.html#limit-request-line). It is useful preventing DDoS attacks.
-* **num-gpu** - Optional parameter for number of GPUs available for use. MMS uses GPUs with id from 0 .. (num-gpu-1)   By default MMS uses all the available GPUs while this parameter can be configured if user want to use only few of them .
-```
-
+* **num-gpu** - Optional parameter for number of available GPUs user wants to use. MMS uses GPUs with id from 0 .. (num-gpu-1). **By default MMS uses all the available GPUs but this parameter can be configured if user want to use only few of them**. A discussion on how to set this parameter can be found [here](../docs/optimised_config.md##number-of-gpus(num-gpu))
+Please find below list of arguments from [mms_app_cpu.conf](./mms_app_cpu.conf)
 
 ```text
-
- [MMS arguments]
+    [MMS arguments]
     --models
     resnet-18=https://s3.amazonaws.com/mms-models/resnet-18.model
 
@@ -287,6 +285,10 @@ Notes on a couple of the parameters:
     optional
 
     --log-level
+    optional
+    
+    ## Following option is used only for GPU and is present in mms_app_gpu.conf
+    --num-gpu
     optional
 
     [Gunicorn arguments]

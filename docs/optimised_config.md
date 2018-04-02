@@ -40,7 +40,7 @@ We performed similar experiments for CPU (100 requests from 100 concurrent worke
 We also found similar results for CPU as shown in the above plots i.e throughput is highest when there are 8 workers(which equals number of vCPUs in c5.2xlarge)
 **Based on the results, we recommend setting number of Gunicorn workers equal to number of vCPUs present in the instance.**
 
-Note: The higher latencies seen during the load tests on CPU instance is becausethe C5.2xlarge CPU instance has 1/4th the total number of vCPUs as compared the p3.8xlarge GPU instance and both were serving the same number of incoming request. We had seen comparable latencies when the rate of requests coming into c5.2xlarge instance were reduced by 1/4th. Apart from it, the GPU alse shares some workload of CPUs avoiding any backlogs and hence better latency numbers.
+Note: The higher latencies seen during the load tests on CPU instance is becausethe c5.2xlarge CPU instance has 1/4th the total number of vCPUs as compared the p3.8xlarge GPU instance and both were serving the same number of incoming request. We had seen comparable latencies when the rate of requests coming into c5.2xlarge instance were reduced by 1/4th. Apart from it, the GPU also shares some workload of CPUs avoiding any backlogs and hence better latency numbers.
 
 However, the number published in [mms_app_gpu.conf](../docker/mms_app_gpu.conf) and [mms_app_cpu.conf](../docker/mms_app_cpu.conf)  are based on above experiments and optimised for the above ec2 instances.You may need to change the number of workers in [mms_app_gpu.conf](../docker/mms_app_gpu.conf)/ [mms_app_cpu.conf](../docker/mms_app_cpu.conf) based on the GPU/CPU you use. The performance may vary based on the model used.
 

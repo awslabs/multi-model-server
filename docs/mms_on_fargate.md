@@ -56,7 +56,7 @@ https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.mod
 
 So there is no need to pre-bake actual binary of the model to the container. You can just specify the HTTPS link to the binary.
 
-The last question that we need to address: how we should be starting our MMS within our container. And the answer is very simple, you just need to set the following ENTRYPOINT ([ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)): 
+The last question that we need to address: how we should be starting our MMS within our container. And the answer is very simple, you just need to set the following [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint): 
 
 ```bash
 mxnet-model-server start --mms-config /mxnet-model-server/mms_app_cpu.conf
@@ -70,60 +70,66 @@ At this point, you are ready to start creating actual task definition.
 
 This is the first task where you finally ready to start doing something:
 
-1. Log-in to the AWS console and go to the Elastic Cloud Service / Task Definitions and press “Create new Task Definition”:
+1. Login to the AWS console and go to the Elastic Cloud Service -> Task Definitions and Click “Create new Task Definition”:
 
 ![task def](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/1_Create_task_definition.png)
 
-2. Now you need to specify type of the task, surprise-surprise, we will be using the Fargate task:
+2. Now you need to specify the type of the task, surprise-surprise, you will be using the Fargate task:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/2_Select_Fargate.png)
 
-3. Task requires some configuration, let's look on it step by step, first set the name:
+3. The task requires some configuration, let's look at it step by step. First set the name:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3_Config_1.png)
 
-Now is important part, one need to create [IAM role](https://aws.amazon.com/iam) that will be used to publish metrics to CloudWatch:
+Now is important part, you need to create [IAM role](https://aws.amazon.com/iam) that will be used to publish metrics to CloudWatch:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/Task+Execution+IAM+Role+.png)
 
-Our containers are optimized for 8 vCPUs, however in our example we going to use slightly smaller task with 4 vCPUs and 8 GB of RAM:
+The containers are optimized for 8 vCPUs, however in this example you are going to use slightly smaller task with 4 vCPUs and 8 GB of RAM:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/cpu+and+ram.png)
 
-2. Now it is time to configure the actual container that the task should be executing
+2. Now it is time to configure the actual container that the task should be executing.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/container+step+1.png)
 
-3. Next one need to specify port mapping, we need to expose port 8080. This is the port that our container is listening to. If needed it can be configured via the config [here](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf#L40).
+3. The next task is to specify the port mapping. We need to expose container port 8080. 
+This is the port that the MMS application inside the container is listening on. 
+If needed it can be configured via the config [here](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf#L40).
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/port+8080.png)
 
-Now the health checks. MMS has pre-configured endpoint /ping that can be used for health checks.
+Next, we configure the health-checks. MMS has a pre-configured endpoint `/ping` 
+that can be used for health checks.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/container+health+checks.png)
 
-and the environment, with the entry point that we have discussed earlier:
+After configuring the health-checks, we go onto configuring the environment, with the entry point that we have discussed earlier:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/entrypoint.png)
 
-Everything else can be left as default. So feel free to press add and finish the creation of our very first task. If everything is ok you should now be able to see your task in the list of task definitions.
+Everything else can be left as default. So feel free to click `Add` to create your very first ECS Fargate-task. If everything is ok, you should now be able to see your task in the list of task definitions.
 
-Finally we have a task that we can be executed, but we need something that will be in charge of the actual execution. This something, in terms of ECS, is called Service. Service is capable of running multiple tasks and in charge of making sure that required amount of tasks is always running, restarting un-health tasks adding more tasks when needed, etc. If the service is going to be accessible from the Internet, we first need to configure load balancer that will  be in charge of serving the traffic from the Internet and redirecting it to the tasks. So we are going to create an LB now:
+Finally, you have a task that you can be run. In ECS, Services are created to run Tasks. A service is in charge of 
+running multiple tasks and making sure the that required number of tasks are always running, 
+restarting un-health tasks, adding more tasks when needed. 
+ 
+ If the service is going to be accessible from the Internet, we first need to configure a load-balancer that will  be 
+ in charge of serving the traffic from the Internet and redirecting it to these newly created tasks. 
+ Let's create an Application Load Balancer now:
 
-## Create LoadBalancer
+## Create a Load Balancer
 
-AWS Supports several different types of Load Blanacers:
+AWS supports several different types of Load Balancers:
 
+* Application Load Balancer: works on the level 7 of the OSI model (effectively with the HTTP/HTTPS protocols)
+* TCP Load Balancer 
 
-* Application Load Balancer, that works on the level 7 of the OSI model (effectively with the HTTP/HTTPS protocols)
-* TCP Load Balancer and
-* deprecated Elastic Load Balancer, which also used to work on the TCP level
-
-For our cluster we are going to use application load balancer.
-1. Open AWS console
-2. Goto EC2
-3. Goto to “Load balancers” section
-4. Create new Load Balancer
+For your cluster you are going to use application load balancer.
+1. Open AWS console -> Click Services -> Select EC2
+2. Go to the “Load balancers” section
+3. Create new Load Balancer
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/1__Create_Load_Balancer.png)
 
@@ -131,50 +137,54 @@ For our cluster we are going to use application load balancer.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/2__HTTP_HTTPS+.png)
 
-6. Set all the required details. Most importantly set the VPC. VPC is very important. Having wrong VPC might cause our LB to not be able to communicate with your tasks. So memorize VPC that you going to use here for later.
+6. Set all the required details. Most importantly, set the VPC. VPC is very important. 
+Having the wrong VPC might cause your LB to not be able to communicate with your tasks. Make a note of the VPC that you 
+going to use here for later.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3_2_Listeners_and_AZ+.png)
 
-7. Next is security group. This is also important. Your security group should:
+7. Next is configuring the security group. This is also important. Your security group should:
 
-* allow inbound connection for port 80 (since this is the port on which LB will be listening on)
-* member of the security group should be able to talk to the security group where you planing to have your service. In our case we will use same security group everywhere in order to simplify our life.
+* allow inbound connections for port 80 (since this is the port on which LB will be listening on)
+* member of the security group should be able to talk to the security group where you plan to have your service. 
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/4.+Configure+Security+groups.png)
 
-8. Routing configuration is simple. The thing is here you need to create what is called “target group”. But the thing is, ECS will create required service group later on for you. Therefore now you need to create dummy “target group” that you will delete after the creation of the LB. Yes, I know, there should be option to skip this, but there is not :(
+8. Routing configuration is simple. Here you need to create a “target group”. 
+But, in your case the ECS service, that you will create later, will automatically create a target group.  
+Therefore you will create dummy “target group” that you will delete after the creation of the LB. 
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/5.+Configure+Routing+(DUmmy).png)
 
-9. nothing need to be done on the last two steps. Finish the creation and ...
-10. now you are ready to remove dummy listener and target group
+9. Nothing needs to be done for the last two steps. `Finish` the creation and ...
+10. Now you are ready to remove dummy listener and target group
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/8__Delete_the_dummy_listener.png)
 
-Finally we are done-done-done with the LB, time to move to the service creation
+Now that you are `done-done-done` with the Load Balancer creation, lets move onto creating our Serverless inference service.
 
-## Create a ECS Service from the ECS Task Definitions
+## Create an ECS Service from the ECS Task Definitions
 
 1. Go to Elastic Container Service → Task Definitions and select the task definitions name. Click on actions and select create service.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/1.+Go+to+task+definitions.png)
 
-2.  There are two important things on the first step (apart from naming):
+2. There are two important things on the first step (apart from naming):
 
-* platform version, it should be set to 1.1.0 and
-* number of tasks that the service should maintain as healthy all the time, in our case we will use 3
+* Platform version: it should be set to 1.1.0 .
+* Number of tasks that the service should maintain as healthy all of the time, in our case we will use 3.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/number+of+tasks.png)
 
-3. Now it is time to configure the VPC and the security group. One should use EXACTLY same VPC that was used for the LB (and same subnets!)
+3. Now it is time to configure the VPC and the security group. You should use the same VPC that was used for the LB (and same subnets!).
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.2.1+Use+the+existing+VPC+Edit+sg.png)
 
-4. As for the security group, it should be either the same security group as you had for the LB, or the one that LB have access to:
+4. As for the security group, it should be either the same security group as you had for the LB, or the one that LB has access to:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.2.2+SG+Use+existing.png)
 
-5.  Now we can connect our future service to the existing LB. Select the application load balancer and set the LB name:
+5. Now you can connect your service to the LB that was created in the previous section. Select the application load balancer and set the LB name:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.2.3+Add+load+balancing.png)
 
@@ -182,32 +192,34 @@ Finally we are done-done-done with the LB, time to move to the service creation
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.2.4+Configure+load+blancer.png)
 
-7. We are not going to use service discovery now, so uncheck it:
+7. You are not going to use service discovery now, so uncheck it:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.2.5+Next.png)
 
-8. Also for the sake of the simplicity we are not going to use auto-scaling functionality
+8. In this document, we are not using auto-scaling options. For an actual production system, it is advisable to have this configuration setup.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.3+Auto+scaling.png)
 
-9. Now we are done-done-done and we can move to the final chapter of our journey:
+9. Now you are `done-done-done` creating a running service. You can move to the final chapter of the journey, which is testing the service you created. 
 
 ## Test The Inference
 
-First let's figure out the DNS name of our LB. It should be in EC2 => Load Balancers and click on the LB:
+First find the DNS name of your LB. It should be in `AWS Console -> Service -> EC2 -> Load Balancers` and click on the LB that you created.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/lb_dns.png)
 
-Now we can run the health checks to verify that it is working:
+Now you can run the health checks using this load-balancer public DNS name, to verify that your newly created service is working:
 ```bash
-➜ ~ curl InfraLb-1624382880.us-east-1.elb.amazonaws.com/ping 
-
+curl InfraLb-1624382880.us-east-1.elb.amazonaws.com/ping 
+```
+```text
 http://infralb-1624382880.us-east-1.elb.amazonaws.com/ping
 {
     "health": "healthy!"
 }
 ```
-And now we are finally ready to run our inference! Let's download example iamge:
+
+And now we are finally ready to run our inference! Let's download an example image:
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
 ```
@@ -216,11 +228,15 @@ The image:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/kitten.jpg)
 
-And the actual inference:
+The output of this query would be as follows,
+
 ```bash
-➜  ~ curl -X POST InfraLb-1624382880.us-east-1.elb.amazonaws.com/squeezenet/predict -F "data=@kitten.jpg"
+curl -X POST InfraLb-1624382880.us-east-1.elb.amazonaws.com/squeezenet/predict -F "data=@kitten.jpg"
+```
+
+```text
 {
-  "prediction": [
+      "prediction": [
     [
       {
         "class": "n02124075 Egyptian cat",
@@ -248,16 +264,13 @@ And the actual inference:
 ```
 ## Instead of a Conclusion
 
-There are many things that we have not touched that can be very useful, like:
+There are a few things that we have not covered here and which are very useful, such as:
 
+* How to set up IAM policies to cloudwatch metrics.
+* How to configure auto-scaling on our ECS cluster.
+* Running A/B testing of different versions of the model with the Fargate Deployment concepts.
 
-* setting up integration between MMS and CloudWatch
-* setting auto scaling funcitonality
-* running A/B testing of different versions of the model with the Fargate Deployment concepts
-* connecting Route 53 domain name
-* etc
-
-Each of the topics above probably requires it is own article, so stay tuned ;)
+Each of the above topics require their own articles, so stay tuned !!
 
 ## Authors
 

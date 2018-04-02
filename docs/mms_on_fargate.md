@@ -42,15 +42,21 @@ There are several constraints that one should consider when using Fargate:
 1. There is no GPU support at the moment.
 2. mms_cpu container is optimized for the Skylake Intel processors (that we have on our [C5 EC2 instances](https://aws.amazon.com/ec2/instance-types/c5/)). However, since we are using Fargate, unfortunately there is no guarantee that the actual hardware will be Skylake.
 
-Our containers come with preinstalled config of the SqueezeNet model (such a nice coincidence that we have decided to run inference for exactly this model :) ). Even though the config is pre-baked in the container, it is highly recommend you to have a quick look on it, just to familiarize yourself, since for your own model most likely you will have to update it, plus it very-very simple, [check it yourself](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf). To be more precise, here is the [line in the config](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf#L3) that is pointing to the actual binary of the model. By a close look one can see that it is just a  public HTTPS link to the binary:
+Our containers come with preinstalled config of the SqueezeNet model (such a nice coincidence that we have decided to run inference for exactly this model :) ). Even though the config is pre-baked in the container, it is highly recommended to have a quick look at it. [Familiarize yourself](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf),since for your own model, most likely you will have to update it. here is the line in the config that is pointing to the binary of the model:
+
+```
+https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf#L3
+```
+
+Looking closely, one can see that it is just a public HTTPS link to the binary:
 
 ```
 https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
-So there is no need to pre-bake actual binary of the model to the container, you can just specify the HTTPS link to the binary.
+So there is no need to pre-bake actual binary of the model to the container. You can just specify the HTTPS link to the binary.
 
-The last question that we need to address: how we should be starting our MMS within our container. And the answer is very simple, you just need to set the following ENTRYPOINT ([what is ENTRYPOINT?](https://docs.docker.com/engine/reference/builder/#entrypoint): 
+The last question that we need to address: how we should be starting our MMS within our container. And the answer is very simple, you just need to set the following ENTRYPOINT ([ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)): 
 
 ```bash
 mxnet-model-server start --mms-config /mxnet-model-server/mms_app_cpu.conf
@@ -58,11 +64,11 @@ mxnet-model-server start --mms-config /mxnet-model-server/mms_app_cpu.conf
 
 And this it, nothing else.
 
-At this point I think we are ready to start creating actual Task definition.
+At this point, you are ready to start creating actual task definition.
 
 ## Create a SqueezeNet Task Definition
 
-This is the first task where we finally ready to start doing something:
+This is the first task where you finally ready to start doing something:
 
 1. Log-in to the AWS console and go to the Elastic Cloud Service / Task Definitions and press “Create new Task Definition”:
 
@@ -256,5 +262,5 @@ Each of the topics above probably requires it is own article, so stay tuned ;)
 ## Authors
 
 * Aaron Markham
-* Viacheslav Kovalevskyi (@b0noi)
-* Vamshidhar Dantu  
+* Vamshidhar Dantu 
+* Viacheslav Kovalevskyi (@b0noi) 

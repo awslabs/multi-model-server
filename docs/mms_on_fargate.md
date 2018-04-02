@@ -1,22 +1,25 @@
 # Serverless Inference with MMS on FARGATE
 
-This is self-contained step by step guide that shows how to create ECS with Fargate in order to do a serverless inference with MMS. Even though it is fully self contained we do expect reader to have some knowledge about the following topics:
+This is self-contained step by step guide that shows how to create ECS with Fargate in order to do a serverless inference with MMS. 
+
+## Prerequisites
+
+Even though it is fully self-contained we do expect reader to have some knowledge about the following topics:
 
 * [MMS](https://github.com/awslabs/mxnet-model-server)
-* [ECS](https://aws.amazon.com/ecs)
-* [Fargate](https://aws.amazon.com/fargate)
-* [MXNet](https://aws.amazon.com/mxnet/)
-* [Docker](https://www.docker.com/)
+* [What is Amazon Elastic Container Service (ECS)](https://aws.amazon.com/ecs)
+* [What is Fargate](https://aws.amazon.com/fargate)
+* [What is Docker](https://www.docker.com/) and how to use containers
 
-Since we are doing inference, we need to have a pre-trained model that we can use to run inference. For the sake of this article we will be using [SqueezeNet model](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md#squeezenet_v1.1). In short SqueezeNet is the model that allows you to recognize objects on the picture. 
+Since we are doing inference, we need to have a pre-trained model that we can use to run inference. For the sake of this article, we will be using [SqueezeNet model](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md#squeezenet_v1.1). In short, SqueezeNet is a model that allows you to recognize objects on a picture. 
 
-Now, when we have the model chosen let's discuss on the high level how our end solution will looks like:
+Now, that we have the model chosen let's discuss at a high level what our serverless solution will look like:
 
 ![architecture](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/architecture_2.png)
 
-Do not be worried if something is not clear from the picture. We are going to walk you step by step. And these steps are:
+Do not be worried if something is not clear from the picture. We are going to walk you through step by step. And these steps are:
 
-1. Familiarize yourself with our containers
+1. Familiarize yourself with MMS containers
 2. Create a SqueezeNet task definition (with the docker container of MMS) 
 3. Create Fargate ECS cluster
 4. Create Application Load Balancer
@@ -27,19 +30,19 @@ Let the show begin...
 
 ## Familiarize Yourself With Our Containers 
 
-With our current release of [MMS, 0.3](https://github.com/awslabs/mxnet-model-server/releases/tag/v0.3.0), we now providing official containers with the MMS preinstalled already. There are 2 containers:
+With the current release of [MMS, 0.3](https://github.com/awslabs/mxnet-model-server/releases/tag/v0.3.0), we now providing official containers are provided with MMS preinstalled. There are 2 containers:
 
 * [awsdeeplearningteam/mms_cpu](https://hub.docker.com/r/awsdeeplearningteam/mms_cpu/)
 * [awsdeeplearningteam/mms_gpu](https://hub.docker.com/r/awsdeeplearningteam/mms_gpu/)
 
-Since we are doing inference we are going to use cpu container(mms_cpu). 
+In our article we are going to use cpu container (mms_cpu). 
 
-There are several constrains that one should consider when using Fargate:
+There are several constraints that one should consider when using Fargate:
 
-1. There is no GPU support at the moment
-2. mms_cpu container is optimized for the Skylake Intel processors (that we have on our [C5 EC2 instances](https://aws.amazon.com/ec2/instance-types/c5/)). However since we are using Fargate, unfortunately there is no guarantee that the actual hardware will be Skylake  
+1. There is no GPU support at the moment.
+2. mms_cpu container is optimized for the Skylake Intel processors (that we have on our [C5 EC2 instances](https://aws.amazon.com/ec2/instance-types/c5/)). However, since we are using Fargate, unfortunately there is no guarantee that the actual hardware will be Skylake.
 
-Our containers comes with pre-installed config of the SqueezeNet model (such a nice coincidence that we have decided to run inference for exactly this model :) ). Even though the config is pre-baked in the container we would highly recommend you to have a quick look on it, just to familiarize yourself, since for your own model most likely you will have to update it, plus it very-very simple, [check it yourself](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf). To be more precise, here is the [line in the config](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf#L3) that is pointing to the actual binary of the model. By a close look one can see that it is just a  public HTTPS link to the binary:
+Our containers come with preinstalled config of the SqueezeNet model (such a nice coincidence that we have decided to run inference for exactly this model :) ). Even though the config is pre-baked in the container, it is highly recommend you to have a quick look on it, just to familiarize yourself, since for your own model most likely you will have to update it, plus it very-very simple, [check it yourself](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf). To be more precise, here is the [line in the config](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf#L3) that is pointing to the actual binary of the model. By a close look one can see that it is just a  public HTTPS link to the binary:
 
 ```
 https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
@@ -252,5 +255,6 @@ Each of the topics above probably requires it is own article, so stay tuned ;)
 
 ## Authors
 
+* Aaron Markham
 * Viacheslav Kovalevskyi (@b0noi)
 * Vamshidhar Dantu  

@@ -12,7 +12,7 @@ Since we are doing inference, we need to have a pre-trained model that we can us
 
 Now, when we have the model chosen let's discuss on the high level how our end solution will looks like:
 
-![architecture](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/overal_architecture.png)
+![architecture](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/architecture_2.png)
 
 Do not be worried if something is not clear from the picture. We are going to walk you step by step. And these steps are:
 

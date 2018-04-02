@@ -249,3 +249,8 @@ There are many things that we have not touched that can be very useful, like:
 * etc
 
 Each of the topics above probably requires it is own article, so stay tuned ;)
+
+## Authors
+
+* Viacheslav Kovalevskyi (@b0noi)
+* Vamshidhar Dantu  

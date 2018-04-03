@@ -1,10 +1,11 @@
 # Serverless Inference with MMS on FARGATE
 
-This is self-contained step by step guide that shows how to create ECS with Fargate tasks in order to do a serverless inference with MMS. 
+This is self-contained step by step guide that shows how to create launch and server your deep learning models with MMS in a production setup. 
+In this document you will learn how to launch MMS with AWS Fargate, in order to achieve a serverless inference.
 
 ## Prerequisites
 
-Even though it is fully self-contained we do expect reader to have some knowledge about the following topics:
+Even though it is fully self-contained we do expect the reader to have some knowledge about the following topics:
 
 * [MMS](https://github.com/awslabs/mxnet-model-server)
 * [What is Amazon Elastic Container Service (ECS)](https://aws.amazon.com/ecs)
@@ -14,9 +15,9 @@ Even though it is fully self-contained we do expect reader to have some knowledg
 Since we are doing inference, we need to have a pre-trained model that we can use to run inference. 
 For the sake of this article, we will be using 
 [SqueezeNet model](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md#squeezenet_v1.1). 
-In short, SqueezeNet is a model that allows you to recognize objects on a picture. 
+In short, SqueezeNet is a model that allows you to recognize objects in a picture. 
 
-Now, that we have the model chosen let's discuss at a high level what our serverless solution will look like:
+Now that we have the model chosen, let's discuss at a high level what our serverless solution will look like:
 
 ![architecture](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/architecture_2.png)
 
@@ -24,7 +25,7 @@ Do not be worried if something is not clear from the picture. We are going to wa
 
 1. Familiarize yourself with MMS containers
 2. Create a SqueezeNet task definition (with the docker container of MMS) 
-3. Create Fargate ECS cluster
+3. Create AWS Fargate cluster
 4. Create Application Load Balancer
 5. Create Squeezenet Fargate service on the cluster
 6. Profit!
@@ -34,21 +35,22 @@ Let the show begin...
 ## Familiarize Yourself With Our Containers 
 
 With the current release of [MMS, 0.3](https://github.com/awslabs/mxnet-model-server/releases/tag/v0.3.0), 
-we are providing pre-configured, optimized container images of MMS. We have two container images, one for CPU and one for GPU.
+Official pre-configured, optimized container images of MMS are provided on [Docker hub](https://hub.docker.com).
 
 * [awsdeeplearningteam/mms_cpu](https://hub.docker.com/r/awsdeeplearningteam/mms_cpu/)
 * [awsdeeplearningteam/mms_gpu](https://hub.docker.com/r/awsdeeplearningteam/mms_gpu/)
 
-In our article we are going to use cpu container (mms_cpu).
+In our article we are going to use the official CPU container image.
 
 There are several constraints that one should consider when using Fargate:
 
 1. There is no GPU support at the moment.
 2. mms_cpu container is optimized for the Skylake Intel processors (that we have on our [C5 EC2 instances](https://aws.amazon.com/ec2/instance-types/c5/)). However, since we are using Fargate, unfortunately there is no guarantee that the actual hardware will be Skylake.
 
-Our containers come with pre-installed config of the SqueezeNet model (such a nice coincidence that we have decided to run inference for exactly this model :) ). Even though the config is pre-baked in the container, it is highly recommended to have a quick look at it. 
+The official container images come with pre-installed config of the SqueezeNet model. Even though the config is pre-baked in the container, it is highly recommended that you understand all the parameters of the MMS configuration file.
 Familiarize yourself with the [MMS configuration](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf) and [configuring MMS Container docs](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md).
-For your model, you will have to update this configuration. Here is the line in the config that is pointing to the binary of the model:
+When you want to launch and host your custom model, you will have to update this configuration. 
+Here is the line in the config that is pointing to the binary of the model:
 
 ```
 https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf#L3
@@ -116,7 +118,7 @@ After configuring the health-checks, you can go onto configuring the environment
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/entrypoint.png)
 
-Everything else can be left as default. So feel free to click `Create` to create your very first ECS Fargate-task. 
+Everything else can be left as default. So feel free to click `Create` to create your very first AWS Fargate-task. 
 If everything is ok, you should now be able to see your task in the list of task definitions.
 
 In ECS, `Services` are created to run Tasks. A service is in charge of 
@@ -272,6 +274,56 @@ curl -X POST InfraLb-1624382880.us-east-1.elb.amazonaws.com/squeezenet/predict -
   ]
 }
 ```
+
+## Customize the containers to server your custom deep learning models
+
+For this section, we will show you how you could wrap the official container images with your custom configuration. 
+The custom MMS configuration will contain your custom deep-learning models, modified serving workers to suite your needs and any other
+customizations that you would require to run your "containerized inference service".
+
+To launch a service in AWS Fargate, you will need to have a container image of MMS. Lets look at how you could build a custom container.
+
+1. Create a directory to for your custom-container image work and work from that directory.
+```bash
+mkdir /tmp/custom_container
+```
+```bash
+cd /tmp/custom_continer
+```
+
+2. Download the [MMS configuration](https://s3.amazonaws.com/mms-config/mms_app_cpu.conf) for CPU.
+```bash
+wget https://s3.amazonaws.com/mms-config/mms_app_cpu.conf
+```
+Example CPU and GPU configurations are available on S3 at [CPU](https://s3.amazonaws.com/mms-config/mms_app_cpu.conf) and [GPU](https://s3.amazonaws.com/mms-config/mms_app_gpu.conf).
+Modify the downloaded configuration file and update it with the required models. For more on how to modify this check [Advanced Settings](../docker/advanced_settings.md)
+
+3. Write a short Dockerfile which can be used to create your custom MMS container image.
+```bash
+vi Dockerfile
+```
+Paste the following in that Dockerfile and save the file.
+```text
+FROM awsdeeplearningteam/mms_cpu
+COPY mms_app_cpu.conf /mxnet_model_server/mms_app_cpu.conf
+```
+
+4. Build your container image using the Docker CLI
+```bash
+docker build -t custom_mms .
+```
+Verify that the your newly built container image was successfully built, by running the following command. 
+```bash
+docker images
+```
+
+5. You now have a custom container image which can be loaded onto [Amazon ECR Repository](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html) 
+or host it on [Docker hub registry](hub.docker.com).
+
+This newly created container image can be used for launching your new Serverless inference service. Follow the steps mentioned in the above sections of this document
+to create a Amazon Fargate service. 
+  
+
 ## Instead of a Conclusion
 
 There are a few things that we have not covered here and which are very useful, such as:

@@ -23,7 +23,7 @@ Running MXNet Model Server with Docker in two steps:
 This will download the MMS Docker image and run its default configuration, serving a Squeezenet model.
 
 ```bash
-docker run -itd --name mms -p 80:8080 awsdeeplearningteam/mms_cpu mxnet-model-server.sh start --mms-config /mxnet_model_server/mms_app_cpu.conf
+docker run -itd --name mms -p 80:8080 awsdeeplearningteam/mms_cpu mxnet-model-server start --mms-config /mxnet_model_server/mms_app_cpu.conf
 ```
 
 With the `-p` flag, we're setting it up so you can run inference on your host computer's port: `80`.

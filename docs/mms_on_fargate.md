@@ -307,6 +307,7 @@ vi mms_app_cpu.conf
 ```text
 [MMS Arguments]
 
+# Models names must be seperated with space
 --models
 squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
 
@@ -337,7 +338,7 @@ Verify that the your newly built container image was successfully built, by runn
 docker images
 ```
 
-5. You now have a custom container image which can be uploaded to [Amazon ECR Repository](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html) 
+6. You now have a custom container image which can be uploaded to [Amazon ECR Repository](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html) 
 or you can host the container image on [Docker hub registry](hub.docker.com).
 
 This newly created container image can be used for launching your new serverless inference service. Follow the steps mentioned in the previous sections of this document

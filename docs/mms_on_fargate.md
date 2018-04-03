@@ -75,7 +75,7 @@ You will now have a running container, ready to serve the models configured in t
 
 At this point, you are ready to start creating actual task definition.
 
-## Create a SqueezeNet Task Definition
+## Create an AWS Faragte task to serve SqueezeNet model
 
 This is the first step towards getting your own "inference service" up and running in a production setup. 
 
@@ -173,7 +173,7 @@ Therefore you will create dummy “target group” that you will delete after th
 
 Now that you are `done-done-done` with the Load Balancer creation, lets move onto creating our Serverless inference service.
 
-## Create an ECS Service from the ECS Task Definitions
+## Creating an ECS Service to launch our AWS Fargate task
 
 1. Go to Elastic Container Service → Task Definitions and select the task definitions name. Click on actions and select create service.
 
@@ -212,7 +212,7 @@ Now that you are `done-done-done` with the Load Balancer creation, lets move ont
 
 9. Now you are `done-done-done` creating a running service. You can move to the final chapter of the journey, which is testing the service you created. 
 
-## Test The Inference
+## Test your service
 
 First find the DNS name of your LB. It should be in `AWS Console -> Service -> EC2 -> Load Balancers` and click on the LB that you created.
 

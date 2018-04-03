@@ -14,6 +14,13 @@ MXNet Model Server (MMS) can be used with any container service. In this guide, 
     * [Docker Details](advanced_settings.md#docker-details)
     * [Description of Config File Settings](advanced_settings.md#description-of-config-file-settings)
     * [Configuring SSL](advanced_settings.md#configuring-ssl)
+* [Launch MMS as a managed inference service on AWS Fargate](../docs/mms_on_fargate.md)
+    * [Introduction to published containers](../docs/mms_on_fargate.md#familiarize-yourself-with-our-containers)
+    * [Creating a AWS Fargate task to server SqueezeNet V1.1](../docs/mms_on_fargate.md#create-a-aws-faragte-task-to-serve-squeezenet-model)
+    * [Creating an Load Balancer](../docs/mms_on_fargate.md#create-a-load-balancer)
+    * [Creating an AWS ECS Service](../docs/mms_on_fargate.md#creating-an-ecs-service-to-launch-our-aws-fargate-task)
+    * [Testing your service](../docs/mms_on_fargate.md#test-your-service)
+    * [Build custom MMS containers images to serve your Deep learning models](../docs/mms_on_fargate.md#customize-the-containers-to-server-your-custom-deep-learning-models)
 
 ## Quickstart
 Running MXNet Model Server with Docker in two steps:

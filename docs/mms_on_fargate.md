@@ -277,11 +277,11 @@ curl -X POST InfraLb-1624382880.us-east-1.elb.amazonaws.com/squeezenet/predict -
 
 ## Customize the containers to server your custom deep learning models
 
-For this section, we will show you how you could wrap the official container images with your custom configuration. 
-The custom MMS configuration will contain your custom deep-learning models, modified serving workers to suite your needs and any other
+For this section, we will show you how you can wrap the provided container images with a custom configuration. 
+The custom MMS configuration will contain your custom deep learning models, modified serving workers to suite your needs and any other
 customizations that you would require to run your "containerized inference service".
 
-To launch a service in AWS Fargate, you will need to have a container image of MMS. Lets look at how you could build a custom container.
+To launch a service in AWS Fargate, you will need to have a container image of MMS. Let's look at how you could build a custom container.
 
 1. Create a directory to for your custom-container image work and work from that directory.
 ```bash
@@ -296,9 +296,29 @@ cd /tmp/custom_continer
 wget https://s3.amazonaws.com/mms-config/mms_app_cpu.conf
 ```
 Example CPU and GPU configurations are available on S3 at [CPU](https://s3.amazonaws.com/mms-config/mms_app_cpu.conf) and [GPU](https://s3.amazonaws.com/mms-config/mms_app_gpu.conf).
-Modify the downloaded configuration file and update it with the required models. For more on how to modify this check [Advanced Settings](../docker/advanced_settings.md)
+Modify the downloaded configuration file and update the `--models` parameter, with your custom model that you want to serve. 
+For more on how to modify this, check [Advanced Settings](../docker/advanced_settings.md)
 
-3. Write a short Dockerfile which can be used to create your custom MMS container image.
+3. For this example, let's edit the downloaded configuration file and add "Resnet-18" model to the list of served models. You will
+make the following changes to this configuration file. You now have a MMS configuration, which can serve both "SqueezeNet" and "Resnet" models.
+```bash
+vi mms_app_cpu.conf
+```
+```text
+[MMS Arguments]
+
+--models
+squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
+
+--service
+optional
+
+--gen-api
+optional
+...
+```
+
+4. Write a short Dockerfile which can be used to create your custom MMS container image.
 ```bash
 vi Dockerfile
 ```
@@ -308,7 +328,7 @@ FROM awsdeeplearningteam/mms_cpu
 COPY mms_app_cpu.conf /mxnet_model_server/mms_app_cpu.conf
 ```
 
-4. Build your container image using the Docker CLI
+5. Build your container image using the Docker CLI
 ```bash
 docker build -t custom_mms .
 ```
@@ -317,10 +337,10 @@ Verify that the your newly built container image was successfully built, by runn
 docker images
 ```
 
-5. You now have a custom container image which can be loaded onto [Amazon ECR Repository](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html) 
-or host it on [Docker hub registry](hub.docker.com).
+5. You now have a custom container image which can be uploaded to [Amazon ECR Repository](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html) 
+or you can host the container image on [Docker hub registry](hub.docker.com).
 
-This newly created container image can be used for launching your new Serverless inference service. Follow the steps mentioned in the above sections of this document
+This newly created container image can be used for launching your new serverless inference service. Follow the steps mentioned in the previous sections of this document
 to create a Amazon Fargate service. 
   
 
@@ -332,7 +352,7 @@ There are a few things that we have not covered here and which are very useful, 
 * How to configure auto-scaling on our ECS cluster.
 * Running A/B testing of different versions of the model with the Fargate Deployment concepts.
 
-Each of the above topics require their own articles, so stay tuned !!
+Each of the above topics require their own articles, so stay tuned!!
 
 ## Authors
 

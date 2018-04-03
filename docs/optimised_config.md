@@ -40,7 +40,9 @@ We performed similar experiments for CPU (100 requests from 100 concurrent worke
 We also found similar results for CPU as shown in the above plots i.e throughput is highest when there are 8 workers(which equals number of vCPUs in c5.2xlarge)
 **Based on the results, we recommend setting number of Gunicorn workers equal to number of vCPUs present in the instance.**
 
-However, the number published in [mms_app_gpu.conf](../docker/mms_app_gpu.conf) and [mms_app_cpu.conf](../docker/mms_app_cpu.conf)  are based on above experiments and optimised for the above ec2 instances.You may need to change the number of workers in [mms_app_gpu.conf](../docker/mms_app_gpu.conf)/ [mms_app_cpu.conf](../docker/mms_app_cpu.conf) based on the GPU/CPU you use. The performance may vary based on the model used.
+**Note:**  The higher latencies were seen during the load tests on CPU instance was because the c5.2xlarge CPU instance has 1/4th the total number of vCPUs as compared to the p3.8xlarge GPU instance and both were serving the same number of incoming request. Apart from it, the GPU also shares some workload of CPUs reducing the request backlogs. We had seen significantly lesser latencies when the rate of requests coming into c5.2xlarge instance was reduced by 1/4th.
+
+However, the number published in [mms_app_gpu.conf](../docker/mms_app_gpu.conf) and [mms_app_cpu.conf](../docker/mms_app_cpu.conf)  are based on above experiments and optimised for the above ec2 instances. You may need to change the number of workers in [mms_app_gpu.conf](../docker/mms_app_gpu.conf)/ [mms_app_cpu.conf](../docker/mms_app_cpu.conf) based on the GPU/CPU you use. The performance may vary based on the model used.
 
 ## Number of GPUs (num-gpu)
 The best performances are obtained using all the available GPUs available on the system. Experiments shows that it linearly scales throughput . By default, MMS identifies number of available GPUs and assign context of Gunicorn worker threads to each of them in round robin fashion. However, you can configure the number of GPUs in  you want to use in the [mms_app_gpu.conf](../docker/mms_app_gpu.conf) to use only few of the available instances.

@@ -66,7 +66,7 @@ The last question that we need to address: how we should be starting our MMS wit
 And the answer is very simple, you just need to set the following [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint): 
 
 ```bash
-mxnet-model-server start --mms-config /mxnet-model-server/mms_app_cpu.conf
+mxnet-model-server start --mms-config /mxnet_model_server/mms_app_cpu.conf
 ```
 
 You will now have a running container, ready to serve the models configured in the "mms_app_cpu.conf" mentioned in the ENTRYPOINT above. 

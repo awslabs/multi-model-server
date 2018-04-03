@@ -1,6 +1,6 @@
 # Serverless Inference with MMS on FARGATE
 
-This is self-contained step by step guide that shows how to create ECS with Fargate in order to do a serverless inference with MMS. 
+This is self-contained step by step guide that shows how to create ECS with Fargate tasks in order to do a serverless inference with MMS. 
 
 ## Prerequisites
 
@@ -11,7 +11,10 @@ Even though it is fully self-contained we do expect reader to have some knowledg
 * [What is Fargate](https://aws.amazon.com/fargate)
 * [What is Docker](https://www.docker.com/) and how to use containers
 
-Since we are doing inference, we need to have a pre-trained model that we can use to run inference. For the sake of this article, we will be using [SqueezeNet model](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md#squeezenet_v1.1). In short, SqueezeNet is a model that allows you to recognize objects on a picture. 
+Since we are doing inference, we need to have a pre-trained model that we can use to run inference. 
+For the sake of this article, we will be using 
+[SqueezeNet model](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md#squeezenet_v1.1). 
+In short, SqueezeNet is a model that allows you to recognize objects on a picture. 
 
 Now, that we have the model chosen let's discuss at a high level what our serverless solution will look like:
 
@@ -30,19 +33,22 @@ Let the show begin...
 
 ## Familiarize Yourself With Our Containers 
 
-With the current release of [MMS, 0.3](https://github.com/awslabs/mxnet-model-server/releases/tag/v0.3.0), we now providing official containers are provided with MMS preinstalled. There are 2 containers:
+With the current release of [MMS, 0.3](https://github.com/awslabs/mxnet-model-server/releases/tag/v0.3.0), 
+we are providing pre-configured, optimized container images of MMS. We have two container images, one for CPU and one for GPU.
 
 * [awsdeeplearningteam/mms_cpu](https://hub.docker.com/r/awsdeeplearningteam/mms_cpu/)
 * [awsdeeplearningteam/mms_gpu](https://hub.docker.com/r/awsdeeplearningteam/mms_gpu/)
 
-In our article we are going to use cpu container (mms_cpu). 
+In our article we are going to use cpu container (mms_cpu).
 
 There are several constraints that one should consider when using Fargate:
 
 1. There is no GPU support at the moment.
 2. mms_cpu container is optimized for the Skylake Intel processors (that we have on our [C5 EC2 instances](https://aws.amazon.com/ec2/instance-types/c5/)). However, since we are using Fargate, unfortunately there is no guarantee that the actual hardware will be Skylake.
 
-Our containers come with preinstalled config of the SqueezeNet model (such a nice coincidence that we have decided to run inference for exactly this model :) ). Even though the config is pre-baked in the container, it is highly recommended to have a quick look at it. [Familiarize yourself](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf),since for your own model, most likely you will have to update it. here is the line in the config that is pointing to the binary of the model:
+Our containers come with pre-installed config of the SqueezeNet model (such a nice coincidence that we have decided to run inference for exactly this model :) ). Even though the config is pre-baked in the container, it is highly recommended to have a quick look at it. 
+Familiarize yourself with the [MMS configuration](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf) and [configuring MMS Container docs](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md).
+For your model, you will have to update this configuration. Here is the line in the config that is pointing to the binary of the model:
 
 ```
 https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf#L3
@@ -54,27 +60,28 @@ Looking closely, one can see that it is just a public HTTPS link to the binary:
 https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
-So there is no need to pre-bake actual binary of the model to the container. You can just specify the HTTPS link to the binary.
+So there is no need to pre-bake actual binary of the model to the container. You can just specify the S3 link to the binary.
 
-The last question that we need to address: how we should be starting our MMS within our container. And the answer is very simple, you just need to set the following [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint): 
+The last question that we need to address: how we should be starting our MMS within our container. 
+And the answer is very simple, you just need to set the following [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint): 
 
 ```bash
 mxnet-model-server start --mms-config /mxnet-model-server/mms_app_cpu.conf
 ```
 
-And this it, nothing else.
+You will now have a running container, ready to serve the models configured in the "mms_app_cpu.conf" mentioned in the ENTRYPOINT above. 
 
 At this point, you are ready to start creating actual task definition.
 
 ## Create a SqueezeNet Task Definition
 
-This is the first task where you finally ready to start doing something:
+This is the first step towards getting your own "inference service" up and running in a production setup. 
 
 1. Login to the AWS console and go to the Elastic Cloud Service -> Task Definitions and Click “Create new Task Definition”:
 
 ![task def](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/1_Create_task_definition.png)
 
-2. Now you need to specify the type of the task, surprise-surprise, you will be using the Fargate task:
+2. Now you need to specify the type of the task, you will be using the Fargate task:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/2_Select_Fargate.png)
 
@@ -82,7 +89,7 @@ This is the first task where you finally ready to start doing something:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3_Config_1.png)
 
-Now is important part, you need to create [IAM role](https://aws.amazon.com/iam) that will be used to publish metrics to CloudWatch:
+Now is important part, you need to create a [IAM role](https://aws.amazon.com/iam) that will be used to publish metrics to CloudWatch:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/Task+Execution+IAM+Role+.png)
 
@@ -90,32 +97,33 @@ The containers are optimized for 8 vCPUs, however in this example you are going 
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/cpu+and+ram.png)
 
-2. Now it is time to configure the actual container that the task should be executing.
+4. Now it is time to configure the actual container that the task should be executing.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/container+step+1.png)
 
-3. The next task is to specify the port mapping. We need to expose container port 8080. 
+5. The next task is to specify the port mapping. You need to expose container port 8080. 
 This is the port that the MMS application inside the container is listening on. 
 If needed it can be configured via the config [here](https://github.com/awslabs/mxnet-model-server/blob/master/docker/mms_app_cpu.conf#L40).
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/port+8080.png)
 
-Next, we configure the health-checks. MMS has a pre-configured endpoint `/ping` 
+Next, you will have to configure the health-checks. MMS has a pre-configured endpoint `/ping` 
 that can be used for health checks.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/container+health+checks.png)
 
-After configuring the health-checks, we go onto configuring the environment, with the entry point that we have discussed earlier:
+After configuring the health-checks, you can go onto configuring the environment, with the entry point that we have discussed earlier:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/entrypoint.png)
 
-Everything else can be left as default. So feel free to click `Add` to create your very first ECS Fargate-task. If everything is ok, you should now be able to see your task in the list of task definitions.
+Everything else can be left as default. So feel free to click `Create` to create your very first ECS Fargate-task. 
+If everything is ok, you should now be able to see your task in the list of task definitions.
 
-Finally, you have a task that you can be run. In ECS, Services are created to run Tasks. A service is in charge of 
+In ECS, `Services` are created to run Tasks. A service is in charge of 
 running multiple tasks and making sure the that required number of tasks are always running, 
-restarting un-health tasks, adding more tasks when needed. 
+restarting un-healthy tasks, adding more tasks when needed. 
  
- If the service is going to be accessible from the Internet, we first need to configure a load-balancer that will  be 
+ To have your `inference service` accessible over the Internet, you would need to configure a load-balancer (LB). This LB will  be 
  in charge of serving the traffic from the Internet and redirecting it to these newly created tasks. 
  Let's create an Application Load Balancer now:
 
@@ -127,9 +135,9 @@ AWS supports several different types of Load Balancers:
 * TCP Load Balancer 
 
 For your cluster you are going to use application load balancer.
-1. Open AWS console -> Click Services -> Select EC2
-2. Go to the “Load balancers” section
-3. Create new Load Balancer
+1. Login to the EC2 Console.
+2. Go to the “Load balancers” section.
+3. Click on Create new Load Balancer.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/1__Create_Load_Balancer.png)
 
@@ -137,21 +145,21 @@ For your cluster you are going to use application load balancer.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/2__HTTP_HTTPS+.png)
 
-6. Set all the required details. Most importantly, set the VPC. VPC is very important. 
-Having the wrong VPC might cause your LB to not be able to communicate with your tasks. Make a note of the VPC that you 
-going to use here for later.
+6. Set all the required details. **Make a note of the VPC of the LB**. This is important since the LB's VPC and the ECS
+cluster's VPC need to be same for them to communicate with each other.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3_2_Listeners_and_AZ+.png)
 
 7. Next is configuring the security group. This is also important. Your security group should:
 
-* allow inbound connections for port 80 (since this is the port on which LB will be listening on)
-* member of the security group should be able to talk to the security group where you plan to have your service. 
+* Allow inbound connections for port 80 (since this is the port on which LB will be listening on)
+* LBs security group needs to be added to the AWS Fargate service's security group, so that all the traffic from LB is accepted
+by your "inference service". 
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/4.+Configure+Security+groups.png)
 
 8. Routing configuration is simple. Here you need to create a “target group”. 
-But, in your case the ECS service, that you will create later, will automatically create a target group.  
+But, in your case the AWS Fargate service, that you will create later, will automatically create a target group.  
 Therefore you will create dummy “target group” that you will delete after the creation of the LB. 
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/5.+Configure+Routing+(DUmmy).png)
@@ -171,24 +179,24 @@ Now that you are `done-done-done` with the Load Balancer creation, lets move ont
 
 2. There are two important things on the first step (apart from naming):
 
-* Platform version: it should be set to 1.1.0 .
-* Number of tasks that the service should maintain as healthy all of the time, in our case we will use 3.
+* Platform version: It should be set to 1.1.0 .
+* Number of tasks that the service should maintain as healthy all of the time, for this example you will set this to 3.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/number+of+tasks.png)
 
-3. Now it is time to configure the VPC and the security group. You should use the same VPC that was used for the LB (and same subnets!).
+3. Now it is time to configure the VPC and the security group. **You should use the same VPC that was used for the LB (and same subnets!).**
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.2.1+Use+the+existing+VPC+Edit+sg.png)
 
-4. As for the security group, it should be either the same security group as you had for the LB, or the one that LB has access to:
+4. As for the security group, it should be either the same security group as you had for the LB, or the one that accepts traffic from the LBs security group.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.2.2+SG+Use+existing.png)
 
-5. Now you can connect your service to the LB that was created in the previous section. Select the application load balancer and set the LB name:
+5. Now you can connect your service to the LB that was created in the previous section. Select the "Application Load Balancer" and set the LB name:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.2.3+Add+load+balancing.png)
 
-6. Now we need to specify which port on the LB our service should be listening on:
+6. Now you need to specify which port on the LB our service should be listening on:
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/3.2.4+Configure+load+blancer.png)
 
@@ -209,9 +217,11 @@ First find the DNS name of your LB. It should be in `AWS Console -> Service -> E
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/lb_dns.png)
 
 Now you can run the health checks using this load-balancer public DNS name, to verify that your newly created service is working:
+
 ```bash
 curl InfraLb-1624382880.us-east-1.elb.amazonaws.com/ping 
 ```
+
 ```text
 http://infralb-1624382880.us-east-1.elb.amazonaws.com/ping
 {
@@ -219,7 +229,7 @@ http://infralb-1624382880.us-east-1.elb.amazonaws.com/ping
 }
 ```
 
-And now we are finally ready to run our inference! Let's download an example image:
+And now you are finally ready to run our inference! Let's download an example image:
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
 ```

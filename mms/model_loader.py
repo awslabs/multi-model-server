@@ -80,6 +80,8 @@ def _download_and_extract(model_location, path=None, overwrite=False):
             if '.model' in model_file:
                 _extract_zip(model_file, model_dir)
         except Exception as e:
+            #Remove the directory being created if invalid model specified
+            shutil.rmtree(model_dir)
             raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
                             % (model_file, model_file_prefix , e))
     return model_dir
@@ -114,7 +116,7 @@ def _extract_model(service_name, path):
         raise ValueError('Convert ONNX model using mxnet-model-export before serving.')
 
     model_dir = _download_and_extract(model_location=path, overwrite=True)
-        
+
     try:
         # manifest schema
         import mms
@@ -144,7 +146,7 @@ def _extract_model(service_name, path):
     'Service file in model archive is inconsistent with manifest.'
 
     model_name = manifest['Model']['Model-Name']
-            
+
     return service_name, model_name, model_dir, manifest
 
 
@@ -154,13 +156,13 @@ class ModelLoader(object):
     @staticmethod
     def load(models):
         """
-        Load models 
+        Load models
 
         Parameters
         ----------
         models : dict
             Model name and model path pairs
-            
+
         Returns
         ----------
         list

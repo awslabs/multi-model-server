@@ -24,8 +24,8 @@ logger = get_logger()
 
 
 class ServingFrontend(object):
-    """ServingFrontend warps up all internal services including 
-    model service manager, request handler. It provides all public 
+    """ServingFrontend warps up all internal services including
+    model service manager, request handler. It provides all public
     apis for users to extend and use our system.
     """
     def __init__(self, app_name):
@@ -85,7 +85,7 @@ class ServingFrontend(object):
         ----------
         user_defined_module_file_path : Python module file path
             A python module will be loaded according to this file path.
-            
+
 
         Returns
         ----------
@@ -102,15 +102,15 @@ class ServingFrontend(object):
 
     def get_registered_modelservices(self, modelservice_names=None):
         """
-        Get all registered Model Service Class Definitions into a dictionary 
-        according to name or list of names. 
+        Get all registered Model Service Class Definitions into a dictionary
+        according to name or list of names.
         If nothing is passed, all registered model services will be returned.
 
         Parameters
         ----------
         modelservice_names : str or List, optional
             Names to retrieve registered model services
-            
+
         Returns
         ----------
         Dict of name, model service pairs
@@ -123,15 +123,15 @@ class ServingFrontend(object):
 
     def get_loaded_modelservices(self, modelservice_names=None):
         """
-        Get all model services which are loaded in the system into a dictionary 
-        according to name or list of names. 
+        Get all model services which are loaded in the system into a dictionary
+        according to name or list of names.
         If nothing is passed, all loaded model services will be returned.
 
         Parameters
         ----------
         modelservice_names : str or List, optional
             Names to retrieve loaded model services
-            
+
         Returns
         ----------
         Dict of name, model service pairs
@@ -150,7 +150,7 @@ class ServingFrontend(object):
         ----------
         field : str
             Field in the query string from request.
-            
+
         Returns
         ----------
         Object
@@ -182,20 +182,20 @@ class ServingFrontend(object):
 
     def setup_openapi_endpoints(self, host, port):
         """
-        Firstly, construct Openapi compatible api definition for 
+        Firstly, construct Openapi compatible api definition for
         1. Predict
         2. Ping
         3. API description
-        
+        4. Root (a default for the server, reuses ping functionality)
         Then the api definition is used to setup web server endpoint.
 
         Parameters
         ----------
         host : str
-            Host that server will use 
+            Host that server will use
 
         port: int
-            Host that server will use 
+            Host that server will use
         """
         modelservices = self.service_manager.get_loaded_modelservices()
         # TODO: not hardcode host:port
@@ -216,13 +216,13 @@ class ServingFrontend(object):
             input_type = modelservice.signature['input_type']
             inputs = modelservice.signature['inputs']
             output_type = modelservice.signature['output_type']
-            
+
             # Contruct predict openapi specs
             endpoint = '/' + model_name + '/predict'
             predict_api = {
                 endpoint: {
                     'post': {
-                        'operationId': model_name + '_predict', 
+                        'operationId': model_name + '_predict',
                         'consumes': ['multipart/form-data'],
                         'produces': [output_type],
                         'parameters': [],
@@ -241,7 +241,7 @@ class ServingFrontend(object):
                     parameter = {
                         'in': 'formData',
                         'name': inputs[idx]['data_name'],
-                        'description': '%s should tensor with shape: %s' % 
+                        'description': '%s should tensor with shape: %s' %
                             (inputs[idx]['data_name'], inputs[idx]['data_shape'][1:]),
                         'required': 'true',
                         'schema': {
@@ -252,7 +252,7 @@ class ServingFrontend(object):
                     parameter = {
                         'in': 'formData',
                         'name': inputs[idx]['data_name'],
-                        'description': '%s should be image which will be resized to: %s' % 
+                        'description': '%s should be image which will be resized to: %s' %
                             (inputs[idx]['data_name'], inputs[idx]['data_shape'][1:]),
                         'required': 'true',
                         'type': 'file'
@@ -287,13 +287,13 @@ class ServingFrontend(object):
                 msg = '%s is not supported for output content-type' % output_type
                 logger.error(msg)
                 abort(500, "Service setting error. %s" % (msg))
-            predict_api[endpoint]['post']['responses']['200'].update(responses) 
+            predict_api[endpoint]['post']['responses']['200'].update(responses)
 
             self.openapi_endpoints['paths'].update(predict_api)
 
             # Setup Flask endpoint for predict api
-            self.add_endpoint(predict_api, 
-                              self.predict_callback, 
+            self.add_endpoint(predict_api,
+                              self.predict_callback,
                               modelservice=modelservice,
                               input_names=input_names,
                               model_name=model_name)
@@ -303,7 +303,7 @@ class ServingFrontend(object):
         ping_api = {
             '/ping': {
                 'get': {
-                    'operationId': 'ping', 
+                    'operationId': 'ping',
                     'produces': ['application/json'],
                     'responses': {
                         '200': {
@@ -319,7 +319,7 @@ class ServingFrontend(object):
                         }
                     }
                 }
-                
+
             }
         }
         self.openapi_endpoints['paths'].update(ping_api)
@@ -346,18 +346,44 @@ class ServingFrontend(object):
                         }
                     }
                 }
-                
+
             }
         }
         self.openapi_endpoints['paths'].update(api_description_api)
         self.add_endpoint(api_description_api, self.api_description)
 
+        #4. root endpoint (A secondary way  to ping functionality)
+        root_api = {
+            '/': {
+                'get': {
+                    'operationId': 'root',
+                    'produces': ['application/json'],
+                    'responses': {
+                        '200': {
+                            'description': 'OK',
+                            'schema': {
+                                'type': 'object',
+                                'properties': {
+                                    'health': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+        self.openapi_endpoints['paths'].update(root_api)
+        self.add_endpoint(root_api, self.ping_callback)
+
         return self.openapi_endpoints
-    
+
     def ping_callback(self, **kwargs):
         """
         Callback function for ping endpoint.
-            
+
         Returns
         ----------
         Response
@@ -449,7 +475,7 @@ class ServingFrontend(object):
                         if form_data:
                             file_data = base64.decodestring(self.handler.get_form_data(name))
                         else:
-                            raise ValueError('This end point is expecting a data_name of %s. End point details can be found here:http://<host>:<port>/api-description' %name)    
+                            raise ValueError('This end point is expecting a data_name of %s. End point details can be found here:http://<host>:<port>/api-description' %name)
                     input_data.append(file_data)
             except Exception as e:
                 if model_name + '_Prediction4XX' in MetricsManager.metrics:
@@ -487,4 +513,3 @@ class ServingFrontend(object):
         logger.debug("Prediction request handling time is: %s ms" %
                      ((time.time() - handler_start_time) * 1000))
         return self.handler.jsonify({'prediction': response})
-

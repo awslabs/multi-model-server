@@ -8,9 +8,13 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+NLP utils
+"""
 import bisect
 import numpy as np
 import mxnet as mx
+
 
 def encode_sentences(sentences, vocab=None, invalid_label=-1, invalid_key='\n', start_label=0):
     """Encode sentences and (optionally) build a mapping
@@ -63,6 +67,7 @@ def encode_sentences(sentences, vocab=None, invalid_label=-1, invalid_key='\n', 
 
     return res, vocab
 
+
 def pad_sentence(sentence, buckets, invalid_label=-1, data_name='data', layout='NT'):
     """Pad a sentence to closest length in provided buckets.
 
@@ -92,7 +97,7 @@ def pad_sentence(sentence, buckets, invalid_label=-1, data_name='data', layout='
     pad_sent = mx.nd.array([buff], dtype='float32')
     shape = (1, sent_bucket) if layout == 'NT' else (sent_bucket, 1)
     return mx.io.DataBatch([pad_sent], pad=0, bucket_key=sent_bucket,
-                    provide_data=[mx.io.DataDesc(
-                        name=data_name,
-                        shape=shape,
-                        layout=layout)])
+                           provide_data=[mx.io.DataDesc(
+                               name=data_name,
+                               shape=shape,
+                               layout=layout)])

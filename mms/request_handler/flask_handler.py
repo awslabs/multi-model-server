@@ -7,29 +7,32 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
-import sys
+"""Flask HttpRequestHandler for handling requests.
+"""
 
 from flask import Flask, request, jsonify, send_file
-from mms.log import get_logger
-from mms.request_handler.request_handler import RequestHandler
 from flask_cors import CORS
+from mms.request_handler.request_handler import RequestHandler
+from mms.log import get_logger
 
 
 logger = get_logger()
 
 
 class FlaskRequestHandler(RequestHandler):
-    """Flask HttpRequestHandler for handling requests.
+    """
+    Class defining flask request handler
     """
     def __init__(self, app_name):
         """
         Contructor for Flask request handler.
-        
+
         Parameters
         ----------
-        app_name : string 
+        app_name : string
             App name for handler.
         """
+        # pylint: disable=super-init-not-called
         self.app = Flask(app_name)
         CORS(self.app)
 
@@ -39,15 +42,15 @@ class FlaskRequestHandler(RequestHandler):
 
         Parameters
         ----------
-        host : string 
+        host : string
             Host to setup handler.
         port: int
             Port to setup handler.
         """
         try:
             self.app.run(host=host, port=port)
-        except Exception as e:
-            raise 
+        except Exception:  # pylint: disable=broad-except
+            raise
 
     def add_endpoint(self, api_name, endpoint, callback, methods):
         """
@@ -55,8 +58,8 @@ class FlaskRequestHandler(RequestHandler):
 
         Parameters
         ----------
-        endpoint : string 
-            Endpoint for handler. 
+        endpoint : string
+            Endpoint for handler.
         api_name: string
             Endpoint ID for handler.
 
@@ -66,26 +69,27 @@ class FlaskRequestHandler(RequestHandler):
         methods: List
             Http request methods [POST, GET].
         """
+        # pylint: disable=arguments-differ
 
         # Flask need to be passed with a method list
         try:
             assert isinstance(methods, list), 'methods should be a list: [GET, POST] by Flask.'
             self.app.add_url_rule(endpoint, api_name, callback, methods=methods)
-        except Exception as e:
+        except Exception:  # pylint: disable=broad-except
             raise
-        
+
     def get_query_string(self, field=None):
         """
         Get query string from a request.
 
         Parameters
         ----------
-        field : string 
+        field : string
             Get field data from query string.
 
         Returns
         ----------
-        Object: 
+        Object:
             Field data from query string.
         """
         logger.info('Getting query string from request.')
@@ -97,15 +101,15 @@ class FlaskRequestHandler(RequestHandler):
     def get_form_data(self, field=None):
         """
         Get form data from request.
-        
+
         Parameters
         ----------
-        field : string 
+        field : string
             Get field data from form data
 
         Returns
         ----------
-        Object: 
+        Object:
             Field data from form data.
         """
         logger.info('Getting form data from request.')
@@ -119,15 +123,15 @@ class FlaskRequestHandler(RequestHandler):
     def get_file_data(self, field=None):
         """
         Get file data from request.
-        
+
         Parameters
         ----------
-        field : string 
+        field : string
             Get field data from file data.
 
         Returns
         ----------
-        Object: 
+        Object:
             Field data from file data.
         """
         logger.info('Getting file data from request.')
@@ -138,31 +142,30 @@ class FlaskRequestHandler(RequestHandler):
             return files[field]
         return None
 
-
     def jsonify(self, response):
         """
         Jsonify a response.
-        
+
         Parameters
         ----------
-        response : Response 
+        response : Response
             response to be jsonified.
 
         Returns
         ----------
-        Response: 
+        Response:
             Jsonified response.
         """
-        logger.info('Jsonifying the response: ' + str(response))
+        logger.info('Jsonifying the response: %s', (str(response)))
         return jsonify(response)
 
     def send_file(self, file, mimetype):
         """
         Send a file in Http response.
-        
+
         Parameters
         ----------
-        file : Buffer 
+        file : Buffer
             File to be sent in the response.
 
         mimetype: string
@@ -170,8 +173,9 @@ class FlaskRequestHandler(RequestHandler):
 
         Returns
         ----------
-        Response: 
+        Response:
             Response with file to be sent.
         """
-        logger.info('Sending file with mimetype: ' + mimetype)
+        # pylint: disable=logging-format-interpolation
+        logger.info('Sending file with mimetype: {}'.format(mimetype))
         return send_file(file, mimetype=mimetype)

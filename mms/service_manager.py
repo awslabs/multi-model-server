@@ -8,6 +8,9 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+This module manages model-services
+"""
 import inspect
 
 import mms.model_service.mxnet_model_service as mxnet_model_service
@@ -37,15 +40,15 @@ class ServiceManager(object):
 
     def get_modelservices_registry(self, modelservice_names=None):
         """
-        Get all registered Model Service Class Definitions in a dictionary 
-        from internal registry according to name or list of names. 
+        Get all registered Model Service Class Definitions in a dictionary
+        from internal registry according to name or list of names.
         If nothing is passed, all registered model services will be returned.
 
         Parameters
         ----------
         modelservice_names : List, optional
             Names to retrieve registered model services.
-            
+
         Returns
         ----------
         Dict of name, model service pairs
@@ -67,22 +70,22 @@ class ServiceManager(object):
         ----------
         modelservice_name : string
             Model service name to be added.
-        ModelServiceClassDef: python class  
+        ModelServiceClassDef: python class
             Model Service Class Definition which can initialize a model service.
         """
         self.modelservice_registry[modelservice_name] = ModelServiceClassDef
 
     def get_loaded_modelservices(self, modelservice_names=None):
         """
-        Get all model services which are loaded in the system into a dictionary 
-        according to name or list of names. 
+        Get all model services which are loaded in the system into a dictionary
+        according to name or list of names.
         If nothing is passed, all loaded model services will be returned.
 
         Parameters
         ----------
         modelservice_names : List, optional
              Model service names to retrieve loaded model services.
-            
+
         Returns
         ----------
         Dict of name, model service pairs
@@ -98,7 +101,7 @@ class ServiceManager(object):
 
     def load_model(self, service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu=None):
         """
-        Load a single model into a model service by using 
+        Load a single model into a model service by using
         user passed Model Service Class Definitions.
 
         Parameters
@@ -125,9 +128,9 @@ class ServiceManager(object):
 
         Parameters
         ----------
-        service_file : User defined module file path 
+        service_file : User defined module file path
             A python module which will be parsed by given name.
-            
+
         Returns
         ----------
         List of model service class definitions.

@@ -8,11 +8,15 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""HttpRequestHandler for handling http requests.
+"""
+
 from abc import ABCMeta, abstractmethod
 
 
 class RequestHandler(object):
-    """HttpRequestHandler for handling http requests.
+    """
+    Class for defining the request handler
     """
     __metaclass__ = ABCMeta
 
@@ -20,10 +24,10 @@ class RequestHandler(object):
     def __init__(self, app_name):
         """
         Contructor for request handler.
-        
+
         Parameters
         ----------
-        app_name : string 
+        app_name : string
             App name for handler.
         """
         pass
@@ -35,7 +39,7 @@ class RequestHandler(object):
 
         Parameters
         ----------
-        host : string 
+        host : string
             Host to setup handler.
         port: int
             Port to setup handler.
@@ -49,8 +53,8 @@ class RequestHandler(object):
 
         Parameters
         ----------
-        endpoint : string 
-            Endpoint for handler. 
+        endpoint : string
+            Endpoint for handler.
         api_name: string
             Endpoint ID for handler.
 
@@ -69,12 +73,12 @@ class RequestHandler(object):
 
         Parameters
         ----------
-        field : string 
+        field : string
             Get field data from query string.
 
         Returns
         ----------
-        Object: 
+        Object:
             Field data from query string.
         """
         pass
@@ -83,15 +87,15 @@ class RequestHandler(object):
     def get_form_data(self, field=None):
         """
         Get form data from request.
-        
+
         Parameters
         ----------
-        field : string 
+        field : string
             Get field data from form data
 
         Returns
         ----------
-        Object: 
+        Object:
             Field data from form data.
         """
         pass
@@ -100,15 +104,15 @@ class RequestHandler(object):
     def get_file_data(self, field=None):
         """
         Get file data from request.
-        
+
         Parameters
         ----------
-        field : string 
+        field : string
             Get field data from file data.
 
         Returns
         ----------
-        Object: 
+        Object:
             Field data from file data.
         """
         pass
@@ -118,15 +122,15 @@ class RequestHandler(object):
     def jsonify(self, response):
         """
         Jsonify a response.
-        
+
         Parameters
         ----------
-        response : Response 
+        response : Response
             response to be jsonified.
 
         Returns
         ----------
-        Response: 
+        Response:
             Jsonified response.
         """
         pass
@@ -135,10 +139,10 @@ class RequestHandler(object):
     def send_file(self, file, mimetype):
         """
         Send a file in Http response.
-        
+
         Parameters
         ----------
-        file : Buffer 
+        file : Buffer
             File to be sent in the response.
 
         mimetype: string
@@ -146,8 +150,7 @@ class RequestHandler(object):
 
         Returns
         ----------
-        Response: 
+        Response:
             Response with file to be sent.
         """
         pass
-

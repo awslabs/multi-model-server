@@ -8,8 +8,13 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+KVStorage for MMS
+"""
+
+
 class KVStorage(dict):
     """KV Storage
     """
-    def __init__(self, name):
+    def __init__(self, name):  # pylint: disable=super-init-not-called
         self.name = name

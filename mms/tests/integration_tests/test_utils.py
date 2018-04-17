@@ -186,6 +186,26 @@ def start_test(
             # Assert objects are detected.
             assert predictions is not None
             assert len(predictions) > 0
+        # Check root API and Ping API calls
+        output = subprocess.check_output(['curl',
+                                            '-X',
+                                            'GET',
+                                              'http://127.0.0.1:' + port + '/'])
+        if sys.version_info[0] >= 3:
+            output = output.decode("utf-8")
+        output = json.loads(output)
+        assert 'health' in output
+        assert output['health'] == 'healthy!'
+
+        output = subprocess.check_output(['curl',
+                                            '-X',
+                                            'GET',
+                                              'http://127.0.0.1:' + port + '/ping'])
+        if sys.version_info[0] >= 3:
+            output = output.decode("utf-8")
+        output = json.loads(output)
+        assert 'health' in output
+        assert output['health'] == 'healthy!'
     except Exception as e:
         print("Failed to test models. {} ".format(str(e)))
         raise

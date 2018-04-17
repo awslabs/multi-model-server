@@ -8,6 +8,9 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""Metric class for model server
+"""
+
 import csv
 import datetime
 import os
@@ -34,9 +37,9 @@ MetricUnit = {
 
 
 class Metric(object):
-    """Metric class for model server
     """
-
+    Class for generating metrics and publishing it to cloudwatch/log/csvfiles
+    """
     def __init__(self, name, mutex,
                  model_name,
                  unit,
@@ -47,7 +50,7 @@ class Metric(object):
                  write_to='log'):
         """Constructor for Metric class
 
-           Metric class will spawn a thread and report collected metrics to local disk 
+           Metric class will spawn a thread and report collected metrics to local disk
            or AWS cloudwatch between given intervals.
 
         Parameters
@@ -95,7 +98,7 @@ class Metric(object):
         if self.write_to == 'cloudwatch':
             try:
                 self.client = boto.client('cloudwatch')
-            except Exception as e:
+            except Exception as e: # pylint: disable=broad-except
                 warnings.warn('Failed to connect to AWS CloudWatch, \
                     metrics will be written to log.\n \
                     Failure reason ' + str(e))
@@ -114,12 +117,12 @@ class Metric(object):
         metric : float
             metric to be updated
         """
-        if self.min_value == None:
+        if self.min_value is None:
             self.min_value = metric
         else:
             self.min_value = min(self.min_value, metric)
 
-        if self.max_value == None:
+        if self.max_value is None:
             self.max_value = metric
         else:
             self.max_value = min(self.max_value, metric)
@@ -170,8 +173,8 @@ class Metric(object):
                         csvwriter = csv.writer(csvfile, delimiter=',')
                         csvwriter.writerow([utcnow, metric])
                 elif self.write_to == 'cloudwatch':
-                    logger.info('Metric %s for last %s seconds is %f, writing to AWS CloudWatch...' %
-                                (self.name, self.interval_sec, metric))
+                    logger.info('Metric %s for last %s seconds is %f, writing to AWS CloudWatch...',
+                                self.name, self.interval_sec, metric)
                     try:
                         update_entry = {'Value': metric}
                         if self.unit == MetricUnit['MB']:
@@ -207,11 +210,10 @@ class Metric(object):
                                 metric_data
                             ]
                         )
-                    except Exception as e:
+                    except Exception as e: # pylint: disable=broad-except
                         raise Exception("Failed to write metrics to cloudwatch " + str(e))
                 else:
-                    logger.info('Metric %s for last %s seconds is %f' %
-                                (self.name, self.interval_sec, metric))
+                    logger.info("Metric %s for last %s seconds is %f", self.name, self.interval_sec, metric)
 
         # Clear interval metrics
         self.interval_metric_aggregate = 0.0

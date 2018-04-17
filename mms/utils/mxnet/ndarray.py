@@ -8,8 +8,12 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+NDArray utils
+"""
 import mxnet as mx
 import numpy as np
+
 
 def top_probability(data, labels, top=5):
     """Get top probability prediction from NDArray.

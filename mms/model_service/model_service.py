@@ -10,6 +10,7 @@
 
 """`ModelService` defines an API for base model service.
 """
+# pylint: disable=W0223
 
 import os
 import sys
@@ -30,7 +31,7 @@ class ModelService(object):
     '''
     __metaclass__ = ABCMeta
 
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
+    def __init__(self, model_name, model_dir, manifest, gpu=None):  # pylint: disable=unused-argument
         self.ctx = None
 
     @abstractmethod
@@ -173,6 +174,12 @@ class MultiNodesService(ModelService):
 
 
 def load_service(path, name=None):
+    """
+    Load the model-service into memory and associate it with each flask app worker
+    :param path:
+    :param name:
+    :return:
+    """
     try:
         if not name:
             name = os.path.splitext(os.path.basename(path))[0]

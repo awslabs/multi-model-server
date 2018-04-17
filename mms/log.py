@@ -10,7 +10,8 @@
 
 #!/usr/bin/env python
 
-"""Logging utilities."""
+"""Logging utilities.
+"""
 import logging
 import sys
 import warnings
@@ -51,7 +52,7 @@ class _Formatter(logging.Formatter):
             fmt += ']\x1b[0m'
         fmt += ' %(message)s'
         if PY3:
-            self._style._fmt = fmt 
+            self._style._fmt = fmt
         else:
             self._fmt = fmt
         return super(_Formatter, self).format(record)

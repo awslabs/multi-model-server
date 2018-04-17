@@ -8,6 +8,9 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+Serving frontend for MMS
+"""
 import ast
 import traceback
 import time
@@ -93,7 +96,9 @@ class ServingFrontend(object):
             Those python class can be used to initialize model service.
         """
         model_class_definations = self.service_manager.parse_modelservices_from_module(user_defined_module_file_path)
-        assert len(model_class_definations) >= 1, 'No valid python class derived from Base Model Service is in module file: %s' % user_defined_module_file_path
+        assert len(model_class_definations) >= 1, \
+            'No valid python class derived from Base Model Service is in module file: %s' % \
+            user_defined_module_file_path
 
         for ModelServiceClassDef in model_class_definations:
             self.service_manager.add_modelservice_to_registry(ModelServiceClassDef.__name__, ModelServiceClassDef)
@@ -177,7 +182,7 @@ class ServingFrontend(object):
         method = list(api_definition[endpoint].keys())[0]
         api_name = api_definition[endpoint][method]['operationId']
 
-        logger.info('Adding endpoint: %s to Flask' % api_name)
+        logger.info('Adding endpoint: %s to Flask', api_name)
         self.handler.add_endpoint(api_name, endpoint, partial(callback, **kwargs), [method.upper()])
 
     def setup_openapi_endpoints(self, host, port):
@@ -186,7 +191,7 @@ class ServingFrontend(object):
         1. Predict
         2. Ping
         3. API description
-        4. Root (a default for the server, reuses ping functionality)
+
         Then the api definition is used to setup web server endpoint.
 
         Parameters
@@ -198,18 +203,16 @@ class ServingFrontend(object):
             Host that server will use
         """
         modelservices = self.service_manager.get_loaded_modelservices()
-        # TODO: not hardcode host:port
         self.openapi_endpoints = {
             'swagger': '2.0',
             'info': {
                 'version': '1.0.0',
-                  'title': 'Model Serving Apis'
-              },
-              'host': host + ':' + str(port),
-              'schemes': ['http'],
-              'paths': {},
-          }
-
+                'title': 'Model Serving Apis'
+            },
+            'host': host + ':' + str(port),
+            'schemes': ['http'],
+            'paths': {},
+        }
 
         # 1. Predict endpoints
         for model_name, modelservice in modelservices.items():
@@ -234,6 +237,7 @@ class ServingFrontend(object):
             }
             input_names = []
             # Setup endpoint for each modelservice
+            # pylint: disable=consider-using-enumerate
             for idx in range(len(inputs)):
                 # Check input content type to set up proper openapi consumes field
                 input_names.append(inputs[idx]['data_name'])
@@ -242,7 +246,7 @@ class ServingFrontend(object):
                         'in': 'formData',
                         'name': inputs[idx]['data_name'],
                         'description': '%s should tensor with shape: %s' %
-                            (inputs[idx]['data_name'], inputs[idx]['data_shape'][1:]),
+                                       (inputs[idx]['data_name'], inputs[idx]['data_shape'][1:]),
                         'required': 'true',
                         'schema': {
                             'type': 'string'
@@ -253,14 +257,14 @@ class ServingFrontend(object):
                         'in': 'formData',
                         'name': inputs[idx]['data_name'],
                         'description': '%s should be image which will be resized to: %s' %
-                            (inputs[idx]['data_name'], inputs[idx]['data_shape'][1:]),
+                                       (inputs[idx]['data_name'], inputs[idx]['data_shape'][1:]),
                         'required': 'true',
                         'type': 'file'
                     }
                 else:
-                    msg = '%s is not supported for input content-type' % (input_type)
+                    msg = '%s is not supported for input content-type' % input_type
                     logger.error(msg)
-                    abort(500, "Service setting error. %s" % (msg))
+                    abort(500, "Service setting error. %s" % msg)
                 predict_api[endpoint]['post']['parameters'].append(parameter)
 
             # Contruct openapi response schema
@@ -286,7 +290,7 @@ class ServingFrontend(object):
             else:
                 msg = '%s is not supported for output content-type' % output_type
                 logger.error(msg)
-                abort(500, "Service setting error. %s" % (msg))
+                abort(500, "Service setting error. %s" % msg)
             predict_api[endpoint]['post']['responses']['200'].update(responses)
 
             self.openapi_endpoints['paths'].update(predict_api)
@@ -297,7 +301,6 @@ class ServingFrontend(object):
                               modelservice=modelservice,
                               input_names=input_names,
                               model_name=model_name)
-
 
         # 2. Ping endpoints
         ping_api = {
@@ -319,12 +322,10 @@ class ServingFrontend(object):
                         }
                     }
                 }
-
             }
         }
         self.openapi_endpoints['paths'].update(ping_api)
         self.add_endpoint(ping_api, self.ping_callback)
-
 
         # 3. Describe apis endpoints
         api_description_api = {
@@ -346,7 +347,6 @@ class ServingFrontend(object):
                         }
                     }
                 }
-
             }
         }
         self.openapi_endpoints['paths'].update(api_description_api)
@@ -387,27 +387,29 @@ class ServingFrontend(object):
         Returns
         ----------
         Response
-            Http response for ping endpiont.
+            Http response for ping endpoint.
         """
+        # pylint: disable=unused-argument
         if 'PingTotal' in MetricsManager.metrics:
             MetricsManager.metrics['PingTotal'].update(metric=1)
         try:
             for model in self.service_manager.get_loaded_modelservices().values():
                 model.ping()
-        except Exception:
-            logger.warn('Model serving is unhealthy.')
+        except Exception:  # pylint: disable=broad-except
+            logger.error('Model serving is unhealthy.')
             return self.handler.jsonify({'health': 'unhealthy!'})
 
         return self.handler.jsonify({'health': 'healthy!'})
 
     def api_description(self, **kwargs):
+        # pylint: disable=unused-argument
         """
         Callback function for api description endpoint.
 
         Returns
         ----------
         Response
-            Http response for api description endpiont.
+            Http response for api description endpoint.
         """
         if 'APIDescriptionTotal' in MetricsManager.metrics:
             MetricsManager.metrics['APIDescriptionTotal'].update(metric=1)
@@ -446,14 +448,14 @@ class ServingFrontend(object):
         if input_type == 'application/json':
             try:
                 for name in input_names:
-                    logger.info('Request input: ' + name +  ' should be json tensor.')
+                    logger.info('Request input: %s should be json tensor.', name)
                     form_data = self.handler.get_form_data(name)
                     form_data = ast.literal_eval(form_data)
                     assert isinstance(form_data, list), "Input data for request argument: %s is not correct. " \
                                                         "%s is expected but got %s instead of list" \
                                                         % (name, input_type, type(form_data))
                     input_data.append(form_data)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 if model_name + '_Prediction4XX' in MetricsManager.metrics:
                     MetricsManager.metrics[model_name + '_Prediction4XX'].update(metric=1)
                 logger.error(str(e))
@@ -461,29 +463,33 @@ class ServingFrontend(object):
         elif input_type == 'image/jpeg':
             try:
                 for name in input_names:
-                    logger.info('Request input: ' + name +  ' should be image with jpeg format.')
+                    logger.info('Request input: %s should be image with jpeg format.', name)
                     input_file = self.handler.get_file_data(name)
                     if input_file:
                         mime_type = input_file.content_type
                         assert mime_type == input_type, 'Input data for request argument: %s is not correct. ' \
-                                                        '%s is expected but %s is given.' % (name, input_type, mime_type)
+                                                        '%s is expected but %s is given.' % \
+                                                        (name, input_type, mime_type)
                         file_data = input_file.read()
                         assert isinstance(file_data, (str, bytes)), 'Image file buffer should be type str or ' \
                                                                     'bytes, but got %s' % (type(file_data))
                     else:
-                        form_data=self.handler.get_form_data(name)
+                        form_data = self.handler.get_form_data(name)
                         if form_data:
+                            # pylint: disable=deprecated-method
                             file_data = base64.decodestring(self.handler.get_form_data(name))
                         else:
-                            raise ValueError('This end point is expecting a data_name of %s. End point details can be found here:http://<host>:<port>/api-description' %name)
+                            raise ValueError('This end point is expecting a data_name of %s. '
+                                             'End point details can be found here:http://<host>:<port>/api-description'
+                                             % name)
                     input_data.append(file_data)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 if model_name + '_Prediction4XX' in MetricsManager.metrics:
                     MetricsManager.metrics[model_name + '_Prediction4XX'].update(metric=1)
                 logger.error(str(e))
                 abort(400, str(e))
         else:
-            msg = '%s is not supported for input content-type' % (input_type)
+            msg = '%s is not supported for input content-type' % input_type
             if model_name + '_Prediction5XX' in MetricsManager.metrics:
                 MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)
             logger.error(msg)
@@ -492,7 +498,7 @@ class ServingFrontend(object):
         # Doing prediction on model
         try:
             response = modelservice.inference(input_data)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             if model_name + '_Prediction5XX' in MetricsManager.metrics:
                 MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)
             logger.error(str(traceback.format_exc()))
@@ -504,12 +510,12 @@ class ServingFrontend(object):
         elif output_type == 'image/jpeg':
             logger.info('Response is jpeg image encoded in base64 string.')
         else:
-            msg = '%s is not supported for input content-type.' % (output_type)
+            msg = '%s is not supported for input content-type.' % output_type
             if model_name + '_Prediction5XX' in MetricsManager.metrics:
                 MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)
             logger.error(msg)
-            abort(500, "Service setting error. %s" % (msg))
+            abort(500, "Service setting error. %s" % msg)
 
-        logger.debug("Prediction request handling time is: %s ms" %
+        logger.debug("Prediction request handling time is: %s ms",
                      ((time.time() - handler_start_time) * 1000))
         return self.handler.jsonify({'prediction': response})

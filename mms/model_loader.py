@@ -7,16 +7,18 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
-
+"""
+Download and extract the model archivefiles
+"""
 import os
 import glob
-import requests
 import zipfile
 import shutil
 import json
+import requests
 
-from mms.log import get_logger
 from jsonschema import validate
+from mms.log import get_logger
 
 logger = get_logger()
 
@@ -80,10 +82,8 @@ def _download_and_extract(model_location, path=None, overwrite=False):
             if '.model' in model_file:
                 _extract_zip(model_file, model_dir)
         except Exception as e:
-            #Remove the directory being created if invalid model specified
-            shutil.rmtree(model_dir)
-            raise Exception('Failed to open model file %s for model %s. Removed Folder %s Stacktrace: %s'
-                            % (model_file, model_file_prefix , model_dir, e))
+            raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
+                            % (model_file, model_file_prefix, e))
     return model_dir
 
 
@@ -134,16 +134,16 @@ def _extract_model(service_name, path):
     validate(manifest, schema)
 
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Signature']))) == 1, \
-    'Signature file in model archive is inconsistent with manifest.'
+        'Signature file in model archive is inconsistent with manifest.'
 
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))) == 1, \
-    'Symbol file in model archive is inconsistent with manifest.'
+        'Symbol file in model archive is inconsistent with manifest.'
 
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Parameters']))) == 1, \
-    'Parameter file in model archive is inconsistent with manifest.'
+        'Parameter file in model archive is inconsistent with manifest.'
 
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Service']))) == 1, \
-    'Service file in model archive is inconsistent with manifest.'
+        'Service file in model archive is inconsistent with manifest.'
 
     model_name = manifest['Model']['Model-Name']
 

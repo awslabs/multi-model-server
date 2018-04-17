@@ -85,7 +85,7 @@ def _download_and_extract(model_location, path=None, overwrite=False):
             # Remove the directory being created if invalid model specified
             shutil.rmtree(model_dir)
             raise Exception('Failed to open model file %s for model %s. Removed Folder %s Stacktrace: %s'
-                            % (model_file, model_file_prefix , model_dir, e))
+                            % (model_file, model_file_prefix, model_dir, e))
     return model_dir
 
 

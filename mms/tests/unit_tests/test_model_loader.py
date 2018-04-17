@@ -25,4 +25,4 @@ def test_invalid_model_path_input():
     models = {'squeezenet_v1': 'invalid_model_file_path.model'}
     with pytest.raises(Exception) as e:
         ModelLoader.load(models)
-    assert 'Removed Folder' in str(e.value)
+    assert not os.path.exists('invalid_model_file_path')

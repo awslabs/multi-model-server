@@ -8,8 +8,9 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-'''Command line interface to export model files to be used for inference by MXNet Model Server
-'''
+"""
+Command line interface to export model files to be used for inference by MXNet Model Server
+"""
 
 import glob
 import inspect
@@ -121,12 +122,12 @@ def validate_signature(model_path):
     assert isinstance(signature['inputs'], list) and \
            isinstance(signature['outputs'], list), \
         'inputs and outputs values must be list.'
-    for input in signature['inputs']:
-        assert isinstance(input, dict), 'Each input must be a dictionary.'
-        assert 'data_name' in input, 'data_name is required for input.'
-        assert isinstance(input['data_name'], basestring), 'data_name value must be string.'
-        assert 'data_shape' in input, 'data_shape is required for input.'
-        assert isinstance(input['data_shape'], list), 'data_shape value must be list.'
+    for ip in signature['inputs']:
+        assert isinstance(ip, dict), 'Each input must be a dictionary.'
+        assert 'data_name' in ip, 'data_name is required for input.'
+        assert isinstance(ip['data_name'], basestring), 'data_name value must be string.'
+        assert 'data_shape' in ip, 'data_shape is required for input.'
+        assert isinstance(ip['data_shape'], list), 'data_shape value must be list.'
     for output in signature['outputs']:
         assert isinstance(output, dict), 'Each output must be a dictionary.'
         assert 'data_name' in output, 'data_name is required for output.'
@@ -138,6 +139,13 @@ def validate_signature(model_path):
 
 
 def validate_service(model_path, service_file, signature_file):
+    """
+    Validate the service
+    :param model_path:
+    :param service_file:
+    :param signature_file:
+    :return:
+    """
     if service_file:
 
         assert os.path.isfile(service_file) or os.path.isfile(os.path.join(model_path, service_file)), \
@@ -177,6 +185,15 @@ def validate_service(model_path, service_file, signature_file):
 
 
 def generate_manifest(symbol_file, params_file, service_file, signature_file, model_name):
+    """
+    Funtion to generate manifest file
+    :param symbol_file:
+    :param params_file:
+    :param service_file:
+    :param signature_file:
+    :param model_name:
+    :return:
+    """
     manifest = {}
     manifest["Model-Archive-Version"] = MODEL_ARCHIVE_VERSION
     manifest["Model-Archive-Description"] = model_name
@@ -189,7 +206,7 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
     manifest["Model"]["Description"] = model_name
     manifest["Model"]["Model-Name"] = model_name
     manifest["Model"]["Model-Format"] = "MXNet-Symbolic"
-    
+
     mxnet_version = mx.__version__
 
     if os.path.exists(symbol_file):
@@ -198,12 +215,18 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
             if MXNET_VERSION in symbol_json[MXNET_ATTRS]:
                 mxnet_version = symbol_json[MXNET_ATTRS][MXNET_VERSION]
 
-    manifest["Engine"]  = {"MXNet": mxnet_version}           
+    manifest["Engine"] = {"MXNet": mxnet_version}
 
     return manifest
 
 
 def convert_onnx_model(model_path, onnx_file):
+    """
+    Util to convert onnx model to MXNet model
+    :param model_path:
+    :param onnx_file:
+    :return:
+    """
     import onnx_mxnet
     model_name = os.path.splitext(os.path.basename(onnx_file))[0]
     symbol_file = '%s-symbol.json' % model_name
@@ -219,6 +242,12 @@ def convert_onnx_model(model_path, onnx_file):
 
 
 def find_unique(files, suffix):
+    """
+    Function to find unique model params file
+    :param files:
+    :param suffix:
+    :return:
+    """
     match = [f for f in files if f.endswith(suffix)]
     count = len(match)
 
@@ -233,18 +262,29 @@ def find_unique(files, suffix):
             '.onnx': ('.onnx', 'ONNX model file'),
         }[suffix]
 
-        message = 'mxnet-model-export expects only one {} file. Please supply the single {} ' + \
-                  'file you wish to export.'.format(params[0], params[1])
+        message = 'mxnet-model-export expects only one ' + params[0] + ' file. Please supply the single ' + \
+                  params[1] + ' file you wish to export.'
 
         raise ValueError(message)
 
 
 def validate_epoch_number(params_file):
+    """
+    Util to validate epoch number
+    :param params_file:
+    :return:
+    """
     if re.match(r'^[\w\-\.]+-\d+\.params$', params_file) is None:
         raise ValueError(NO_EPOCH_NUMBER_MESSAGE.format(params_file))
 
 
 def validate_prefix_match(symbol_file, params_file):
+    """
+    Validate prefix match
+    :param symbol_file:
+    :param params_file:
+    :return:
+    """
     symbol_prefix = symbol_file.replace('-symbol.json', '')
     params_prefix = re.sub(r'-\d+\.params$', '', params_file)
     if symbol_prefix != params_prefix:
@@ -252,6 +292,14 @@ def validate_prefix_match(symbol_file, params_file):
 
 
 def validate_model_files(model_path, onnx_file, params_file, symbol_file):
+    """
+    Validate the model files
+    :param model_path:
+    :param onnx_file:
+    :param params_file:
+    :param symbol_file:
+    :return:
+    """
     mask = 0
     if onnx_file:
         mask += 1
@@ -276,7 +324,7 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
     """
     Internal helper for the exporting model command line interface.
     """
-    temp_files=[]
+    temp_files = []
     try:
         if export_file is None:
             export_file = '{}/{}.model'.format(os.getcwd(), model_name)
@@ -311,14 +359,18 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
         with zipfile.ZipFile(export_file, 'w') as z:
             for f in files + temp_files:
                 z.write(os.path.join(model_path, f), f)
-        logger.info('Successfully exported model {} to file {}.'.format(model_name, export_file))
-   
+        logger.info("Successfully exported model %s to file %s", model_name, export_file)
+
     finally:
         for f in temp_files:
-            os.remove(os.path.join(model_path,f))
-   
+            os.remove(os.path.join(model_path, f))
+
 
 def export():
+    """
+    Export as MXNet model
+    :return:
+    """
     args = ArgParser.export_parser().parse_args()
     export_model(args.model_name, args.model_path, args.service_file_path)
 

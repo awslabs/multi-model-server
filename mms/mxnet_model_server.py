@@ -7,18 +7,20 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
-
+"""
+Model Server code
+"""
+from multiprocessing import Lock
+import logging
+from logging.handlers import TimedRotatingFileHandler
+import os
+import sys
 from mms.arg_parser import ArgParser
 from mms.client_sdk_generator import ClientSDKGenerator
 from mms.log import get_logger, LOG_LEVEL_DICT, _Formatter
-from logging.handlers import TimedRotatingFileHandler
-from multiprocessing import Lock
 from mms.serving_frontend import ServingFrontend
 from mms.metrics_manager import MetricsManager
 from mms.model_loader import ModelLoader
-import logging
-import os
-import sys
 
 if sys.version_info[0] == 3:
     import socketserver as SocketServer
@@ -41,10 +43,10 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
     assert isinstance(interval, int) and interval > 0, "interval must be a positive integer."
     assert when in VALID_ROTATE_UNIT, "rotate time unit must be one of the values in %s." \
                                       % (str(VALID_ROTATE_UNIT))
-   
+
     root = logging.getLogger()
     root.setLevel(LOG_LEVEL_DICT[log_level])
-    
+
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(_Formatter())
     root.addHandler(stream_handler)
@@ -58,6 +60,8 @@ def _set_root_logger(log_file, log_level, log_rotation_time):
 class MMS(object):
     """MXNet Model Serving
     """
+
+    # pylint: disable=logging-not-lazy
     def __init__(self, app_name='mms', args=None, models=None):
         """Initialize mxnet model server application.
 
@@ -88,10 +92,10 @@ class MMS(object):
             _set_root_logger(log_file, log_level, log_rotation_time)
 
             logger.info('Initialized model serving.')
-        except Exception as e:
-            print ('Failed to initialize model serving: ' + str(e))
+        except Exception as e:  # pylint: disable=broad-except
+            print('Failed to initialize model serving: ' + str(e))
             exit(1)
-        
+
     def start_model_serving(self):
         """Start model serving server
         """
@@ -104,16 +108,16 @@ class MMS(object):
                 logger.info('Service started successfully.')
                 logger.info('Service description endpoint: ' + self.host + ':' + str(self.port) + '/api-description')
                 logger.info('Service health endpoint: ' + self.host + ':' + str(self.port) + '/ping')
-                
+
                 self.serving_frontend.start_handler(self.host, self.port)
-        
+
         except SocketServer.socket.error as exc:
             if exc.args[0] != 48:
                 raise
             logger.error('Port: ' + str(self.port) + " already in use. exiting...")
             exit(1)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error('Failed to start model serving host: ' + str(e))
             exit(1)
 
@@ -131,7 +135,7 @@ class MMS(object):
             # Create app
             return self.serving_frontend.handler.app
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error('Failed to start model serving host: ' + str(e))
             exit(1)
 
@@ -156,10 +160,10 @@ class MMS(object):
 
             # Load models using registered model definitions
             registered_models = self.serving_frontend.get_registered_modelservices()
-            ModelClassDef = registered_models[model_class_name]                        
+            ModelClassDef = registered_models[model_class_name]
 
             self.serving_frontend.load_models(self.models, ModelClassDef, self.gpu)
-            
+
             # Setup endpoint
             openapi_endpoints = self.serving_frontend.setup_openapi_endpoints(self.host, self.port)
 
@@ -170,10 +174,10 @@ class MMS(object):
             # Generate metrics to target location (log, csv ...), default to log
             MetricsManager.start(self.args.metrics_write_to, self.args.models, Lock())
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error('Failed to process arguments: ' + str(e))
             exit(1)
-        
+
 
 def start_serving(app_name='mms', args=None):
     """Start service routing.

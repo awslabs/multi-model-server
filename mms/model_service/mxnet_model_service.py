@@ -10,16 +10,13 @@
 
 """`MXNetBaseService` defines an API for MXNet service.
 """
-
-import mxnet as mx
-import requests
-import zipfile
+# pylint: disable=redefined-builtin
 import json
-import shutil
 import os
+import mxnet as mx
 from mxnet.io import DataBatch
 from mms.log import get_logger
-from mms.model_service.model_service import SingleNodeService, URL_PREFIX
+from mms.model_service.model_service import SingleNodeService
 
 
 logger = get_logger()
@@ -54,12 +51,14 @@ def check_input_shape(inputs, signature):
                                          % (sig_input['data_name'], sig_input['data_shape'],
                                             input.shape)
 
+
 class MXNetBaseService(SingleNodeService):
     '''MXNetBaseService defines the fundamental loading model and inference
        operations when serving MXNet model. This is a base class and needs to be
        inherited.
     '''
     def __init__(self, model_name, model_dir, manifest, gpu=None):
+        # pylint: disable=super-init-not-called
         self.model_name = model_name
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
         signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
@@ -80,20 +79,22 @@ class MXNetBaseService(SingleNodeService):
             # Set batch size as 1
             data_shape = input['data_shape']
             data_shape[0] = 1
+            # pylint: disable=consider-using-enumerate
             for idx in range(len(data_shape)):
                 if data_shape[idx] == 0:
                     data_shape[idx] = 1
             data_shapes.append((input['data_name'], tuple(data_shape)))
-        
+
         # Load MXNet module
         epoch = 0
         try:
             param_filename = manifest['Model']['Parameters']
             epoch = int(param_filename[len(model_name) + 1: -len('.params')])
-        except Exception as e:
+        except Exception:  # pylint: disable=broad-except
             logger.warning('Failed to parse epoch from param file, setting epoch to 0')
 
-        sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' % (model_dir, manifest['Model']['Symbol'][:-12]), epoch)
+        sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
+                                                               (model_dir, manifest['Model']['Symbol'][:-12]), epoch)
         self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
                                       data_names=data_names, label_names=None)
         self.mx_model.bind(for_training=False, data_shapes=data_shapes)
@@ -145,7 +146,7 @@ class MXNetBaseService(SingleNodeService):
 
     @property
     def signature(self):
-        '''Signiture for model service.
+        '''Signature for model service.
 
         Returns
         -------
@@ -153,6 +154,3 @@ class MXNetBaseService(SingleNodeService):
             Model service signiture.
         '''
         return self._signature
-
-    
-

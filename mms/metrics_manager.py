@@ -7,8 +7,9 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
-
-import os
+"""
+Metrics manager for publishing MMS metrics
+"""
 import threading
 
 import psutil
@@ -98,6 +99,7 @@ class MetricsManager(object):
         mutex: object
             Mutex to prevent double thread writing on same resource
         """
+        # pylint: disable=unused-variable
         for model_name, model_class in models.items():
             MetricsManager.metrics[model_name + '_Prediction5XX'] = Metric('Prediction5XX', mutex,
                                                                            model_name=model_name,
@@ -191,4 +193,3 @@ class MetricsManager(object):
                                                            aggregate_method='interval_average',
                                                            write_to=metrics_write_to,
                                                            update_func=disk_utilization)
-

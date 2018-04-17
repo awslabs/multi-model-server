@@ -38,4 +38,3 @@ class MXNetVisionService(MXNetBaseService):
             "Can't find labels attribute. Did you put synset.txt file into " \
             "model archive or manually load class label file in __init__?"
         return [ndarray.top_probability(d, self.labels, top=5) for d in data]
-

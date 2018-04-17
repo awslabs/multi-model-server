@@ -8,6 +8,11 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+This module parses the arguments given through the mxnet-model-server command-line. This is used by model-server
+at runtime.
+"""
+
 import argparse
 
 
@@ -18,8 +23,8 @@ class StoreDictKeyPair(argparse.Action):
         try:
             setattr(namespace, 'models', {kv.split('=', 1)[0]: kv.split('=', 1)[1] for kv in values})
         except Exception:
-          raise Exception('Failed to parse <model=path>: ' + str(values) +
-                          ' Format should be <model-name>=<model-path> (Local file path, URL, S3).')
+            raise Exception('Failed to parse <model=path>: ' + str(values) +
+                            'Format should be <model-name>=<model-path> (Local file path, URL, S3).')
 
 
 class ArgParser(object):
@@ -64,7 +69,8 @@ class ArgParser(object):
                                  'Valid format is "interval when", where _when_ can be "S", "M", "H", or "D". '
                                  'For a particular weekday use only "W0" - "W6". '
                                  'For midnight use only "midnight". '
-                                 'Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler '
+                                 'Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.\
+                                 TimedRotatingFileHandler '
                                  'for detailed information on values.')
 
         parser.add_argument('--log-level', help='Log level. By default it is INFO. '
@@ -106,7 +112,8 @@ class ArgParser(object):
                                    default=None,
                                    help='Service file path to handle custom MMS inference logic. '
                                         'If path is not provided and the input defined in signature.json '
-                                        'is application/json, this tool will include the MXNetBaseService in the archive. '
+                                        'is application/json, this tool will include the MXNetBaseService \
+                                        in the archive. '
                                         'Alternatively, if the input defined in signature.json is image/jpeg '
                                         'this tool will include the MXNetVisionService in the archive.')
 

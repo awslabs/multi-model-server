@@ -231,10 +231,22 @@ The first step is to create an [EC2 instance](https://aws.amazon.com/ec2/).
 
 There are separate `Dockerfile` configuration files for CPU and GPU. They are named `Dockerfile.cpu` and `Dockerfile.gpu` respectively.
 
+The images are layered in two parts.
+
+1. Base Image - Consists of ubuntu dependenices, gunicorn gevent.
+2. Derived Image - Consists of MXNet, MMS and all related python libraries.
+
+We can build both images, or use prebuilt base image (Hosted on Docker Hub as awsdeeplearningteam/mms_cpu_base) and build MMS on top of it.
+
 By default, Docker expects a Dockerfile, so you'll make a copy leaving the original .cpu file as a backup. If you would like to use a GPU instead, follow the separate GPU Build Step further below.
 The next command will build the Docker image. The `-t` flag and following value will give the image the tag `mms_image`, however you can specify `mms_image:v0.11` or whatever you want for your tag. If you use just `mms_image`, it will be assigned the default `latest` tag, and be runnable with `mms_image:latest`.
 
 ```bash
+# Building base image and derived image
+docker build -f Dockerfile.cpu.base  awsdeeplearningteam/mms_cpu_base
+docker build -f Dockerfile.cpu -t mms_image .
+
+# Building MMS image with pre-built base image
 docker build -f Dockerfile.cpu -t mms_image .
 ```
 
@@ -248,7 +260,14 @@ You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-dock
 
 Once you install `nvidia-docker`, run following commands (for info modifying the tag, see the CPU section above):
 
+Similar to CPU base image the prebuilt GPU 'base' image is hosted at awsdeeplearningteam/mms_gpu_base (under Docker hub)
+
 ```bash
+# Building base image and derived image
+docker build -f Dockerfile.gpu.base  awsdeeplearningteam/mms_gpu_base
+docker build -f Dockerfile.gpu -t mms_image_gpu .
+
+# Building MMS image with pre-built base image
 docker build -f Dockerfile.gpu -t mms_image_gpu .
 ```
 
@@ -325,7 +344,7 @@ Notes on a couple of the parameters:
 * **worker-class** - the type of Gunicorn worker processes. We configure by default to `gevent` which is a type of async worker process. Options are described in the [Gunicorn docs](http://docs.gunicorn.org/en/stable/settings.html#worker-class).
 * **workers** - the number of Gunicorn workers which gets started. We recommend setting number of workers equal to number of vCPUs in the instance you are using. A detailed discussion of experiments and results can be found [here](../docs/optimised_config.md)
 * **limit-request-line** - this is a security-related configuration that limits the [length of the request URI](http://docs.gunicorn.org/en/stable/settings.html#limit-request-line). It is useful preventing DDoS attacks.
-* **num-gpu** - optional parameter for number of available GPUs user wants to use. MMS currently assigns each guinicorn worker a gpu-id 
+* **num-gpu** - optional parameter for number of available GPUs user wants to use. MMS currently assigns each guinicorn worker a gpu-id
 in the range of 0 .. (num-gpu-1) in a round-robin fashion. **By default MMS uses all the available GPUs but this parameter can be configured if user want to use only few of them**. A discussion on how to set this parameter can be found [here](../docs/optimised_config.md)
 
 ```text
@@ -358,7 +377,7 @@ in the range of 0 .. (num-gpu-1) in a round-robin fashion. **By default MMS uses
     ##Following option is used only for GPU and is present in mms_app_gpu.conf
     --num-gpu	     
      optional
-     	     
+
     --worker-class
     gevent
 

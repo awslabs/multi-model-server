@@ -140,4 +140,5 @@ class ServiceManager(object):
         # Parsing the module to get all defined classes
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]
         # Check if class is subclass of base ModelService class
+        # pylint: disable=deprecated-lambda
         return list(filter(lambda cls: issubclass(cls, MXNetBaseService), classes))

@@ -136,7 +136,7 @@ class RequestHandler(object):
         pass
 
     @abstractmethod
-    def send_file(self, file, mimetype):
+    def send_file(self, filename, mimetype):
         """
         Send a file in Http response.
 

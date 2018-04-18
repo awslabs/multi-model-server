@@ -159,7 +159,7 @@ class FlaskRequestHandler(RequestHandler):
         logger.info('Jsonifying the response: %s', (str(response)))
         return jsonify(response)
 
-    def send_file(self, file, mimetype):
+    def send_file(self, filename, mimetype):
         """
         Send a file in Http response.
 
@@ -178,4 +178,4 @@ class FlaskRequestHandler(RequestHandler):
         """
         # pylint: disable=logging-format-interpolation
         logger.info('Sending file with mimetype: {}'.format(mimetype))
-        return send_file(file, mimetype=mimetype)
+        return send_file(filename, mimetype=mimetype)

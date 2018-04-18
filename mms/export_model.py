@@ -33,6 +33,7 @@ logger = get_logger()
 try:
     basestring
 except NameError:
+    # pylint: disable=redefined-builtin
     basestring = str
 
 MMS_SERVICE_FILES = {k: os.path.splitext(v.__file__)[0] + '.py' for k, v in {
@@ -54,18 +55,18 @@ MXNET_VERSION = 'mxnet_version'
 NO_MODEL_FILES_MESSAGE = '''
 No model files found in the model directory {}.
 
-mxnet-model-export supports the exporting of MXNet and ONNX models to a 
-mxnet-model-server .model file. 
+mxnet-model-export supports the exporting of MXNet and ONNX models to a
+mxnet-model-server .model file.
 
 MXNet models are expected as two files in the same directory, a params file
-and a symbol file, both with the same prefix and where 0000 is the param's 
-epoch number (any number from 0 to n). 
+and a symbol file, both with the same prefix and where 0000 is the param's
+epoch number (any number from 0 to n).
 Example: modelname-0000.params and modelname-symbol.json.
- 
-ONNX models are expected as one file. 
-Example: modelname.onnx. 
 
-See https://github.com/onnx/onnx for converting PyTorch, Caffe2, CNTK, 
+ONNX models are expected as one file.
+Example: modelname.onnx.
+
+See https://github.com/onnx/onnx for converting PyTorch, Caffe2, CNTK,
 and other models to the ONNX format.
 '''.strip()
 
@@ -78,19 +79,19 @@ Example: modelname-0000.params and modelname-symbol.json.
 '''.strip()
 
 NO_EPOCH_NUMBER_MESSAGE = '''
-No epoch number found in the parameter filename {}. 
+No epoch number found in the parameter filename {}.
 
 When exporting an MXNet model, mxnet-model-export expects a parameters file
-that includes the epoch number in the filename. 0000 is usually sufficient, 
+that includes the epoch number in the filename. 0000 is usually sufficient,
 but if known, you can supply any epoch number in the format: modelname-1234.params.
 '''.strip()
 
 MODEL_PREFIX_MISMATCH_MESSAGE = '''
-Your parameters file and symbols file naming prefix do not match. 
+Your parameters file and symbols file naming prefix do not match.
 
-When exporting an MXNet model, mxnet-model-export expects two files in the 
-same directory, a params file and a symbol file, both with the same prefix 
-(a common name) and where 0000 is the param's epoch number (any number from 0 to n). 
+When exporting an MXNet model, mxnet-model-export expects two files in the
+same directory, a params file and a symbol file, both with the same prefix
+(a common name) and where 0000 is the param's epoch number (any number from 0 to n).
 Example: modelname-0000.params and modelname-symbol.json.
 '''.strip()
 
@@ -158,6 +159,7 @@ def validate_service(model_path, service_file, signature_file):
 
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]
         # Check if subclass of MXNetBaseService
+        # pylint: disable=deprecated-lambda
         service_classes = list(filter(lambda cls: issubclass(cls, MXNetBaseService), classes))
 
         assert len(service_classes) > 1, \

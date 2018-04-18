@@ -152,6 +152,7 @@ class MMS(object):
             service_file = os.path.join(self.models[0][2], manifest['Model']['Service'])
 
             class_defs = self.serving_frontend.register_module(self.args.service or service_file)
+            # pylint: disable=deprecated-lambda
             class_defs = list(filter(lambda c: len(c.__subclasses__()) == 0, class_defs))
 
             if len(class_defs) != 1:

@@ -16,3 +16,13 @@ def test_onnx_fails_fast():
         ModelLoader.load(models)
 
     assert 'Convert ONNX model' in str(e.value)
+
+def test_invalid_model_path_input():
+    """
+    Test to ensure that folder being created is removed,
+    when path is invalid
+    """
+    models = {'squeezenet_v1': 'invalid_model_file_path.model'}
+    with pytest.raises(Exception) as e:
+        ModelLoader.load(models)
+    assert not os.path.exists('invalid_model_file_path')

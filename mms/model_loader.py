@@ -82,8 +82,10 @@ def _download_and_extract(model_location, path=None, overwrite=False):
             if '.model' in model_file:
                 _extract_zip(model_file, model_dir)
         except Exception as e:
-            raise Exception('Failed to open model file %s for model %s. Stacktrace: %s'
-                            % (model_file, model_file_prefix, e))
+            # Remove the directory being created if invalid model specified
+            shutil.rmtree(model_dir)
+            raise Exception('Failed to open model file %s for model %s. Removed Folder %s Stacktrace: %s'
+                            % (model_file, model_file_prefix, model_dir, e))
     return model_dir
 
 
@@ -168,4 +170,5 @@ class ModelLoader(object):
         list
             (Model Name, Model Path, Model Schema) tuple list
         """
+        # pylint: disable=deprecated-lambda
         return list(map(lambda model: _extract_model(model[0], model[1]), models.items()))

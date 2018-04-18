@@ -191,6 +191,7 @@ class ServingFrontend(object):
         1. Predict
         2. Ping
         3. API description
+        4. Root API (reusing ping functionality)
 
         Then the api definition is used to setup web server endpoint.
 
@@ -200,7 +201,7 @@ class ServingFrontend(object):
             Host that server will use
 
         port: int
-            Host that server will use
+            Port that server will use
         """
         modelservices = self.service_manager.get_loaded_modelservices()
         self.openapi_endpoints = {
@@ -351,6 +352,32 @@ class ServingFrontend(object):
         }
         self.openapi_endpoints['paths'].update(api_description_api)
         self.add_endpoint(api_description_api, self.api_description)
+
+        #4. root endpoint (A secondary way  to ping functionality)
+        root_api = {
+            '/': {
+                'get': {
+                    'operationId': 'root',
+                    'produces': ['application/json'],
+                    'responses': {
+                        '200': {
+                            'description': 'OK',
+                            'schema': {
+                                'type': 'object',
+                                'properties': {
+                                    'health': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+        self.openapi_endpoints['paths'].update(root_api)
+        self.add_endpoint(root_api, self.ping_callback)
 
         return self.openapi_endpoints
 

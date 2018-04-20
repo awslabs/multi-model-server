@@ -227,26 +227,28 @@ Now you can examine how to build a Docker image with MMS and establish a public 
 
 The first step is to create an [EC2 instance](https://aws.amazon.com/ec2/).
 
-### Build Step for CPU
+### Build Step for CPU container image
 
 There are separate `Dockerfile` configuration files for CPU and GPU. They are named `Dockerfile.cpu` and `Dockerfile.gpu` respectively.
 
 The images are layered in two parts.
 
 1. Base Image - Consists of ubuntu dependenices, gunicorn gevent.
-2. Derived Image - Consists of MXNet, MMS and all related python libraries.
+2. MMS Image - Consists of MXNet, MMS and all related python libraries, built on top of the base image
 
-We can build both images, or use prebuilt base image (Hosted on Docker Hub as awsdeeplearningteam/mms_cpu_base) and build MMS on top of it.
+We can build both images, or use prebuilt base image (Hosted on Docker Hub as `awsdeeplearningteam/mms_cpu_base)` and build MMS on top of it.
 
 By default, Docker expects a Dockerfile, so you'll make a copy leaving the original .cpu file as a backup. If you would like to use a GPU instead, follow the separate GPU Build Step further below.
 The next command will build the Docker image. The `-t` flag and following value will give the image the tag `mms_image`, however you can specify `mms_image:v0.11` or whatever you want for your tag. If you use just `mms_image`, it will be assigned the default `latest` tag, and be runnable with `mms_image:latest`.
 
 ```bash
-# Building base image and derived image
+# Building base image and derived MMS image
 docker build -f Dockerfile.cpu.base  awsdeeplearningteam/mms_cpu_base
 docker build -f Dockerfile.cpu -t mms_image .
+```
 
-# Building MMS image with pre-built base image
+```bash
+# Building derived MMS image with pre-built base image
 docker build -f Dockerfile.cpu -t mms_image .
 ```
 
@@ -260,14 +262,16 @@ You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-dock
 
 Once you install `nvidia-docker`, run following commands (for info modifying the tag, see the CPU section above):
 
-Similar to CPU base image the prebuilt GPU 'base' image is hosted at awsdeeplearningteam/mms_gpu_base (under Docker hub)
+Similar to CPU base image the prebuilt GPU 'base' image is hosted at `awsdeeplearningteam/mms_gpu_base` (under Docker hub)
 
 ```bash
-# Building base image and derived image
+# Building base image and derived MMS image
 docker build -f Dockerfile.gpu.base  awsdeeplearningteam/mms_gpu_base
 docker build -f Dockerfile.gpu -t mms_image_gpu .
+```
 
-# Building MMS image with pre-built base image
+```bash
+# Building derived  MMS image with pre-built base image
 docker build -f Dockerfile.gpu -t mms_image_gpu .
 ```
 

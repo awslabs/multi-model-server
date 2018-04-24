@@ -1,28 +1,7 @@
-FROM nvidia/cuda:9.0-cudnn7-devel
+FROM awsdeeplearningteam/mms_gpu_base:latest
 
-RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository -y ppa:certbot/certbot && \
-    apt-get update && \
-    apt-get install -y \
-    build-essential \
-    libatlas-base-dev \
-    libopencv-dev \
-    graphviz \
-    python-dev \
-    openjdk-8-jdk \
-    nginx \
-    protobuf-compiler \
-    libprotoc-dev \
-    python-certbot-nginx \
-    curl \
-    vim \
-    && rm -rf /var/lib/apt/lists/* \
-    && cd /tmp \
-    && curl -O https://bootstrap.pypa.io/get-pip.py \
-    && python get-pip.py \
-    && pip install gevent gunicorn \
-    && pip install mxnet-model-server \
+RUN pip install mxnet-model-server \
+    && pip uninstall --yes mxnet \
     && pip install --no-cache-dir mxnet-cu90mkl \
     && mkdir /mxnet_model_server
 

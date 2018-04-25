@@ -8,8 +8,8 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-from setuptools import setup, find_packages
 import platform
+from setuptools import setup, find_packages
 
 pkgs = find_packages()
 pkgs.append('tools')
@@ -23,8 +23,9 @@ pkgs.append('tools')
 # $ pip install wheel
 # $ python setup.py bdist_wheel --universal
 # $ twine upload dist/*
-requirements = ['mxnet-mkl>=1.1', 'Flask', 'Pillow', 'requests', 'flask-cors', 'psutil', 'jsonschema',
-                  'onnx-mxnet>=0.4.2', 'boto3', 'importlib2', 'fasteners']
+requirements = ['mxnet-mkl>=1.1', 'Flask', 'Pillow', 'requests', 'flask-cors',
+                'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
+                'fasteners']
 if platform.system() == 'Linux':
     requirements[0] = 'mxnet-cu90mkl>=1.1'
 setup(

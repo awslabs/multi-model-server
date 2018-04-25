@@ -23,11 +23,11 @@ pkgs.append('tools')
 # $ pip install wheel
 # $ python setup.py bdist_wheel --universal
 # $ twine upload dist/*
-requirements = ['mxnet-mkl>=1.1', 'Flask', 'Pillow', 'requests', 'flask-cors',
+requirements = ['mxnet-mkl', 'Flask', 'Pillow', 'requests', 'flask-cors',
                 'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
                 'fasteners']
 if platform.system() == 'Linux':
-    requirements[0] = 'mxnet-cu90mkl>=1.1'
+    requirements[0] = 'mxnet-cu90mkl'
 setup(
     name='mxnet-model-server',
     version='0.3',

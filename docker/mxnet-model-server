@@ -18,7 +18,7 @@ NGINX_CONFIG_FILE='/etc/nginx/conf.d/virtual.conf'
 MMS_CONFIG_FILE=''
 
 # Start MxNet model server. This function expects one argument which is the application config file.
-start_mms() 
+start_mms()
 {
     gunicorn_arguments=''
     # TODO issue:https://github.com/awslabs/mxnet-model-server/issues/337. Check if MMS is already running.
@@ -33,6 +33,16 @@ start_mms()
     MMS_CONFIG_FILE=$1
     models=""
     models_found=0
+
+    # Check if the process is already running
+    for pid in $(pgrep -f mxnet-model-server); do
+        if [ $pid != $$ ]; then
+            echo "[$(date)] : mxnet-model-server : Process is already running with PID $pid, run mxnet-model-server stop or mxnet-model-server restart"
+            exit 1
+        else
+          echo "Running with PID $pid"
+        fi
+    done
 
     echo "INFO: Reading file $MMS_CONFIG_FILE"
 
@@ -62,7 +72,7 @@ start_mms()
 	        fi
 	        continue
 	    fi
-	    
+
 	    if [[ "$HEADER" =~ "$GUNICORN_ARGS" ]] # Gunicorn args
 	    then
     		gunicorn_arguments="${gunicorn_arguments} $line "
@@ -91,10 +101,10 @@ start_mms()
     		echo "ERROR: Invalid config header seen $HEADER"
     		exit 1
     	    fi
-	    
+
     done < "$MMS_CONFIG_FILE"
     shopt -u nocasematch
-    
+
     app_script='wsgi'
     service nginx restart
     # Download and extract all the models
@@ -108,7 +118,7 @@ start_mms()
     if [[ `echo $?` == 0 ]] ; then
         gunicorn $gunicorn_arguments --chdir /mxnet_model_server --env MXNET_MODEL_SERVER_CONFIG=$MMS_CONFIG_FILE $app_script
     fi
-    
+
     rm -f /mxnet_model_server/.models
     echo "INFO: Ending the program"
 }
@@ -118,7 +128,7 @@ stop_mms() {
     kill -9 $(ps -e | grep "gunicorn\|nginx" | awk '{print $1}') 2> /dev/null
 }
 
-usage_help() { 
+usage_help() {
     echo "Usage:"
     echo ""
     echo "$0 [start | stop | restart | help] [--mms-config <MMS config file>]"
@@ -141,7 +151,7 @@ usage_help() {
 main() {
     option='none'
     mms_config_file='default'
-    
+
     shopt -s nocasematch
     while true ; do
         case "$1" in
@@ -150,7 +160,7 @@ main() {
 	    * ) break ;;
         esac
     done
-    
+
     case "$option" in
         "start" ) start_mms $mms_config_file ;;
         "stop" ) stop_mms ;;
@@ -161,7 +171,7 @@ main() {
             usage_help
             exit 1;;
     esac
-    
+
     shopt -u nocasematch
 }
 

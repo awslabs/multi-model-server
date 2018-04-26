@@ -8,7 +8,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import platform
 from setuptools import setup, find_packages
 
 pkgs = find_packages()
@@ -23,11 +22,7 @@ pkgs.append('tools')
 # $ pip install wheel
 # $ python setup.py bdist_wheel --universal
 # $ twine upload dist/*
-requirements = ['mxnet-mkl>=1.1', 'Flask', 'Pillow', 'requests', 'flask-cors',
-                'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
-                'fasteners']
-if platform.system() == 'Linux':
-    requirements[0] = 'mxnet-cu90mkl>=1.1'
+
 setup(
     name='mxnet-model-server',
     version='0.3',
@@ -35,7 +30,8 @@ setup(
     url='https://github.com/awslabs/mxnet-model-server',
     keywords='MXNet Model Server Serving Deep Learning Inference AI',
     packages=pkgs,
-    install_requires=requirements,
+    install_requires=['mxnet>=1.1', 'Flask', 'Pillow', 'requests', 'flask-cors', 'psutil', 'jsonschema',
+                      'onnx-mxnet>=0.4.2', 'boto3', 'importlib2', 'fasteners'],
     entry_points={
         'console_scripts': ['mxnet-model-server=mms.mxnet_model_server:start_serving',
                             'mxnet-model-export=mms.export_model:export']

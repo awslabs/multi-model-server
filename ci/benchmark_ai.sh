@@ -87,7 +87,9 @@ fi
 echo "setting up conf"
 #Change conf files for running resnet
 cd /
-git clone https://github.com/awslabs/mxnet-model-server.git
+if [ -d "/mxnet-model-server" ]; then
+    git clone https://github.com/awslabs/mxnet-model-server.git
+fi
 sed -i -e 's/squeezenet=https:\/\/s3.amazonaws.com\/model-server\/models\/squeezenet_v1.1\/squeezenet_v1.1.model/resnet-18=https:\/\/s3.amazonaws.com\/model-server\/models\/resnet-18\/resnet-18.model /g'\
  /mxnet-model-server/docker/mms_app_cpu.conf
 sed -i -e 's/squeezenet=https:\/\/s3.amazonaws.com\/model-server\/models\/squeezenet_v1.1\/squeezenet_v1.1.model/resnet-18=https:\/\/s3.amazonaws.com\/model-server\/models\/resnet-18\/resnet-18.model /g'\

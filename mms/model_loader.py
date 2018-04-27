@@ -137,15 +137,24 @@ def _extract_model(service_name, path):
 
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Signature']))) == 1, \
         'Signature file in model archive is inconsistent with manifest.'
+    print("Signature file configured")
 
-    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))) == 1, \
-        'Symbol file in model archive is inconsistent with manifest.'
+    try:
+        if len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))):
+            print("Symbol file configured")
+    except Exception:  # pylint: disable=broad-except
+        print("Symbol file not given. This model service will be treated as an non-symbolic/imperative model service.")
 
-    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Parameters']))) == 1, \
-        'Parameter file in model archive is inconsistent with manifest.'
+    try:
+        if len(glob.glob(os.path.join(model_dir, manifest['Model']['Parameters']))):
+            print("Parameter file configured")
+    except Exception:  # pylint: disable=broad-except
+        print("Parameter file not given. "
+              "This model service will be treated as an non-symbolic/imperative model service.")
 
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Service']))) == 1, \
         'Service file in model archive is inconsistent with manifest.'
+    print("Service file configured")
 
     model_name = manifest['Model']['Model-Name']
 

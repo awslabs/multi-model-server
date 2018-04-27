@@ -94,26 +94,33 @@ class SingleNodeService(ModelService):
             data to be sent back
         '''
         pre_start_time = time.time()
+
         data = self._preprocess(data)
-        infer_start_time = time.time()
 
         # Update preprocess latency metric
+        infer_start_time = time.time()
         pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
         if self.model_name + '_LatencyPreprocess' in MetricsManager.metrics:
             MetricsManager.metrics[self.model_name + '_LatencyPreprocess'].update(pre_time_in_ms)
 
         data = self._inference(data)
-        data = self._postprocess(data)
 
+        post_start_ms = time.time()
         # Update inference latency metric
-        infer_time_in_ms = (time.time() - infer_start_time) * 1000
+        infer_time_in_ms = (post_start_ms - infer_start_time) * 1000
         if self.model_name + '_LatencyInference' in MetricsManager.metrics:
             MetricsManager.metrics[self.model_name + '_LatencyInference'].update(infer_time_in_ms)
 
+        data = self._postprocess(data)
+        post_time_in_ms = time.time() - infer_start_time
+
+        if self.model_name + '_LatencyPostprocess' in MetricsManager.metrics:
+            MetricsManager.metrics[self.model_name + '_LatencyPostprocess'].update(infer_time_in_ms)
+
         # Update overall latency metric
         if self.model_name + '_LatencyOverall' in MetricsManager.metrics:
-            MetricsManager.metrics[self.model_name + '_LatencyOverall'].update(pre_time_in_ms + infer_time_in_ms)
-
+            MetricsManager.metrics[self.model_name + '_LatencyOverall'].update(pre_time_in_ms + infer_time_in_ms +
+                                                                               post_time_in_ms)
         return data
 
     @abstractmethod

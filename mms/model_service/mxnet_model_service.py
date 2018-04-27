@@ -53,12 +53,13 @@ def check_input_shape(inputs, signature):
 
 
 class MXNetBaseService(SingleNodeService):
-    '''MXNetBaseService defines the fundamental loading model and inference
+    """MXNetBaseService defines the fundamental loading model and inference
        operations when serving MXNet model. This is a base class and needs to be
        inherited.
-    '''
+    """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
         # pylint: disable=super-init-not-called
+        self.param_filename = None
         self.model_name = model_name
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
         signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
@@ -68,8 +69,8 @@ class MXNetBaseService(SingleNodeService):
         try:
             signature_file = open(signature_file_path)
             self._signature = json.load(signature_file)
-        except:
-            raise Exception('Failed to open model signiture file: %s' % signature_file_path)
+        except Exception:
+            raise Exception('Failed to open model signature file: %s' % signature_file_path)
 
         data_names = []
         data_shapes = []
@@ -88,17 +89,21 @@ class MXNetBaseService(SingleNodeService):
         # Load MXNet module
         epoch = 0
         try:
-            param_filename = manifest['Model']['Parameters']
-            epoch = int(param_filename[len(model_name) + 1: -len('.params')])
+            self.param_filename = manifest['Model']['Parameters']
+            epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
         except Exception:  # pylint: disable=broad-except
-            logger.warning('Failed to parse epoch from param file, setting epoch to 0')
+            logger.warning('Failed to parse epoch from param file (or) parameters file not found, setting epoch to 0')
 
-        sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
-                                                               (model_dir, manifest['Model']['Symbol'][:-12]), epoch)
-        self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
-                                      data_names=data_names, label_names=None)
-        self.mx_model.bind(for_training=False, data_shapes=data_shapes)
-        self.mx_model.set_params(arg_params, aux_params, allow_missing=True, allow_extra=True)
+        try:
+            sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
+                                                                   (model_dir, manifest['Model']['Symbol'][:-12]),
+                                                                   epoch)
+            self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
+                                          data_names=data_names, label_names=None)
+            self.mx_model.bind(for_training=False, data_shapes=data_shapes)
+            self.mx_model.set_params(arg_params, aux_params, allow_missing=True, allow_extra=True)
+        except Exception:  # pylint: disable=broad-except
+            logger.warning('Failed to find symbols in the Manifest. This will be treated as Imperative model')
 
         # Read synset file
         # If synset is not specified, check whether model archive contains synset file.

@@ -83,7 +83,7 @@ class HybridAlexNet(gluon.HybridBlock):
                 self.features.add(nn.Dropout(0.5))
             self.output = nn.Dense(classes)
 
-    def hybrid_forward(self, F, x):
+    def hybrid_forward(self, x):
         x = self.features(x)
         x = self.output(x)
         return x

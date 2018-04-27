@@ -197,12 +197,23 @@ The expected output is
 ```
 
 ## How to create a model archive
-1. Go to `mxnet-model-server/examples/gluon_alexnet` folder
+1. Go to `mxnet-model-server/examples/gluon_alexnet` folder.
 ```bash
 git clone https://github.com/awslabs/mxnet-model-server.git
-cd mxnet-model-server/examples/gluon_alexnet 
 ```
+
+```bash
+# Go to the example
+cd mxnet-model-server/examples/gluon_alexnet
+```
+
+```bash
+# Download the alexnet-params file. This is used when using non-pretrained gluon model.
+wget https://s3.amazonaws.com/gluon-mms-model-files/alexnet.params
+```
+
 2. Copy relavant files into a model archive
 ```bash
+# Create model archive
 zip gluon.model *
 ```

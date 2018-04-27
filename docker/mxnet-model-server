@@ -18,7 +18,7 @@ NGINX_CONFIG_FILE='/etc/nginx/conf.d/virtual.conf'
 MMS_CONFIG_FILE=''
 
 # Start MxNet model server. This function expects one argument which is the application config file.
-start_mms() 
+start_mms()
 {
     gunicorn_arguments=''
     # TODO issue:https://github.com/awslabs/mxnet-model-server/issues/337. Check if MMS is already running.
@@ -33,6 +33,16 @@ start_mms()
     MMS_CONFIG_FILE=$1
     models=""
     models_found=0
+    prev=""
+    # Check if the process is already running , if so let the user know and exitx
+    for pid in $(pgrep -f mxnet-model-server); do
+        if [ $pid != $$ ]; then
+            echo "[$(date)] : mxnet-model-server : Process is already running with PID $pid, run mxnet-model-server stop or mxnet-model-server restart"
+            exit 1
+        else
+          echo "Running with PID $pid"
+        fi
+    done
 
     echo "INFO: Reading file $MMS_CONFIG_FILE"
 
@@ -62,39 +72,44 @@ start_mms()
 	        fi
 	        continue
 	    fi
-	    
 	    if [[ "$HEADER" =~ "$GUNICORN_ARGS" ]] # Gunicorn args
 	    then
+        #if workers not given, optimize for number of CPUs available
+        if [[ ("$prev" =~ "--workers") && ($line =~ "optional") ]]
+        then
+          line=$(grep -c ^processor /proc/cpuinfo)
+        fi
     		gunicorn_arguments="${gunicorn_arguments} $line "
-    	    elif [[ "$HEADER" =~ "$MXNET_ARGS" ]] # MxNet Engine Args
-    	    then
-    		export $line
-    	    elif [[ "$HEADER" =~ "$NGINX_ARGS" ]] # Nginx Args
-    	    then
-    	    # MXNET_MODEL_SERVER_HOST gets updated when you run Docker (run/exec) command with the environment
+        prev=$line
+    	elif [[ "$HEADER" =~ "$MXNET_ARGS" ]] # MxNet Engine Args
+    	then
+    	   export $line
+    	elif [[ "$HEADER" =~ "$NGINX_ARGS" ]] # Nginx Args
+    	then
+          # MXNET_MODEL_SERVER_HOST gets updated when you run Docker (run/exec) command with the environment
     	    #    variables MXNET_MODEL_SERVER_HOST=$HOSTNAME
-  	        if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MXNET_MODEL_SERVER_HOST// } ) ]]
-   	        then
-   	            host_name=$MXNET_MODEL_SERVER_HOST
-   	            line="server_name $host_name;"
-   	        fi
-    		echo "$line" >> $NGINX_CONFIG_FILE
-            elif [[ "$HEADER" =~ "$MMS_ARG" ]] # MMS Args
-            then
-		if [[ "$line" =~ "--model" ]] ; then
+  	      if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MXNET_MODEL_SERVER_HOST// } ) ]]
+   	      then
+   	        host_name=$MXNET_MODEL_SERVER_HOST
+   	        line="server_name $host_name;"
+   	      fi
+    		  echo "$line" >> $NGINX_CONFIG_FILE
+      elif [[ "$HEADER" =~ "$MMS_ARG" ]] # MMS Args
+      then
+		      if [[ "$line" =~ "--model" ]] ; then
                     models_found=1
-		elif [[ $models_found == 1 ]] ; then
+		      elif [[ $models_found == 1 ]] ; then
                     models=$line
                     models_found=0
-		fi
-    	    else
+		      fi
+     else
     		echo "ERROR: Invalid config header seen $HEADER"
     		exit 1
-    	    fi
-	    
+    fi
+
     done < "$MMS_CONFIG_FILE"
     shopt -u nocasematch
-    
+
     app_script='wsgi'
     service nginx restart
     # Download and extract all the models
@@ -108,7 +123,7 @@ start_mms()
     if [[ `echo $?` == 0 ]] ; then
         gunicorn $gunicorn_arguments --chdir /mxnet_model_server --env MXNET_MODEL_SERVER_CONFIG=$MMS_CONFIG_FILE $app_script
     fi
-    
+
     rm -f /mxnet_model_server/.models
     echo "INFO: Ending the program"
 }
@@ -118,7 +133,7 @@ stop_mms() {
     kill -9 $(ps -e | grep "gunicorn\|nginx" | awk '{print $1}') 2> /dev/null
 }
 
-usage_help() { 
+usage_help() {
     echo "Usage:"
     echo ""
     echo "$0 [start | stop | restart | help] [--mms-config <MMS config file>]"
@@ -141,7 +156,7 @@ usage_help() {
 main() {
     option='none'
     mms_config_file='default'
-    
+
     shopt -s nocasematch
     while true ; do
         case "$1" in
@@ -150,7 +165,7 @@ main() {
 	    * ) break ;;
         esac
     done
-    
+
     case "$option" in
         "start" ) start_mms $mms_config_file ;;
         "stop" ) stop_mms ;;
@@ -161,7 +176,7 @@ main() {
             usage_help
             exit 1;;
     esac
-    
+
     shopt -u nocasematch
 }
 

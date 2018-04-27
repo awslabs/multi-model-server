@@ -21,7 +21,6 @@ MMS_CONFIG_FILE=''
 start_mms()
 {
     gunicorn_arguments=''
-    # TODO issue:https://github.com/awslabs/mxnet-model-server/issues/337. Check if MMS is already running.
 
     # This function expects one argument.
     if [[ "$#" != 1 ]]

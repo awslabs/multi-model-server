@@ -2,10 +2,10 @@
 
 ## Pre-requisites
 
-You will need some additional Python modules to run the unit tests and integration tests.
+You will need some additional Python modules to run the unit tests, integration tests and linting.
 
 ```bash
-sudo pip install mock pytest
+pip install mock pytest pylint
 ```
 
 You will also need the source for the project, so clone the project first.
@@ -28,4 +28,12 @@ You can run the integration tests with the following:
 
 ```bash
 python -m pytest mms/tests/integration_tests/
+```
+
+## Lint test
+
+You can run the lint tests with the following:
+
+```bash
+pylint -rn --rcfile=./mms/tests/pylintrc mms/.
 ```

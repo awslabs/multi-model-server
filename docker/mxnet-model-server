@@ -34,7 +34,7 @@ start_mms()
     models=""
     models_found=0
 
-    # Check if the process is already running
+    # Check if the process is already running , if so let the user know and exit
     for pid in $(pgrep -f mxnet-model-server); do
         if [ $pid != $$ ]; then
             echo "[$(date)] : mxnet-model-server : Process is already running with PID $pid, run mxnet-model-server stop or mxnet-model-server restart"

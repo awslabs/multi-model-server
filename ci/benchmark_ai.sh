@@ -102,9 +102,9 @@ if [ -f $file ] ; then
 fi
 
 #start the container test
-for workers in 5 10 20
+for workers in 50 100
 do
-    for requests in 5 10
+    for requests in 25 50 100
     do
         echo "*************************************** Workers $workers and reqs $requests   ****************************************************"
         if [ "$use_gpu" == "0" ]; then
@@ -118,12 +118,11 @@ do
             nvidia-docker exec mms pip uninstall --yes mxnet-cu90mkl
             nvidia-docker exec mms pip uninstall --yes mxnet
             nvidia-docker exec mms pip install mxnet-cu90mkl
-            nvidia-docker exec mms mxnet-model-server start --mms-config /mxnet-model-server/docker/mms_app_gpu.conf & #  >& /dev/null &
+            nvidia-docker exec mms mxnet-model-server start --mms-config /mxnet-model-server/docker/mms_app_gpu.conf >& /dev/null &
             sleep 90
         fi
 
         cd /mxnet-model-server/load-test
-        export HOME=/home/ubuntu
         export JMETER_HOME=$HOME/apache-jmeter-4.0
         export PATH=$JMETER_HOME/bin:$PATH
         ./run_load_test.sh -i 127.0.0.1 -c $workers -n $requests -f report.csv -p 80
@@ -134,14 +133,11 @@ do
 ggregate_report_error aggregate_report_rate aggregate_report_bandwidth aggregate_report_stddev < <(tail -n1 ./report/report.csv)
 
         echo -e "{\
-        Number_of_concurrent_workers :$workers,\
-        Number_of_request_per_workers :$requests,\
-        Total_requests :$aggregate_report_count,\
-        Throughput :$aggregate_report_rate,\
-        Average_Latency :$average,\
-        Median_Latency :$aggregate_report_median,\
-        P90_Latency :$aggregate_report_90_line,\
-        Error_rate :$aggregate_report_error}\n" >> $HOME/log_results
+        Throughput_concurrency_${workers}_req_${requests} :$aggregate_report_rate,\
+        Average_latency_concurrency_${workers}_req_${requests} :$average,\
+        Median_latency_concurrency_${workers}_req_${requests} :$aggregate_report_median,\
+        P90_latency_concurrency_${workers}_req_${requests} :$aggregate_report_90_line,\
+        Error_rate_concurrency_${workers}_req_${requests} :$aggregate_report_error}\n" >> $HOME/log_results
         IFS=$OLDIFS
 
         docker rm -f mms

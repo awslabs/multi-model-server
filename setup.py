@@ -26,7 +26,7 @@ pkgs.append('tools')
 requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
                 'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
                 'fasteners']
-if platform.system() == 'Linux':
+if platform.system().lower() == 'linux':
     requirements = ['mxnet-cu90mkl>=1.1'] + requirements
 else:
     requirements = ['mxnet-mkl>=1.1'] + requirements

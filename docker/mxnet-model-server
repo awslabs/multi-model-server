@@ -33,22 +33,12 @@ start_mms()
     models=""
     models_found=0
 
-    # Check if the process is already running , if so let the user know and exit
-    for pid in $(pgrep -f mxnet-model-server); do
+    # Check if the process is already running , also includes gunicorn process , if so let the user know and exit
+    for pid in $(pgrep -f mxnet_model_server); do
         if [ $pid != $$ ]; then
             echo "[$(date)] : mxnet-model-server : Process is already running with PID $pid, run mxnet-model-server stop or mxnet-model-server restart --mms-config=/path/to/config"
             exit 1
         else
-          # Look for orphaned gunicorn workers, kill them if found
-          for spid in $(pgrep -f MXNET_MODEL_SERVER); do
-            if [ -z $spid ]; then
-              break
-            else
-              echo "Killing orphaned gunicorn workers"
-              kill -9 $spid
-              break
-            fi
-          done
           echo "Running with PID $pid"
         fi
     done

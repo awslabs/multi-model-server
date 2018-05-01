@@ -33,15 +33,6 @@ start_mms()
     models=""
     models_found=0
     prev=""
-    # Check if the process is already running , if so let the user know and exitx
-    for pid in $(pgrep -f mxnet-model-server); do
-        if [ $pid != $$ ]; then
-            echo "[$(date)] : mxnet-model-server : Process is already running with PID $pid, run mxnet-model-server stop or mxnet-model-server restart"
-            exit 1
-        else
-          echo "Running with PID $pid"
-        fi
-    done
 
     # Check if the process is already running , also includes gunicorn process , if so let the user know and exit
     for pid in $(pgrep -f mxnet_model_server); do

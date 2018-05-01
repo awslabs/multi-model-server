@@ -112,7 +112,7 @@ class AlexnetService():
 ```
 
 As in the above section, we could test this network by creating a model archive with this service code and running it 
-with MMS. For this model, we would nee `Parameters` file but we would need `Symbols` defined in `MANIFEST.json`
+with MMS. For this model, we would need `Parameters` file but we would need `Symbols` defined in `MANIFEST.json`
 Refer [How to test your models](#how-to-test-your-gluon-models), to test your gluon model.
 
 ## Load and serve a hybrid'ized gluon model

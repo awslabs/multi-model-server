@@ -112,7 +112,7 @@ class SingleNodeService(ModelService):
             MetricsManager.metrics[self.model_name + '_LatencyInference'].update(infer_time_in_ms)
 
         data = self._postprocess(data)
-        post_time_in_ms = time.time() - infer_start_time
+        post_time_in_ms = (time.time() - post_start_ms) * 1000
 
         if self.model_name + '_LatencyPostprocess' in MetricsManager.metrics:
             MetricsManager.metrics[self.model_name + '_LatencyPostprocess'].update(infer_time_in_ms)

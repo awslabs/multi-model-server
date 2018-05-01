@@ -139,7 +139,7 @@ ggregate_report_error aggregate_report_rate aggregate_report_bandwidth aggregate
         Average_latency_concurrency_${workers}_req_${requests} :$average,\
         Median_latency_concurrency_${workers}_req_${requests} :$aggregate_report_median,\
         P90_latency_concurrency_${workers}_req_${requests} :$aggregate_report_90_line,\
-        Error_rate_concurrency_${workers}_req_${requests} :$aggregate_report_error}\n" >> $HOME/log_results
+        Error_rate_concurrency_${workers}_req_${requests} :$aggregate_report_error}\n"
         IFS=$OLDIFS
 
         docker rm -f mms

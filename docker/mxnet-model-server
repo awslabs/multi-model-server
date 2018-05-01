@@ -72,9 +72,6 @@ start_mms()
 	        fi
 	        continue
 	    fi
-
-
-
 	    if [[ "$HEADER" =~ "$GUNICORN_ARGS" ]] # Gunicorn args
 	    then
         #if workers not given, optimize for number of CPUs available
@@ -108,7 +105,6 @@ start_mms()
      else
     		echo "ERROR: Invalid config header seen $HEADER"
     		exit 1
-
     fi
     done < "$MMS_CONFIG_FILE"
     shopt -u nocasematch

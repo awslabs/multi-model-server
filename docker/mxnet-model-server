@@ -32,6 +32,16 @@ start_mms()
     MMS_CONFIG_FILE=$1
     models=""
     models_found=0
+    prev=""
+    # Check if the process is already running , if so let the user know and exitx
+    for pid in $(pgrep -f mxnet-model-server); do
+        if [ $pid != $$ ]; then
+            echo "[$(date)] : mxnet-model-server : Process is already running with PID $pid, run mxnet-model-server stop or mxnet-model-server restart"
+            exit 1
+        else
+          echo "Running with PID $pid"
+        fi
+    done
 
     # Check if the process is already running , also includes gunicorn process , if so let the user know and exit
     for pid in $(pgrep -f mxnet_model_server); do
@@ -72,35 +82,43 @@ start_mms()
 	        continue
 	    fi
 
+
+
 	    if [[ "$HEADER" =~ "$GUNICORN_ARGS" ]] # Gunicorn args
 	    then
+        #if workers not given, optimize for number of CPUs available
+        if [[ ("$prev" =~ "--workers") && ($line =~ "optional") ]]
+        then
+          line=$(grep -c ^processor /proc/cpuinfo)
+        fi
     		gunicorn_arguments="${gunicorn_arguments} $line "
-    	    elif [[ "$HEADER" =~ "$MXNET_ARGS" ]] # MxNet Engine Args
-    	    then
-    		export $line
-    	    elif [[ "$HEADER" =~ "$NGINX_ARGS" ]] # Nginx Args
-    	    then
-    	    # MXNET_MODEL_SERVER_HOST gets updated when you run Docker (run/exec) command with the environment
+        prev=$line
+    	elif [[ "$HEADER" =~ "$MXNET_ARGS" ]] # MxNet Engine Args
+    	then
+    	   export $line
+    	elif [[ "$HEADER" =~ "$NGINX_ARGS" ]] # Nginx Args
+    	then
+          # MXNET_MODEL_SERVER_HOST gets updated when you run Docker (run/exec) command with the environment
     	    #    variables MXNET_MODEL_SERVER_HOST=$HOSTNAME
-  	        if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MXNET_MODEL_SERVER_HOST// } ) ]]
-   	        then
-   	            host_name=$MXNET_MODEL_SERVER_HOST
-   	            line="server_name $host_name;"
-   	        fi
-    		echo "$line" >> $NGINX_CONFIG_FILE
-            elif [[ "$HEADER" =~ "$MMS_ARG" ]] # MMS Args
-            then
-		if [[ "$line" =~ "--model" ]] ; then
+  	      if [[ ( "$line" =~ "server_name" ) && ( ! -z ${MXNET_MODEL_SERVER_HOST// } ) ]]
+   	      then
+   	        host_name=$MXNET_MODEL_SERVER_HOST
+   	        line="server_name $host_name;"
+   	      fi
+    		  echo "$line" >> $NGINX_CONFIG_FILE
+      elif [[ "$HEADER" =~ "$MMS_ARG" ]] # MMS Args
+      then
+		      if [[ "$line" =~ "--model" ]] ; then
                     models_found=1
-		elif [[ $models_found == 1 ]] ; then
+		      elif [[ $models_found == 1 ]] ; then
                     models=$line
                     models_found=0
-		fi
-    	    else
+		      fi
+     else
     		echo "ERROR: Invalid config header seen $HEADER"
     		exit 1
-    	    fi
 
+    fi
     done < "$MMS_CONFIG_FILE"
     shopt -u nocasematch
 

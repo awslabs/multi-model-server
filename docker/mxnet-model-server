@@ -33,13 +33,14 @@ start_mms()
     models=""
     models_found=0
     prev=""
-    # Check if the process is already running , if so let the user know and exitx
-    for pid in $(pgrep -f mxnet-model-server); do
+
+    # Check if the process is already running , also includes gunicorn process , if so let the user know and exit
+    pids=$(pgrep -f mxnet-model-server)
+    pids="$pids $(pgrep -f MXNET_MODEL_SERVER_CONFIG)"
+    for pid in $pids; do
         if [ $pid != $$ ]; then
-            echo "[$(date)] : mxnet-model-server : Process is already running with PID $pid, run mxnet-model-server stop or mxnet-model-server restart"
+            echo "[$(date)] : mxnet-model-server : Process is already running with PID $pid, run mxnet-model-server stop or mxnet-model-server restart --mms-config=/path/to/config"
             exit 1
-        else
-          echo "Running with PID $pid"
         fi
     done
 
@@ -105,7 +106,6 @@ start_mms()
     		echo "ERROR: Invalid config header seen $HEADER"
     		exit 1
     fi
-
     done < "$MMS_CONFIG_FILE"
     shopt -u nocasematch
 

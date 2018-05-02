@@ -183,7 +183,7 @@ start_mms_gpu(){
         exit 1
     fi
     echo "sleep until mms starts"
-    sleep 30
+    sleep 90
 }
 
 start_jmeter(){

@@ -249,7 +249,6 @@ main(){
     echo "docker restarted"
     docker rm -f hw
     echo "container removed"
-    #docker rm -f hw
 }
 
 main "$@"

@@ -199,6 +199,7 @@ start_jmeter(){
 }
 
 remove_container_images(){
+    service docker restart
     docker rm -f mms
 }
 
@@ -217,6 +218,7 @@ run_test(){
             fi
             start_jmeter
             parse_csv_log
+            service docker restart
             docker rm -f mms
         done
     done
@@ -239,6 +241,7 @@ main(){
     prepare_repo
     pull_docker_images
     run_test
+    service docker restart
     docker rm -f hw
 }
 

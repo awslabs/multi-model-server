@@ -199,8 +199,10 @@ start_jmeter(){
 }
 
 remove_container_images(){
-    service docker restart
-    docker rm -f mms
+     service docker stop && service docker start
+     echo "docker restarted"
+     docker rm -f mms
+     echo "container removed"
 }
 
 run_test(){
@@ -218,8 +220,10 @@ run_test(){
             fi
             start_jmeter
             parse_csv_log
-            service docker restart
+            service docker stop && service docker start
+            echo "docker restarted"
             docker rm -f mms
+            echo "container removed"
         done
     done
 }
@@ -241,8 +245,11 @@ main(){
     prepare_repo
     pull_docker_images
     run_test
-    service docker restart
+    service docker stop && service docker start
+    echo "docker restarted"
     docker rm -f hw
+    echo "container removed"
+    #docker rm -f hw
 }
 
 main "$@"

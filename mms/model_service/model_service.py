@@ -25,10 +25,11 @@ URL_PREFIX = ('http://', 'https://', 's3://')
 
 
 class ModelService(object):
-    '''ModelService wraps up all preprocessing, inference and postprocessing
+    """
+    ModelService wraps up all preprocessing, inference and postprocessing
     functions used by model service. It is defined in a flexible manner to
     be easily extended to support different frameworks.
-    '''
+    """
     __metaclass__ = ABCMeta
 
     def __init__(self, model_name, model_dir, manifest, gpu=None):  # pylint: disable=unused-argument
@@ -36,8 +37,8 @@ class ModelService(object):
 
     @abstractmethod
     def inference(self, data):
-        '''
-        Wrapper function to run preprocess, inference and postprocess functions.
+        """
+        Wrapper function to run pre-process, inference and post-process functions.
 
         Parameters
         ----------
@@ -48,7 +49,7 @@ class ModelService(object):
         -------
         list of outputs to be sent back to client.
             data to be sent back
-        '''
+        """
         pass
 
     @abstractmethod
@@ -69,7 +70,7 @@ class ModelService(object):
         Returns
         -------
         Dict
-            Model service signiture.
+            Model service signature.
         '''
         pass
 
@@ -159,7 +160,7 @@ class SingleNodeService(ModelService):
         return data
 
     def _postprocess(self, data):
-        '''
+        """
         Internal postprocess methods. Do transformation on inference output
         and convert them to MIME type objects.
 
@@ -172,7 +173,7 @@ class SingleNodeService(ModelService):
         -------
         list of object
             list of outputs to be sent back.
-        '''
+        """
         return data
 
 

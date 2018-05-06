@@ -8,17 +8,19 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""
-This module does the following:
-a. Starts model-server.
-b. Creates end-points based on the configured models.
-c. Exposes standard "ping" and "api-description" endpoints.
-d. Waits for servicing inference requests.
-"""
-from . import log
-from . import metric
-from . import model_service
-from . import metrics_manager
-from . import version
+import mms
+import os
+import re
 
-__version__ = version.__version__
+
+def test_mms_version():
+    with open(os.path.join("../../mms", "version.py")) as f:
+        version = f.read()
+        version_re = r"^__version__ = ([^'\"]*)(?:\n\s*)"
+        version_groups = re.search(version_re, version, re.M)
+        if version_groups:
+            ver = version_groups.group(1)
+        else:
+            assert 0, "Version file not found"
+
+        assert ver.strip() == str(mms.__version__), "Versions don't match"

@@ -44,8 +44,8 @@ MMS_SERVICE_FILES = {k: os.path.splitext(v.__file__)[0] + '.py' for k, v in {
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']
 VALID_MIME_TYPE = ['image/jpeg', 'application/json']
 SIGNATURE_FILE = 'signature.json'
-MODEL_ARCHIVE_VERSION = 0.1
-MODEL_SERVER_VERSION = 0.1
+MODEL_ARCHIVE_VERSION = 0.2
+MODEL_SERVER_VERSION = mms.__version__
 MANIFEST_FILE_NAME = 'MANIFEST.json'
 MXNET_TYPE = 'mxnet'
 ONNX_TYPE = 'onnx'
@@ -186,7 +186,8 @@ def validate_service(model_path, service_file, signature_file):
     return service_file
 
 
-def generate_manifest(symbol_file, params_file, service_file, signature_file, model_name):
+def generate_manifest(symbol_file=None, params_file=None, service_file=None, signature_file=None,
+                      model_name=None, model_type='symbolic'):
     """
     Funtion to generate manifest file
     :param symbol_file:
@@ -194,6 +195,7 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
     :param service_file:
     :param signature_file:
     :param model_name:
+    :param model_type:
     :return:
     """
     manifest = {}
@@ -201,17 +203,17 @@ def generate_manifest(symbol_file, params_file, service_file, signature_file, mo
     manifest["Model-Archive-Description"] = model_name
     manifest["Model-Server"] = MODEL_SERVER_VERSION
     manifest["Model"] = {}
-    manifest["Model"]["Symbol"] = os.path.split(symbol_file)[1]
-    manifest["Model"]["Parameters"] = os.path.split(params_file)[1]
+    manifest["Model"]["Symbol"] = os.path.split(symbol_file)[1] if symbol_file else ""
+    manifest["Model"]["Parameters"] = os.path.split(params_file)[1] if params_file else ""
     manifest["Model"]["Signature"] = os.path.split(signature_file)[1]
     manifest["Model"]["Service"] = os.path.split(service_file)[1]
     manifest["Model"]["Description"] = model_name
     manifest["Model"]["Model-Name"] = model_name
-    manifest["Model"]["Model-Format"] = "MXNet-Symbolic"
+    manifest["Model"]["Model-Format"] = "MXNet-Symbolic" if model_type is 'symbolic' else "Gluon-Imperative"
 
     mxnet_version = mx.__version__
 
-    if os.path.exists(symbol_file):
+    if symbol_file is not None and os.path.exists(symbol_file):
         symbol_json = json.load(open(symbol_file))
         if MXNET_ATTRS in symbol_json:
             if MXNET_VERSION in symbol_json[MXNET_ATTRS]:
@@ -280,7 +282,7 @@ def validate_epoch_number(params_file):
         raise ValueError(NO_EPOCH_NUMBER_MESSAGE.format(params_file))
 
 
-def validate_prefix_match(symbol_file, params_file):
+def validate_prefix_match(symbol_file=None, params_file=None):
     """
     Validate prefix match
     :param symbol_file:
@@ -293,15 +295,17 @@ def validate_prefix_match(symbol_file, params_file):
         raise ValueError(MODEL_PREFIX_MISMATCH_MESSAGE.format(symbol_file, params_file))
 
 
-def validate_model_files(model_path, onnx_file, params_file, symbol_file):
+def validate_model_files(model_path, onnx_file, params_file, symbol_file, model_type):
     """
     Validate the model files
     :param model_path:
     :param onnx_file:
     :param params_file:
     :param symbol_file:
+    :param model_type:
     :return:
     """
+
     mask = 0
     if onnx_file:
         mask += 1
@@ -309,12 +313,14 @@ def validate_model_files(model_path, onnx_file, params_file, symbol_file):
         mask += 2
     if symbol_file:
         mask += 4
+    if model_type in ["imperative"]:
+        mask += 8
 
     if mask == 0:
         raise ValueError(NO_MODEL_FILES_MESSAGE.format(model_path))
-    if mask in [3, 5, 7]:
+    if mask in [3, 5, 7, 9, 14, 15]:
         raise ValueError(MIXED_MODEL_FILES_MESSAGE.format(model_path))
-    if mask in [2, 4]:
+    if mask in [2, 4, 12]:
         raise ValueError(INCOMPLETE_MODULE_FILES_MESSAGE.format(model_path))
     if mask == 6:
         # an mxnet model
@@ -322,7 +328,7 @@ def validate_model_files(model_path, onnx_file, params_file, symbol_file):
         validate_prefix_match(symbol_file, params_file)
 
 
-def export_model(model_name, model_path, service_file=None, export_file=None):
+def export_model(model_name, model_path, service_file=None, export_file=None, model_type='symbolic'):
     """
     Internal helper for the exporting model command line interface.
     """
@@ -340,7 +346,7 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
         symbol_file = find_unique(files, '-symbol.json')
         params_file = find_unique(files, '.params')
 
-        validate_model_files(model_path, onnx_file, params_file, symbol_file)
+        validate_model_files(model_path, onnx_file, params_file, symbol_file, model_type)
         signature_file = validate_signature(model_path)
         service_file = validate_service(model_path, service_file, signature_file)
         if os.path.basename(service_file) not in files:
@@ -353,7 +359,7 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
             files.remove(onnx_file)
             temp_files.extend([symbol_file, params_file])
 
-        manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name)
+        manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name, model_type)
         with open(os.path.join(model_path, MANIFEST_FILE_NAME), 'w') as m:
             json.dump(manifest, m, indent=4)
         temp_files.append(MANIFEST_FILE_NAME)
@@ -374,7 +380,8 @@ def export():
     :return:
     """
     args = ArgParser.export_parser().parse_args()
-    export_model(args.model_name, args.model_path, args.service_file_path)
+    export_model(model_name=args.model_name, model_path=args.model_path,
+                 service_file=args.service_file_path, model_type=args.model_type)
 
 
 if __name__ == '__main__':

@@ -20,8 +20,8 @@ from model_service.mxnet_vision_service import MXNetVisionService
 from model_service.mxnet_model_service import MXNetBaseService
 from serving_frontend import ServingFrontend
 
-class TestServingFrontend(unittest.TestCase):
 
+class TestServingFrontend(unittest.TestCase):
     def setUp(self):
         self.test_frontend = ServingFrontend('test')
 

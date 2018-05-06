@@ -9,57 +9,22 @@
 # permissions and limitations under the License.
 
 import mxnet
-from mxnet import gluon
 from mxnet.gluon import nn
+from mxnet.gluon.block import HybridBlock
 from mms.model_service.mxnet_vision_service import MXNetVisionService
 import numpy as np
+import os
 
 """
-MMS examples for loading Gluon Hybrid/Dynamic models
+MMS examples for loading Gluon Hybrid models
 """
 
-
-class ImperativeAlexNet(gluon.Block):
-    """
-    Fully imperative gluon Alexnet model
-    """
-    def __init__(self, classes=1000, **kwargs):
-        super(ImperativeAlexNet, self).__init__(**kwargs)
-        with self.name_scope():
-            self.features = nn.Sequential(prefix='')
-            with self.features.name_scope():
-                self.features.add(nn.Conv2D(64, kernel_size=11, strides=4,
-                                            padding=2, activation='relu'))
-                self.features.add(nn.MaxPool2D(pool_size=3, strides=2))
-                self.features.add(nn.Conv2D(192, kernel_size=5, padding=2,
-                                            activation='relu'))
-                self.features.add(nn.MaxPool2D(pool_size=3, strides=2))
-                self.features.add(nn.Conv2D(384, kernel_size=3, padding=1,
-                                            activation='relu'))
-                self.features.add(nn.Conv2D(256, kernel_size=3, padding=1,
-                                            activation='relu'))
-                self.features.add(nn.Conv2D(256, kernel_size=3, padding=1,
-                                            activation='relu'))
-                self.features.add(nn.MaxPool2D(pool_size=3, strides=2))
-                self.features.add(nn.Flatten())
-                self.features.add(nn.Dense(4096, activation='relu'))
-                self.features.add(nn.Dropout(0.5))
-                self.features.add(nn.Dense(4096, activation='relu'))
-                self.features.add(nn.Dropout(0.5))
-            self.output = nn.Dense(classes)
-
-    def forward(self, F, x):
-        x = self.features(x)
-        x = self.output(x)
-        return x
-
-
-class HybridAlexNet(gluon.HybridBlock):
+class GluonHybridAlexNet(HybridBlock):
     """
     Hybrid Block gluon model
     """
     def __init__(self, classes=1000, **kwargs):
-        super(HybridAlexNet, self).__init__(**kwargs)
+        super(GluonHybridAlexNet, self).__init__(**kwargs)
         with self.name_scope():
             self.features = nn.HybridSequential(prefix='')
             with self.features.name_scope():
@@ -81,9 +46,10 @@ class HybridAlexNet(gluon.HybridBlock):
                 self.features.add(nn.Dropout(0.5))
                 self.features.add(nn.Dense(4096, activation='relu'))
                 self.features.add(nn.Dropout(0.5))
+
             self.output = nn.Dense(classes)
 
-    def hybrid_forward(self, x):
+    def hybrid_forward(self, F, x):
         x = self.features(x)
         x = self.output(x)
         return x
@@ -95,17 +61,11 @@ class MMSImperativeService(MXNetVisionService):
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
         super(MMSImperativeService, self).__init__(model_name, model_dir, manifest, gpu)
-        # Uncomment the following to create a purely imperative model of Alexnet. Comment other self.net blocks below.
-        self.net = ImperativeAlexNet()
 
-        # Uncomment the following to use pretrained model and comment other self.net blocks above and below.
-        # self.net = mxnet.gluon.model_zoo.vision.alexnet(pretrained=True)
-
-        # Uncomment the following code block to use hybrid variation of Alexnet. Comment other self.net blocks above.
-        # self.net = HybridAlexNet()
-        # self.net.hybridize()
+        self.net = GluonHybridAlexNet()
         if self.param_filename:
-            self.net.load_params(self.param_filename, ctx=self.ctx)
+            self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
+        self.net.hybridize()
 
     def _preprocess(self, data):
         img_list = []

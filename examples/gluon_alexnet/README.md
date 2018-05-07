@@ -1,78 +1,130 @@
-## Loading and serving Gluon models on MXNet Model Server (MMS)
+# Loading and serving Gluon models on MXNet Model Server (MMS)
 
-We are glad to announce that MXNet Model Server now supports loading and serving Imperative and Hybrid Gluon models. 
-This is a short tutorial on how to write a custom Gluon model and serve it on MMS. If you are using Gluon for the first
-time, you could refer this [60 min crash-course](http://gluon-crash-course.mxnet.io/ndarray.html) on gluon to get a 
-better understanding.
+MXNet Model Server (MMS) supports loading and serving MXNet Imperative and Hybrid Gluon models.
+This is a short tutorial on how to write a custom Gluon model, and then serve it with MMS.
 
-In this tutorial, we will cover the following:
-1. [How to serve Gluon models](#how-to-serve-gluon-models)
-2. [Load and serve pretrained models](#load-and-serve-a-pretrained-gluon-model)
-3. [Load and serve pure Gluon imperative models](#load-and-serve-pure-gluon-imperative-models)
-4. [Load and serve a hybrid'ized gluon model](#load-and-serve-a-hybrid'ized-gluon-model)
-5. [How to test your gluon models](#how-to-test-your-gluon-models)
-6. [How to create a model archive](#how-to-create-a-model-archive)
+This tutorial covers the following:
+1. [Prerequisites](#prerequisites)
+2. [Serve a Gluon model](#load-and-serve-a-gluon-model)
+  * [Load and serve a pre-trained Gluon model](#load-and-serve-a-pre-trained-gluon-model)
+  * [Load and serve a custom Gluon model](#load-and-serve-a-custom-gluon-imperative-model)
+  * [Load and serve a custom hybrid Gluon model](#load-and-serve-a-hybrid-gluon-model)
+3. [Conclusion](#conclusion)
 
-**NOTE: If you do not use `Symbols` parameter in `MANIFEST.json`, MMS infers this as a imperative gluon model
-(or network defined by run). In other words DO-NOT-USE `Symbols` parameter in `MANIFEST.json` when defining `Gluon` 
-models.** 
+## Prerequisites
 
-## How to serve Gluon models
-There are three ways of defining our Gluon nerual network/model.
-1. Load and serve a pretrained model.
-2. Load and serve custom imperative model, which implies that we don't generate/use symbols.
-3. Load and serve custom Hybrid models. More on why we need `HybridBlocks` and the need to `hybridize` is explained well
-in this [Gluon Document](http://gluon.mxnet.io/chapter07_distributed-learning/hybridize.html#)
+* **Basic Gluon knowledge**. If you are using Gluon for the first
+time, but are familiar with creating a neural network with MXNet or another framework, you may refer this 10 min Gluon crash-course: [Predict with a pre-trained model](http://gluon-crash-course.mxnet.io/predict.html).
+* **Gluon naming**. Fine-tuning pre-trained Gluon models requires some understanding of how the naming conventions work. Take a look at the [Naming of Gluon Parameter and Blocks](https://mxnet.incubator.apache.org/tutorials/gluon/naming.html) tutorial for more information.
+* **Basic MMS knowledge**. If you are using MMS for the first time, you should take advantage of the [MMS QuickStart tutorial](https://github.com/awslabs/mxnet-model-server#quick-start).
+* **MMS Custom Service knowledge.** Review the [Defining a Custom Service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/custom_service.md) documentation to understand how MMS implements custom pre and post-processing for models.
+* **MMS installed**. If you haven't already, [install MMS with pip](https://github.com/awslabs/mxnet-model-server/blob/master/docs/install.md#install-mms-with-pip) or [install MMS from source](https://github.com/awslabs/mxnet-model-server/blob/master/docs/install.md#install-mms-from-source-code). Either installation will also install MXNet.
 
-For this tutorial, we use [Alexnet](https://mxnet.incubator.apache.org/api/python/gluon/model_zoo.html) 
-to describe the above three scenarios. The example code and supporting files to create a model archive are 
-in `mxnet-model-server/examples/gluon_alexnet/*`.  
 
-## Load and serve a pretrained gluon model
-Gluon already provides a good range of pretrained models through `mxnet.gluon.model_zoo` and they are rapidly adding 
-more. These models are available after simply installing `mxnet`
+Refer to the [MXNet model zoo](https://mxnet.incubator.apache.org/api/python/gluon/model_zoo.html) documentation for examples of accessing other models.
+## Load and serve a Gluon model
+
+There are three scenarios for serving a Gluon model with MMS:
+
+1. Load and serve a pre-trained Gluon model.
+2. Load and serve a custom imperative Gluon model.
+3. Load and serve a custom hybrid Gluon model.
+
+To learn more about the differences between gluon and hybrid gluon models refer to [the following document](http://gluon.mxnet.io/chapter07_distributed-learning/hybridize.html)
+
+### Load and serve a pre-trained Gluon model
+
+Loading and serving a pre-trained Gluon model is the simplest of the three scenarios. These models don't require you to provide `symbols` and `params` files.
+
+While it is easy to access a model with a couple of lines of code, with MMS you will want to use a [MMS custom service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/custom_service.md) code pattern as follows:
+
+```python
+class MMSPretrainedAlexnet(MXNetVisionService):
+    """
+    Pretrained alexnet Service
+    """
+    def __init__(self, model_name, model_dir, manifest, gpu=None):
+        super(MMSPretrainedAlexnet, self).__init__(model_name, model_dir, manifest, gpu)
+
+        self.net = mxnet.gluon.model_zoo.vision.alexnet(pretrained=True)
+
+    def _preprocess(self, data):
+        img_list = []
+        for idx, img in enumerate(data):
+            input_shape = self.signature['inputs'][idx]['data_shape']
+            # We are assuming input shape is NCHW
+            [h, w] = input_shape[2:]
+            img_arr = mxnet.img.imdecode(img)
+            img_arr = mxnet.image.imresize(img_arr, w, h)
+            img_arr = img_arr.astype(np.float32)
+            img_arr /= 255
+            img_arr = mxnet.image.color_normalize(img_arr,
+                                                  mean=mxnet.nd.array([0.485, 0.456, 0.406]),
+                                                  std=mxnet.nd.array([0.229, 0.224, 0.225]))
+            img_arr = mxnet.nd.transpose(img_arr, (2, 0, 1))
+            img_arr = img_arr.expand_dims(axis=0)
+            img_list.append(img_arr)
+        return img_list
+
+    def _inference(self, data):
+        # Call forward/hybrid_forward
+        output = self.net(data[0])
+        return output.softmax()
+
+    def _postprocess(self, data):
+        idx = data.topk(k=5)[0]
+        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability': float(data[0, int(i.asscalar())].asscalar())}
+                for i in idx]
+```
+
+For an actual code implementation, refer to the custom-service code which uses the [pre-trained Alexnet](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_pretrained_alexnet.py)
+
+### Serve pre-trained model with MMS
+To serve pre-trained models with MMS we would need to create an model archive file. Follow the below steps to get the example custom service
+loaded and served with MMS.
+
+1. Create a `models` directory
 ```bash
-# For CPU instances
-pip install mxnet-mkl
+mkdir /tmp/models
+```
+2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_pretrained_alexnet.py) 
+and other required artifacts to this folder
+```bash
+cp gluon_pretrained_alexnet.py synset.txt signature.json /tmp/models
+```
+3. Run the model-export tool on this folder.
+```bash
+mxnet-model-export --model-name="pretrained-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_pretrained_alexnet.py" --model-type="imperative"
+```
+This creates a model-archive file `pretrained-alexnet.model`.
+
+4. You could run the server with this model file to serve the pre-trained alexnet.
+```bash
+mxnet-model-server --models alexnet=pretrained-alexnet.model
+```
+5. Test your service
+```bash
+curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
+curl -X POST http://127.0.0.1:8080/alexnet/predict -F "data=@kitten.jpg"
 ```
 
-This is the simplest of the three methods to define. Here we don't need `params` or `symbols` to be given as inputs. 
-We can access these models from the `service_code` as follows
-```text
-import mxnet
+## Load and serve a custom Gluon imperative model
 
-class AlexnetService():
-...
-    def inference(self, data):
-        net = mxnet.gluon.model_zoo.vision.alexnet(pretrained=True)
-        output = net(data)
-        return output.argmax()
-...        
-```
+To load an imperative model for use with MMS, you must activate the network in a MMS custom service. Once activated, MMS 
+can load the pre-trained parameters and start serving the imperative model. You also need to handle pre-processing and 
+post-processing of the image input.
 
-Since this is a pretrained model, we wouldn't need to provide `Parameters` and `Symbols` through `MANIFEST.json`.
+We created a custom imperative model using Gluon. Refer to 
+[custom service code](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/examples/gluon_alexnet/gluon_alexnet.py)
+The network definition, which is defined in the example, is as follows
 
-To see this in action, refer the `__init__` in the `MMSImperativeService`  in  `gluon_alexnet.py`. 
- 
-Remove the `Parameters` and `Symbols` from the `MANIFEST.json` file and create a model-archive.
-Refer [How to test your models](#how-to-test-your-gluon-models), to test your gluon model.
-
-## Load and serve pure Gluon imperative models
-As above, let's consider `gluon_mxnet.py` in this `mxnet-model-server/examples/gluon_alexnet` folder.
-To define a imperative neral-net, we would need to define the complete network. We then load the parameters that we 
-obtained from training this model and start serving the model.
-
-```text
-import mxnet
-from mxnet import gluon
-from mxnet.gluon import nn
-
-class GluonImperativeAlexnet():
+```python
+class ImperativeAlexNet(gluon.Block):
     """
     Fully imperative gluon Alexnet model
     """
     def __init__(self, classes=1000, **kwargs):
-        super(GluonImperativeAlexnet, self).__init__(**kwargs)
+        super(ImperativeAlexNet, self).__init__(**kwargs)
         with self.name_scope():
             self.features = nn.Sequential(prefix='')
             with self.features.name_scope():
@@ -96,38 +148,108 @@ class GluonImperativeAlexnet():
                 self.features.add(nn.Dropout(0.5))
             self.output = nn.Dense(classes)
 
-    def forward(self, F, x):
-        x = self.features(x)
+    def forward(self, x):
+	x = self.features(x)
         x = self.output(x)
         return x
-
-class AlexnetService():
-...
-    def inference(self, data):
-        net = GluonImperativeAlexnet()
-        net.load_params(self.param_filename, ctx=self.ctx)
-        output = net(data)
-        return output.argmax()
-...
 ```
 
-As in the above section, we could test this network by creating a model archive with this service code and running it 
-with MMS. For this model, we would need `Parameters` file but we would need `Symbols` defined in `MANIFEST.json`
-Refer [How to test your models](#how-to-test-your-gluon-models), to test your gluon model.
+The pre-process, inference and post-process steps are similar to the service code that we saw in the [above section](#load-and-serve-a-pre-trained-gluon-model).
+```python
+class MMSImperativeService(MXNetVisionService):
+    """
+    Gluon alexnet Service
+    """
+    def __init__(self, model_name, model_dir, manifest, gpu=None):
+        super(MMSImperativeService, self).__init__(model_name, model_dir, manifest, gpu)
+        self.net = ImperativeAlexNet()
+        if self.param_filename:
+            self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
 
-## Load and serve a hybrid'ized gluon model
-Similar to above sections, let's consider `gluon_alexnet.py` in `mxnet-model-server/examples/gluon_alexnet` folder.
-We first convert the model to a `gluon` hybrid block.
-```text
-import mxnet
-from mxnet import gluon
-from mxnet.gluon import nn
-class HybridAlexNet(gluon.HybridBlock):
+    def _preprocess(self, data):
+        img_list = []
+        for idx, img in enumerate(data):
+            input_shape = self.signature['inputs'][idx]['data_shape']
+            # We are assuming input shape is NCHW
+            [h, w] = input_shape[2:]
+            img_arr = mxnet.img.imdecode(img)
+            img_arr = mxnet.image.imresize(img_arr, w, h)
+            img_arr = img_arr.astype(np.float32)
+            img_arr /= 255
+            img_arr = mxnet.image.color_normalize(img_arr,
+                                                  mean=mxnet.nd.array([0.485, 0.456, 0.406]),
+                                                  std=mxnet.nd.array([0.229, 0.224, 0.225]))
+            img_arr = mxnet.nd.transpose(img_arr, (2, 0, 1))
+            img_arr = img_arr.expand_dims(axis=0)
+            img_list.append(img_arr)
+        return img_list
+
+    def _inference(self, data):
+        # Call forward/hybrid_forward
+        output = self.net(data[0])
+        return output.softmax()
+
+    def _postprocess(self, data):
+        idx = data.topk(k=5)[0]
+        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability': float(data[0, int(i.asscalar())].asscalar())}
+                for i in idx]
+
+``` 
+ 
+### Test your imperative Gluon model service
+To serve imperative Gluon models with MMS we would need to create an model archive file. 
+Follow the below steps to get the example custom service loaded and served with MMS.
+
+1. Create a `models` directory
+```bash
+mkdir /tmp/models
+```
+2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_imperative_alexnet.py) 
+and other required artifacts to this folder
+```bash
+cp gluon_imperative_alexnet.py synset.txt signature.json /tmp/models
+```
+3. Download/copy the parameters to this `/tmp/models` directory. For this example, we have the parameters file in a S3 bucket.
+```bash
+wget https://s3.amazonaws.com/gluon-mms-model-files/alexnet.params
+mv alexnet.params /tmp/models
+```
+4. Run the model-export tool on this folder.
+```bash
+mxnet-model-export --model-name="imperative-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_imperative_alexnet.py" --model-type="imperative"
+```
+This creates a model-archive file `imperative-alexnet.model`.
+
+5. You could run the server with this model file to serve the pre-trained alexnet.
+```bash
+mxnet-model-server --models alexnet=imperative-alexnet.model
+```
+6. Test your service
+```bash
+curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
+curl -X POST http://127.0.0.1:8080/alexnet/predict -F "data=@kitten.jpg"
+```
+
+The output should be close to the following:
+
+```json
+{"prediction":[{"class":"lynx,","probability":0.9411474466323853},{"class":"leopard,","probability":0.016749195754528046},{"class":"tabby,","probability":0.012754007242619991},{"class":"Egyptian","probability":0.011728651821613312},{"class":"tiger","probability":0.008974711410701275}]}
+```
+
+## Load and serve a hybrid Gluon model
+
+To serve hybrid Gluon models with MMS, let's consider `gluon_imperative_alexnet.py` in `mxnet-model-server/examples/gluon_alexnet` folder.
+We first convert the model to a `Gluon` hybrid block. 
+For additional background on using `HybridBlocks` and the need to `hybridize` refer to this Gluon [hybridize](http://gluon.mxnet.io/chapter07_distributed-learning/hybridize.html#) tutorial.
+
+The above network, after this conversion, would look as follows: 
+```python
+class GluonHybridAlexNet(HybridBlock):
     """
     Hybrid Block gluon model
     """
     def __init__(self, classes=1000, **kwargs):
-        super(HybridAlexNet, self).__init__(**kwargs)
+        super(GluonHybridAlexNet, self).__init__(**kwargs)
         with self.name_scope():
             self.features = nn.HybridSequential(prefix='')
             with self.features.name_scope():
@@ -149,71 +271,100 @@ class HybridAlexNet(gluon.HybridBlock):
                 self.features.add(nn.Dropout(0.5))
                 self.features.add(nn.Dense(4096, activation='relu'))
                 self.features.add(nn.Dropout(0.5))
+
             self.output = nn.Dense(classes)
 
     def hybrid_forward(self, F, x):
         x = self.features(x)
         x = self.output(x)
         return x
-
-class AlexnetService():
-...
-    def inference(self, data):
-        net = HybridAlexNet()
-        net.hybridize()
-        net.load_params(self.param_filename, ctx=self.ctx)
-        output = net(data)
-        return output.argmax()
-...
 ```
-To understand how `.hybridize()` is useful and its internals, refer to 
-[Gluon's tutorial on Hybridize](http://gluon.mxnet.io/chapter07_distributed-learning/hybridize.html).
+We could use the same custom service code as in the above section, 
 
-Similar to Imperative models, this model doesn't require `Symbols` as the call to `.hybridize()` compiles the nerual-net. 
-This would store the `mxnet.symbols` implicitly. 
+```python
+class MMSHybridService(MXNetVisionService):
+    """
+    Gluon alexnet Service
+    """
+    def __init__(self, model_name, model_dir, manifest, gpu=None):
+        super(MMSHybridService, self).__init__(model_name, model_dir, manifest, gpu)
+        self.net = GluonHybridAlexNet()
+        if self.param_filename:
+            self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
+        self.net.hybridize()
+            
 
-To test this model, refer to the below section on [how to test your gluon models](#how-to-test-your-gluon-models).
-## How to test your gluon models
-To test the gluon models, we need to do the following
-1. Make sure you have the latest version of `mxnet-model-server`
-```bash
-pip install mxnet-model-server
-``` 
-2. Create a model archive file. Refer [How to create a model archive](#how-to-create-a-model-archive) 
-for that.
-3. Start the model-server with the newly create model archive.
-```bash
-mxnet-model-server --models gluon=gluon.model
+    def _preprocess(self, data):
+        img_list = []
+        for idx, img in enumerate(data):
+            input_shape = self.signature['inputs'][idx]['data_shape']
+            # We are assuming input shape is NCHW
+            [h, w] = input_shape[2:]
+            img_arr = mxnet.img.imdecode(img)
+            img_arr = mxnet.image.imresize(img_arr, w, h)
+            img_arr = img_arr.astype(np.float32)
+            img_arr /= 255
+            img_arr = mxnet.image.color_normalize(img_arr,
+                                                  mean=mxnet.nd.array([0.485, 0.456, 0.406]),
+                                                  std=mxnet.nd.array([0.229, 0.224, 0.225]))
+            img_arr = mxnet.nd.transpose(img_arr, (2, 0, 1))
+            img_arr = img_arr.expand_dims(axis=0)
+            img_list.append(img_arr)
+        return img_list
+
+    def _inference(self, data):
+        # Call forward/hybrid_forward
+        output = self.net(data[0])
+        return output.softmax()
+
+    def _postprocess(self, data):
+        idx = data.topk(k=5)[0]
+        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability': float(data[0, int(i.asscalar())].asscalar())}
+                for i in idx]
 ```
-4. Test this service by running requests from another terminal, as follows:
+Similar to imperative models, this model doesn't require `Symbols` as the call to `.hybridize()` compiles the neural net.
+This would store the `symbols` implicitly.
+
+### Test your hybrid Gluon model service
+To serve Hybrid Gluon models with MMS we would need to create an model archive file. 
+Follow the below steps to get the example custom service loaded and served with MMS.
+
+1. Create a `models` directory
+```bash
+mkdir /tmp/models
+```
+2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_imperative_alexnet.py) 
+and other required artifacts to this folder
+```bash
+cp gluon_hybrid_alexnet.py synset.txt signature.json /tmp/models
+```
+3. Download/copy the parameters to this `/tmp/models` directory. For this example, we have the parameters file in a S3 bucket.
+```bash
+wget https://s3.amazonaws.com/gluon-mms-model-files/alexnet.params
+mv alexnet.params /tmp/models
+```
+4. Run the model-export tool on this folder.
+```bash
+mxnet-model-export --model-name="hybrid-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_hybrid_alexnet.py" --model-type="imperative"
+```
+This creates a model-archive file `hybrid-alexnet.model`.
+
+5. You could run the server with this model file to serve the pre-trained alexnet.
+```bash
+mxnet-model-server --models alexnet=hybrid-alexnet.model
+```
+6. Test your service
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
-curl -X POST http://127.0.0.1:8080/gluon/predict -F "data=@kitten.jpg"
+curl -X POST http://127.0.0.1:8080/alexnet/predict -F "data=@kitten.jpg"
 ```
 
-The expected output is
-```text
+The output should be close to the following:
+
+```json
 {"prediction":[{"class":"lynx,","probability":0.9411474466323853},{"class":"leopard,","probability":0.016749195754528046},{"class":"tabby,","probability":0.012754007242619991},{"class":"Egyptian","probability":0.011728651821613312},{"class":"tiger","probability":0.008974711410701275}]}
 ```
 
-## How to create a model archive
-1. Go to `mxnet-model-server/examples/gluon_alexnet` folder.
-```bash
-git clone https://github.com/awslabs/mxnet-model-server.git
-```
+## Conclusion
 
-```bash
-# Go to the example
-cd mxnet-model-server/examples/gluon_alexnet
-```
-
-```bash
-# Download the alexnet-params file. This is used when using non-pretrained gluon model.
-wget https://s3.amazonaws.com/gluon-mms-model-files/alexnet.params
-```
-
-2. Copy relavant files into a model archive
-```bash
-# Create model archive
-zip gluon.model *
-```
+In this tutorial you learned how to serve Gluon models in three unique scenarios: a pre-trained imperative model directly from the model zoo, a custom imperative model, and a hybrid model. For further examples of customizing gluon models, try the Gluon tutorial for [Transferring knowledge through fine-tuning](http://gluon.mxnet.io/chapter08_computer-vision/fine-tuning.html). For an advanced custom service example, try the MMS [SSD example](https://github.com/awslabs/mxnet-model-server/tree/master/examples/ssd).

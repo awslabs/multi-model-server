@@ -8,7 +8,8 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""`MXNetBaseService` defines an API for MXNet service.
+"""
+`MXNetBaseService` defines an API for MXNet service.
 """
 # pylint: disable=redefined-builtin
 import json
@@ -23,7 +24,8 @@ logger = get_logger()
 
 
 def check_input_shape(inputs, signature):
-    '''Check input data shape consistency with signature.
+    """
+    Check input data shape consistency with signature.
 
     Parameters
     ----------
@@ -31,7 +33,7 @@ def check_input_shape(inputs, signature):
         Input data in NDArray format.
     signature : dict
         Dictionary containing model signature.
-    '''
+    """
     assert isinstance(inputs, list), 'Input data must be a list.'
     assert len(inputs) == len(signature['inputs']), 'Input number mismatches with ' \
                                            'signature. %d expected but got %d.' \
@@ -87,23 +89,27 @@ class MXNetBaseService(SingleNodeService):
             data_shapes.append((input['data_name'], tuple(data_shape)))
 
         # Load MXNet module
-        epoch = 0
         try:
             self.param_filename = manifest['Model']['Parameters']
-            epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
         except Exception:  # pylint: disable=broad-except
-            logger.warning('Failed to parse epoch from param file (or) parameters file not found, setting epoch to 0')
+            if "symbolic" in manifest['Model']['Model-Format'].lower():
+                raise Exception('Failed to parse epoch from param file (or) '
+                                'parameters file not found, setting epoch to 0')
+            else:
+                logger.info("No Parameters found: Model Format {}".format(manifest['Model']['Model-Format']))
 
-        try:
-            sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
-                                                                   (model_dir, manifest['Model']['Symbol'][:-12]),
-                                                                   epoch)
-            self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
-                                          data_names=data_names, label_names=None)
-            self.mx_model.bind(for_training=False, data_shapes=data_shapes)
-            self.mx_model.set_params(arg_params, aux_params, allow_missing=True, allow_extra=True)
-        except Exception:  # pylint: disable=broad-except
-            logger.warning('Failed to find symbols in the Manifest. This will be treated as Imperative model')
+        if 'symbolic' in manifest['Model']['Model-Format'].lower():
+            try:
+                epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
+                sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
+                                                                       (model_dir, manifest['Model']['Symbol'][:-12]),
+                                                                       epoch)
+                self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
+                                              data_names=data_names, label_names=None)
+                self.mx_model.bind(for_training=False, data_shapes=data_shapes)
+                self.mx_model.set_params(arg_params, aux_params, allow_missing=True, allow_extra=True)
+            except Exception as e:  # pylint: disable=broad-except
+                raise Exception('Failed to initialize MXNet Module {}'.format(str(e)))
 
         # Read synset file
         # If synset is not specified, check whether model archive contains synset file.
@@ -120,7 +126,8 @@ class MXNetBaseService(SingleNodeService):
         return [str(d.asnumpy().tolist()) for d in data]
 
     def _inference(self, data):
-        '''Internal inference methods for MXNet. Run forward computation and
+        """
+        Internal inference methods for MXNet. Run forward computation and
         return output.
 
         Parameters
@@ -132,7 +139,7 @@ class MXNetBaseService(SingleNodeService):
         -------
         list of NDArray
             Inference output.
-        '''
+        """
         # Check input shape
         check_input_shape(data, self.signature)
         data = [item.as_in_context(self.ctx) for item in data]
@@ -140,22 +147,24 @@ class MXNetBaseService(SingleNodeService):
         return self.mx_model.get_outputs()
 
     def ping(self):
-        '''Ping to get system's health.
+        """
+        Ping to get system's health.
 
         Returns
         -------
         String
             MXNet version to show system is healthy.
-        '''
+        """
         return mx.__version__
 
     @property
     def signature(self):
-        '''Signature for model service.
+        """
+        Signature for model service.
 
         Returns
         -------
         Dict
             Model service signiture.
-        '''
+        """
         return self._signature

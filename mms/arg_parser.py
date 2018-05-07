@@ -108,6 +108,7 @@ class ArgParser(object):
 
         parser_export.add_argument('--service-file-path',
                                    required=False,
+                                   dest="service_file_path",
                                    type=str,
                                    default=None,
                                    help='Service file path to handle custom MMS inference logic. '
@@ -117,7 +118,15 @@ class ArgParser(object):
                                         'Alternatively, if the input defined in signature.json is image/jpeg '
                                         'this tool will include the MXNetVisionService in the archive.')
 
+        parser_export.add_argument('--model-type',
+                                   required=False,
+                                   type=str,
+                                   choices=list(['symbolic', 'imperative']),
+                                   default='symbolic',
+                                   help='Model type of the file.'
+                                        'Options are \"symbolic\" or \"imperative\"')
         return parser_export
+
 
     @staticmethod
     def extract_args(args=None):

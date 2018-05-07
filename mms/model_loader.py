@@ -60,7 +60,7 @@ def _download_and_extract(model_location, path=None, overwrite=False):
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
 
-            print('Downloading %s from %s...' % (model_file, model_location))
+            print('INFO: Downloading %s from %s...' % (model_file, model_location))
             r = requests.get(model_location, stream=True)
             if r.status_code != 200:
                 raise RuntimeError("Failed downloading url %s" % model_location)
@@ -137,24 +137,23 @@ def _extract_model(service_name, path):
 
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Signature']))) == 1, \
         'Signature file in model archive is inconsistent with manifest.'
-    print("Signature file configured")
+    print("INFO: Signature file configured")
 
     try:
         if len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))):
-            print("Symbol file configured")
+            print("INFO: Symbol file configured")
     except Exception:  # pylint: disable=broad-except
-        print("Symbol file not given. This model service will be treated as an non-symbolic/imperative model service.")
+        print("WARNING: Symbols file not given.")
 
     try:
         if len(glob.glob(os.path.join(model_dir, manifest['Model']['Parameters']))):
-            print("Parameter file configured")
+            print("INFO: Parameter file configured")
     except Exception:  # pylint: disable=broad-except
-        print("Parameter file not given. "
-              "This model service will be treated as an non-symbolic/imperative model service.")
+        print("WARNING: Parameter file not given.")
 
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Service']))) == 1, \
         'Service file in model archive is inconsistent with manifest.'
-    print("Service file configured")
+    print("INFO: Service file configured")
 
     model_name = manifest['Model']['Model-Name']
 

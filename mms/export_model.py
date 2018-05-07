@@ -211,6 +211,8 @@ def generate_manifest(symbol_file=None, params_file=None, service_file=None, sig
     manifest["Model"]["Model-Name"] = model_name
     manifest["Model"]["Model-Format"] = "MXNet-Symbolic" if model_type is 'symbolic' else "Gluon-Imperative"
 
+    print("VDANTU Manifest is: {}".format(manifest))
+
     mxnet_version = mx.__version__
 
     if symbol_file is not None and os.path.exists(symbol_file):

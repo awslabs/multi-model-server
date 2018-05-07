@@ -89,18 +89,15 @@ class MXNetBaseService(SingleNodeService):
             data_shapes.append((input['data_name'], tuple(data_shape)))
 
         # Load MXNet module
+        epoch = 0
         try:
             self.param_filename = manifest['Model']['Parameters']
+            epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
         except Exception:  # pylint: disable=broad-except
-            if "symbolic" in manifest['Model']['Model-Format'].lower():
-                raise Exception('Failed to parse epoch from param file (or) '
-                                'parameters file not found, setting epoch to 0')
-            else:
-                logger.info("No Parameters found: Model Format {}".format(manifest['Model']['Model-Format']))
+                logger.info("Failed to parse epoch from param file, setting epoch to 0")
 
         if 'symbolic' in manifest['Model']['Model-Format'].lower():
             try:
-                epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
                 sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
                                                                        (model_dir, manifest['Model']['Symbol'][:-12]),
                                                                        epoch)

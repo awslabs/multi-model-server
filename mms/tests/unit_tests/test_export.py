@@ -41,7 +41,7 @@ def onnx_mxnet():
     patcher.stop()
 
 
-@pytest.fixture
+@pytest.fixture()
 def module_dir(tmpdir):
     path = '{}/test'.format(tmpdir)
     os.mkdir(path)

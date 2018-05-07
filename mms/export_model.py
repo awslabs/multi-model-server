@@ -209,7 +209,7 @@ def generate_manifest(symbol_file=None, params_file=None, service_file=None, sig
     manifest["Model"]["Service"] = os.path.split(service_file)[1]
     manifest["Model"]["Description"] = model_name
     manifest["Model"]["Model-Name"] = model_name
-    manifest["Model"]["Model-Format"] = "MXNet-Symbolic" if model_type is 'symbolic' else "Gluon-Imperative"
+    manifest["Model"]["Model-Format"] = "MXNet-Symbolic" if model_type == 'symbolic' else "Gluon-Imperative"
 
     print("VDANTU Manifest is: {}".format(manifest))
 

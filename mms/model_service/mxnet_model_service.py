@@ -94,7 +94,7 @@ class MXNetBaseService(SingleNodeService):
             self.param_filename = manifest['Model']['Parameters']
             epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
         except Exception:  # pylint: disable=broad-except
-                logger.info("Failed to parse epoch from param file, setting epoch to 0")
+            logger.info("Failed to parse epoch from param file, setting epoch to 0")
 
         if 'symbolic' in manifest['Model']['Model-Format'].lower():
             try:

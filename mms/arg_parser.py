@@ -86,6 +86,12 @@ class ArgParser(object):
                                  'the current directory. '
                                  'If you pass "cloudwatch", metrics will be pushed to AWS CloudWatch Service.')
 
+        parser.add_argument('--batching', default='false', choices=['true, false'],
+                            help='Enable back-end batching of requests. NOTE: This is an experimental feature.')
+
+        parser.add_argument('--redis-conf', default='redis.conf',
+                            help='Location of Redis Configuration file. Only applicable if batching is enabled.')
+
         return parser
 
     @staticmethod

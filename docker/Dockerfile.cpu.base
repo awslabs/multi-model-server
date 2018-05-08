@@ -17,6 +17,7 @@ RUN apt-get update && \
     python-certbot-nginx \
     curl \
     vim \
+    redis-server \
     && rm -rf /var/lib/apt/lists/* \
     && cd /tmp \
     && curl -O https://bootstrap.pypa.io/get-pip.py \

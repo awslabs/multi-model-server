@@ -8,6 +8,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+Queue definition and Redis implementation
+"""
+
 from abc import ABCMeta, abstractmethod
 
 import redis

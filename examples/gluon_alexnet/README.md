@@ -1,5 +1,4 @@
 # Loading and serving Gluon models on MXNet Model Server (MMS)
-
 MXNet Model Server (MMS) supports loading and serving MXNet Imperative and Hybrid Gluon models.
 This is a short tutorial on how to write a custom Gluon model, and then serve it with MMS.
 
@@ -12,7 +11,6 @@ This tutorial covers the following:
 3. [Conclusion](#conclusion)
 
 ## Prerequisites
-
 * **Basic Gluon knowledge**. If you are using Gluon for the first
 time, but are familiar with creating a neural network with MXNet or another framework, you may refer this 10 min Gluon crash-course: [Predict with a pre-trained model](http://gluon-crash-course.mxnet.io/predict.html).
 * **Gluon naming**. Fine-tuning pre-trained Gluon models requires some understanding of how the naming conventions work. Take a look at the [Naming of Gluon Parameter and Blocks](https://mxnet.incubator.apache.org/tutorials/gluon/naming.html) tutorial for more information.
@@ -22,8 +20,8 @@ time, but are familiar with creating a neural network with MXNet or another fram
 
 
 Refer to the [MXNet model zoo](https://mxnet.incubator.apache.org/api/python/gluon/model_zoo.html) documentation for examples of accessing other models.
-## Load and serve a Gluon model
 
+## Load and serve a Gluon model
 There are three scenarios for serving a Gluon model with MMS:
 
 1. Load and serve a pre-trained Gluon model.
@@ -33,7 +31,6 @@ There are three scenarios for serving a Gluon model with MMS:
 To learn more about the differences between gluon and hybrid gluon models refer to [the following document](http://gluon.mxnet.io/chapter07_distributed-learning/hybridize.html)
 
 ### Load and serve a pre-trained Gluon model
-
 Loading and serving a pre-trained Gluon model is the simplest of the three scenarios. These models don't require you to provide `symbols` and `params` files.
 
 While it is easy to access a model with a couple of lines of code, with MMS you will want to use a [MMS custom service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/custom_service.md) code pattern as follows:
@@ -109,7 +106,6 @@ curl -X POST http://127.0.0.1:8080/alexnet/predict -F "data=@kitten.jpg"
 ```
 
 ## Load and serve a custom Gluon imperative model
-
 To load an imperative model for use with MMS, you must activate the network in a MMS custom service. Once activated, MMS 
 can load the pre-trained parameters and start serving the imperative model. You also need to handle pre-processing and 
 post-processing of the image input.
@@ -237,7 +233,6 @@ The output should be close to the following:
 ```
 
 ## Load and serve a hybrid Gluon model
-
 To serve hybrid Gluon models with MMS, let's consider `gluon_imperative_alexnet.py` in `mxnet-model-server/examples/gluon_alexnet` folder.
 We first convert the model to a `Gluon` hybrid block. 
 For additional background on using `HybridBlocks` and the need to `hybridize` refer to this Gluon [hybridize](http://gluon.mxnet.io/chapter07_distributed-learning/hybridize.html#) tutorial.
@@ -366,5 +361,4 @@ The output should be close to the following:
 ```
 
 ## Conclusion
-
 In this tutorial you learned how to serve Gluon models in three unique scenarios: a pre-trained imperative model directly from the model zoo, a custom imperative model, and a hybrid model. For further examples of customizing gluon models, try the Gluon tutorial for [Transferring knowledge through fine-tuning](http://gluon.mxnet.io/chapter08_computer-vision/fine-tuning.html). For an advanced custom service example, try the MMS [SSD example](https://github.com/awslabs/mxnet-model-server/tree/master/examples/ssd).

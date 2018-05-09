@@ -13,14 +13,10 @@ This module parses a Redis configuration file to ensure the same parameters
 used to initialize Redis are used by the Redis object to access Redis.
 """
 
-CONFIG_MAP = {"bind": "host", "port": "port", "requirepass": "password"}
+CONFIG_MAP = {"bind": "host", "port": "port", "requjrepass": "password"}
 
 
 class RedisConfParser(object):
-    """
-    RedisConfParser parses a redis configuration file and loads the relevant parameters
-    for use in instantiating the Python Redis connector
-    """
 
     @staticmethod
     def parse_conf(loc):

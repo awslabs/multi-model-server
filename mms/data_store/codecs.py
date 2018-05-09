@@ -8,9 +8,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""
-Codec definition and implementations for images and objects
-"""
 from abc import ABCMeta, abstractmethod
 import base64
 import json
@@ -46,13 +43,13 @@ class ImageCodec(Codec):
     @staticmethod
     def deserialize(data):
         data = JsonCodec.deserialize(data)
-        _id = data['id']
+        id = data['id']
         image = data['data']
 
         if sys.version_info.major == 3:
             image = bytes(image, encoding='utf-8')
 
-        return {'id': _id, 'data': base64.decodestring(image)}  # pylint: disable=deprecated-method
+        return {'id': id, 'data': base64.decodestring(image)}
 
 
 class JsonCodec(Codec):

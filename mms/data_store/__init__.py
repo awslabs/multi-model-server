@@ -8,9 +8,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""
-Defines all functions of the data store
-"""
 from . import codecs
 from . import data_store
 from . import hashmap

@@ -1,4 +1,4 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -143,13 +143,16 @@ def _extract_model(service_name, path):
         if len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))):
             print("INFO: Symbol file configured")
     except Exception:  # pylint: disable=broad-except
-        print("WARNING: Symbols file not given.")
+        if manifest['Model']['Model-Format'] is "MXNet-Symbolic":
+            print("WARNING: Symbols file not given.")
+        else:
+            print("Symbols file not given.")
 
     try:
         if len(glob.glob(os.path.join(model_dir, manifest['Model']['Parameters']))):
             print("INFO: Parameter file configured")
     except Exception:  # pylint: disable=broad-except
-        print("WARNING: Parameter file not given.")
+            print("WARNING: Parameter file not given.")
 
     assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Service']))) == 1, \
         'Service file in model archive is inconsistent with manifest.'

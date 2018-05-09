@@ -40,7 +40,6 @@ class RedisHashMap(HashMap):
         self.name_prefix = name_prefix
         try:
             self.redis = redis.StrictRedis(**config)
-            self.redis.ping()
         except Exception as e:
             raise Exception("Failed to connect to Redis: %s" % e)
 

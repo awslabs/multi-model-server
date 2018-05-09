@@ -25,7 +25,7 @@ pkgs.append('tools')
 # $ twine upload dist/*
 requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
                 'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
-                'fasteners', 'redis']
+                'fasteners', 'redis', 'numpy']
 if platform.system().lower() == 'linux':
     requirements = ['mxnet-cu90mkl>=1.1'] + requirements
 else:

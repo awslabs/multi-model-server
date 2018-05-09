@@ -120,10 +120,16 @@ class PredictFrontend(object):
             logger.error(msg)
             abort(500, "Service setting error. %s" % (msg))
 
-        if self.batching:
-            response = self._batch_predict(input_data, input_type, output_type, model_name)
-        else:
-            response = self._single_predict(input_data, model_service, model_name)
+        try:
+            if self.batching:
+                response = self._batch_predict(input_data, input_type, output_type, model_name)
+            else:
+                response = self._single_predict(input_data, model_service, model_name)
+        except Exception as e:  # pylint: disable=broad-except
+            if model_name + '_Prediction4XX' in MetricsManager.metrics:
+                MetricsManager.metrics[model_name + '_Prediction4XX'].update(metric=1)
+            logger.error(str(e))
+            abort(400, str(e))
 
         # Construct response according to output type
         if output_type == 'application/json':

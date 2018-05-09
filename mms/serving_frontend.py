@@ -11,6 +11,8 @@
 """
 Serving frontend for MMS
 """
+import random
+import string
 
 from functools import partial
 from flask import abort
@@ -38,14 +40,17 @@ class ServingFrontend(object):
         app_name : str
             App name to initialize request handler.
         """
+        def gen_prefix(prefix, length=5, chars=string.ascii_letters+string.digits):
+            return prefix + ''.join(random.choice(chars) for _ in range(length)) + '_'
+
         try:
             self.service_manager = ServiceManager()
             self.handler = FlaskRequestHandler(app_name)
 
             if batching:
-                # TODO generate a unique prefix in docker/mxnet-model-server and pass it into all gunicorn workers
-                # this would be to ensure there are no collisions with any data from past MMS runs
-                data_store = DataStore(app_name, data_store_config)
+                # generate a pseudo-random prefix to avoid collisions between runs
+                prefix = gen_prefix(app_name)
+                data_store = DataStore(prefix, data_store_config)
             else:
                 data_store = None
 

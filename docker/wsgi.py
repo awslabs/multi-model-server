@@ -92,11 +92,7 @@ arguments = ArgParser.extract_args(args)
 # Start Redis if batching is enabled
 if arguments.batching == 'true':
     assert arguments.redis_conf
-
-    # TODO start redis from docker/mxnet-model-server
-    # check if redis is already running. if not, start it
-    if subprocess.call(['redis-cli', 'ping']) != 0:
-        subprocess.call(["redis-server", arguments.redis_conf])
+    subprocess.call(["redis-server", arguments.redis_conf])
 
 # Instantiate the MMS object to start the MMS app
 server = mxnet_model_server.MMS(args=arguments, models=models)

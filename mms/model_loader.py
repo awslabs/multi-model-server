@@ -126,7 +126,7 @@ def _extract_model(service_name, path):
         manifest_schema_file = os.path.join(mms_pkg_loc, MANIFEST_DIR, MANIFEST_SCHEMA_FILE)
 
         assert os.path.isfile(manifest_schema_file), \
-                 "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc
+            "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc
 
         schema = json.load(open(manifest_schema_file))
         manifest = json.load(open(os.path.join(model_dir, MANIFEST_FILENAME)))
@@ -140,8 +140,8 @@ def _extract_model(service_name, path):
         if not manifest['Model']['Signature'] or \
                len(glob.glob(os.path.join(model_dir, manifest['Model']['Signature']))) != 1:
             raise Exception
-        print ("INFO: Signature file read from Manifest. {}".format(
-            os.path.join(model_dir, manifest['Model']['Signature'])))
+        print("INFO: Signature file read from Manifest. "
+              "{}".format(os.path.join(model_dir, manifest['Model']['Signature'])))
     except Exception:  # pylint: disable=broad-except
         assert 0, "ERROR: Signature file not defined in MANIFEST.json"
 
@@ -149,8 +149,8 @@ def _extract_model(service_name, path):
         if not manifest['Model']['Symbol'] or \
                len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))) != 1:
             raise Exception
-        print("INFO: Symbol file read from manifest {}".format(
-             os.path.join(model_dir, manifest['Model']['Symbol'])))
+        print("INFO: Symbol file read from manifest "
+              "{}".format(os.path.join(model_dir, manifest['Model']['Symbol'])))
     except Exception:  # pylint: disable=broad-except
         if manifest['Model']['Model-Format'] in "MXNet-Symbolic":
             assert 0, "ERROR: Symbol file not defined in MANIFEST.json"
@@ -169,9 +169,9 @@ def _extract_model(service_name, path):
         if not manifest['Model']['Service'] or \
                 len(glob.glob(os.path.join(model_dir, manifest['Model']['Service']))) != 1:
             raise Exception
-        print("INFO: Service file read from Manifest {}".format(
-            os.path.join(model_dir, manifest['Model']['Service'])))
-    except Exception:
+        print("INFO: Service file read from Manifest "
+              "{}".format(os.path.join(model_dir, manifest['Model']['Service'])))
+    except Exception:  # pylint: disable=broad-except
         assert 0, "ERROR: Service file not defined in MANIFEST.json."
 
     model_name = manifest['Model']['Model-Name']

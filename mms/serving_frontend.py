@@ -15,8 +15,6 @@ import ast
 import traceback
 import time
 import base64
-import random
-import string
 
 from functools import partial
 from flask import abort
@@ -24,7 +22,6 @@ from mms.service_manager import ServiceManager
 from mms.request_handler.flask_handler import FlaskRequestHandler
 from mms.log import get_logger
 from mms.metrics_manager import MetricsManager
-from mms.data_store.data_store import DataStore
 
 logger = get_logger()
 
@@ -34,7 +31,7 @@ class ServingFrontend(object):
     model service manager, request handler. It provides all public
     apis for users to extend and use our system.
     """
-    def __init__(self, app_name, batching=False, data_store_config=None):
+    def __init__(self, app_name):
         """
         Initialize handler for FlaskHandler and ServiceManager.
 
@@ -43,18 +40,9 @@ class ServingFrontend(object):
         app_name : str
             App name to initialize request handler.
         """
-        def gen_prefix(prefix, length=5, chars=string.ascii_letters+string.digits):
-            return prefix + ''.join(random.choice(chars) for _ in range(length)) + '_'
-
         try:
             self.service_manager = ServiceManager()
             self.handler = FlaskRequestHandler(app_name)
-            if batching:
-                # generate a pseudo-random prefix to avoid collisions between runs
-                prefix = gen_prefix(app_name)
-                self.DataStore = DataStore(prefix, data_store_config)
-            else:
-                self.DataStore = None
 
             logger.info('Initialized serving frontend.')
         except Exception as e:

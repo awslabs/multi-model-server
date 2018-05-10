@@ -57,7 +57,7 @@ You can check the latest source code as follows:
 Testing
 -------
 
-After installation try out the MMS Quickstart for `Serving a
+After installation, try out the MMS Quickstart for `Serving a
 Model <https://github.com/awslabs/mxnet-model-server/blob/master/README.md#serve-a-model>`__
 and `Exporting a
 Model <https://github.com/awslabs/mxnet-model-server/blob/master/README.md#export-a-model>`__.

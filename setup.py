@@ -11,6 +11,12 @@
 import platform
 from setuptools import setup, find_packages
 
+def PyPiDescription():
+    """Imports the long description for the project page"""
+    with open('PyPiDescription.rst') as f:
+        return f.read()
+
+
 pkgs = find_packages()
 pkgs.append('tools')
 

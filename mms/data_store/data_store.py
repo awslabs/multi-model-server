@@ -26,6 +26,9 @@ class DataStore(object):
         self.hashmap = RedisHashMap(name_prefix, config)
         self.queue = RedisQueue(name_prefix, config)
 
+    def queue_len(self, model_name):
+        return self.queue.len(model_name)
+
     def pop_batch(self, model_name, length, data_type):
         """
         Pops up to length items from self.queue and deserializes it according to data_type

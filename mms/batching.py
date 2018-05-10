@@ -1,4 +1,4 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -9,7 +9,7 @@
 # permissions and limitations under the License.
 
 """
-Batching strategy definition implementations for manual and aimd batching strategies
+Batching strategy definition implementations for manual, naive, and AIMD batching strategies
 """
 
 from abc import ABCMeta, abstractmethod
@@ -44,8 +44,9 @@ class BatchingStrategy(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, model_name, data_store, input_type, batch_size, sleep_time):
-        self.model_name = model_name
+    # TODO replace sleep_time w/ latency in naive strategy?
+    def __init__(self, service_name, data_store, input_type, batch_size, sleep_time):
+        self.service_name = service_name
         self.data_store = data_store
         self.input_type = input_type
         self.batch_size = batch_size
@@ -66,12 +67,12 @@ class NaiveBatchingStrategy(BatchingStrategy):
     """
     NaiveBatchingStrategy polls the queue at a set interval (sleep_time) and returns requests up to batch_size
     """
-    def __init__(self, model_name, data_store, input_type, batch_size, sleep_time):
-        super(NaiveBatchingStrategy, self).__init__(model_name, data_store, input_type, batch_size, sleep_time)
+    def __init__(self, service_name, data_store, input_type, batch_size, sleep_time):
+        super(NaiveBatchingStrategy, self).__init__(service_name, data_store, input_type, batch_size, sleep_time)
 
     def wait_for_batch(self):
         while True:
-            ids, data = self.data_store.pop_batch(self.model_name, self.batch_size, self.input_type)
+            ids, data = self.data_store.pop_batch(self.service_name, self.batch_size, self.input_type)
 
             assert len(ids) == len(data)
             if ids:
@@ -85,14 +86,14 @@ class ManualBatchingStrategy(BatchingStrategy):
     ManualBatchingStrategy polls the queue at a set interval. Once there is a request in the queue,
     it returns when either the batch size or the latency is exceeded.
     """
-    def __init__(self, model_name, data_store, input_type, batch_size, sleep_time, latency):
-        super(ManualBatchingStrategy, self).__init__(model_name, data_store, input_type, batch_size, sleep_time)
+    def __init__(self, service_name, data_store, input_type, batch_size, sleep_time, latency):
+        super(ManualBatchingStrategy, self).__init__(service_name, data_store, input_type, batch_size, sleep_time)
         self.latency = latency
 
     def wait_for_batch(self):
         start_time, previous_length = -1, float('-inf')
         while True:
-            length = self.data_store.len(self.model_name)
+            length = self.data_store.len(self.service_name)
             if length != 0:
                 if start_time == -1:
                     start_time = time.time()
@@ -102,10 +103,10 @@ class ManualBatchingStrategy(BatchingStrategy):
                         start_time, previous_length = -1, float('-inf')
                         continue
 
-                    latency_hit = time.time() - start_time > self.latency
-                    batch_size_hit = length > self.batch_size
+                    latency_hit = time.time() - start_time >= self.latency
+                    batch_size_hit = length >= self.batch_size
                     if latency_hit or batch_size_hit:
-                        ids, data = self.data_store.pop_batch(self.model_name, self.batch_size, self.input_type)
+                        ids, data = self.data_store.pop_batch(self.service_name, self.batch_size, self.input_type)
 
                         assert len(ids) == len(data)
                         if ids:
@@ -122,9 +123,9 @@ class AIMDBatchingStrategy(BatchingStrategy):
     adding a set amount to the previous batch size until the latency is over the constraint.
     It then multiplicatively decreases the batch size by a set factor until under the constraint
     """
-    def __init__(self, model_name, data_store,
+    def __init__(self, service_name, data_store,
                  input_type, batch_size, sleep_time, latency, starting_batch_size, increase_amount, decrease_factor):
-        super(AIMDBatchingStrategy, self).__init__(model_name, data_store, input_type, batch_size, sleep_time)
+        super(AIMDBatchingStrategy, self).__init__(service_name, data_store, input_type, batch_size, sleep_time)
         self.latency = latency
 
         self.batch_size = starting_batch_size
@@ -136,7 +137,7 @@ class AIMDBatchingStrategy(BatchingStrategy):
         start_time, previous_length = -1, float('-inf')
         ids, data, latency = None, None, None
         while True:
-            length = self.data_store.len(self.model_name)
+            length = self.data_store.len(self.service_name)
             if length != 0:
                 if start_time == -1:
                     start_time = time.time()
@@ -146,9 +147,9 @@ class AIMDBatchingStrategy(BatchingStrategy):
                         start_time, previous_length = -1, float('-inf')
                         continue
 
-                    batch_size_hit = length > self.batch_size
+                    batch_size_hit = length >= self.batch_size
                     if batch_size_hit:
-                        ids, data = self.data_store.pop_batch(self.model_name, self.batch_size, self.input_type)
+                        ids, data = self.data_store.pop_batch(self.service_name, self.batch_size, self.input_type)
 
                         assert len(ids) == len(data)
                         if ids:

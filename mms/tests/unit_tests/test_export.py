@@ -79,7 +79,7 @@ def test_generate_manifest():
     manifest = generate_manifest(symbol_file='dir/symbol',
                                  params_file='dir/params', service_file='dir/service',
                                  signature_file='dir/signature', model_name='name',
-                                 model_type='symbolic')
+                                 model_type_imperative=False)
     assert 'Model-Archive-Version' in manifest
     assert manifest['Model-Archive-Description'] == 'name'
     assert 'Model-Server' in manifest
@@ -100,7 +100,7 @@ def test_generate_manifest_imperative_with_params():
     manifest = generate_manifest(symbol_file=None,
                                  params_file='dir/params', service_file='dir/service',
                                  signature_file='dir/signature', model_name='name',
-                                 model_type='imperative')
+                                 model_type_imperative=True)
     assert 'Model-Archive-Version' in manifest
     assert manifest['Model-Archive-Description'] == 'name'
     assert 'Model-Server' in manifest
@@ -121,7 +121,7 @@ def test_generate_manifest_imperative_without_params():
     manifest = generate_manifest(symbol_file=None,
                                  params_file=None, service_file='dir/service',
                                  signature_file='dir/signature', model_name='name',
-                                 model_type='imperative')
+                                 model_type_imperative=True)
     assert 'Model-Archive-Version' in manifest
     assert manifest['Model-Archive-Description'] == 'name'
     assert 'Model-Server' in manifest
@@ -172,7 +172,7 @@ def test_temp_files_cleanup_export_path(tmpdir, module_dir):
     else:
         model_path = module_dir
     initial_files = os.listdir(model_path)
-    export_model('test', module_dir, None, export_path, 'symbolic')
+    export_model('test', module_dir, None, export_path)
     assert os.path.exists(export_path), 'no model created - export failed'
     final_files = os.listdir(model_path)
     files_created = set(final_files)-set(initial_files)
@@ -182,7 +182,7 @@ def test_temp_files_cleanup_export_path(tmpdir, module_dir):
 
 def test_export_module(tmpdir, module_dir):
     export_path = '{}/test.model'.format(tmpdir)
-    export_model('test', module_dir, None, export_path, 'symbolic')
+    export_model('test', module_dir, None, export_path)
     
     assert os.path.exists(export_path), 'no model created - export failed'
     zip_contents = list_zip(export_path)
@@ -198,7 +198,7 @@ def test_export_module_hyphenated_basename(tmpdir, module_dir):
     os.rename(os.path.join(module_dir, 'test-symbol.json'), os.path.join(module_dir, 'test-hyphens-symbol.json'))
     os.rename(os.path.join(module_dir, 'test-0000.params'), os.path.join(module_dir, 'test-hyphens-0000.params'))
     export_path = '{}/test-hyphens.model'.format(tmpdir)
-    export_model('test-hyphens', module_dir, None, export_path, 'symbolic')
+    export_model('test-hyphens', module_dir, None, export_path)
     assert os.path.exists(export_path), 'no model created - export failed'
     os.remove(export_path)
 

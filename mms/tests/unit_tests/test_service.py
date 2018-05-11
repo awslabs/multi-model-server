@@ -18,7 +18,7 @@ import mxnet as mx
 import shutil, tempfile, pytest
 from io import BytesIO
 from helper.pixel2pixel_service import UnetGenerator
-from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.model_service.mxnet_model_service import MXNetBaseService, ImperativeBaseService
 
 curr_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(curr_path + '/../..')
@@ -98,7 +98,7 @@ def create_imperative_manifest(path):
                 "Description": "test",
                 "Service": "test",
                 "Symbol": "",
-                "Parameters": "test-0000.params",
+                "Parameters": "",
                 "Signature": "signature.json",
                 "Model-Name": "test",
                 "Model-Format": "Gluon-Imperative"
@@ -253,7 +253,8 @@ class TestService(unittest.TestCase):
             model_path = mod_dir
         create_imperative_manifest(model_path)
         manifest = json.load(open(os.path.join(model_path, 'MANIFEST.json')))
-        MxnetBaseServiceClass = MXNetBaseService('test', model_path, manifest)
+        MxnetBaseServiceClass = ImperativeBaseService('test', model_path, manifest,
+                                                      mx.gluon.model_zoo.vision.alexnet(pretrained=True))
         os.system('rm -rf %s' % (model_path))
 
     def runTest(self):

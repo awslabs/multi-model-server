@@ -26,7 +26,7 @@ import mms
 from mms.arg_parser import ArgParser
 from mms.log import get_logger
 from mms.model_service.model_service import load_service
-from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.model_service.mxnet_model_service import MXNetBaseService, ImperativeBaseService
 
 logger = get_logger()
 
@@ -68,6 +68,14 @@ Example: modelname.onnx.
 
 See https://github.com/onnx/onnx for converting PyTorch, Caffe2, CNTK,
 and other models to the ONNX format.
+
+Gluon models are expected to have a 
+Custom Service file derived from ImperativeBaseService,
+a Parameters file,
+a Signature file. 
+
+In order to export Gluon models, the export tool expects --service-file-path pointing to the Gluon custom service
+code.
 '''.strip()
 
 MIXED_MODEL_FILES_MESSAGE = 'More than one model type is present in the model directory {}.'
@@ -147,6 +155,8 @@ def validate_service(model_path, service_file, signature_file):
     :param signature_file:
     :return:
     """
+
+    is_gluon_service = False
     if service_file:
 
         assert os.path.isfile(service_file) or os.path.isfile(os.path.join(model_path, service_file)), \
@@ -158,12 +168,19 @@ def validate_service(model_path, service_file, signature_file):
         module = load_service(service_file)
 
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]
-        # Check if subclass of MXNetBaseService
+        # Check if subclass of MXNetBaseService or ImperativeBaseService
         # pylint: disable=deprecated-lambda
-        service_classes = list(filter(lambda cls: issubclass(cls, MXNetBaseService), classes))
+        service_classes_mxnet = list(filter(lambda cls: issubclass(cls, MXNetBaseService), classes))
+        service_classes_gluon = list(filter(lambda cls: issubclass(cls, ImperativeBaseService), classes))
+        is_mxnet_service = len(service_classes_mxnet) > 1
+        is_gluon_service = len(service_classes_gluon) > 1
+        assert (len(service_classes_mxnet) > 1 or len(service_classes_gluon) > 1), \
+            "The Service class should be derived from MXNetBaseService or ImperativeBaseService, " \
+            "found %s classes" % str(service_classes_mxnet)
 
-        assert len(service_classes) > 1, \
-            "The Service class should be derived from MXNetBaseService, found %s classes" % str(service_classes)
+        if is_gluon_service and is_mxnet_service:
+            raise ValueError("Service file contains both symbolic and imperative sub-classes. The service file"
+                             "should contain either MXNetBaseSerivce class or ImperativeBaseService class")
 
         # remove the compiled python code
         if os.path.exists(service_file + 'c'):
@@ -171,6 +188,7 @@ def validate_service(model_path, service_file, signature_file):
 
     else:
         input_type = None
+
         with open(signature_file) as js_file:
             input_type = json.load(js_file)['input_type']
 
@@ -183,11 +201,11 @@ def validate_service(model_path, service_file, signature_file):
             raise ValueError('Service File {} is missing in mms installation'
                              .format(os.path.basename(service_file)))
 
-    return service_file
+    return is_gluon_service, service_file
 
 
 def generate_manifest(symbol_file=None, params_file=None, service_file=None, signature_file=None,
-                      model_name=None, model_type='symbolic'):
+                      model_name=None, model_type_imperative=False):
     """
     Funtion to generate manifest file
     :param symbol_file:
@@ -209,7 +227,7 @@ def generate_manifest(symbol_file=None, params_file=None, service_file=None, sig
     manifest["Model"]["Service"] = os.path.split(service_file)[1]
     manifest["Model"]["Description"] = model_name
     manifest["Model"]["Model-Name"] = model_name
-    manifest["Model"]["Model-Format"] = "MXNet-Symbolic" if model_type == 'symbolic' else "Gluon-Imperative"
+    manifest["Model"]["Model-Format"] = "MXNet-Symbolic" if model_type_imperative is False else "Gluon-Imperative"
 
     mxnet_version = mx.__version__
 
@@ -295,7 +313,7 @@ def validate_prefix_match(symbol_file=None, params_file=None):
         raise ValueError(MODEL_PREFIX_MISMATCH_MESSAGE.format(symbol_file, params_file))
 
 
-def validate_model_files(model_path, onnx_file, params_file, symbol_file, model_type):
+def validate_model_files(model_path, onnx_file, params_file, symbol_file, model_type_imperative=False):
     """
     Validate the model files
     :param model_path:
@@ -313,7 +331,7 @@ def validate_model_files(model_path, onnx_file, params_file, symbol_file, model_
         mask += 2
     if symbol_file:
         mask += 4
-    if model_type in ["imperative"]:
+    if model_type_imperative is True:
         mask += 8
 
     if mask == 0:
@@ -328,7 +346,7 @@ def validate_model_files(model_path, onnx_file, params_file, symbol_file, model_
         validate_prefix_match(symbol_file, params_file)
 
 
-def export_model(model_name, model_path, service_file=None, export_file=None, model_type='symbolic'):
+def export_model(model_name, model_path, service_file=None, export_file=None):
     """
     Internal helper for the exporting model command line interface.
     """
@@ -346,9 +364,9 @@ def export_model(model_name, model_path, service_file=None, export_file=None, mo
         symbol_file = find_unique(files, '-symbol.json')
         params_file = find_unique(files, '.params')
 
-        validate_model_files(model_path, onnx_file, params_file, symbol_file, model_type)
         signature_file = validate_signature(model_path)
-        service_file = validate_service(model_path, service_file, signature_file)
+        is_imperative, service_file = validate_service(model_path, service_file, signature_file)
+        validate_model_files(model_path, onnx_file, params_file, symbol_file, is_imperative)
         if os.path.basename(service_file) not in files:
             temp_files.append(os.path.basename(service_file))
             shutil.copyfile(service_file, os.path.join(model_path, os.path.basename(service_file)))
@@ -359,7 +377,7 @@ def export_model(model_name, model_path, service_file=None, export_file=None, mo
             files.remove(onnx_file)
             temp_files.extend([symbol_file, params_file])
 
-        manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name, model_type)
+        manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name, is_imperative)
         with open(os.path.join(model_path, MANIFEST_FILE_NAME), 'w') as m:
             json.dump(manifest, m, indent=4)
         temp_files.append(MANIFEST_FILE_NAME)
@@ -381,7 +399,7 @@ def export():
     """
     args = ArgParser.export_parser().parse_args()
     export_model(model_name=args.model_name, model_path=args.model_path,
-                 service_file=args.service_file_path, model_type=args.model_type)
+                 service_file=args.service_file_path)
 
 
 if __name__ == '__main__':

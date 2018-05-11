@@ -15,7 +15,7 @@ import inspect
 
 import mms.model_service.mxnet_model_service as mxnet_model_service
 from mms.model_service.model_service import load_service
-from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.model_service.mxnet_model_service import SingleNodeService
 from mms.storage import KVStorage
 
 
@@ -141,4 +141,4 @@ class ServiceManager(object):
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]
         # Check if class is subclass of base ModelService class
         # pylint: disable=deprecated-lambda
-        return list(filter(lambda cls: issubclass(cls, MXNetBaseService), classes))
+        return list(filter(lambda cls: issubclass(cls, SingleNodeService), classes))

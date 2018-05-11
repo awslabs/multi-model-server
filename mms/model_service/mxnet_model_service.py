@@ -76,6 +76,7 @@ class MXNetBaseService(SingleNodeService):
 
         data_names = []
         data_shapes = []
+        epoch = 0
         for input in self._signature['inputs']:
             data_names.append(input['data_name'])
             # Replace 0 entry in data shape with 1 for binding executor.
@@ -89,24 +90,18 @@ class MXNetBaseService(SingleNodeService):
             data_shapes.append((input['data_name'], tuple(data_shape)))
 
         # Load MXNet module
-        epoch = 0
         try:
             self.param_filename = manifest['Model']['Parameters']
             epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
         except Exception:  # pylint: disable=broad-except
             logger.info("Failed to parse epoch from param file, setting epoch to 0")
 
-        if 'symbolic' in manifest['Model']['Model-Format'].lower():
-            try:
-                sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
-                                                                       (model_dir, manifest['Model']['Symbol'][:-12]),
-                                                                       epoch)
-                self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
-                                              data_names=data_names, label_names=None)
-                self.mx_model.bind(for_training=False, data_shapes=data_shapes)
-                self.mx_model.set_params(arg_params, aux_params, allow_missing=True, allow_extra=True)
-            except Exception as e:  # pylint: disable=broad-except
-                raise Exception('Failed to initialize MXNet Module {}'.format(str(e)))
+        sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
+                                                               (model_dir, manifest['Model']['Symbol'][:-12]), epoch)
+        self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
+                                      data_names=data_names, label_names=None)
+        self.mx_model.bind(for_training=False, data_shapes=data_shapes)
+        self.mx_model.set_params(arg_params, aux_params, allow_missing=True, allow_extra=True)
 
         # Read synset file
         # If synset is not specified, check whether model archive contains synset file.
@@ -142,6 +137,78 @@ class MXNetBaseService(SingleNodeService):
         data = [item.as_in_context(self.ctx) for item in data]
         self.mx_model.forward(DataBatch(data))
         return self.mx_model.get_outputs()
+
+    def ping(self):
+        """
+        Ping to get system's health.
+
+        Returns
+        -------
+        String
+            MXNet version to show system is healthy.
+        """
+        return mx.__version__
+
+    @property
+    def signature(self):
+        """
+        Signature for model service.
+
+        Returns
+        -------
+        Dict
+            Model service signiture.
+        """
+        return self._signature
+
+
+class ImperativeBaseService(SingleNodeService):
+    """ImperativeBaseService defines the fundamental loading model and inference
+       operations when serving Gluon model. This is a base class and needs to be
+       inherited.
+    """
+    def __init__(self, model_name, model_dir, manifest, net=None, gpu=None):
+        # pylint: disable=super-init-not-called
+        self.param_filename = None
+        self.model_name = model_name
+        self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
+        self.net = net
+        signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
+        if not os.path.isfile(signature_file_path):
+            raise RuntimeError('Signature file is not found. Please put signature.json '
+                               'into the model file directory...' + signature_file_path)
+        try:
+            signature_file = open(signature_file_path)
+            self._signature = json.load(signature_file)
+        except Exception:
+            raise Exception('Failed to open model signature file: %s' % signature_file_path)
+
+        # Load MXNet module
+        try:
+            self.param_filename = manifest['Model']['Parameters']
+            if self.param_filename or self.net is not None:
+                self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
+            else:
+                logger.info("No parameters file given for this imperative service")
+        except Exception:  # pylint: disable=broad-except
+            logger.info("Failed to parse epoch from param file, setting epoch to 0")
+
+        # Read synset file
+        # If synset is not specified, check whether model archive contains synset file.
+        archive_synset = os.path.join(model_dir, 'synset.txt')
+
+        if os.path.isfile(archive_synset):
+            synset = archive_synset
+            self.labels = [line.strip() for line in open(synset).readlines()]
+
+    def _preprocess(self, data):
+        pass
+
+    def _postprocess(self, data):
+        pass
+
+    def _inference(self, data):
+        check_input_shape(data, self.signature)
 
     def ping(self):
         """

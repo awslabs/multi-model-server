@@ -36,42 +36,19 @@ Loading and serving a pre-trained Gluon model is the simplest of the three scena
 While it is easy to access a model with a couple of lines of code, with MMS you will want to use a [MMS custom service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/custom_service.md) code pattern as follows:
 
 ```python
-class MMSPretrainedAlexnet(MXNetVisionService):
+class MMSPretrainedAlexnet(GluonVisionService):
     """
     Pretrained alexnet Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MMSPretrainedAlexnet, self).__init__(model_name, model_dir, manifest, gpu)
-
-        self.net = mxnet.gluon.model_zoo.vision.alexnet(pretrained=True)
-
-    def _preprocess(self, data):
-        img_list = []
-        for idx, img in enumerate(data):
-            input_shape = self.signature['inputs'][idx]['data_shape']
-            # We are assuming input shape is NCHW
-            [h, w] = input_shape[2:]
-            img_arr = mxnet.img.imdecode(img)
-            img_arr = mxnet.image.imresize(img_arr, w, h)
-            img_arr = img_arr.astype(np.float32)
-            img_arr /= 255
-            img_arr = mxnet.image.color_normalize(img_arr,
-                                                  mean=mxnet.nd.array([0.485, 0.456, 0.406]),
-                                                  std=mxnet.nd.array([0.229, 0.224, 0.225]))
-            img_arr = mxnet.nd.transpose(img_arr, (2, 0, 1))
-            img_arr = img_arr.expand_dims(axis=0)
-            img_list.append(img_arr)
-        return img_list
-
-    def _inference(self, data):
-        # Call forward/hybrid_forward
-        output = self.net(data[0])
-        return output.softmax()
+        super(MMSPretrainedAlexnet, self).__init__(model_name, model_dir, manifest,
+                                                   mxnet.gluon.model_zoo.vision.alexnet(pretrained=True),
+                                                   gpu)
 
     def _postprocess(self, data):
         idx = data.topk(k=5)[0]
-        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability': float(data[0, int(i.asscalar())].asscalar())}
-                for i in idx]
+        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability': 
+            float(data[0, int(i.asscalar())].asscalar())} for i in idx]
 ```
 
 For an actual code implementation, refer to the custom-service code which uses the [pre-trained Alexnet](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_pretrained_alexnet.py)
@@ -91,7 +68,7 @@ cp gluon_pretrained_alexnet.py synset.txt signature.json /tmp/models
 ```
 3. Run the model-export tool on this folder.
 ```bash
-mxnet-model-export --model-name="pretrained-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_pretrained_alexnet.py" --model-type="imperative"
+mxnet-model-export --model-name="pretrained-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_pretrained_alexnet.py"
 ```
 This creates a model-archive file `pretrained-alexnet.model`.
 
@@ -152,44 +129,17 @@ class ImperativeAlexNet(gluon.Block):
 
 The pre-process, inference and post-process steps are similar to the service code that we saw in the [above section](#load-and-serve-a-pre-trained-gluon-model).
 ```python
-class MMSImperativeService(MXNetVisionService):
+class MMSImperativeService(GluonVisionService):
     """
     Gluon alexnet Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MMSImperativeService, self).__init__(model_name, model_dir, manifest, gpu)
-        self.net = ImperativeAlexNet()
-        if self.param_filename:
-            self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
-
-    def _preprocess(self, data):
-        img_list = []
-        for idx, img in enumerate(data):
-            input_shape = self.signature['inputs'][idx]['data_shape']
-            # We are assuming input shape is NCHW
-            [h, w] = input_shape[2:]
-            img_arr = mxnet.img.imdecode(img)
-            img_arr = mxnet.image.imresize(img_arr, w, h)
-            img_arr = img_arr.astype(np.float32)
-            img_arr /= 255
-            img_arr = mxnet.image.color_normalize(img_arr,
-                                                  mean=mxnet.nd.array([0.485, 0.456, 0.406]),
-                                                  std=mxnet.nd.array([0.229, 0.224, 0.225]))
-            img_arr = mxnet.nd.transpose(img_arr, (2, 0, 1))
-            img_arr = img_arr.expand_dims(axis=0)
-            img_list.append(img_arr)
-        return img_list
-
-    def _inference(self, data):
-        # Call forward/hybrid_forward
-        output = self.net(data[0])
-        return output.softmax()
+        super(MMSImperativeService, self).__init__(model_name, model_dir, manifest, GluonImperativeAlexNet(), gpu)
 
     def _postprocess(self, data):
         idx = data.topk(k=5)[0]
         return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability': float(data[0, int(i.asscalar())].asscalar())}
                 for i in idx]
-
 ``` 
  
 ### Test your imperative Gluon model service
@@ -212,7 +162,7 @@ mv alexnet.params /tmp/models
 ```
 4. Run the model-export tool on this folder.
 ```bash
-mxnet-model-export --model-name="imperative-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_imperative_alexnet.py" --model-type="imperative"
+mxnet-model-export --model-name="imperative-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_imperative_alexnet.py"
 ```
 This creates a model-archive file `imperative-alexnet.model`.
 
@@ -277,45 +227,19 @@ class GluonHybridAlexNet(HybridBlock):
 We could use the same custom service code as in the above section, 
 
 ```python
-class MMSHybridService(MXNetVisionService):
+class MMSHybridService(GluonVisionService):
     """
     Gluon alexnet Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MMSHybridService, self).__init__(model_name, model_dir, manifest, gpu)
-        self.net = GluonHybridAlexNet()
-        if self.param_filename:
-            self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
+        super(MMSHybridizedService, self).__init__(model_name, model_dir, manifest, GluonHybridAlexNet(), gpu)
         self.net.hybridize()
-            
-
-    def _preprocess(self, data):
-        img_list = []
-        for idx, img in enumerate(data):
-            input_shape = self.signature['inputs'][idx]['data_shape']
-            # We are assuming input shape is NCHW
-            [h, w] = input_shape[2:]
-            img_arr = mxnet.img.imdecode(img)
-            img_arr = mxnet.image.imresize(img_arr, w, h)
-            img_arr = img_arr.astype(np.float32)
-            img_arr /= 255
-            img_arr = mxnet.image.color_normalize(img_arr,
-                                                  mean=mxnet.nd.array([0.485, 0.456, 0.406]),
-                                                  std=mxnet.nd.array([0.229, 0.224, 0.225]))
-            img_arr = mxnet.nd.transpose(img_arr, (2, 0, 1))
-            img_arr = img_arr.expand_dims(axis=0)
-            img_list.append(img_arr)
-        return img_list
-
-    def _inference(self, data):
-        # Call forward/hybrid_forward
-        output = self.net(data[0])
-        return output.softmax()
 
     def _postprocess(self, data):
         idx = data.topk(k=5)[0]
-        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability': float(data[0, int(i.asscalar())].asscalar())}
-                for i in idx]
+        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability': 
+            float(data[0, int(i.asscalar())].asscalar())} for i in idx]
+
 ```
 Similar to imperative models, this model doesn't require `Symbols` as the call to `.hybridize()` compiles the neural net.
 This would store the `symbols` implicitly.
@@ -340,7 +264,7 @@ mv alexnet.params /tmp/models
 ```
 4. Run the model-export tool on this folder.
 ```bash
-mxnet-model-export --model-name="hybrid-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_hybrid_alexnet.py" --model-type="imperative"
+mxnet-model-export --model-name="hybrid-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_hybrid_alexnet.py"
 ```
 This creates a model-archive file `hybrid-alexnet.model`.
 

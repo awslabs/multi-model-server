@@ -83,9 +83,14 @@ class MMS(object):
         try:
             # Args passed as Namespace object
             self.args = args if args else ArgParser.extract_args()
-            if args.batching:
+            if args.batching == 'true':
+                batching_config_keys = (
+                    'batch_size', 'sleep_time', 'latency', 'starting_batch_size', 'increase_amount', 'decrease_factor')
+                batching_config = {x: vars(args)[x] for x in batching_config_keys if x in vars(args)}
                 data_store_config = RedisConfParser.parse_conf(args.redis_conf)
-                self.serving_frontend = ServingFrontend(app_name, True, data_store_config)
+                self.serving_frontend = ServingFrontend(
+                    app_name, batching=True, batching_strategy=args.batching_strategy,
+                    batching_config=batching_config, data_store_config=data_store_config)
             else:
                 self.serving_frontend = ServingFrontend(app_name)
             self.gpu = self.args.gpu

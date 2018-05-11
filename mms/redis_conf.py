@@ -40,7 +40,7 @@ class RedisConfParser(object):
             if line.startswith("#"):
                 continue
             line = line.split()
-            if line[0] in CONFIG_MAP:
+            if line and line[0] in CONFIG_MAP:
                 config[CONFIG_MAP[line[0]]] = line[1]
 
         return config

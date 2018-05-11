@@ -63,6 +63,7 @@ class DataStore(object):
         """
         codec = self._get_codec(data_type)
         for _id, datum in zip(ids, data):
+            datum = {'id': _id, 'data': datum}
             self.hashmap.put(_id, codec.serialize(datum))
 
     @staticmethod

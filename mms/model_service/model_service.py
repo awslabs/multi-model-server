@@ -17,6 +17,8 @@ import sys
 import time
 from abc import ABCMeta, abstractmethod, abstractproperty
 
+from mxnet import ndarray
+
 from mms.log import get_logger
 from mms.metrics_manager import MetricsManager
 
@@ -79,13 +81,13 @@ class SingleNodeService(ModelService):
     single model.
     '''
 
-    def inference(self, data):
+    def inference(self, batch):
         '''
         Wrapper function to run preprocess, inference and postprocess functions.
 
         Parameters
         ----------
-        data : list of object
+        batch : list of object
             Raw input from request.
 
         Returns
@@ -94,7 +96,7 @@ class SingleNodeService(ModelService):
             data to be sent back
         '''
         pre_start_time = time.time()
-        data = self._preprocess(data)
+        data = [ndarray.concatenate(list(_input)) for _input in zip(*[self._preprocess(item) for item in batch])]
         infer_start_time = time.time()
 
         # Update preprocess latency metric

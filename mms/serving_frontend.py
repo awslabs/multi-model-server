@@ -29,7 +29,7 @@ class ServingFrontend(object):
     model service manager, request handler. It provides all public
     apis for users to extend and use our system.
     """
-    def __init__(self, app_name, batching=False, data_store_config=None):
+    def __init__(self, app_name, batching=False, batching_strategy=None, batching_config=None, data_store_config=None):
         """
         Initialize handler for FlaskHandler and ServiceManager.
 
@@ -45,11 +45,15 @@ class ServingFrontend(object):
             if batching:
                 # TODO generate a unique prefix in docker/mxnet-model-server and pass it into all gunicorn workers
                 # this would be to ensure there are no collisions with any data from past MMS runs
-                data_store = DataStore(app_name, data_store_config)
+                self.data_store = DataStore(app_name, data_store_config)
             else:
-                data_store = None
+                self.data_store = None
 
-            predict_frontend = PredictFrontend(self.handler, batching, data_store)
+            self.batching = batching
+            self.batching_strategy = batching_strategy
+            self.batching_config = batching_config
+
+            predict_frontend = PredictFrontend(self.handler, self.batching, self.data_store)
             self.predict_callback = predict_frontend.callback
 
             logger.info('Initialized serving frontend.')
@@ -84,7 +88,9 @@ class ServingFrontend(object):
             If it is not set, cpu will be used.
         """
         for service_name, model_name, model_path, manifest in models:
-            self.service_manager.load_model(service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu)
+            self.service_manager.load_model(
+                service_name, model_name, model_path, manifest,
+                ModelServiceClassDef, gpu, self.batching, self.data_store, self.batching_strategy, self.batching_config)
 
     def register_module(self, user_defined_module_file_path):
         """
@@ -307,7 +313,7 @@ class ServingFrontend(object):
             # Setup Flask endpoint for predict api
             self.add_endpoint(predict_api,
                               self.predict_callback,
-                              modelservice=modelservice,
+                              model_service=modelservice,
                               input_names=input_names,
                               model_name=model_name)
 

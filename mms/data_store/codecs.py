@@ -41,18 +41,22 @@ class ImageCodec(Codec):
 
     @staticmethod
     def serialize(data):
-        return base64.b64encode(data).decode('utf-8')
+        data['data'] = [base64.b64encode(x).decode('utf-8') for x in data['data']]
+        return JsonCodec.serialize(data)
 
     @staticmethod
     def deserialize(data):
         data = JsonCodec.deserialize(data)
         _id = data['id']
-        image = data['data']
+        data = data['data']
 
-        if sys.version_info.major == 3:
-            image = bytes(image, encoding='utf-8')
+        deserialized = []
+        for datum in data:
+            if sys.version_info.major == 3:
+                datum = bytes(datum, encoding='utf-8')
+            deserialized.append(base64.decodestring(datum))  # pylint: disable=deprecated-method
 
-        return {'id': _id, 'data': base64.decodestring(image)}  # pylint: disable=deprecated-method
+        return {'id': _id, 'data': deserialized}
 
 
 class JsonCodec(Codec):

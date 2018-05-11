@@ -67,7 +67,7 @@ class NaiveBatchingStrategy(BatchingStrategy):
     """
     NaiveBatchingStrategy polls the queue at a set interval (sleep_time) and returns requests up to batch_size
     """
-    def __init__(self, service_name, data_store, input_type, batch_size, sleep_time):
+    def __init__(self, service_name, data_store, input_type, batch_size, sleep_time, **kwargs):
         super(NaiveBatchingStrategy, self).__init__(service_name, data_store, input_type, batch_size, sleep_time)
 
     def wait_for_batch(self):
@@ -86,14 +86,14 @@ class ManualBatchingStrategy(BatchingStrategy):
     ManualBatchingStrategy polls the queue at a set interval. Once there is a request in the queue,
     it returns when either the batch size or the latency is exceeded.
     """
-    def __init__(self, service_name, data_store, input_type, batch_size, sleep_time, latency):
+    def __init__(self, service_name, data_store, input_type, batch_size, sleep_time, latency, **kwargs):
         super(ManualBatchingStrategy, self).__init__(service_name, data_store, input_type, batch_size, sleep_time)
         self.latency = latency
 
     def wait_for_batch(self):
         start_time, previous_length = -1, float('-inf')
         while True:
-            length = self.data_store.len(self.service_name)
+            length = self.data_store.queue_len(self.service_name)
             if length != 0:
                 if start_time == -1:
                     start_time = time.time()
@@ -123,8 +123,8 @@ class AIMDBatchingStrategy(BatchingStrategy):
     adding a set amount to the previous batch size until the latency is over the constraint.
     It then multiplicatively decreases the batch size by a set factor until under the constraint
     """
-    def __init__(self, service_name, data_store,
-                 input_type, batch_size, sleep_time, latency, starting_batch_size, increase_amount, decrease_factor):
+    def __init__(self, service_name, data_store, input_type,
+                 batch_size, sleep_time, latency, starting_batch_size, increase_amount, decrease_factor, **kwargs):
         super(AIMDBatchingStrategy, self).__init__(service_name, data_store, input_type, batch_size, sleep_time)
         self.latency = latency
 
@@ -137,7 +137,7 @@ class AIMDBatchingStrategy(BatchingStrategy):
         start_time, previous_length = -1, float('-inf')
         ids, data, latency = None, None, None
         while True:
-            length = self.data_store.len(self.service_name)
+            length = self.data_store.queue_len(self.service_name)
             if length != 0:
                 if start_time == -1:
                     start_time = time.time()

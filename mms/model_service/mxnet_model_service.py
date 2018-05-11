@@ -57,7 +57,7 @@ class MXNetBaseService(SingleNodeService):
        operations when serving MXNet model. This is a base class and needs to be
        inherited.
     '''
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
+    def __init__(self, model_name, model_dir, manifest, gpu=None, batch_size=1):
         # pylint: disable=super-init-not-called
         self.model_name = model_name
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
@@ -71,14 +71,13 @@ class MXNetBaseService(SingleNodeService):
         except:
             raise Exception('Failed to open model signiture file: %s' % signature_file_path)
 
+        self.batch_size = batch_size
         data_names = []
         data_shapes = []
         for input in self._signature['inputs']:
             data_names.append(input['data_name'])
-            # Replace 0 entry in data shape with 1 for binding executor.
-            # Set batch size as 1
             data_shape = input['data_shape']
-            data_shape[0] = 1
+            data_shape[0] = self.batch_size
             # pylint: disable=consider-using-enumerate
             for idx in range(len(data_shape)):
                 if data_shape[idx] == 0:
@@ -130,9 +129,13 @@ class MXNetBaseService(SingleNodeService):
         '''
         # Check input shape
         check_input_shape(data, self.signature)
+        batch_size = data[0].shape[0]
         data = [item.as_in_context(self.ctx) for item in data]
-        self.mx_model.forward(DataBatch(data))
-        return self.mx_model.get_outputs()
+        batch = DataBatch(data, pad=self.batch_size - batch_size)
+
+        self.mx_model.forward(batch)
+        outputs = self.mx_model.get_outputs()
+        return outputs
 
     def ping(self):
         '''Ping to get system's health.

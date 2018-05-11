@@ -152,7 +152,7 @@ class PredictFrontend(object):
         input_data = {'id': _id, 'data': input_data}
         self.data_store.push(model_name, input_data, input_type)
 
-        response = self.data_store.get(_id, output_type)
+        response = self.data_store.get(_id, output_type)['data']
 
         if not response:
             abort(500, "Timed out")
@@ -161,7 +161,7 @@ class PredictFrontend(object):
 
     def _single_predict(self, input_data, model_service, model_name):
         try:
-            response = model_service.inference(input_data)
+            response = model_service.inference([input_data])
         except Exception:  # pylint: disable=broad-except
             if model_name + '_Prediction5XX' in MetricsManager.metrics:
                 MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)

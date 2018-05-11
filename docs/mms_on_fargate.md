@@ -75,7 +75,7 @@ You will now have a running container, ready to serve the models configured in t
 
 At this point, you are ready to start creating actual task definition.
 
-## Create an AWS Faragte task to serve SqueezeNet model
+## Create an AWS Fargate task to serve SqueezeNet model
 
 This is the first step towards getting your own "inference service" up and running in a production setup. 
 

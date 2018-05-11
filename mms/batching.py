@@ -69,6 +69,7 @@ class NaiveBatchingStrategy(BatchingStrategy):
     """
     def __init__(self, service_name, data_store, input_type, batch_size, sleep_time, **kwargs):
         super(NaiveBatchingStrategy, self).__init__(service_name, data_store, input_type, batch_size, sleep_time)
+        self.kwargs = kwargs
 
     def wait_for_batch(self):
         while True:
@@ -88,6 +89,7 @@ class ManualBatchingStrategy(BatchingStrategy):
     """
     def __init__(self, service_name, data_store, input_type, batch_size, sleep_time, latency, **kwargs):
         super(ManualBatchingStrategy, self).__init__(service_name, data_store, input_type, batch_size, sleep_time)
+        self.kwargs = kwargs
         self.latency = latency
 
     def wait_for_batch(self):
@@ -126,6 +128,7 @@ class AIMDBatchingStrategy(BatchingStrategy):
     def __init__(self, service_name, data_store, input_type,
                  batch_size, sleep_time, latency, starting_batch_size, increase_amount, decrease_factor, **kwargs):
         super(AIMDBatchingStrategy, self).__init__(service_name, data_store, input_type, batch_size, sleep_time)
+        self.kwargs = kwargs
         self.latency = latency
 
         self.batch_size = starting_batch_size

@@ -81,13 +81,13 @@ class SingleNodeService(ModelService):
     single model.
     '''
 
-    def inference(self, batch):
+    def inference(self, data):
         '''
         Wrapper function to run preprocess, inference and postprocess functions.
 
         Parameters
         ----------
-        batch : list of object
+        data : list of object
             Raw input from request.
 
         Returns
@@ -96,7 +96,7 @@ class SingleNodeService(ModelService):
             data to be sent back
         '''
         pre_start_time = time.time()
-        data = [ndarray.concatenate(list(_input)) for _input in zip(*[self._preprocess(item) for item in batch])]
+        data = [ndarray.concatenate(list(_input)) for _input in zip(*[self._preprocess(item) for item in data])]
         infer_start_time = time.time()
 
         # Update preprocess latency metric

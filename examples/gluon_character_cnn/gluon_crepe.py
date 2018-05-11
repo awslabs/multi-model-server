@@ -62,17 +62,19 @@ class CharacterCNNService(MXNetVisionService):
         self.net = GluonCrepe()
         if self.param_filename:
             self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
-        self.net.hybridize()
-
-    def _preprocess(self, data):
-        # build the text from the request
-        text = '{}|{}'.format(data[0][0]['review_title'], data[0][0]['review'])
         # The 69 characters as specified in the paper
         ALPHABET = list("abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+ =<>()[]{}")
         # Map Alphabets to index
         ALPHABET_INDEX = {letter: index for index, letter in enumerate(ALPHABET)}
         # max-length in characters for one document
         FEATURE_LEN = 1014
+        # Hybridize imperative model for best performance
+        self.net.hybridize()
+
+    def _preprocess(self, data):
+        # build the text from the request
+        text = '{}|{}'.format(data[0][0]['review_title'], data[0][0]['review'])
+
         encoded = np.zeros([len(ALPHABET), FEATURE_LEN], dtype='float32')
         review = text.lower()[:FEATURE_LEN-1:-1]
         i = 0

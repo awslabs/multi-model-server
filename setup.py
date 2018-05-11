@@ -11,6 +11,12 @@
 import platform
 from setuptools import setup, find_packages
 
+def PyPiDescription():
+    """Imports the long description for the project page"""
+    with open('PyPiDescription.rst') as f:
+        return f.read()
+
+
 pkgs = find_packages()
 pkgs.append('tools')
 
@@ -34,6 +40,7 @@ setup(
     name='mxnet-model-server',
     version='0.3',
     description='Model Server for Apache MXNet is a tool for serving neural net models for inference',
+    long_description=PyPiDescription(),
     url='https://github.com/awslabs/mxnet-model-server',
     keywords='MXNet Model Server Serving Deep Learning Inference AI',
     packages=pkgs,

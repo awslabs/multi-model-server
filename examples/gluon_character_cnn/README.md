@@ -1,6 +1,6 @@
 # Character-level CNN Model in Gluon trained using Amazon Product Dataset
 
-In this example, we show how to create a service which classifies a review into product type using [Character-level Convolutional Network Model (CNN) model](https://papers.nips.cc/paper/5782-character-level-convolutional-networks-for-text-classification.pdf) model by Yann LeCunn. This model is trained on [Amazon product data](http://jmcauley.ucsd.edu/data/amazon/) and training detail can be found in a detailed tutorial from Thomas Delteil [Character CNN training](https://github.com/ThomasDelteil/CNN_NLP_MXNet).
+In this example, we show how to create a service which classifies a review into product type using [Character-level Convolutional Network Model (CNN) model](https://papers.nips.cc/paper/5782-character-level-convolutional-networks-for-text-classification.pdf) model by Yann LeCunn. This model is trained on [Amazon product data](http://jmcauley.ucsd.edu/data/amazon/) and training detail can be found in a detailed tutorial from Thomas Delteil on [Character CNN training.](https://github.com/ThomasDelteil/CNN_NLP_MXNet).
 
 
 # Step by step to create service
@@ -88,6 +88,7 @@ mxnet-model-export --model-path /path/to/mode/folder --model-name character_cnn 
 ```
 
 A packaged model can be downloaded from [here.](https://s3.amazonaws.com/mms-char-cnn-files/character_cnn.model)
+
 ## Step 6 - Establish inference service
 
 character_cnn.model file is created by exporting model files. We also defined custom service under gluon_crepe.py. We are ready to establish the Character-level CNN inference service:

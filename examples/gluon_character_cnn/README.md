@@ -70,7 +70,7 @@ Let's take a look at signature file:
 }
 
 ```
-The input size is, limited to 1014, characters as mentioned in the paper. The output is of shape [0,7] as we classify the reviews into seven product categories.
+The input size is, limited to 1014, characters as mentioned in the paper. The output is of shape [0,7] as we classify the reviews into seven product categories. Both the input and output are passed on as 'application/json' based text content. 
 
 # Step 4 - Prepare synset.txt with list of class names
 

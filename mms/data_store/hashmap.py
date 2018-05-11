@@ -51,4 +51,5 @@ class RedisHashMap(HashMap):
         data = self.redis.blpop(self.name_prefix + key, timeout)
         self.redis.delete(self.name_prefix + key)
 
+        # pylint : disable=indexing-exception
         return data[1]

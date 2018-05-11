@@ -1,6 +1,6 @@
 # Character-level CNN Model in Gluon trained using Amazon Product Dataset
 
-In this example, we show how to create a service which classifies a review into product type using [Character-level Convolutional Network Model (CNN) model](https://papers.nips.cc/paper/5782-character-level-convolutional-networks-for-text-classification.pdf) model by Yann LeCunn. This model is trained on [Amazon product data](http://jmcauley.ucsd.edu/data/amazon/) and training detail can be found in a detailed tutorial from Thomas Delteil [Char CNN](https://github.com/ThomasDelteil/CNN_NLP_MXNet).
+In this example, we show how to create a service which classifies a review into product type using [Character-level Convolutional Network Model (CNN) model](https://papers.nips.cc/paper/5782-character-level-convolutional-networks-for-text-classification.pdf) model by Yann LeCunn. This model is trained on [Amazon product data](http://jmcauley.ucsd.edu/data/amazon/) and training detail can be found in a detailed tutorial from Thomas Delteil [Character CNN training](https://github.com/ThomasDelteil/CNN_NLP_MXNet).
 
 
 # Step by step to create service

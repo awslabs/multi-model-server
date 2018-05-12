@@ -16,10 +16,10 @@ sys.path.append(curr_path + '/../..')
 import unittest
 import mock
 
-from model_service.mxnet_vision_service import MXNetVisionService
-from model_service.gluon_vision_service import GluonVisionService
-from model_service.mxnet_model_service import MXNetBaseService
-from serving_frontend import ServingFrontend
+from mms.model_service.mxnet_vision_service import MXNetVisionService
+from mms.model_service.gluon_vision_service import GluonVisionService
+from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.serving_frontend import ServingFrontend
 
 
 class TestServingFrontend(unittest.TestCase):

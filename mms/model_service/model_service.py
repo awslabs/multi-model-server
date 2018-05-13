@@ -196,5 +196,7 @@ def load_service(path, name=None):
             module = imp.load_source(name, path)
 
         return module
-    except Exception:
-        raise Exception('Incorrect or missing service file: ' + path)
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        raise Exception('Incorrect or missing service file: {} with error in \n {}:{}:{}'.format(path, fname,exc_tb.tb_lineno,e))

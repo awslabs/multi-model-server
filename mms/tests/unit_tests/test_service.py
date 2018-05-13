@@ -101,7 +101,7 @@ class TestService(unittest.TestCase):
                 "Synset": "synset.txt"
             }
         }
-        
+
         os.system('rm -rf %s/test' % (curr_path))
 
     def test_gluon_inference(self):
@@ -137,11 +137,19 @@ class TestService(unittest.TestCase):
         cmd = 'python %s/../../export_model.py --model-name %s --model-path %s' \
               % (curr_path, model_name, model_path)
         os.system(cmd)
-        
+
         os.system('rm -rf %s %s/%s.model %s/%s' % (model_path, os.getcwd(),
                                                    model_name, os.getcwd(), model_name))
-
+    def test_incorrect_service(self):
+        from mms.model_service.model_service import load_service
+        path = os.getcwd()
+        try:
+            load_service(os.path.join(path,'mms/tests/unit_tests/incorrect_service.py'))
+        except Exception as e:
+            assert "No module" in str(e)
+            print(e)
     def runTest(self):
         self.test_vision_init()
         self.test_vision_inference()
         self.test_gluon_inference()
+        self.test_incorrect_service()

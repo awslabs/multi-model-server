@@ -1,12 +1,10 @@
+from mms.model_loader import ModelLoader
 import sys
-
 import os
 import pytest
 
 curr_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(curr_path + '/../..')
-
-from mms.model_loader import ModelLoader
 
 
 def test_onnx_fails_fast():
@@ -16,6 +14,7 @@ def test_onnx_fails_fast():
         ModelLoader.load(models)
 
     assert 'Convert ONNX model' in str(e.value)
+
 
 def test_invalid_model_path_input():
     """

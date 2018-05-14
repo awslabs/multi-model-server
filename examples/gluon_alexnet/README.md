@@ -92,12 +92,12 @@ We created a custom imperative model using Gluon. Refer to
 The network definition, which is defined in the example, is as follows
 
 ```python
-class ImperativeAlexNet(gluon.Block):
+class GluonImperativeAlexNet(gluon.Block):
     """
     Fully imperative gluon Alexnet model
     """
     def __init__(self, classes=1000, **kwargs):
-        super(ImperativeAlexNet, self).__init__(**kwargs)
+        super(GluonImperativeAlexNet, self).__init__(**kwargs)
         with self.name_scope():
             self.features = nn.Sequential(prefix='')
             with self.features.name_scope():

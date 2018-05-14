@@ -138,6 +138,7 @@ class ArgParser(object):
 
         parser_export.add_argument('--service-file-path',
                                    required=False,
+                                   dest="service_file_path",
                                    type=str,
                                    default=None,
                                    help='Service file path to handle custom MMS inference logic. '
@@ -148,6 +149,7 @@ class ArgParser(object):
                                         'this tool will include the MXNetVisionService in the archive.')
 
         return parser_export
+
 
     @staticmethod
     def extract_args(args=None):

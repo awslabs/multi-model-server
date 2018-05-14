@@ -16,18 +16,27 @@ sys.path.append(curr_path + '/../..')
 import unittest
 import mock
 
-from model_service.mxnet_vision_service import MXNetVisionService
-from model_service.mxnet_model_service import MXNetBaseService
-from serving_frontend import ServingFrontend
+from mms.model_service.mxnet_vision_service import MXNetVisionService
+from mms.model_service.gluon_vision_service import GluonVisionService
+from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.serving_frontend import ServingFrontend
+
 
 class TestServingFrontend(unittest.TestCase):
-
     def setUp(self):
         self.test_frontend = ServingFrontend('test')
 
     def test_register_module(self):
         # Mock 
         ret = [MXNetVisionService]
+        self.test_frontend.service_manager.parse_modelservices_from_module = mock.Mock(return_value=ret)
+        self.test_frontend.service_manager.add_modelservice_to_registry = mock.Mock()
+
+        self.assertEqual(self.test_frontend.register_module('mx_vision_service'), ret)
+
+    def test_register_gluon_service_module(self):
+        # Mock
+        ret = [GluonVisionService]
         self.test_frontend.service_manager.parse_modelservices_from_module = mock.Mock(return_value=ret)
         self.test_frontend.service_manager.add_modelservice_to_registry = mock.Mock()
 

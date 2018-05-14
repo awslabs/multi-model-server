@@ -14,8 +14,7 @@ import sys
 sys.path.append('../../..')
 
 from mms.model_service.mxnet_model_service import MXNetBaseService, check_input_shape
-from mms.model_loader import _extract_zip
-from utils.mxnet import image
+from mms.utils.mxnet import image
 from mxnet import ndarray as nd
 from mxnet.gluon.nn import Dense, Activation, Conv2D, Conv2DTranspose, \
     BatchNorm, LeakyReLU, Flatten, HybridSequential, HybridBlock, Dropout

@@ -27,10 +27,11 @@ URL_PREFIX = ('http://', 'https://', 's3://')
 
 
 class ModelService(object):
-    '''ModelService wraps up all preprocessing, inference and postprocessing
+    """
+    ModelService wraps up all preprocessing, inference and postprocessing
     functions used by model service. It is defined in a flexible manner to
     be easily extended to support different frameworks.
-    '''
+    """
     __metaclass__ = ABCMeta
 
     def __init__(self, model_name, model_dir, manifest, gpu=None):  # pylint: disable=unused-argument
@@ -38,8 +39,8 @@ class ModelService(object):
 
     @abstractmethod
     def inference(self, data):
-        '''
-        Wrapper function to run preprocess, inference and postprocess functions.
+        """
+        Wrapper function to run pre-process, inference and post-process functions.
 
         Parameters
         ----------
@@ -50,39 +51,42 @@ class ModelService(object):
         -------
         list of outputs to be sent back to client.
             data to be sent back
-        '''
+        """
         pass
 
     @abstractmethod
     def ping(self):
-        '''Ping to get system's health.
+        """
+        Ping to get system's health.
 
         Returns
         -------
         String
             A message, "health": "healthy!", to show system is healthy.
-        '''
+        """
         pass
 
     @abstractproperty
     def signature(self):
-        '''Signiture for model service.
+        """
+        Signiture for model service.
 
         Returns
         -------
         Dict
-            Model service signiture.
-        '''
+            Model service signature.
+        """
         pass
 
 
 class SingleNodeService(ModelService):
-    '''SingleNodeModel defines abstraction for model service which loads a
+    """
+    SingleNodeModel defines abstraction for model service which loads a
     single model.
-    '''
+    """
 
     def inference(self, data):
-        '''
+        """
         Wrapper function to run preprocess, inference and postprocess functions.
 
         Parameters
@@ -94,33 +98,35 @@ class SingleNodeService(ModelService):
         -------
         list of outputs to be sent back to client.
             data to be sent back
-        '''
+        """
         pre_start_time = time.time()
         data = [ndarray.concatenate(list(_input)) for _input in zip(*[self._preprocess(item) for item in data])]
         infer_start_time = time.time()
+        data = self._inference(data)
+        post_start_ms = time.time()
+        data = self._postprocess(data)
+        post_end_ms = time.time()
 
-        # Update preprocess latency metric
         pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
         if self.model_name + '_LatencyPreprocess' in MetricsManager.metrics:
             MetricsManager.metrics[self.model_name + '_LatencyPreprocess'].update(pre_time_in_ms)
 
-        data = self._inference(data)
-        data = self._postprocess(data)
-
-        # Update inference latency metric
-        infer_time_in_ms = (time.time() - infer_start_time) * 1000
+        infer_time_in_ms = (post_start_ms - infer_start_time) * 1000
         if self.model_name + '_LatencyInference' in MetricsManager.metrics:
             MetricsManager.metrics[self.model_name + '_LatencyInference'].update(infer_time_in_ms)
 
-        # Update overall latency metric
-        if self.model_name + '_LatencyOverall' in MetricsManager.metrics:
-            MetricsManager.metrics[self.model_name + '_LatencyOverall'].update(pre_time_in_ms + infer_time_in_ms)
+        post_time_in_ms = (post_end_ms - post_start_ms) * 1000
+        if self.model_name + '_LatencyPostprocess' in MetricsManager.metrics:
+            MetricsManager.metrics[self.model_name + '_LatencyPostprocess'].update(post_time_in_ms)
 
+        if self.model_name + '_LatencyOverall' in MetricsManager.metrics:
+            MetricsManager.metrics[self.model_name + '_LatencyOverall'].update(pre_time_in_ms + infer_time_in_ms +
+                                                                               post_time_in_ms)
         return data
 
     @abstractmethod
     def _inference(self, data):
-        '''
+        """
         Internal inference methods. Run forward computation and
         return output.
 
@@ -133,11 +139,11 @@ class SingleNodeService(ModelService):
         -------
         list of NDArray
             Inference output.
-        '''
+        """
         return data
 
     def _preprocess(self, data):
-        '''
+        """
         Internal preprocess methods. Do transformation on raw
         inputs and convert them to NDArray.
 
@@ -150,11 +156,11 @@ class SingleNodeService(ModelService):
         -------
         list of NDArray
             Processed inputs in NDArray format.
-        '''
+        """
         return data
 
     def _postprocess(self, data):
-        '''
+        """
         Internal postprocess methods. Do transformation on inference output
         and convert them to MIME type objects.
 
@@ -167,7 +173,7 @@ class SingleNodeService(ModelService):
         -------
         list of object
             list of outputs to be sent back.
-        '''
+        """
         return data
 
 

@@ -11,19 +11,109 @@
 import os
 import sys
 import json
-curr_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(curr_path + '/../..')
-
 import PIL
 import unittest
 import numpy as np
 import mxnet as mx
+import shutil, tempfile, pytest
 from io import BytesIO
-from model_service.mxnet_vision_service import MXNetVisionService as mx_vision_service
-from helper.pixel2pixel_service import UnetGenerator, Pixel2pixelService
-#from export_model import export_serving
+from helper.pixel2pixel_service import UnetGenerator
+from mms.model_service.mxnet_model_service import MXNetBaseService, GluonImperativeBaseService
+
+curr_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(curr_path + '/../..')
+
+
+def empty_file(path):
+    open(path, 'a').close()
+
+
+def module_dir(tmpdir):
+    path = '{}/test'.format(tmpdir)
+    os.mkdir(path)
+    empty_file('{}/test-symbol.json'.format(path))
+    empty_file('{}/test-0000.params'.format(path))
+    empty_file('{}/synset.txt'.format(path))
+
+    with open('{}/signature.json'.format(path), 'w') as sig:
+        signature = {
+            "input_type": "image/jpeg",
+            "inputs": [
+                {
+                    'data_name': 'data1',
+                    'data_shape': [1, 3, 64, 64]
+                },
+                {
+                    'data_name': 'data2',
+                    'data_shape': [1, 3, 32, 32]
+                }
+            ],
+            "output_type": "application/json",
+            "outputs": [
+                {
+                    'data_name': 'softmax',
+                    'data_shape': [1, 10]
+                }
+            ]
+        }
+        json.dump(signature, sig)
+
+    return path
+
+
+def create_symbolic_manifest(path):
+    with open('{}/MANIFEST.json'.format(path), 'w') as man:
+        manifest = {
+            "Engine": {
+                "MXNet": 0.12
+            },
+            "Model-Archive-Description": "test",
+            "License": "Apache 2.0",
+            "Model-Archive-Version": 0.1,
+            "Model-Server": 0.1,
+            "Model": {
+                "Description": "test",
+                "Service": "test",
+                "Symbol": "",
+                "Parameters": "test-0000.params",
+                "Signature": "signature.json",
+                "Model-Name": "test",
+                "Model-Format": "MXNet-Symbolic"
+            }
+        }
+        json.dump(manifest, man)
+
+
+def create_imperative_manifest(path):
+    with open('{}/MANIFEST.json'.format(path), 'w') as man:
+        manifest = manifest = {
+            "Engine": {
+                "MXNet": 0.12
+            },
+            "Model-Archive-Description": "test",
+            "License": "Apache 2.0",
+            "Model-Archive-Version": 0.1,
+            "Model-Server": 0.1,
+            "Model": {
+                "Description": "test",
+                "Service": "test",
+                "Symbol": "",
+                "Parameters": "",
+                "Signature": "signature.json",
+                "Model-Name": "test",
+                "Model-Format": "Gluon-Imperative"
+            }
+        }
+        json.dump(manifest, man)
+
 
 class TestService(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.test_dir)
+
     def _train_and_export(self, path):
         model_path = curr_path + '/' + path
         if not os.path.isdir(model_path):
@@ -80,7 +170,8 @@ class TestService(unittest.TestCase):
         manifest = {
             "Model": {
                 "Parameters": 'test-0000.params',
-                "Signature": "signature.json"
+                "Signature": "signature.json",
+                "Model-Format": "MXNet-symoblic"
             },
             "Assets": {
                 "Synset": "synset.txt"
@@ -95,7 +186,8 @@ class TestService(unittest.TestCase):
         manifest = {
             "Model": {
                 "Parameters": 'test-0000.params',
-                "Signature": "signature.json"
+                "Signature": "signature.json",
+                "Model-Format": "MXNet-symoblic"
             },
             "Assets": {
                 "Synset": "synset.txt"
@@ -141,7 +233,33 @@ class TestService(unittest.TestCase):
         os.system('rm -rf %s %s/%s.model %s/%s' % (model_path, os.getcwd(),
                                                    model_name, os.getcwd(), model_name))
 
+    def test_mxnet_model_service(self):
+        mod_dir = module_dir(self.test_dir)
+        if mod_dir.startswith('~'):
+            model_path = os.path.expanduser(mod_dir)
+        else:
+            model_path = mod_dir
+        create_symbolic_manifest(model_path)
+        manifest = json.load(open(os.path.join(model_path, 'MANIFEST.json')))
+        with pytest.raises(Exception):
+            MxnetBaseServiceClass = MXNetBaseService('test', model_path, manifest)
+        os.system('rm -rf %s' % (model_path))
+
+    def test_gluon_model_service(self):
+        mod_dir = module_dir(self.test_dir)
+        if mod_dir.startswith('~'):
+            model_path = os.path.expanduser(mod_dir)
+        else:
+            model_path = mod_dir
+        create_imperative_manifest(model_path)
+        manifest = json.load(open(os.path.join(model_path, 'MANIFEST.json')))
+        MxnetBaseServiceClass = GluonImperativeBaseService('test', model_path, manifest,
+                                                      mx.gluon.model_zoo.vision.alexnet(pretrained=True))
+        os.system('rm -rf %s' % (model_path))
+
     def runTest(self):
         self.test_vision_init()
         self.test_vision_inference()
         self.test_gluon_inference()
+        self.test_mxnet_model_service()
+        self.test_gluon_model_service()

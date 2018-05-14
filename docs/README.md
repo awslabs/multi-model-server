@@ -1,4 +1,4 @@
-# Model Server or Apache MXNet Documentation
+# Model Server for Apache MXNet Documentation
 
 ## Basic Features
 * [Serving Quick Start](../README.md#serve-a-model) - Basic server usage tutorial

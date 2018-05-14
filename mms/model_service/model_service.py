@@ -199,4 +199,4 @@ def load_service(path, name=None):
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        raise Exception('Incorrect or missing service file: {} with error in \n {}:{}:{}'.format(path, fname,exc_tb.tb_lineno,e))
+        raise Exception('Error in service file: {} \n {}:{}:{}'.format(path, fname,exc_tb.tb_lineno,e))

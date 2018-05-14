@@ -131,6 +131,11 @@ class MetricsManager(object):
                                                                                unit=MetricUnit['ms'],
                                                                                aggregate_method='interval_average',
                                                                                write_to=metrics_write_to)
+            MetricsManager.metrics[model_name + '_LatencyPostprocess'] = Metric('LatencyPostprocess', mutex,
+                                                                                model_name=model_name,
+                                                                                unit=MetricUnit['ms'],
+                                                                                aggregate_method='interval_average',
+                                                                                write_to=metrics_write_to)
 
         MetricsManager.metrics['PingTotal'] = Metric('PingTotal', mutex,
                                                      model_name=None,

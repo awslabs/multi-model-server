@@ -22,6 +22,11 @@ class GluonImperativeAlexNet(gluon.Block):
     Fully imperative gluon Alexnet model
     """
     def __init__(self, classes=1000, **kwargs):
+        """
+        This is the network definition of Imperative Alexnet
+        :param classes:
+        :param kwargs:
+        """
         super(GluonImperativeAlexNet, self).__init__(**kwargs)
         with self.name_scope():
             self.features = nn.Sequential(prefix='')
@@ -52,14 +57,14 @@ class GluonImperativeAlexNet(gluon.Block):
         return x
 
 
-class MMSImperativeService(GluonVisionService):
+class ImperativeAlexnetService(GluonVisionService):
     """
     Gluon alexnet Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MMSImperativeService, self).__init__(model_name, model_dir, manifest, GluonImperativeAlexNet(), gpu)
+        super(ImperativeAlexnetService, self).__init__(model_name, model_dir, manifest, GluonImperativeAlexNet(), gpu)
 
     def _postprocess(self, data):
         idx = data.topk(k=5)[0]
         return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
-            float(data[0, int(i.asscalar())].asscalar())} for i in idx]
+                float(data[0, int(i.asscalar())].asscalar())} for i in idx]

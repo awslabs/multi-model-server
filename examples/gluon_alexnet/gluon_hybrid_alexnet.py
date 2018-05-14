@@ -22,6 +22,11 @@ class GluonHybridAlexNet(HybridBlock):
     Hybrid Block gluon model
     """
     def __init__(self, classes=1000, **kwargs):
+        """
+        This is the network definition of Gluon Hybrid Alexnet
+        :param classes:
+        :param kwargs:
+        """
         super(GluonHybridAlexNet, self).__init__(**kwargs)
         with self.name_scope():
             self.features = nn.HybridSequential(prefix='')
@@ -53,12 +58,12 @@ class GluonHybridAlexNet(HybridBlock):
         return x
 
 
-class MMSHybridService(GluonVisionService):
+class HybridAlexnetService(GluonVisionService):
     """
     Gluon alexnet Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MMSHybridService, self).__init__(model_name, model_dir, manifest, GluonHybridAlexNet(), gpu)
+        super(HybridAlexnetService, self).__init__(model_name, model_dir, manifest, GluonHybridAlexNet(), gpu)
         self.net.hybridize()
 
     def _postprocess(self, data):

@@ -36,12 +36,12 @@ Loading and serving a pre-trained Gluon model is the simplest of the three scena
 While it is easy to access a model with a couple of lines of code, with MMS you will want to use a [MMS custom service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/custom_service.md) code pattern as follows:
 
 ```python
-class MMSPretrainedAlexnet(GluonVisionService):
+class PretrainedAlexnetService(GluonVisionService):
     """
     Pretrained alexnet Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MMSPretrainedAlexnet, self).__init__(model_name, model_dir, manifest,
+        super(PretrainedAlexnetService, self).__init__(model_name, model_dir, manifest,
                                                    mxnet.gluon.model_zoo.vision.alexnet(pretrained=True),
                                                    gpu)
 
@@ -129,12 +129,12 @@ class ImperativeAlexNet(gluon.Block):
 
 The pre-process, inference and post-process steps are similar to the service code that we saw in the [above section](#load-and-serve-a-pre-trained-gluon-model).
 ```python
-class MMSImperativeService(GluonVisionService):
+class ImperativeAlexnetService(GluonVisionService):
     """
     Gluon alexnet Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MMSImperativeService, self).__init__(model_name, model_dir, manifest, GluonImperativeAlexNet(), gpu)
+        super(ImperativeAlexnetService, self).__init__(model_name, model_dir, manifest, GluonImperativeAlexNet(), gpu)
 
     def _postprocess(self, data):
         idx = data.topk(k=5)[0]
@@ -227,12 +227,12 @@ class GluonHybridAlexNet(HybridBlock):
 We could use the same custom service code as in the above section, 
 
 ```python
-class MMSHybridService(GluonVisionService):
+class HybridAlexnetService(GluonVisionService):
     """
     Gluon alexnet Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MMSHybridizedService, self).__init__(model_name, model_dir, manifest, GluonHybridAlexNet(), gpu)
+        super(HybridAlexnetService, self).__init__(model_name, model_dir, manifest, GluonHybridAlexNet(), gpu)
         self.net.hybridize()
 
     def _postprocess(self, data):

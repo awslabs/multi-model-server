@@ -12,16 +12,16 @@ import mxnet
 from mms.model_service.gluon_vision_service import GluonVisionService
 
 
-class MMSPretrainedAlexnet(GluonVisionService):
+class PretrainedAlexnetService(GluonVisionService):
     """
     Pretrained alexnet Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(MMSPretrainedAlexnet, self).__init__(model_name, model_dir, manifest,
-                                                   mxnet.gluon.model_zoo.vision.alexnet(pretrained=True),
-                                                   gpu)
+        super(PretrainedAlexnetService, self).__init__(model_name, model_dir, manifest,
+                                                mxnet.gluon.model_zoo.vision.alexnet(pretrained=True),
+                                                gpu)
 
     def _postprocess(self, data):
         idx = data.topk(k=5)[0]
         return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
-            float(data[0, int(i.asscalar())].asscalar())} for i in idx]
+                float(data[0, int(i.asscalar())].asscalar())} for i in idx]

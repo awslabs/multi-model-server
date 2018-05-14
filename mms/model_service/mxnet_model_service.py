@@ -162,7 +162,7 @@ class MXNetBaseService(SingleNodeService):
         return self._signature
 
 
-class ImperativeBaseService(SingleNodeService):
+class GluonImperativeBaseService(SingleNodeService):
     """ImperativeBaseService defines the fundamental loading model and inference
        operations when serving Gluon model. This is a base class and needs to be
        inherited.

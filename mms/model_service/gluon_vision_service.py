@@ -12,11 +12,11 @@
 """
 import mxnet
 import numpy as np
-from mms.model_service.mxnet_model_service import ImperativeBaseService
+from mms.model_service.mxnet_model_service import GluonImperativeBaseService
 from mms.utils.mxnet import ndarray
 
 
-class GluonVisionService(ImperativeBaseService):
+class GluonVisionService(GluonImperativeBaseService):
     """MXNetVisionService defines a fundamental service for image classification task.
     In preprocess, input image buffer is read to NDArray and resized respect to input
     shape in signature.

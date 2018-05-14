@@ -12,6 +12,7 @@
     * [Export an ONNX Model](export_from_onnx.md)
     * [Exported MMS Model File Tour](export_model_file_tour.md)
 * [Docker](../docker/README.md) - How to use MMS with Docker and cloud services
+    * [Optimized Configuration](optimized_config.md)
 * [Metrics](metrics.md) - How to configure logging of metrics
 
 ## Advanced Features

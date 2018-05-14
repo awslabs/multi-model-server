@@ -79,7 +79,7 @@ start_mms()
         then
           line=$(grep -c ^processor /proc/cpuinfo)
         fi
-    		gunicorn_arguments="${gunicorn_arguments} $line "
+        gunicorn_arguments="${gunicorn_arguments} $line "
         prev=$line
     	elif [[ "$HEADER" =~ "$MXNET_ARGS" ]] # MxNet Engine Args
     	then

@@ -7,18 +7,8 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
-
 """
-This module does the following:
-a. Starts model-server.
-b. Creates end-points based on the configured models.
-c. Exposes standard "ping" and "api-description" endpoints.
-d. Waits for servicing inference requests.
+This is the current version of MMS
 """
-from . import log
-from . import metric
-from . import model_service
-from . import metrics_manager
-from . import version
 
-__version__ = version.__version__
+__version__ = 0.3

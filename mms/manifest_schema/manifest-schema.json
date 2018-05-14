@@ -20,7 +20,7 @@
                 "Model-Name": {"type": "string"},
                 "Service": {"type": "string"}
             },
-            "required": ["Parameters", "Symbol", "Signature", "Model-Format", "Model-Name", "Service"]
+            "required": ["Signature", "Model-Format", "Model-Name", "Service"]
         },
         "Engine": {
             "type": "object"

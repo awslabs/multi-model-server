@@ -41,7 +41,7 @@ def onnx_mxnet():
     patcher.stop()
 
 
-@pytest.fixture
+@pytest.fixture()
 def module_dir(tmpdir):
     path = '{}/test'.format(tmpdir)
     os.mkdir(path)
@@ -76,7 +76,10 @@ def module_dir(tmpdir):
 
 
 def test_generate_manifest():
-    manifest = generate_manifest('dir/symbol', 'dir/params', 'dir/service', 'dir/signature', 'name')
+    manifest = generate_manifest(symbol_file='dir/symbol',
+                                 params_file='dir/params', service_file='dir/service',
+                                 signature_file='dir/signature', model_name='name',
+                                 model_type_imperative=False)
     assert 'Model-Archive-Version' in manifest
     assert manifest['Model-Archive-Description'] == 'name'
     assert 'Model-Server' in manifest
@@ -92,30 +95,75 @@ def test_generate_manifest():
         'Model-Format': 'MXNet-Symbolic'
     }
 
+
+def test_generate_manifest_imperative_with_params():
+    manifest = generate_manifest(symbol_file=None,
+                                 params_file='dir/params', service_file='dir/service',
+                                 signature_file='dir/signature', model_name='name',
+                                 model_type_imperative=True)
+    assert 'Model-Archive-Version' in manifest
+    assert manifest['Model-Archive-Description'] == 'name'
+    assert 'Model-Server' in manifest
+    assert 'Engine' in manifest
+
+    assert manifest['Model'] == {
+        'Symbol': '',
+        'Parameters': 'params',
+        'Signature': 'signature',
+        'Service': 'service',
+        'Description': 'name',
+        'Model-Name': 'name',
+        'Model-Format': 'Gluon-Imperative'
+    }
+
+
+def test_generate_manifest_imperative_without_params():
+    manifest = generate_manifest(symbol_file=None,
+                                 params_file=None, service_file='dir/service',
+                                 signature_file='dir/signature', model_name='name',
+                                 model_type_imperative=True)
+    assert 'Model-Archive-Version' in manifest
+    assert manifest['Model-Archive-Description'] == 'name'
+    assert 'Model-Server' in manifest
+    assert 'Engine' in manifest
+
+    assert manifest['Model'] == {
+        'Symbol': '',
+        'Parameters': '',
+        'Signature': 'signature',
+        'Service': 'service',
+        'Description': 'name',
+        'Model-Name': 'name',
+        'Model-Format': 'Gluon-Imperative'
+    }
+
+
 def test_temp_files_cleanup_no_export_path(tmpdir, module_dir):
     if module_dir.startswith('~'):
         model_path = os.path.expanduser(module_dir)
     else:
         model_path = module_dir
     initial_user_files = set(os.listdir(model_path))
-    initial_export_files= set(os.listdir(os.getcwd()))
+    initial_export_files = set(os.listdir(os.getcwd()))
     export_model('test', module_dir, None, None)
-    export_path='{}/test.model'.format(os.getcwd())
+    export_path = '{}/test.model'.format(os.getcwd())
     assert os.path.exists(export_path), 'no model created - export failed'
     final_user_files = set(os.listdir(model_path))
     final_export_files = set(os.listdir(os.getcwd()))
     
     user_files_created = final_user_files-initial_user_files
     user_files_deleted = initial_user_files-final_user_files
-    assert len(user_files_created)==0 , 'temporary files not deleted'
-    assert len(user_files_deleted)==0,'user files deleted'
+    assert len(user_files_created) == 0, 'temporary files not deleted'
+    assert len(user_files_deleted) == 0, 'user files deleted'
     
     export_files_created= final_export_files- initial_export_files
-    assert len(export_files_created)==1 and list(export_files_created)[0].endswith('.model'), 'something other than the model file got generated'
-    export_files_deleted = initial_export_files- final_export_files
-    assert len(export_files_deleted)==0, 'user files deleted'
+    assert len(export_files_created) == 1 and list(export_files_created)[0].endswith('.model'), \
+        'something other than the model file got generated'
+    export_files_deleted = initial_export_files - final_export_files
+    assert len(export_files_deleted) == 0, 'user files deleted'
     
     os.remove(export_path)
+
 
 def test_temp_files_cleanup_export_path(tmpdir, module_dir):
     export_path = '{}/test.model'.format(tmpdir)
@@ -128,7 +176,8 @@ def test_temp_files_cleanup_export_path(tmpdir, module_dir):
     assert os.path.exists(export_path), 'no model created - export failed'
     final_files = os.listdir(model_path)
     files_created = set(final_files)-set(initial_files)
-    assert len(files_created)==0, 'temporary files not deleted'
+    assert len(files_created) == 0, 'temporary files not deleted'
+    os.remove(export_path)
     
 
 def test_export_module(tmpdir, module_dir):
@@ -142,6 +191,7 @@ def test_export_module(tmpdir, module_dir):
         assert f in zip_contents
 
     assert [f for f in zip_contents if f.endswith('.py')], 'missing service file'
+    os.remove(export_path)
 
 
 def test_export_module_hyphenated_basename(tmpdir, module_dir):
@@ -150,6 +200,7 @@ def test_export_module_hyphenated_basename(tmpdir, module_dir):
     export_path = '{}/test-hyphens.model'.format(tmpdir)
     export_model('test-hyphens', module_dir, None, export_path)
     assert os.path.exists(export_path), 'no model created - export failed'
+    os.remove(export_path)
 
 
 def test_export_onnx(tmpdir, module_dir, onnx_mxnet):
@@ -166,6 +217,7 @@ def test_export_onnx(tmpdir, module_dir, onnx_mxnet):
         assert f in zip_contents
 
     assert [f for f in zip_contents if f.endswith('.py')], 'missing service file'
+    os.remove(export_path)
 
 
 def test_export_model_no_model_files(tmpdir, module_dir):

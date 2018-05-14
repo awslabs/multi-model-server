@@ -1,4 +1,4 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -60,7 +60,7 @@ def _download_and_extract(model_location, path=None, overwrite=False):
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
 
-            print('Downloading %s from %s...' % (model_file, model_location))
+            print('INFO: Downloading %s from %s...' % (model_file, model_location))
             r = requests.get(model_location, stream=True)
             if r.status_code != 200:
                 raise RuntimeError("Failed downloading url %s" % model_location)
@@ -126,7 +126,7 @@ def _extract_model(service_name, path):
         manifest_schema_file = os.path.join(mms_pkg_loc, MANIFEST_DIR, MANIFEST_SCHEMA_FILE)
 
         assert os.path.isfile(manifest_schema_file), \
-               "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc
+            "manifest-schema file missing mms pkg location:%s" % mms_pkg_loc
 
         schema = json.load(open(manifest_schema_file))
         manifest = json.load(open(os.path.join(model_dir, MANIFEST_FILENAME)))
@@ -135,17 +135,44 @@ def _extract_model(service_name, path):
 
     validate(manifest, schema)
 
-    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Signature']))) == 1, \
-        'Signature file in model archive is inconsistent with manifest.'
+    # check if signature, symbol, parameters and service key-values are non empty and are valid
+    try:
+        if not manifest['Model']['Signature'] or \
+               len(glob.glob(os.path.join(model_dir, manifest['Model']['Signature']))) != 1:
+            raise Exception
+        print("INFO: Signature file read from Manifest. "
+              "{}".format(os.path.join(model_dir, manifest['Model']['Signature'])))
+    except Exception:  # pylint: disable=broad-except
+        assert 0, "ERROR: Signature file not defined in MANIFEST.json"
 
-    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))) == 1, \
-        'Symbol file in model archive is inconsistent with manifest.'
+    try:
+        if not manifest['Model']['Symbol'] or \
+               len(glob.glob(os.path.join(model_dir, manifest['Model']['Symbol']))) != 1:
+            raise Exception
+        print("INFO: Symbol file read from manifest "
+              "{}".format(os.path.join(model_dir, manifest['Model']['Symbol'])))
+    except Exception:  # pylint: disable=broad-except
+        if manifest['Model']['Model-Format'] in "MXNet-Symbolic":
+            assert 0, "ERROR: Symbol file not defined in MANIFEST.json"
+        else:
+            print("Symbols file not given.")
 
-    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Parameters']))) == 1, \
-        'Parameter file in model archive is inconsistent with manifest.'
+    try:
+        if not manifest['Model']['Parameters'] or \
+                len(glob.glob(os.path.join(model_dir, manifest['Model']['Parameters']))) != 1:
+            raise Exception
+        print("INFO: Parameter file configured {}".format(os.path.join(model_dir, manifest['Model']['Parameters'])))
+    except Exception:  # pylint: disable=broad-except
+        print("WARNING: Parameter file not defined in MANIFEST.json.")
 
-    assert len(glob.glob(os.path.join(model_dir, manifest['Model']['Service']))) == 1, \
-        'Service file in model archive is inconsistent with manifest.'
+    try:
+        if not manifest['Model']['Service'] or \
+                len(glob.glob(os.path.join(model_dir, manifest['Model']['Service']))) != 1:
+            raise Exception
+        print("INFO: Service file read from Manifest "
+              "{}".format(os.path.join(model_dir, manifest['Model']['Service'])))
+    except Exception:  # pylint: disable=broad-except
+        assert 0, "ERROR: Service file not defined in MANIFEST.json."
 
     model_name = manifest['Model']['Model-Name']
 

@@ -26,7 +26,7 @@ import mms
 from mms.arg_parser import ArgParser
 from mms.log import get_logger
 from mms.model_service.model_service import load_service
-from mms.model_service.mxnet_model_service import MXNetBaseService, ImperativeBaseService
+from mms.model_service.mxnet_model_service import MXNetBaseService, GluonImperativeBaseService
 
 logger = get_logger()
 
@@ -70,7 +70,7 @@ See https://github.com/onnx/onnx for converting PyTorch, Caffe2, CNTK,
 and other models to the ONNX format.
 
 Gluon models are expected to have a 
-Custom Service file derived from ImperativeBaseService,
+Custom Service file derived from GluonImperativeBaseService,
 a Parameters file,
 a Signature file. 
 
@@ -168,19 +168,19 @@ def validate_service(model_path, service_file, signature_file):
         module = load_service(service_file)
 
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]
-        # Check if subclass of MXNetBaseService or ImperativeBaseService
+        # Check if subclass of MXNetBaseService or GluonImperativeBaseService
         # pylint: disable=deprecated-lambda
         service_classes_mxnet = list(filter(lambda cls: issubclass(cls, MXNetBaseService), classes))
-        service_classes_gluon = list(filter(lambda cls: issubclass(cls, ImperativeBaseService), classes))
+        service_classes_gluon = list(filter(lambda cls: issubclass(cls, GluonImperativeBaseService), classes))
         is_mxnet_service = len(service_classes_mxnet) > 1
         is_gluon_service = len(service_classes_gluon) > 1
         assert (len(service_classes_mxnet) > 1 or len(service_classes_gluon) > 1), \
-            "The Service class should be derived from MXNetBaseService or ImperativeBaseService, " \
+            "The Service class should be derived from MXNetBaseService or GluonImperativeBaseService, " \
             "found %s classes" % str(service_classes_mxnet)
 
         if is_gluon_service and is_mxnet_service:
             raise ValueError("Service file contains both symbolic and imperative sub-classes. The service file"
-                             "should contain either MXNetBaseSerivce class or ImperativeBaseService class")
+                             "should contain either MXNetBaseSerivce class or GluonImperativeBaseService class")
 
         # remove the compiled python code
         if os.path.exists(service_file + 'c'):

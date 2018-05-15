@@ -256,12 +256,12 @@ class TestService(unittest.TestCase):
         MxnetBaseServiceClass = GluonImperativeBaseService('test', model_path, manifest,
                                                       mx.gluon.model_zoo.vision.alexnet(pretrained=True))
         os.system('rm -rf %s' % (model_path))
-        
+
     def test_incorrect_service(self):
         from mms.model_service.model_service import load_service
         path = os.getcwd()
         try:
-            load_service(os.path.join(path,'mms/tests/unit_tests/incorrect_service.py'))
+            load_service(os.path.join(path,'mms/tests/unit_tests/helper/incorrect_service.py'))
         except Exception as e:
             assert "No module" in str(e)
             print(e)

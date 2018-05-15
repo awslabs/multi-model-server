@@ -11,7 +11,7 @@
 import mxnet
 from mxnet.gluon import nn
 from mxnet.gluon.block import HybridBlock
-from mms.model_service.mxnet_vision_service import MXNetVisionService
+from mms.model_service.mxnet_model_service import GluonImperativeBaseService
 import numpy as np
 from mxnet import nd
 import os
@@ -23,36 +23,33 @@ class GluonCrepe(HybridBlock):
     """
     def __init__(self, classes=7, **kwargs):
         super(GluonCrepe, self).__init__(**kwargs)
-        NUM_FILTERS = 256 # number of convolutional filters per convolutional layer
-        NUM_OUTPUTS = classes # number of classes
-        FULLY_CONNECTED = 1024 # number of unit in the fully connected dense layer
-        DROPOUT_RATE = 0.5 # probability of node drop out
+        self.NUM_FILTERS = 256 # number of convolutional filters per convolutional layer
+        self.NUM_OUTPUTS = classes # number of classes
+        self.FULLY_CONNECTED = 1024 # number of unit in the fully connected dense layer
         self.features = nn.HybridSequential()
         with self.name_scope():
             self.features.add(
-                nn.Conv1D(channels=NUM_FILTERS, kernel_size=7, activation='relu'),
+                nn.Conv1D(channels=self.NUM_FILTERS, kernel_size=7, activation='relu'),
                 nn.MaxPool1D(pool_size=3, strides=3),
-                nn.Conv1D(channels=NUM_FILTERS, kernel_size=7, activation='relu'),
+                nn.Conv1D(channels=self.NUM_FILTERS, kernel_size=7, activation='relu'),
                 nn.MaxPool1D(pool_size=3, strides=3),
-                nn.Conv1D(channels=NUM_FILTERS, kernel_size=3, activation='relu'),
-                nn.Conv1D(channels=NUM_FILTERS, kernel_size=3, activation='relu'),
-                nn.Conv1D(channels=NUM_FILTERS, kernel_size=3, activation='relu'),
-                nn.Conv1D(channels=NUM_FILTERS, kernel_size=3, activation='relu'),
+                nn.Conv1D(channels=self.NUM_FILTERS, kernel_size=3, activation='relu'),
+                nn.Conv1D(channels=self.NUM_FILTERS, kernel_size=3, activation='relu'),
+                nn.Conv1D(channels=self.NUM_FILTERS, kernel_size=3, activation='relu'),
+                nn.Conv1D(channels=self.NUM_FILTERS, kernel_size=3, activation='relu'),
                 nn.MaxPool1D(pool_size=3, strides=3),
                 nn.Flatten(),
-                nn.Dense(FULLY_CONNECTED, activation='relu'),
-                nn.Dropout(DROPOUT_RATE),
-                nn.Dense(FULLY_CONNECTED, activation='relu'),
-                nn.Dropout(DROPOUT_RATE),
+                nn.Dense(self.FULLY_CONNECTED, activation='relu'),
+                nn.Dense(self.FULLY_CONNECTED, activation='relu'),
             )
-            self.output = nn.Dense(NUM_OUTPUTS)
+            self.output = nn.Dense(self.NUM_OUTPUTS)
     def hybrid_forward(self, F, x):
         x = self.features(x)
         x = self.output(x)
         return x
 
 
-class CharacterCNNService(MXNetVisionService):
+class CharacterCNNService(GluonImperativeBaseService):
     """
     Gluon Character-level Convolution Service
     """
@@ -63,11 +60,11 @@ class CharacterCNNService(MXNetVisionService):
         if self.param_filename:
             self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
         # The 69 characters as specified in the paper
-        ALPHABET = list("abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+ =<>()[]{}")
+        self.ALPHABET = list("abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+ =<>()[]{}")
         # Map Alphabets to index
-        ALPHABET_INDEX = {letter: index for index, letter in enumerate(ALPHABET)}
+        self.ALPHABET_INDEX = {letter: index for index, letter in enumerate(self.ALPHABET)}
         # max-length in characters for one document
-        FEATURE_LEN = 1014
+        self.FEATURE_LEN = 1014
         # Hybridize imperative model for best performance
         self.net.hybridize()
 
@@ -75,14 +72,14 @@ class CharacterCNNService(MXNetVisionService):
         # build the text from the request
         text = '{}|{}'.format(data[0][0]['review_title'], data[0][0]['review'])
 
-        encoded = np.zeros([len(ALPHABET), FEATURE_LEN], dtype='float32')
-        review = text.lower()[:FEATURE_LEN-1:-1]
+        encoded = np.zeros([len(self.ALPHABET), self.FEATURE_LEN], dtype='float32')
+        review = text.lower()[:self.FEATURE_LEN-1:-1]
         i = 0
         for letter in text:
-            if i >= FEATURE_LEN:
+            if i >= self.FEATURE_LEN:
                 break;
-            if letter in ALPHABET_INDEX:
-                encoded[ALPHABET_INDEX[letter]][i] = 1
+            if letter in self.ALPHABET_INDEX:
+                encoded[self.ALPHABET_INDEX[letter]][i] = 1
             i += 1
         return nd.array([encoded], ctx=self.ctx)
 

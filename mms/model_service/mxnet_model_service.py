@@ -118,8 +118,7 @@ class MXNetBaseService(SingleNodeService):
         return [str(d.asnumpy().tolist()) for d in data]
 
     def _inference(self, data):
-        """
-        Internal inference methods for MXNet. Run forward computation and
+        """Internal inference methods for MXNet. Run forward computation and
         return output.
 
         Parameters

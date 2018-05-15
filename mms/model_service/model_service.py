@@ -203,6 +203,6 @@ def load_service(path, name=None):
 
         return module
     except Exception as e:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
+        exc_tb = sys.exc_info()[2]
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        raise Exception('Error when loading service file: {} \n {}:{}:{}'.format(path, fname,exc_tb.tb_lineno,e))
+        raise Exception('Error when loading service file: {} \n {}:{}:{}'.format(path, fname, exc_tb.tb_lineno, e))

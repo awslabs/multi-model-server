@@ -44,9 +44,17 @@ with open(os.path.join("mms", "version.py")) as f:
 requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
                 'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
                 'fasteners']
+gpu_platform = False
 if platform.system().lower() == 'linux':
-    # TODO: Verify if mxnet import works after installing mxnet-cu90mkl
-    requirements = ['mxnet-mkl>=1.1'] + requirements
+    try:
+        import subprocess
+        # Check if CUDA is installed
+        p = subprocess.Popen(['nvcc', '--version'])
+        gpu_platform = True
+    except Exception as e:
+        gpu_platform = False
+if gpu_platform:
+    requirements = ['mxnet-cu90mkl>=1.1'] + requirements
 else:
     requirements = ['mxnet-mkl>=1.1'] + requirements
 setup(

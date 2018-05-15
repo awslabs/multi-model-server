@@ -44,6 +44,7 @@ with open(os.path.join("mms", "version.py")) as f:
 requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
                 'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
                 'fasteners']
+# Enable Cu90 only when using linux with cuda enabled
 gpu_platform = False
 if platform.system().lower() == 'linux':
     try:

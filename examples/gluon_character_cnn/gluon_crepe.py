@@ -54,11 +54,8 @@ class CharacterCNNService(GluonImperativeBaseService):
     Gluon Character-level Convolution Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(CharacterCNNService, self).__init__(model_name, model_dir, manifest, gpu)
-        # Initialize model and load pre-trained weights
-        self.net = GluonCrepe()
-        if self.param_filename:
-            self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
+        net = GluonCrepe()
+        super(CharacterCNNService, self).__init__(model_name, model_dir, manifest,net, gpu)
         # The 69 characters as specified in the paper
         self.ALPHABET = list("abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+ =<>()[]{}")
         # Map Alphabets to index

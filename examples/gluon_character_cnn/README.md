@@ -16,6 +16,9 @@ $ wget https://s3.amazonaws.com/mms-char-cnn-files/crepe_gluon_epoch6.params
 
 # Download the signature file
 $ wget https://s3.amazonaws.com/mms-char-cnn-files/signature.json
+
+# Download classification category file
+$ wget https://s3.amazonaws.com/mms-char-cnn-files/synset.txt
 ```
 
 ## Step 2 - Look at the Gluon model/service  file
@@ -31,16 +34,19 @@ class GluonCrepe(HybridBlock):
       ## Define model below
       pass
 
-class CharacterCNNService(MXNetVisionService):
+class CharacterCNNService(GluonImperativeBaseService):
     """
     Gluon Character-level Convolution Service
     """
     def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(CharacterCNNService, self).__init__(model_name, model_dir, manifest, gpu)
-        # Initialize model and load pre-trained weights
-        self.net = GluonCrepe()
-        if self.param_filename:
-            self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
+        net = GluonCrepe()
+        super(CharacterCNNService, self).__init__(model_name, model_dir, manifest,net gpu)
+        # The 69 characters as specified in the paper
+        self.ALPHABET = list("abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+ =<>()[]{}")
+        # Map Alphabets to index
+        self.ALPHABET_INDEX = {letter: index for index, letter in enumerate(self.ALPHABET)}
+        # max-length in characters for one document
+        self.FEATURE_LEN = 1014
         self.net.hybridize()
         # define _preprocess, _inference and _postprocess methods
 ```
@@ -95,15 +101,6 @@ character_cnn.model file is created by exporting model files. We also defined cu
 
 ```bash
 mxnet-model-server --models crepe=character_cnn.model
-```
-You will see the following outputs which means the service is successfully established:
-
-```bash
-I1102 11:25:58 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/mxnet_model_server.py:__init__:75] Initialized model serving.
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: crepe_predict to Flask
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: ping to Flask
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: api-description to Flask
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/mxnet_model_server.py:start_model_serving:88] Service started at 127.0.0.1:8080
 ```
 
 The endpoint is on localhost and port 8080. You can change them by passing --host and --port when establishing the service.

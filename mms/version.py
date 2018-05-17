@@ -11,4 +11,4 @@
 This is the current version of MMS
 """
 
-__version__ = 0.3
+__version__ = '0.3'

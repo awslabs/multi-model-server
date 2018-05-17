@@ -69,10 +69,10 @@ Example: modelname.onnx.
 See https://github.com/onnx/onnx for converting PyTorch, Caffe2, CNTK,
 and other models to the ONNX format.
 
-Gluon models are expected to have a 
+Gluon models are expected to have a
 Custom Service file derived from GluonImperativeBaseService,
 a Parameters file,
-a Signature file. 
+a Signature file.
 
 In order to export Gluon models, the export tool expects --service-file-path pointing to the Gluon custom service
 code.
@@ -204,6 +204,13 @@ def validate_service(model_path, service_file, signature_file):
     return is_gluon_service, service_file
 
 
+def split_on_letter(s):
+    match = re.compile("[^\W\d]").search(s)
+    if match:
+        return float(s[:match.start()])
+
+    return float(s)
+
 def generate_manifest(symbol_file=None, params_file=None, service_file=None, signature_file=None,
                       model_name=None, model_type_imperative=False):
     """
@@ -217,9 +224,10 @@ def generate_manifest(symbol_file=None, params_file=None, service_file=None, sig
     :return:
     """
     manifest = {}
+    conv_int = split_on_letter(MODEL_SERVER_VERSION)
     manifest["Model-Archive-Version"] = MODEL_ARCHIVE_VERSION
     manifest["Model-Archive-Description"] = model_name
-    manifest["Model-Server"] = MODEL_SERVER_VERSION
+    manifest["Model-Server"] = conv_int
     manifest["Model"] = {}
     manifest["Model"]["Symbol"] = os.path.split(symbol_file)[1] if symbol_file else ""
     manifest["Model"]["Parameters"] = os.path.split(params_file)[1] if params_file else ""

@@ -54,7 +54,7 @@ if platform.system().lower() == 'linux':
         cuda = ctypes.cdll.LoadLibrary('libcudart.so')
         deviceCount=ctypes.c_int()
         # get the number of supported GpUs
-        libcudart.cudaGetDeviceCount(ctypes.byref(deviceCount))
+        cuda.cudaGetDeviceCount(ctypes.byref(deviceCount))
         if deviceCount.value < 1:
             gpu_platform = False
         else:

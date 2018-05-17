@@ -66,6 +66,9 @@ class CharacterCNNService(GluonImperativeBaseService):
         self.net.hybridize()
 
     def _preprocess(self, data):
+        """
+        Pre-process text to a encode it to a form, that gives spatial information to the CNN
+        """
         # build the text from the request
         text = '{}|{}'.format(data[0][0]['review_title'], data[0][0]['review'])
 

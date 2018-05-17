@@ -5,7 +5,7 @@ In this example, we show how to create a service which classifies a review into 
 
 # Step by step to create service
 
-## Step 1 - Download the Gluon Char CNN model file, signature file and model parameter file.
+## Step 1 - Download the Gluon Char CNN model file, signature file, model parameter and classification labels file.
 
 ```bash
 # Download the model file
@@ -17,7 +17,7 @@ $ wget https://s3.amazonaws.com/mms-char-cnn-files/crepe_gluon_epoch6.params
 # Download the signature file
 $ wget https://s3.amazonaws.com/mms-char-cnn-files/signature.json
 
-# Download classification category file
+# Download classification labels file
 $ wget https://s3.amazonaws.com/mms-char-cnn-files/synset.txt
 ```
 

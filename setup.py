@@ -49,15 +49,12 @@ requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
 gpu_platform = False
 if platform.system().lower() == 'linux':
     try:
-        import subprocess
         # Check if CUDA is installed
         cuda = ctypes.cdll.LoadLibrary('libcudart.so')
-        deviceCount=ctypes.c_int()
+        deviceCount = ctypes.c_int()
         # get the number of supported GpUs
         cuda.cudaGetDeviceCount(ctypes.byref(deviceCount))
-        if deviceCount.value < 1:
-            gpu_platform = False
-        else:
+        if deviceCount.value > 0:
             gpu_platform = True
     except Exception as e:
         gpu_platform = False

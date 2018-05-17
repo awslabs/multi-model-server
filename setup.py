@@ -11,6 +11,7 @@
 import platform
 import os
 import re
+import ctypes
 from setuptools import setup, find_packages
 
 def PyPiDescription():
@@ -50,8 +51,14 @@ if platform.system().lower() == 'linux':
     try:
         import subprocess
         # Check if CUDA is installed
-        p = subprocess.Popen(['nvcc', '--version'])
-        gpu_platform = True
+        cuda = ctypes.cdll.LoadLibrary('libcudart.so')
+        deviceCount=ctypes.c_int()
+        # get the number of supported GpUs
+        libcudart.cudaGetDeviceCount(ctypes.byref(deviceCount))
+        if deviceCount.value < 1:
+            gpu_platform = False
+        else:
+            gpu_platform = True
     except Exception as e:
         gpu_platform = False
 if gpu_platform:

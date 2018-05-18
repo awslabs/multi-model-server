@@ -205,7 +205,7 @@ def validate_service(model_path, service_file, signature_file):
 
 
 def split_on_letter(s):
-    match = re.compile("[^\W\d]").search(s)
+    match = re.compile(r"[^\W\d]").search(s)
     if match:
         return float(s[:match.start()])
 

@@ -119,7 +119,7 @@ MMS then extracts the resources (signature, synset, model symbol and params) we 
 By default, the server is started on the localhost at port 8080. You can optionally specify different host and/or port to start the server using the command line options - '--host ', '--port '.
 
 ```bash
- mxnet-model-server --models SSD=resnet50_ssd_model.model --service ssd_service.py
+ mxnet-model-server --models ssd=resnet50_ssd_model.model --service ssd_service.py
 ```
 
 You will see the output similar to the output listed below.

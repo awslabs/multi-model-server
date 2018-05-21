@@ -61,7 +61,7 @@ loaded and served with MMS.
 ```bash
 mkdir /tmp/models
 ```
-2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_pretrained_alexnet.py)
+2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/blob/master/examples/gluon_alexnet/gluon_pretrained_alexnet.py)
 and other required artifacts to this folder
 ```bash
 cp gluon_pretrained_alexnet.py synset.txt signature.json /tmp/models

@@ -43,7 +43,7 @@ with open(os.path.join("mms", "version.py")) as f:
         raise RuntimeError("Unable to find version string in version.py")
 
 requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
-                'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
+                'psutil', 'jsonschema', 'onnx>=1.1.1', 'boto3', 'importlib2',
                 'fasteners']
 # Enable Cu90 only when using linux with cuda enabled
 gpu_platform = False
@@ -59,9 +59,9 @@ if platform.system().lower() == 'linux':
     except Exception as e:
         gpu_platform = False
 if gpu_platform:
-    requirements = ['mxnet-cu90mkl>=1.1'] + requirements
+    requirements = ['mxnet-cu90mkl>=1.2'] + requirements
 else:
-    requirements = ['mxnet-mkl>=1.1'] + requirements
+    requirements = ['mxnet-mkl>=1.2'] + requirements
 setup(
     name='mxnet-model-server',
     version=ver.strip(),

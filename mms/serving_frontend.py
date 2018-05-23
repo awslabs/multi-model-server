@@ -11,10 +11,6 @@
 """
 Serving frontend for MMS
 """
-import ast
-import traceback
-import time
-import base64
 
 from functools import partial
 from flask import abort
@@ -22,6 +18,8 @@ from mms.service_manager import ServiceManager
 from mms.request_handler.flask_handler import FlaskRequestHandler
 from mms.log import get_logger
 from mms.metrics_manager import MetricsManager
+from mms.data_store.data_store import DataStore
+from mms.predict_frontend import PredictFrontend
 
 logger = get_logger()
 
@@ -31,7 +29,7 @@ class ServingFrontend(object):
     model service manager, request handler. It provides all public
     apis for users to extend and use our system.
     """
-    def __init__(self, app_name):
+    def __init__(self, app_name, batching=False, batching_strategy=None, batching_config=None, data_store_config=None):
         """
         Initialize handler for FlaskHandler and ServiceManager.
 
@@ -43,6 +41,20 @@ class ServingFrontend(object):
         try:
             self.service_manager = ServiceManager()
             self.handler = FlaskRequestHandler(app_name)
+
+            if batching:
+                # TODO generate a unique prefix in docker/mxnet-model-server and pass it into all gunicorn workers
+                # this would be to ensure there are no collisions with any data from past MMS runs
+                self.data_store = DataStore(app_name, data_store_config)
+            else:
+                self.data_store = None
+
+            self.batching = batching
+            self.batching_strategy = batching_strategy
+            self.batching_config = batching_config
+
+            predict_frontend = PredictFrontend(self.handler, self.batching, self.data_store)
+            self.predict_callback = predict_frontend.callback
 
             logger.info('Initialized serving frontend.')
         except Exception as e:
@@ -76,7 +88,9 @@ class ServingFrontend(object):
             If it is not set, cpu will be used.
         """
         for service_name, model_name, model_path, manifest in models:
-            self.service_manager.load_model(service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu)
+            self.service_manager.load_model(
+                service_name, model_name, model_path, manifest,
+                ModelServiceClassDef, gpu, self.batching, self.data_store, self.batching_strategy, self.batching_config)
 
     def register_module(self, user_defined_module_file_path):
         """
@@ -299,7 +313,7 @@ class ServingFrontend(object):
             # Setup Flask endpoint for predict api
             self.add_endpoint(predict_api,
                               self.predict_callback,
-                              modelservice=modelservice,
+                              model_service=modelservice,
                               input_names=input_names,
                               model_name=model_name)
 
@@ -415,108 +429,3 @@ class ServingFrontend(object):
         if 'APIDescriptionTotal' in MetricsManager.metrics:
             MetricsManager.metrics['APIDescriptionTotal'].update(metric=1)
         return self.handler.jsonify({'description': self.openapi_endpoints})
-
-    def predict_callback(self, **kwargs):
-        """
-        Callback for predict endpoint
-
-        Parameters
-        ----------
-        modelservice : ModelService
-            ModelService handler.
-
-        input_names: list
-            Input names in request form data.
-
-        Returns
-        ----------
-        Response
-            Http response for predict endpiont.
-        """
-        handler_start_time = time.time()
-        modelservice = kwargs['modelservice']
-        input_names = kwargs['input_names']
-        model_name = kwargs['model_name']
-
-        if model_name + '_PredictionTotal' in MetricsManager.metrics:
-            MetricsManager.metrics[model_name + '_PredictionTotal'].update(metric=1)
-
-        input_type = modelservice.signature['input_type']
-        output_type = modelservice.signature['output_type']
-
-        # Get data from request according to input type
-        input_data = []
-        if input_type == 'application/json':
-            try:
-                for name in input_names:
-                    logger.info('Request input: %s should be json tensor.', name)
-                    form_data = self.handler.get_form_data(name)
-                    form_data = ast.literal_eval(form_data)
-                    assert isinstance(form_data, list), "Input data for request argument: %s is not correct. " \
-                                                        "%s is expected but got %s instead of list" \
-                                                        % (name, input_type, type(form_data))
-                    input_data.append(form_data)
-            except Exception as e:  # pylint: disable=broad-except
-                if model_name + '_Prediction4XX' in MetricsManager.metrics:
-                    MetricsManager.metrics[model_name + '_Prediction4XX'].update(metric=1)
-                logger.error(str(e))
-                abort(400, str(e))
-        elif input_type == 'image/jpeg':
-            try:
-                for name in input_names:
-                    logger.info('Request input: %s should be image with jpeg format.', name)
-                    input_file = self.handler.get_file_data(name)
-                    if input_file:
-                        mime_type = input_file.content_type
-                        assert mime_type == input_type, 'Input data for request argument: %s is not correct. ' \
-                                                        '%s is expected but %s is given.' % \
-                                                        (name, input_type, mime_type)
-                        file_data = input_file.read()
-                        assert isinstance(file_data, (str, bytes)), 'Image file buffer should be type str or ' \
-                                                                    'bytes, but got %s' % (type(file_data))
-                    else:
-                        form_data = self.handler.get_form_data(name)
-                        if form_data:
-                            # pylint: disable=deprecated-method
-                            file_data = base64.decodestring(self.handler.get_form_data(name))
-                        else:
-                            raise ValueError('This end point is expecting a data_name of %s. '
-                                             'End point details can be found here:http://<host>:<port>/api-description'
-                                             % name)
-                    input_data.append(file_data)
-            except Exception as e:  # pylint: disable=broad-except
-                if model_name + '_Prediction4XX' in MetricsManager.metrics:
-                    MetricsManager.metrics[model_name + '_Prediction4XX'].update(metric=1)
-                logger.error(str(e))
-                abort(400, str(e))
-        else:
-            msg = '%s is not supported for input content-type' % input_type
-            if model_name + '_Prediction5XX' in MetricsManager.metrics:
-                MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)
-            logger.error(msg)
-            abort(500, "Service setting error. %s" % (msg))
-
-        # Doing prediction on model
-        try:
-            response = modelservice.inference(input_data)
-        except Exception:  # pylint: disable=broad-except
-            if model_name + '_Prediction5XX' in MetricsManager.metrics:
-                MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)
-            logger.error(str(traceback.format_exc()))
-            abort(500, "Error occurs while inference was executed on server.")
-
-        # Construct response according to output type
-        if output_type == 'application/json':
-            logger.info('Response is text.')
-        elif output_type == 'image/jpeg':
-            logger.info('Response is jpeg image encoded in base64 string.')
-        else:
-            msg = '%s is not supported for input content-type.' % output_type
-            if model_name + '_Prediction5XX' in MetricsManager.metrics:
-                MetricsManager.metrics[model_name + '_Prediction5XX'].update(metric=1)
-            logger.error(msg)
-            abort(500, "Service setting error. %s" % msg)
-
-        logger.debug("Prediction request handling time is: %s ms",
-                     ((time.time() - handler_start_time) * 1000))
-        return self.handler.jsonify({'prediction': response})

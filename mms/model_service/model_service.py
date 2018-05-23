@@ -17,6 +17,8 @@ import sys
 import time
 from abc import ABCMeta, abstractmethod, abstractproperty
 
+from mxnet import ndarray
+
 from mms.log import get_logger
 from mms.metrics_manager import MetricsManager
 
@@ -98,7 +100,7 @@ class SingleNodeService(ModelService):
             data to be sent back
         """
         pre_start_time = time.time()
-        data = self._preprocess(data)
+        data = [ndarray.concatenate(list(_input)) for _input in zip(*[self._preprocess(item) for item in data])]
         infer_start_time = time.time()
         data = self._inference(data)
         post_start_ms = time.time()

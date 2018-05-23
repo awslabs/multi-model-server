@@ -37,7 +37,7 @@ with open(os.path.join("mms", "version.py")) as f:
 
 requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
                 'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
-                'fasteners']
+                'fasteners', 'redis']
 if platform.system().lower() == 'linux':
     # TODO: Verify if mxnet import works after installing mxnet-cu90mkl
     requirements = ['mxnet-mkl>=1.1'] + requirements

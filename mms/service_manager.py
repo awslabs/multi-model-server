@@ -12,9 +12,12 @@
 This module manages model-services
 """
 import inspect
+import threading
 
 import mms.model_service.mxnet_model_service as mxnet_model_service
 from mms.model_service.model_service import load_service
+from mms.model_service.mxnet_model_service import MXNetBaseService
+from mms.model_thread import ModelThread
 from mms.model_service.mxnet_model_service import SingleNodeService
 from mms.storage import KVStorage
 
@@ -99,7 +102,8 @@ class ServiceManager(object):
             for modelservice_name in modelservice_names
         }
 
-    def load_model(self, service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu=None):
+    def load_model(self, service_name, model_name, model_path, manifest, ModelServiceClassDef,
+                   gpu=None, batching=False, data_store=None, batching_strategy=None, batching_config=None):
         """
         Load a single model into a model service by using
         user passed Model Service Class Definitions.
@@ -119,8 +123,28 @@ class ServiceManager(object):
         gpu : int
             Id of gpu device. If machine has two gpus, this number can be 0 or 1.
             If it is not set, cpu will be used.
+        batching : bool
+            If batching is enabled
+        data_store : mms.data_store.DataStore
+            Data store for batching
+        batching_strategy : string
+            Batching strategy name
+        batching_config : dict
+            Configuration dictionary for batching strategy
         """
-        self.loaded_modelservices[service_name] = ModelServiceClassDef(model_name, model_path, manifest, gpu)
+        if batching:
+            batch_size = batching_config['batch_size']
+            model_service = ModelServiceClassDef(model_name, model_path, manifest, gpu, batch_size)
+        else:
+            model_service = ModelServiceClassDef(model_name, model_path, manifest, gpu)
+
+        self.loaded_modelservices[service_name] = model_service
+
+        if batching:
+            t = threading.Thread(target=ModelThread(
+                service_name, model_service, data_store, batching_strategy, batching_config).start, args=())
+            t.daemon = True
+            t.start()
 
     def parse_modelservices_from_module(self, service_file):
         """

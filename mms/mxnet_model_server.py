@@ -21,6 +21,7 @@ from mms.log import get_logger, LOG_LEVEL_DICT, _Formatter
 from mms.serving_frontend import ServingFrontend
 from mms.metrics_manager import MetricsManager
 from mms.model_loader import ModelLoader
+from mms.redis_conf import RedisConfParser
 
 if sys.version_info[0] == 3:
     import socketserver as SocketServer
@@ -82,7 +83,16 @@ class MMS(object):
         try:
             # Args passed as Namespace object
             self.args = args if args else ArgParser.extract_args()
-            self.serving_frontend = ServingFrontend(app_name)
+            if args.batching == 'true':
+                batching_config_keys = (
+                    'batch_size', 'sleep_time', 'latency', 'starting_batch_size', 'increase_amount', 'decrease_factor')
+                batching_config = {x: vars(args)[x] for x in batching_config_keys if x in vars(args)}
+                data_store_config = RedisConfParser.parse_conf(args.redis_conf)
+                self.serving_frontend = ServingFrontend(
+                    app_name, batching=True, batching_strategy=args.batching_strategy,
+                    batching_config=batching_config, data_store_config=data_store_config)
+            else:
+                self.serving_frontend = ServingFrontend(app_name)
             self.gpu = self.args.gpu
             self.models = models
             # Setup root logger handler and level.

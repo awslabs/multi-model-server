@@ -86,6 +86,36 @@ class ArgParser(object):
                                  'the current directory. '
                                  'If you pass "cloudwatch", metrics will be pushed to AWS CloudWatch Service.')
 
+        parser.add_argument('--batching', default='false', choices=['true', 'false'],
+                            help='Enable back-end batching of requests. NOTE: This is an experimental feature.')
+
+        parser.add_argument('--redis-conf', default='redis.conf',
+                            help='Location of Redis Configuration file. Only applicable if batching is enabled.')
+
+        parser.add_argument('--batch-size', type=int, default=32,
+                            help='Maximum batch size. Should be a multiple of 32. '
+                                 'Only applicable if batching is enabled.')
+
+        parser.add_argument('--latency', type=float, default=0.1,
+                            help='Latency setting for batching in seconds. Only applicable if batching is enabled.')
+
+        parser.add_argument('--sleep-time', type=float, default=0.001,
+                            help='Polling sleep time for batching in seconds. Only applicable if batching is enabled.')
+
+        parser.add_argument('--batching-strategy', default="manual", choices=['manual', 'naive', 'aimd'],
+                            help='Batching strategy name. Only applicable if batching is enabled.')
+
+        parser.add_argument('--starting-batch-size', type=int, default=2,
+                            help='Starting batch size for AIMD batching strategy.'
+                                 'Only applicable if batching is enabled and batching strategy is aimd')
+
+        parser.add_argument('--increase-amount', type=int, default=1,
+                            help='Batch size increase amount for AIMD batching strategy.'
+                            'Only applicable if batching is enabled and batching strategy is aimd')
+
+        parser.add_argument('--decrease-factor', type=float, default=0.9,
+                            help='Batch size decrease factor for AIMD batching strategy.'
+                                 'Only applicable if batching is enabled and batching strategy is aimd')
         return parser
 
     @staticmethod

@@ -34,13 +34,7 @@ pkgs.append('tools')
 # $ twine upload dist/*
 
 with open(os.path.join("mms", "version.py")) as f:
-    version = f.read()
-    version_re = r"^__version__ = ([^'\"]*)(?:\n\s*)"
-    version_groups = re.search(version_re, version, re.M)
-    if version_groups:
-        ver = version_groups.group(1)
-    else:
-        raise RuntimeError("Unable to find version string in version.py")
+    exec(f.read())
 
 requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
                 'psutil', 'jsonschema', 'onnx>=1.1.1', 'boto3', 'importlib2',
@@ -64,7 +58,7 @@ else:
     requirements = ['mxnet-mkl>=1.2'] + requirements
 setup(
     name='mxnet-model-server',
-    version=ver.strip(),
+    version=__version__.strip(),
     description='Model Server for Apache MXNet is a tool for serving neural net models for inference',
     long_description=PyPiDescription(),
     url='https://github.com/awslabs/mxnet-model-server',

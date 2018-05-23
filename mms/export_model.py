@@ -257,12 +257,22 @@ def convert_onnx_model(model_path, onnx_file):
     :param onnx_file:
     :return:
     """
-    import onnx_mxnet
+    from mxnet.contrib import onnx as onnx_mxnet
     model_name = os.path.splitext(os.path.basename(onnx_file))[0]
     symbol_file = '%s-symbol.json' % model_name
     params_file = '%s-0000.params' % model_name
+    signature_file = 'signature.json'
 
-    sym, params = onnx_mxnet.import_model(os.path.join(model_path, onnx_file))
+    sym, arg_params, aux_params = onnx_mxnet.import_model(os.path.join(model_path, onnx_file))
+    # UNION of argument and auxillary parameters
+    params = dict(arg_params, **aux_params)
+    # rewrite input data_name correctly
+    with open(os.path.join(model_path, signature_file), 'r') as f:
+        data = json.loads(f.read())
+        data['inputs'][0]['data_name'] = 'data_0'
+    with open(os.path.join(model_path, signature_file), 'w') as f:
+            f.write(json.dumps(data, indent = 2))
+
     with open(os.path.join(model_path, symbol_file), 'w') as f:
         f.write(sym.tojson())
 

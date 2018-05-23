@@ -18,10 +18,11 @@ onnx_model_urls = {
     'inception_v1': 'https://s3.amazonaws.com/download.onnx/models/inception_v1.tar.gz',
     'inception_v2': 'https://s3.amazonaws.com/download.onnx/models/inception_v2.tar.gz',
     'resnet50': 'https://s3.amazonaws.com/download.onnx/models/resnet50.tar.gz',
-    'shufflenet': 'https://s3.amazonaws.com/download.onnx/models/shufflenet.tar.gz',
     'squeezenet': 'https://s3.amazonaws.com/download.onnx/models/squeezenet.tar.gz',
     'vgg16': 'https://s3.amazonaws.com/download.onnx/models/vgg16.tar.gz',
     'vgg19': 'https://s3.amazonaws.com/download.onnx/models/vgg19.tar.gz'}
+# TODO: Re-add shufflenet once error issue #411 on github is resolved
+# 'shufflenet': 'https://s3.amazonaws.com/download.onnx/models/shufflenet.tar.gz',
 
 # models from onnx-mxnet model zoo
 onnx_mxnet_model_urls = {
@@ -171,7 +172,7 @@ def start_test(
         if model_type == 'mxnet':
             data_name = 'data'
         else:
-            data_name = 'input_0'
+            data_name = 'data_0'
         for models in model_list:
             output = subprocess.check_output(['curl',
                                               '-X',

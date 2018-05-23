@@ -15,12 +15,6 @@ import re
 
 def test_mms_version():
     with open(os.path.join("mms", "version.py")) as f:
-        version = f.read()
-        version_re = r"^__version__ = ([^'\"]*)(?:\n\s*)"
-        version_groups = re.search(version_re, version, re.M)
-        if version_groups:
-            ver = version_groups.group(1)
-        else:
-            assert 0, "Version file not found"
+        exec(f.read(), globals())
 
-        assert ver.strip() == str(mms.__version__), "Versions don't match"
+    assert __version__ == str(mms.__version__), "Versions don't match"

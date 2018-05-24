@@ -37,7 +37,7 @@ with open(os.path.join("mms", "version.py")) as f:
     exec(f.read())
 
 requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
-                'psutil', 'jsonschema', 'onnx>=1.1.1', 'boto3', 'importlib2',
+                'psutil', 'jsonschema', 'onnx==1.1.1', 'boto3', 'importlib2',
                 'fasteners']
 # Enable Cu90 only when using linux with cuda enabled
 gpu_platform = False

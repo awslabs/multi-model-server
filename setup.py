@@ -11,6 +11,7 @@
 import platform
 import os
 import re
+import ctypes
 from setuptools import setup, find_packages
 
 def PyPiDescription():
@@ -36,13 +37,25 @@ with open(os.path.join("mms", "version.py")) as f:
     exec(f.read())
 
 requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
-                'psutil', 'jsonschema', 'onnx-mxnet>=0.4.2', 'boto3', 'importlib2',
+                'psutil', 'jsonschema', 'onnx>=1.1.1', 'boto3', 'importlib2',
                 'fasteners']
+# Enable Cu90 only when using linux with cuda enabled
+gpu_platform = False
 if platform.system().lower() == 'linux':
-    # TODO: Verify if mxnet import works after installing mxnet-cu90mkl
-    requirements = ['mxnet-mkl>=1.1'] + requirements
+    try:
+        # Check if CUDA is installed
+        cuda = ctypes.cdll.LoadLibrary('libcudart.so')
+        deviceCount = ctypes.c_int()
+        # get the number of supported GpUs
+        cuda.cudaGetDeviceCount(ctypes.byref(deviceCount))
+        if deviceCount.value > 0:
+            gpu_platform = True
+    except Exception as e:
+        gpu_platform = False
+if gpu_platform:
+    requirements = ['mxnet-cu90mkl>=1.2'] + requirements
 else:
-    requirements = ['mxnet-mkl>=1.1'] + requirements
+    requirements = ['mxnet-mkl>=1.2'] + requirements
 setup(
     name='mxnet-model-server',
     version=__version__.strip(),

@@ -36,7 +36,7 @@ def onnx_mxnet():
 
     patcher = patch.dict('sys.modules', modules)
     patcher.start()
-    import onnx_mxnet
+    from mxnet.contrib import onnx as onnx_mxnet
     yield onnx_mxnet
     patcher.stop()
 
@@ -150,18 +150,18 @@ def test_temp_files_cleanup_no_export_path(tmpdir, module_dir):
     assert os.path.exists(export_path), 'no model created - export failed'
     final_user_files = set(os.listdir(model_path))
     final_export_files = set(os.listdir(os.getcwd()))
-    
+
     user_files_created = final_user_files-initial_user_files
     user_files_deleted = initial_user_files-final_user_files
     assert len(user_files_created) == 0, 'temporary files not deleted'
     assert len(user_files_deleted) == 0, 'user files deleted'
-    
+
     export_files_created= final_export_files- initial_export_files
     assert len(export_files_created) == 1 and list(export_files_created)[0].endswith('.model'), \
         'something other than the model file got generated'
     export_files_deleted = initial_export_files - final_export_files
     assert len(export_files_deleted) == 0, 'user files deleted'
-    
+
     os.remove(export_path)
 
 
@@ -178,12 +178,12 @@ def test_temp_files_cleanup_export_path(tmpdir, module_dir):
     files_created = set(final_files)-set(initial_files)
     assert len(files_created) == 0, 'temporary files not deleted'
     os.remove(export_path)
-    
+
 
 def test_export_module(tmpdir, module_dir):
     export_path = '{}/test.model'.format(tmpdir)
     export_model('test', module_dir, None, export_path)
-    
+
     assert os.path.exists(export_path), 'no model created - export failed'
     zip_contents = list_zip(export_path)
 
@@ -282,4 +282,3 @@ def test_export_params_symbol_mismatch(module_dir):
         export_model('test', module_dir)
 
     assert 'prefix do not match' in str(e.value)
-

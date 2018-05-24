@@ -135,7 +135,17 @@ class MXNetBaseService(SingleNodeService):
         check_input_shape(data, self.signature)
         data = [item.as_in_context(self.ctx) for item in data]
         self.mx_model.forward(DataBatch(data))
-        return self.mx_model.get_outputs()
+        data = self.mx_model.get_outputs()
+        # by pass lazy evaluation get_outputs either returns a list of nd arrays
+        # a list of list of ndarrays
+        for d in data:
+            if isinstance(d, list):
+                for n in data:
+                    if isinstance(n, mx.ndarray.ndarray.NDArray):
+                        n.wait_to_read()
+            elif isinstance(d, mx.ndarray.ndarray.NDArray):
+                d.wait_to_read()
+        return data
 
     def ping(self):
         """

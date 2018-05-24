@@ -278,8 +278,6 @@ def convert_onnx_model(model_path, onnx_file):
                 shape.append(val.dim_value)
             input_data.append((graph_input.name, tuple(shape)))
 
-
-
     sym, arg_params, aux_params = onnx_mxnet.import_model(os.path.join(model_path, onnx_file))
     # UNION of argument and auxillary parameters
     params = dict(arg_params, **aux_params)

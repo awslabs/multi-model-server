@@ -258,10 +258,27 @@ def convert_onnx_model(model_path, onnx_file):
     :return:
     """
     from mxnet.contrib import onnx as onnx_mxnet
+    import onnx
     model_name = os.path.splitext(os.path.basename(onnx_file))[0]
     symbol_file = '%s-symbol.json' % model_name
     params_file = '%s-0000.params' % model_name
     signature_file = 'signature.json'
+    # Find input symbol name and shape
+    model_proto = onnx.load(os.path.join(model_path, onnx_file))
+    graph = model_proto.graph
+    _params = set()
+    for tensor_vals in graph.initializer:
+        _params.add(tensor_vals.name)
+
+    input_data = []
+    for graph_input in graph.input:
+        shape = []
+        if graph_input.name not in _params:
+            for val in graph_input.type.tensor_type.shape.dim:
+                shape.append(val.dim_value)
+            input_data.append((graph_input.name, tuple(shape)))
+
+
 
     sym, arg_params, aux_params = onnx_mxnet.import_model(os.path.join(model_path, onnx_file))
     # UNION of argument and auxillary parameters
@@ -269,9 +286,9 @@ def convert_onnx_model(model_path, onnx_file):
     # rewrite input data_name correctly
     with open(os.path.join(model_path, signature_file), 'r') as f:
         data = json.loads(f.read())
-        data['inputs'][0]['data_name'] = 'data_0'
+        data['inputs'][0]['data_name'] = input_data[0][0]
     with open(os.path.join(model_path, signature_file), 'w') as f:
-            f.write(json.dumps(data, indent = 2))
+        f.write(json.dumps(data, indent=2))
 
     with open(os.path.join(model_path, symbol_file), 'w') as f:
         f.write(sym.tojson())

@@ -174,6 +174,10 @@ def start_test(
         else:
             data_name = 'data_0'
         for models in model_list:
+            if model_type == 'onnx':
+                with open(os.path.join(tmpdir,models,'signature.json'),'r') as f:
+                    loaded = json.loads(f.read())
+                    data_name = loaded['inputs'][0]['data_name']
             output = subprocess.check_output(['curl',
                                               '-X',
                                               'POST',

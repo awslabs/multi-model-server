@@ -23,6 +23,7 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 | [VGG16](#vgg16) | Image Classification | ImageNet | MXNet | 490 MB | [.model](https://s3.amazonaws.com/model-server/models/vgg16/vgg16.model) |
 | [VGG19](#vgg19) | Image Classification | ImageNet | MXNet | 509 MB | [.model](https://s3.amazonaws.com/model-server/models/vgg19/vgg19.model) |
 | [VGG19](#vgg19_onnx) | Image Classification | ImageNet | ONNX | 548 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-vgg19/vgg19.model) |
+| [FERPlus](#ferplus_onnx) | Emotion Detection | FER2013 | ONNX | 35MB | [.model](https://s3.amazonaws.com/model-server/models/FERPlus/FERPlus.model) |
 
 ## Details on Each Model
 Each model below comes with a basic description, and where available, a link to a scholarly article about the model.
@@ -300,4 +301,26 @@ mxnet-model-server --models vgg19=https://s3.amazonaws.com/model-server/models/o
 * **Run Prediction**:
 ```bash
 curl -X POST http://127.0.0.1:8080/vgg19/predict -F "input_0=@kitten.jpeg"
+```
+
+## <a name="ferplus_onnx"></a>FERPlus
+* **Type**: Emotion detection trained on FER2013 dataset (model imported from ONNX)
+
+* **Reference**: [Barsoum et al.](https://arxiv.org/abs/1608.01041)
+
+* **Model Service**: [emotion_detection_service.py](https://s3.amazonaws.com/model-server/models/FERPlus/emotion_detection_service.py)
+
+* **Start Server**:
+```bash
+mxnet-model-server --models emotion_detection=https://s3.amazonaws.com/model-server/models/FERPlus/FERPlus.model
+```
+
+* **Get a test image**:
+```bash
+curl -O https://s3.amazonaws.com/model-server/models/FERPlus/input.jpg
+```
+
+* **Run Prediction**:
+```bash
+curl -X POST http://127.0.0.1:8080/emotion_detection/predict -F "Input2505=@input.jpg"
 ```

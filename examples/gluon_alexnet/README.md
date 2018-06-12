@@ -95,7 +95,6 @@ We created a custom imperative model using Gluon. Refer to
 The network definition, which is defined in the example, is as follows
 
 ```python
-
 class GluonImperativeAlexNet(gluon.Block):
     """
     Fully imperative gluon Alexnet model

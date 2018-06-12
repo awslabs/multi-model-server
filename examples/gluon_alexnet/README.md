@@ -36,6 +36,9 @@ Loading and serving a pre-trained Gluon model is the simplest of the three scena
 While it is easy to access a model with a couple of lines of code, with MMS you will want to use a [MMS custom service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/custom_service.md) code pattern as follows:
 
 ```python
+import mxnet
+from mms.model_service.gluon_vision_service import GluonVisionService
+
 class PretrainedAlexnetService(GluonVisionService):
     """
     Pretrained alexnet Service
@@ -92,6 +95,7 @@ We created a custom imperative model using Gluon. Refer to
 The network definition, which is defined in the example, is as follows
 
 ```python
+
 class GluonImperativeAlexNet(gluon.Block):
     """
     Fully imperative gluon Alexnet model
@@ -129,6 +133,9 @@ class GluonImperativeAlexNet(gluon.Block):
 
 The pre-process, inference and post-process steps are similar to the service code that we saw in the [above section](#load-and-serve-a-pre-trained-gluon-model).
 ```python
+import mxnet
+from mms.model_service.gluon_vision_service import GluonVisionService
+
 class ImperativeAlexnetService(GluonVisionService):
     """
     Gluon alexnet Service

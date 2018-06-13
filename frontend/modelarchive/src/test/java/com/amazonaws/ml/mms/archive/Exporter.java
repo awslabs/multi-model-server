@@ -1,0 +1,299 @@
+package com.amazonaws.ml.mms.archive;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+public final class Exporter {
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    private Exporter() {}
+
+    public static void main(String[] args) {
+        String jarName = getJarName();
+
+        Options options = Config.getOptions();
+        DefaultParser parser = new DefaultParser();
+        try {
+            if (args.length == 0
+                    || args[0].equalsIgnoreCase("-h")
+                    || args[0].equalsIgnoreCase("--help")) {
+                printHelp("java -jar " + jarName + " <export>", options);
+                return;
+            }
+
+            CommandLine cmd = parser.parse(options, args, null, false);
+            List<String> cmdArgs = cmd.getArgList();
+            if (cmdArgs.isEmpty()) {
+                printHelp("java -jar " + jarName + " <export>", options);
+                return;
+            }
+            Config config = new Config(cmd);
+            String action = cmdArgs.get(0);
+            if (!"export".equalsIgnoreCase(action)) {
+                printHelp("java -jar " + jarName + " <export>", options);
+                return;
+            }
+
+            String modelName = config.getModelName();
+            if (!modelName.matches("[A-Za-z][A-Za-z0-9_\\-.]+")) {
+                System.err.println(
+                        "model-name must starts with letter and only allows alphanumeric characters, hyphens, underscore or dot.");
+                return;
+            }
+
+            File modelPath = new File(config.getModelPath()).getCanonicalFile();
+            if (!modelPath.exists()) {
+                System.err.println("model-path not found: " + modelName);
+                return;
+            }
+            String output = config.getOutputFile();
+            File outputFile;
+            if (output == null) {
+                outputFile = new File(modelPath.getParentFile(), modelName + ".model");
+            } else {
+                outputFile = new File(output);
+            }
+
+            if (modelPath.getName().endsWith(".model") && modelPath.isFile()) {
+                ModelArchive.migrate(modelPath, outputFile);
+                return;
+            }
+
+            if (!modelPath.isDirectory()) {
+                System.err.println("model-path should be a directory or model archive file.");
+                return;
+            }
+
+            File signatureFile = new File(modelPath, "signature.json");
+            if (!signatureFile.exists()) {
+                System.err.println("signature.json is not found in: " + modelPath);
+                return;
+            }
+
+            Signature signature;
+            try (Reader reader =
+                    new InputStreamReader(
+                            new FileInputStream(signatureFile), StandardCharsets.UTF_8)) {
+                signature = GSON.fromJson(reader, Signature.class);
+            } catch (JsonSyntaxException e) {
+                System.err.println("signature.json is not a valid json file.");
+                return;
+            }
+
+            File[] files = modelPath.listFiles();
+            if (files == null) {
+                System.err.println("Symbol file is not found in: " + modelPath);
+                return;
+            }
+
+            File symbolFile = findUniqueFile(files, "-symbol.json");
+            if (symbolFile == null) {
+                System.err.println("Symbol file is not found in: " + modelPath);
+                return;
+            }
+
+            File paramsFile = findUniqueFile(files, ".params");
+            if (paramsFile == null) {
+                System.err.println("Parameters file is not found in: " + modelPath);
+                return;
+            }
+
+            String handler = config.getService();
+            File serviceFile;
+            if (handler == null) {
+                serviceFile = findUniqueFile(files, "_service.py");
+                if (serviceFile == null) {
+                    System.err.println("service file is not found in: " + modelPath);
+                    return;
+                }
+            } else {
+                serviceFile = new File(modelPath, handler);
+                if (serviceFile.exists()) {
+                    System.err.println("service file is not found in: " + modelPath);
+                    return;
+                }
+            }
+
+            Manifest manifest = new Manifest();
+            Manifest.Model model = new Manifest.Model();
+            model.setSignatureFile("signature.json");
+            model.setSymbolFile(symbolFile.getName());
+            model.setParametersFile(paramsFile.getName());
+            model.setHandler(serviceFile.getName());
+            manifest.setModel(model);
+
+            try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(outputFile))) {
+                zos.putNextEntry(new ZipEntry("MANIFEST.json"));
+                zos.write(GSON.toJson(manifest).getBytes(StandardCharsets.UTF_8));
+                zos.putNextEntry(new ZipEntry(model.getSignatureFile()));
+                zos.write(GSON.toJson(signature).getBytes(StandardCharsets.UTF_8));
+
+                int prefix = modelPath.getCanonicalPath().length();
+
+                FileFilter filter =
+                        pathname -> {
+                            if (pathname.isHidden()) {
+                                return false;
+                            }
+                            String fileName = pathname.getName();
+                            return !"MANIFEST.json".equalsIgnoreCase(fileName)
+                                    && !"signature.json".equalsIgnoreCase(fileName);
+                        };
+
+                for (File file : files) {
+                    if (filter.accept(file)) {
+                        ZipUtils.addToZip(prefix, file, filter, zos);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                if (!outputFile.delete()) {
+                    outputFile.deleteOnExit();
+                }
+            }
+        } catch (InvalidModelException | IOException e) {
+            System.err.println(e.getMessage());
+        } catch (ParseException e) {
+            System.err.println(e.getMessage());
+            printHelp("java -jar " + jarName + " <export>", options);
+        }
+    }
+
+    private static void printHelp(String message, Options options) {
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.setLeftPadding(1);
+        formatter.setWidth(120);
+        formatter.printHelp(message, options);
+    }
+
+    private static String getJarName() {
+        URL url = Exporter.class.getProtectionDomain().getCodeSource().getLocation();
+        String path = url.getPath();
+        if ("file".equalsIgnoreCase(url.getProtocol())) {
+            File file = new File(path);
+            if (path.toLowerCase().endsWith(".jar")) { // we only support jar file for now
+                return file.getName();
+            }
+        }
+        return null;
+    }
+
+    private static File findUniqueFile(File[] list, String extension) throws InvalidModelException {
+        File ret = null;
+        for (File file : list) {
+            if (file.getName().endsWith(extension)) {
+                if (ret != null) {
+                    throw new InvalidModelException(
+                            "Multiple " + extension + " file found in the path.");
+                }
+                ret = file;
+            }
+        }
+        return ret;
+    }
+
+    private static final class Config {
+
+        private String modelName;
+        private String modelPath;
+        private String service;
+        private String outputFile;
+
+        public Config(CommandLine cmd) {
+            modelName = cmd.getOptionValue("model-name");
+            modelPath = cmd.getOptionValue("model-path");
+            service = cmd.getOptionValue("service-file-path");
+            outputFile = cmd.getOptionValue("output-file");
+        }
+
+        public static Options getOptions() {
+            Options options = new Options();
+            options.addOption(
+                    Option.builder("n")
+                            .longOpt("model-name")
+                            .hasArg()
+                            .required()
+                            .argName("MODEL_NAME")
+                            .desc(
+                                    "Exported model name. Exported file will be named as model-name.model and saved in current working directory.")
+                            .build());
+            options.addOption(
+                    Option.builder("p")
+                            .longOpt("model-path")
+                            .hasArg()
+                            .required()
+                            .argName("MODEL_PATH")
+                            .desc(
+                                    "Path to the folder containing model related files or legacy model archive. Signature file is required.")
+                            .build());
+            options.addOption(
+                    Option.builder("s")
+                            .longOpt("service-file-path")
+                            .hasArg()
+                            .argName("SERVICE_FILE_PATH")
+                            .desc(
+                                    "Service file path to handle custom MMS inference logic. If path is not provided and the input defined in signature.json is application/json, this tool will include the MXNetBaseService in the archive. Alternatively, if the input defined in signature.json is image/jpeg this tool will include the MXNetVisionService in the archive.")
+                            .build());
+            options.addOption(
+                    Option.builder("o")
+                            .longOpt("output-file")
+                            .hasArg()
+                            .argName("OUTPUT_FILE")
+                            .desc("Output model archive file path.")
+                            .build());
+            return options;
+        }
+
+        public String getModelName() {
+            return modelName;
+        }
+
+        public void setModelName(String modelName) {
+            this.modelName = modelName;
+        }
+
+        public String getModelPath() {
+            return modelPath;
+        }
+
+        public void setModelPath(String modelPath) {
+            this.modelPath = modelPath;
+        }
+
+        public String getService() {
+            return service;
+        }
+
+        public void setService(String service) {
+            this.service = service;
+        }
+
+        public String getOutputFile() {
+            return outputFile;
+        }
+
+        public void setOutputFile(String outputFile) {
+            this.outputFile = outputFile;
+        }
+    }
+}

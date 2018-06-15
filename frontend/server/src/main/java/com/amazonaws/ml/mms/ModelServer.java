@@ -3,6 +3,7 @@ package com.amazonaws.ml.mms;
 import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.ServerGroups;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import com.amazonaws.ml.mms.wlm.WorkLoadManager;
@@ -12,11 +13,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollServerSocketChannel;
-import io.netty.channel.kqueue.KQueue;
-import io.netty.channel.kqueue.KQueueServerSocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.ServerChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
@@ -66,11 +63,12 @@ public class ModelServer {
             serverGroups.shutdown(true);
             logger.info("Model server stopped.");
         }
+        System.exit(-1); // NOPMD
     }
 
     public void initModelStore() throws InvalidModelException, WorkerInitializationException {
         logger.debug("Loading initial models...");
-        WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getMxnetGroup());
+        WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getBackendGroup());
         ModelManager.init(configManager, wlm);
 
         File modelStore = new File(configManager.getModelStore());
@@ -113,25 +111,14 @@ public class ModelServer {
         EventLoopGroup serverGroup = serverGroups.getServerGroup();
         EventLoopGroup workerGroup = serverGroups.getChildGroup();
 
+        Class<? extends ServerChannel> channelClass = NettyUtils.getServerChannel();
+
         ServerBootstrap b = new ServerBootstrap();
-        if (Epoll.isAvailable()) {
-            b.option(ChannelOption.SO_BACKLOG, 1024)
-                    .channel(EpollServerSocketChannel.class)
-                    .childOption(ChannelOption.SO_LINGER, 0)
-                    .childOption(ChannelOption.SO_REUSEADDR, true)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true);
-            logger.info("Initialize server with Epoll.");
-        } else if (KQueue.isAvailable()) {
-            b.option(ChannelOption.SO_BACKLOG, 1024)
-                    .channel(KQueueServerSocketChannel.class)
-                    .childOption(ChannelOption.SO_LINGER, 0)
-                    .childOption(ChannelOption.SO_REUSEADDR, true)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true);
-            logger.info("Initialize server with Kqueue.");
-        } else {
-            b.channel(NioServerSocketChannel.class);
-            logger.info("Initialize server with NIO.");
-        }
+        b.option(ChannelOption.SO_BACKLOG, 1024)
+                .channel(channelClass)
+                .childOption(ChannelOption.SO_LINGER, 0)
+                .childOption(ChannelOption.SO_REUSEADDR, true)
+                .childOption(ChannelOption.SO_KEEPALIVE, true);
         b.group(serverGroup, workerGroup);
         b.childHandler(new ServerInitializer(sslCtx));
         future = b.bind(port).sync();
@@ -148,6 +135,9 @@ public class ModelServer {
                             }
                             serverGroups.registerChannel(f.channel());
                         });
+
+        logger.info("Initialize server with: {}.", channelClass.getSimpleName());
+
         future.sync();
 
         ChannelFuture f = future.channel().closeFuture();

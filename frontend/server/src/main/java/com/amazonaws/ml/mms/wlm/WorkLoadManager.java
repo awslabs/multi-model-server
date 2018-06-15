@@ -14,13 +14,13 @@ public class WorkLoadManager {
     private ConcurrentHashMap<String, List<WorkerThread>> workers;
 
     private ConfigManager configManager;
-    private EventLoopGroup mxnetGroup;
+    private EventLoopGroup backendGroup;
     private int port = 9000;
     private int gpuCounter;
 
-    public WorkLoadManager(ConfigManager configManager, EventLoopGroup mxnetGroup) {
+    public WorkLoadManager(ConfigManager configManager, EventLoopGroup backendGroup) {
         this.configManager = configManager;
-        this.mxnetGroup = mxnetGroup;
+        this.backendGroup = backendGroup;
         threadPool = Executors.newCachedThreadPool();
         workers = new ConcurrentHashMap<>();
     }
@@ -72,11 +72,13 @@ public class WorkLoadManager {
             BatchAggregator aggregator = new BatchAggregator(configManager, model);
             WorkerThread thread =
                     new WorkerThread(
-                            configManager, threads, mxnetGroup, port, gpuId, model, aggregator);
+                            configManager, threads, backendGroup, port, gpuId, model, aggregator);
             thread.connect();
             threads.add(thread);
             threadPool.submit(thread);
-            port++;
+            if (!configManager.isDebug()) {
+                port++;
+            }
         }
     }
 }

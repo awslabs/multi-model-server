@@ -44,6 +44,7 @@ public class ModelServerTest {
 
     private ConfigManager configManager;
     private ModelServer server;
+    private MockWorker worker;
     CountDownLatch latch;
     String result;
     private String openApiResult;
@@ -52,9 +53,14 @@ public class ModelServerTest {
     public void beforeSuite()
             throws InterruptedException, InvalidModelException, WorkerInitializationException,
                     IOException {
+        System.setProperty("DEBUG", "true");
         configManager = new ConfigManager();
 
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
+
+        worker = new MockWorker();
+        worker.start();
+
         server = new ModelServer(configManager);
         server.initModelStore();
         server.start();
@@ -67,6 +73,7 @@ public class ModelServerTest {
     @AfterSuite
     public void afterSuite() {
         server.stop();
+        worker.stop();
     }
 
     @Test
@@ -172,7 +179,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "\"test\"");
+        Assert.assertEquals(result, "test");
     }
 
     private Channel connect() {

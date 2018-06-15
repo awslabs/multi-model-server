@@ -51,15 +51,21 @@ public class WorkerLifeCycle {
         String[] envp = new String[] {pythonEnv};
 
         try {
-            process = Runtime.getRuntime().exec(args, envp, workingDir);
             latch = new CountDownLatch(1);
 
-            String threadName = "W-" + port;
-            new ReaderThread(threadName, process.getErrorStream(), true, this).start();
-            new ReaderThread(threadName, process.getInputStream(), false, this).start();
+            synchronized (this) {
+                process = Runtime.getRuntime().exec(args, envp, workingDir);
 
-            latch.await(2, TimeUnit.MINUTES);
-            return success;
+                String threadName = "W-" + port;
+                new ReaderThread(threadName, process.getErrorStream(), true, this).start();
+                new ReaderThread(threadName, process.getInputStream(), false, this).start();
+            }
+
+            if (latch.await(2, TimeUnit.MINUTES)) {
+                return success;
+            }
+            logger.error("Backend worker startup time out.");
+            exit();
         } catch (IOException e) {
             logger.error("Failed start worker process", e);
             exit();

@@ -1,15 +1,5 @@
 package com.amazonaws.ml.mms.util;
 
-import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollDomainSocketChannel;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.kqueue.KQueue;
-import io.netty.channel.kqueue.KQueueDomainSocketChannel;
-import io.netty.channel.kqueue.KQueueEventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,7 +42,8 @@ public final class ConfigManager {
     }
 
     public boolean isDebug() {
-        return Boolean.parseBoolean(prop.getProperty(DEBUG, "false"));
+        return Boolean.getBoolean("DEBUG")
+                || Boolean.parseBoolean(prop.getProperty(DEBUG, "false"));
     }
 
     public int getPort() {
@@ -83,6 +74,10 @@ public final class ConfigManager {
         return getIntProperty(NUMBER_OF_GPU, 0);
     }
 
+    public int getNettyIoRatio() {
+        return getIntProperty(NETTY_IO_RATIO, 50);
+    }
+
     public String getModelServerHome() {
         String mmsHome = System.getenv("MODEL_SERVER_HOME");
         if (mmsHome == null) {
@@ -109,30 +104,6 @@ public final class ConfigManager {
 
     public SslContext getSslContext() {
         return null;
-    }
-
-    public EventLoopGroup newEventLoopGroup(int threads, boolean adjustIoRatio) {
-        if (Epoll.isAvailable()) {
-            return new EpollEventLoopGroup(threads);
-        } else if (KQueue.isAvailable()) {
-            return new KQueueEventLoopGroup(threads);
-        }
-
-        NioEventLoopGroup group = new NioEventLoopGroup(threads);
-        if (adjustIoRatio) {
-            group.setIoRatio(getIntProperty(NETTY_IO_RATIO, 50));
-        }
-        return group;
-    }
-
-    public Class<? extends Channel> getChannel() {
-        if (Epoll.isAvailable()) {
-            return EpollDomainSocketChannel.class;
-        } else if (KQueue.isAvailable()) {
-            return KQueueDomainSocketChannel.class;
-        }
-
-        return NioSocketChannel.class;
     }
 
     public String getProperty(String key, String def) {

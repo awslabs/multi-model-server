@@ -7,6 +7,22 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.ServerChannel;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerDomainSocketChannel;
+import io.netty.channel.epoll.EpollServerSocketChannel;
+import io.netty.channel.kqueue.KQueue;
+import io.netty.channel.kqueue.KQueueDomainSocketChannel;
+import io.netty.channel.kqueue.KQueueEventLoopGroup;
+import io.netty.channel.kqueue.KQueueServerDomainSocketChannel;
+import io.netty.channel.kqueue.KQueueServerSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -20,11 +36,15 @@ import io.netty.handler.codec.http.multipart.FileUpload;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.util.CharsetUtil;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /** A utility class that handling Netty request and response. */
 public final class NettyUtils {
+
+    private static final String UDS_PREFIX = "/tmp/.mms.worker.";
 
     private NettyUtils() {}
 
@@ -79,6 +99,53 @@ public final class NettyUtils {
         if (ch.isActive()) {
             ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
         }
+    }
+
+    public static EventLoopGroup newEventLoopGroup(int threads) {
+        if (Epoll.isAvailable()) {
+            return new EpollEventLoopGroup(threads);
+        } else if (KQueue.isAvailable()) {
+            return new KQueueEventLoopGroup(threads);
+        }
+
+        return new NioEventLoopGroup(threads);
+    }
+
+    public static Class<? extends ServerChannel> getServerChannel() {
+        if (Epoll.isAvailable()) {
+            return EpollServerSocketChannel.class;
+        } else if (KQueue.isAvailable()) {
+            return KQueueServerSocketChannel.class;
+        }
+
+        return NioServerSocketChannel.class;
+    }
+
+    public static Class<? extends ServerChannel> getServerUdsChannel() {
+        if (Epoll.isAvailable()) {
+            return EpollServerDomainSocketChannel.class;
+        } else if (KQueue.isAvailable()) {
+            return KQueueServerDomainSocketChannel.class;
+        }
+
+        return NioServerSocketChannel.class;
+    }
+
+    public static Class<? extends Channel> getClientChannel() {
+        if (Epoll.isAvailable()) {
+            return EpollDomainSocketChannel.class;
+        } else if (KQueue.isAvailable()) {
+            return KQueueDomainSocketChannel.class;
+        }
+
+        return NioSocketChannel.class;
+    }
+
+    public static SocketAddress getSocketAddress(int port) {
+        if (Epoll.isAvailable() || KQueue.isAvailable()) {
+            return new DomainSocketAddress(UDS_PREFIX + port);
+        }
+        return new InetSocketAddress("127.0.0.1", port);
     }
 
     public static byte[] getBytes(ByteBuf buf) {

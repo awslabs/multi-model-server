@@ -1,6 +1,7 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.util.NettyUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -10,7 +11,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.unix.DomainSocketAddress;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.List;
@@ -22,8 +22,6 @@ import org.slf4j.LoggerFactory;
 public class WorkerThread extends Thread {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
-
-    private static final String UDS_PREFIX = "/tmp/.mms.worker.";
 
     private ConfigManager configManager;
     private EventLoopGroup backendEventGroup;
@@ -92,18 +90,18 @@ public class WorkerThread extends Thread {
         try {
             Bootstrap b = new Bootstrap();
             b.group(backendEventGroup)
-                    .channel(configManager.getChannel())
+                    .channel(NettyUtils.getClientChannel())
                     .handler(
                             new ChannelInitializer<Channel>() {
                                 @Override
                                 public void initChannel(Channel ch) {
                                     ChannelPipeline p = ch.pipeline();
                                     p.addLast(new MessageCodec());
-                                    p.addLast(new MxNetHandler());
+                                    p.addLast(new WorkerHandler());
                                 }
                             });
 
-            SocketAddress address = new DomainSocketAddress(UDS_PREFIX + port);
+            SocketAddress address = NettyUtils.getSocketAddress(port);
             backendChannel = b.connect(address).sync().channel();
             backendChannel
                     .closeFuture()
@@ -112,7 +110,7 @@ public class WorkerThread extends Thread {
                                     future -> {
                                         parentThreads.remove(WorkerThread.this); // NOPMD
                                         shutdown();
-                                        logger.info("Worker disconnection.");
+                                        logger.info("Worker disconnected.");
                                     });
         } catch (InterruptedException e) {
             throw new WorkerInitializationException(e);
@@ -134,7 +132,7 @@ public class WorkerThread extends Thread {
     }
 
     @ChannelHandler.Sharable
-    private class MxNetHandler extends SimpleChannelInboundHandler<Message> {
+    private class WorkerHandler extends SimpleChannelInboundHandler<Message> {
 
         @Override
         public void channelRead0(ChannelHandlerContext ctx, Message msg) {

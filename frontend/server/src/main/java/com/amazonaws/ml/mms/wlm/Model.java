@@ -22,7 +22,11 @@ public class Model {
         return modelArchive.getModelName();
     }
 
-    public String getUrl() {
+    public String getModelDir() {
+        return modelArchive.getModelDir().getAbsolutePath();
+    }
+
+    public String getModelUrl() {
         return modelArchive.getUrl();
     }
 

@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import org.apache.commons.io.IOUtils;
 
 public final class ZipUtils {
 
@@ -26,7 +27,11 @@ public final class ZipUtils {
     }
 
     public static void unzip(File src, File dest) throws IOException {
-        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(src))) {
+        unzip(new FileInputStream(src), dest);
+    }
+
+    public static void unzip(InputStream is, File dest) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(is)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 String name = entry.getName();
@@ -37,18 +42,10 @@ public final class ZipUtils {
                     }
                 } else {
                     try (OutputStream os = new FileOutputStream(file)) {
-                        copy(zis, os);
+                        IOUtils.copy(zis, os);
                     }
                 }
             }
-        }
-    }
-
-    public static void copy(InputStream is, OutputStream os) throws IOException {
-        byte[] buf = new byte[8192];
-        int read;
-        while ((read = is.read(buf)) != -1) {
-            os.write(buf, 0, read);
         }
     }
 
@@ -70,7 +67,7 @@ public final class ZipUtils {
             ZipEntry entry = new ZipEntry(name);
             zos.putNextEntry(entry);
             try (FileInputStream fis = new FileInputStream(file)) {
-                copy(fis, zos);
+                IOUtils.copy(fis, zos);
             }
         }
     }

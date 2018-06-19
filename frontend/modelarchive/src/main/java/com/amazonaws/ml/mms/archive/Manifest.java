@@ -152,7 +152,6 @@ public class Manifest {
         private String description;
         private String modelVersion;
         private String modelFormat;
-        private String signatureFile;
         private String parametersFile;
         private String symbolFile;
         private String handler;
@@ -187,14 +186,6 @@ public class Manifest {
 
         public void setModelFormat(String modelFormat) {
             this.modelFormat = modelFormat;
-        }
-
-        public String getSignatureFile() {
-            return signatureFile;
-        }
-
-        public void setSignatureFile(String signatureFile) {
-            this.signatureFile = signatureFile;
         }
 
         public String getParametersFile() {

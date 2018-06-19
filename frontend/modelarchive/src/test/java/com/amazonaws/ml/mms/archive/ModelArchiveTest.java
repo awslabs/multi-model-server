@@ -2,49 +2,64 @@ package com.amazonaws.ml.mms.archive;
 
 import java.io.File;
 import java.io.IOException;
+import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 public class ModelArchiveTest {
 
+    private File output;
+
     @BeforeTest
-    public void afterTest() throws IOException {
-        File output = new File("build/tmp/test/noop.model");
-        if (output.exists() && !output.delete()) {
-            throw new IOException("Unable to delete file: " + output);
-        }
+    public void afterTest() {
+        output = new File("build/tmp/test/noop.model");
+        FileUtils.deleteQuietly(output);
+        FileUtils.deleteQuietly(new File("build/tmp/test/noop"));
     }
 
     @Test
     public void test() throws InvalidModelException, IOException {
-        File file = new File("src/test/resources/models/noop-v0.1.model");
-        ModelArchive archive = ModelArchive.parseModelMetadata(file);
+        String modelStore = "src/test/resources/models";
+
+        // load 0.1 model archive
+        ModelArchive archive = ModelArchive.downloadModel(modelStore, "noop-v0.1.model");
         Assert.assertEquals(archive.getModelName(), "noop_v0.1");
 
-        File modelPath = new File("build/tmp/test/noop");
-        if (!modelPath.exists() && !modelPath.mkdirs()) {
-            throw new IOException("Unable to create dir: " + modelPath);
-        }
-        ZipUtils.unzip(file, modelPath);
+        // load 0.1 model from model directory
+        File src = new File(modelStore, "noop-v0.1.model");
+        File target = new File("build/tmp/test/noop");
+        FileUtils.forceMkdir(target);
+        ZipUtils.unzip(src, target);
+        archive = ModelArchive.downloadModel("build/tmp/test", "noop");
+        Assert.assertEquals(archive.getModelName(), "noop_v0.1");
 
-        File output = new File("build/tmp/test/noop.model");
+        // load model for s3
+        archive =
+                ModelArchive.downloadModel(
+                        modelStore,
+                        "https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model");
+        Assert.assertEquals(archive.getModelName(), "squeezenet_v1.1");
 
-        String[] args = new String[3];
+        String[] args = new String[4];
         args[0] = "export";
         args[1] = "--model-name=noop";
-        args[2] = "--model-path=build/tmp/test/noop";
+        args[2] = "--model-path=" + archive.getModelDir();
+        args[3] = "--output-file=" + output.getAbsolutePath();
+
         Exporter.main(args);
         Assert.assertTrue(output.exists());
 
-        if (!output.delete()) {
-            throw new IOException("Unable to delete file: " + output);
-        }
+        FileUtils.forceDelete(output);
 
-        ModelArchive.migrate(file, output);
+        File modelFile = new File(modelStore, "noop-v0.1.model");
+        ModelArchive.migrate(modelFile, output);
         Assert.assertTrue(output.exists());
 
-        archive = ModelArchive.parseModelMetadata(output);
+        // load 1.0 model
+        archive =
+                ModelArchive.downloadModel(
+                        output.getParentFile().getAbsolutePath(), output.getName());
         Assert.assertEquals(archive.getModelName(), "noop_v0.1");
     }
 }

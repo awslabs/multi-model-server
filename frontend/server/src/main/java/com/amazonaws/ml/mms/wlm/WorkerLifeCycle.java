@@ -27,13 +27,14 @@ public class WorkerLifeCycle {
     }
 
     public boolean startWorker(int port, Model model) {
+        File archivePath = new File(configManager.getModelStore(), model.getModelUrl());
         String[] args = new String[gpuId >= 0 ? 8 : 6];
         args[0] = "python";
         args[1] = "mms/mxnet_worker.py";
         args[2] = "--port";
         args[3] = String.valueOf(port);
         args[4] = "--models";
-        args[5] = model.getModelName() + '=' + model.getUrl();
+        args[5] = model.getModelName() + '=' + archivePath.getAbsolutePath();
         if (gpuId >= 0) {
             args[6] = "--gpu";
             args[7] = String.valueOf(gpuId);

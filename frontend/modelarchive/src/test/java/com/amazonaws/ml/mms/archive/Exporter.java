@@ -136,7 +136,6 @@ public final class Exporter {
 
             Manifest manifest = new Manifest();
             Manifest.Model model = new Manifest.Model();
-            model.setSignatureFile("signature.json");
             model.setSymbolFile(symbolFile.getName());
             model.setParametersFile(paramsFile.getName());
             model.setHandler(serviceFile.getName());
@@ -145,7 +144,7 @@ public final class Exporter {
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(outputFile))) {
                 zos.putNextEntry(new ZipEntry("MANIFEST.json"));
                 zos.write(GSON.toJson(manifest).getBytes(StandardCharsets.UTF_8));
-                zos.putNextEntry(new ZipEntry(model.getSignatureFile()));
+                zos.putNextEntry(new ZipEntry("signature.json"));
                 zos.write(GSON.toJson(signature).getBytes(StandardCharsets.UTF_8));
 
                 int prefix = modelPath.getCanonicalPath().length();

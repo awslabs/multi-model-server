@@ -105,7 +105,6 @@ public class LegacyManifest {
             model.setModelVersion("snapshot");
             model.setParametersFile(modelInfo.getParameters());
             model.setSymbolFile(modelInfo.getSymbol());
-            model.setSignatureFile("signature.json");
             manifest.setModel(model);
         }
 

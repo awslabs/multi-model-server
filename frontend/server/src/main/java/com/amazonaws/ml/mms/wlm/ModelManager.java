@@ -4,7 +4,6 @@ import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import java.io.File;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -35,11 +34,7 @@ public final class ModelManager {
     }
 
     public ModelArchive registerModel(String url) throws InvalidModelException {
-        File file = new File(configManager.getModelStore(), url);
-        if (!file.exists()) {
-            throw new InvalidModelException("Model file not found: " + url);
-        }
-        ModelArchive archive = ModelArchive.parseModelMetadata(file);
+        ModelArchive archive = ModelArchive.downloadModel(configManager.getModelStore(), url);
         String modelName = archive.getModelName();
         Model model = new Model(archive, configManager.getJobQueueSize());
         Model existingModel = models.putIfAbsent(modelName, model);

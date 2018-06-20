@@ -6,7 +6,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,10 +36,6 @@ public class ServerGroups {
         serverGroup = NettyUtils.newEventLoopGroup(Runtime.getRuntime().availableProcessors());
         childGroup = NettyUtils.newEventLoopGroup(configManager.getNettyThreads());
         backendGroup = NettyUtils.newEventLoopGroup(configManager.getMaxWorkers());
-
-        if (childGroup instanceof NioEventLoopGroup) {
-            ((NioEventLoopGroup) childGroup).setIoRatio(configManager.getNettyIoRatio());
-        }
     }
 
     public void shutdown(boolean graceful) {

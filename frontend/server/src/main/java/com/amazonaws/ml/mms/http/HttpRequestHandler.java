@@ -267,9 +267,16 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         NettyUtils.sendJsonResponse(ctx, "{\"status\":\"Worker updated\"}");
     }
 
-    private static final class Param {
+    public static final class Param {
 
         String modelName;
         String data;
+
+        public Param() {}
+
+        public Param(String modelName, String data) {
+            this.modelName = modelName;
+            this.data = data;
+        }
     }
 }

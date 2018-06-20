@@ -16,6 +16,8 @@ public class ModelArchiveTest {
         output = new File("build/tmp/test/noop.model");
         FileUtils.deleteQuietly(output);
         FileUtils.deleteQuietly(new File("build/tmp/test/noop"));
+        File tmp = FileUtils.getTempDirectory();
+        FileUtils.deleteQuietly(new File(tmp, "models"));
     }
 
     @Test

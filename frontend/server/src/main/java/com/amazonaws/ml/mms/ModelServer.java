@@ -18,6 +18,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import java.io.File;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,7 +44,8 @@ public class ModelServer {
     }
 
     public static void main(String[] args)
-            throws InterruptedException, InvalidModelException, WorkerInitializationException {
+            throws InterruptedException, InvalidModelException, WorkerInitializationException,
+                    IOException, GeneralSecurityException {
         ConfigManager configManager = new ConfigManager();
 
         logger.debug("Starting model server...");
@@ -52,7 +55,8 @@ public class ModelServer {
 
     @SuppressWarnings("PMD.SystemPrintln")
     public void startAndWait()
-            throws InterruptedException, InvalidModelException, WorkerInitializationException {
+            throws InterruptedException, InvalidModelException, WorkerInitializationException,
+                    IOException, GeneralSecurityException {
         try {
             initModelStore();
 
@@ -102,7 +106,8 @@ public class ModelServer {
      * @return A ChannelFuture object
      * @throws InterruptedException if interrupted
      */
-    public ChannelFuture start() throws InterruptedException {
+    public ChannelFuture start()
+            throws InterruptedException, IOException, GeneralSecurityException {
         stopped.set(false);
 
         SslContext sslCtx = configManager.getSslContext();

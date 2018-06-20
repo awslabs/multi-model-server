@@ -6,7 +6,7 @@
     "title": "Model Serving APIs"
   },
   "schemes": [
-    "http"
+    "https"
   ],
   "paths": {
     "/api-description": {

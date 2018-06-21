@@ -7,6 +7,12 @@ dependencies {
     testCompile "org.testng:testng:${testng_version}"
 }
 
+sourceSets {
+    main {
+        output.resourcesDir = "build/classes/java/main"
+    }
+}
+
 jar {
     manifest {
         attributes 'Main-Class': 'com.amazonaws.ml.mms.ModelServer'
@@ -23,5 +29,7 @@ jar {
 
 test.doFirst {
     systemProperty "mmsConfigFile", 'src/test/resources/config.properties'
+    systemProperty "METRICS_LOCATION","build/logs"
+    systemProperty "LOG_LOCATION","build/logs"
 }
 test.finalizedBy(project.tasks.jacocoTestReport)

@@ -54,8 +54,6 @@ import org.testng.annotations.Test;
 
 public class ModelServerTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(ModelServerTest.class);
-
     private ConfigManager configManager;
     private ModelServer server;
     private MockWorker worker;
@@ -63,11 +61,14 @@ public class ModelServerTest {
     String result;
     private String openApiResult;
 
+    static {
+        TestUtils.init();
+    }
+
     @BeforeSuite
     public void beforeSuite()
             throws InterruptedException, InvalidModelException, WorkerInitializationException,
                     IOException, GeneralSecurityException {
-        System.setProperty("DEBUG", "true");
         configManager = new ConfigManager();
 
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
@@ -241,6 +242,7 @@ public class ModelServerTest {
     }
 
     private Channel connect() {
+        Logger logger = LoggerFactory.getLogger(ModelServerTest.class);
         try {
             Bootstrap b = new Bootstrap();
             final SslContext sslCtx =
@@ -285,6 +287,7 @@ public class ModelServerTest {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            Logger logger = LoggerFactory.getLogger(TestHandler.class);
             logger.error("Unknown exception", cause);
             ctx.close();
         }

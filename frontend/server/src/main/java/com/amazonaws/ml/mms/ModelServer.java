@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class ModelServer {
 
-    private static final Logger logger = LoggerFactory.getLogger(ModelServer.class);
+    private Logger logger = LoggerFactory.getLogger(ModelServer.class);
 
     private ServerGroups serverGroups;
     private ChannelFuture future;
@@ -48,7 +48,6 @@ public class ModelServer {
                     IOException, GeneralSecurityException {
         ConfigManager configManager = new ConfigManager();
 
-        logger.debug("Starting model server...");
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
         new ModelServer(configManager).startAndWait();
     }

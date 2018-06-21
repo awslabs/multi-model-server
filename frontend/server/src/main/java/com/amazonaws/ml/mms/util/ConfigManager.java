@@ -28,6 +28,10 @@ import org.apache.commons.io.IOUtils;
 
 public final class ConfigManager {
 
+    public static final String MODEL_METRICS = "MODEL_METRICS";
+    public static final String MODEL_LOG = "MODEL_METRICS";
+    public static final String MMS_METRICS = "MODEL_METRICS";
+
     private static final String DEBUG = "debug";
     private static final String PORT = "port";
     private static final String MODEL_SERVER_HOME = "model_server_home";
@@ -64,6 +68,19 @@ public final class ConfigManager {
             } catch (IOException e) {
                 throw new IllegalStateException("Unable to read configuration file", e);
             }
+        }
+        String logLocation = System.getenv("LOG_LOCATION");
+        if (logLocation != null) {
+            System.setProperty("LOG_LOCATION", logLocation);
+        } else if (System.getProperty("LOG_LOCATION") == null) {
+            System.setProperty("LOG_LOCATION", "logs");
+        }
+
+        String metricsLocation = System.getenv("METRICS_LOCATION");
+        if (metricsLocation != null) {
+            System.setProperty("METRICS_LOCATION", metricsLocation);
+        } else if (System.getProperty("METRICS_LOCATION") == null) {
+            System.setProperty("METRICS_LOCATION", "logs");
         }
     }
 

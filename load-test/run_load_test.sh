@@ -36,7 +36,7 @@ if [ "$loops" == "" ]; then
 fi
 
 # make this var point to your installed CMDRunner location
-command_runner="/usr/local/Cellar/jmeter/3.3/libexec/lib/ext/CMDRunner.jar"
+command_runner="/usr/local/Cellar/jmeter/4.0/libexec/lib/ext/CMDRunner.jar"
 curr_dir=$(pwd)
 
 if [ ! -d "$curr_dir/report" ]; then

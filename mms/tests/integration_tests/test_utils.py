@@ -6,6 +6,7 @@ import tarfile
 import sys
 import time
 import signal
+import base64
 try:
     from urllib2 import urlopen, URLError, HTTPError
 except BaseException:
@@ -185,6 +186,25 @@ def start_test(
                                               '-F',
                                               '{}=@{}/kitten.jpg'.format(data_name,
                                                                          tmpdir)])
+            if sys.version_info[0] >= 3:
+                output = output.decode("utf-8")
+            predictions = json.dumps(json.loads(output))
+            # Assert objects are detected.
+            assert predictions is not None
+            assert len(predictions) > 0
+            
+            # Test when image is sent as URL encoded form field with and without padding
+            with open(tmpdir+"kitten.jpg",'rb') as fp:
+                b64img = base64.b64encode(fp.read())
+
+            output = subprocess.check_output(['curl',
+                                              '-X',
+                                              'POST',
+                                              'http://127.0.0.1:' + port + '/' + models + '/predict',
+                                              '-d',
+                                              '{}=@{}/{}'.format(data_name,
+                                                                   tmpdir, b64img.replace("=",''))])
+  
             if sys.version_info[0] >= 3:
                 output = output.decode("utf-8")
             predictions = json.dumps(json.loads(output))

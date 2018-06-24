@@ -478,15 +478,7 @@ class ServingFrontend(object):
                         form_data = self.handler.get_form_data(name)
                         if form_data:
                             # pylint: disable=deprecated-method
-                            try:
-                                file_data = base64.decodestring(self.handler.get_form_data(name))
-                            except TypeError as e:
-                                logger.info(str(e))
-                                logger.info("Padding and trying again")
-                                #Add arbitrary number of =, base64 takes care of ignoring excess padding
-                                file_data = base64.decodestring(self.handler.get_form_data(name)+"=========")
-                                #If decoding still fails, error is handled in the lower level
-
+                            file_data = base64.decodestring(self.handler.get_form_data(name) + "=====")
                         else:
                             raise ValueError('This end point is expecting a data_name of %s. '
                                              'End point details can be found here:http://<host>:<port>/api-description'

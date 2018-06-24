@@ -194,7 +194,7 @@ def start_test(
             assert len(predictions) > 0
             
             # Test when image is sent as URL encoded form field with and without padding
-            with open(tmpdir+"kitten.jpg",'rb') as fp:
+            with open("{}/kitten.jpg".format(tmpdir),'rb') as fp:
                 b64img = base64.b64encode(fp.read())
 
             output = subprocess.check_output(['curl',

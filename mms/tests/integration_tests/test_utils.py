@@ -202,8 +202,8 @@ def start_test(
                                               'POST',
                                               'http://127.0.0.1:' + port + '/' + models + '/predict',
                                               '-d',
-                                              '{}=@{}/{}'.format(data_name,
-                                                                   tmpdir, b64img.replace("=",''))])
+                                              '{}={}'.format(data_name,
+                                                                   b64img.replace("=",''))])
   
             if sys.version_info[0] >= 3:
                 output = output.decode("utf-8")

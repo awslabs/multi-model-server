@@ -21,7 +21,7 @@ from mms.export_model import export_model, generate_manifest
 
 
 def list_zip(path):
-    return [f.filename for f in zipfile.ZipFile(path,'r').infolist()]
+    return [f.filename for f in zipfile.ZipFile(path).infolist()]
 
 
 def empty_file(path):

@@ -11,7 +11,6 @@
 import json
 import os
 import zipfile
-import shutil
 
 import mxnet as mx
 import pytest

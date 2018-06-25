@@ -193,17 +193,25 @@ def start_test(
             assert predictions is not None
             assert len(predictions) > 0
             
-            # Test when image is sent as URL encoded form field with and without padding
+            # Test when image is sent as URL encoded form field without padding
+            #Read image as base64 string
             with open("{}/kitten.jpg".format(tmpdir),'rb') as fp:
-                b64img = base64.b64encode(fp.read())
+                temp_img = fp.read()
+                b64img = base64.encodestring(temp_img)
+            
+            
+            #Write image to file to prevent against OSError while executing curl command using subprocess
+            with open("{}/kitten_b64.txt".format(tmpdir),'w') as fp:
+                fp.write(b64img.strip().decode('ascii').replace("=",''))
 
             output = subprocess.check_output(['curl',
                                               '-X',
                                               'POST',
                                               'http://127.0.0.1:' + port + '/' + models + '/predict',
+                                              '-H',
+                                              '"Content-Type: application/x-www-form-urlencoded"',
                                               '-d',
-                                              '{}={}'.format(data_name,
-                                                                   b64img.replace("=",''))])
+                                              '{}=$(cat {}/kitten_b64.txt)'.format(data_name,tmpdir)])
   
             if sys.version_info[0] >= 3:
                 output = output.decode("utf-8")
@@ -211,7 +219,7 @@ def start_test(
             # Assert objects are detected.
             assert predictions is not None
             assert len(predictions) > 0
-        # Check root API and Ping API calls
+        # Chck root API and Ping API calls
         output = subprocess.check_output(['curl',
                                             '-X',
                                             'GET',

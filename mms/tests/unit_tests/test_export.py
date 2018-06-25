@@ -11,6 +11,7 @@
 import json
 import os
 import zipfile
+import shutil
 
 import mxnet as mx
 import pytest
@@ -20,12 +21,11 @@ from mms.export_model import export_model, generate_manifest
 
 
 def list_zip(path):
-    return [f.filename for f in zipfile.ZipFile(path).infolist()]
+    return [f.filename for f in zipfile.ZipFile(path,'r').infolist()]
 
 
 def empty_file(path):
     open(path, 'a').close()
-
 
 @pytest.fixture()
 def onnx_mxnet():
@@ -41,6 +41,41 @@ def onnx_mxnet():
     patcher.stop()
 
 
+@pytest.fixture()
+def nested_module_dir(tmpdir):
+    path = '{}/test'.format(tmpdir)
+    os.mkdir(path)
+    nested_path = '{}/nested'.format(path)
+    os.mkdir(nested_path)
+    empty_file('{}/test-symbol.json'.format(path))
+    empty_file('{}/test-0000.params'.format(path))
+    empty_file('{}/synset.txt'.format(path))
+    empty_file('{}/nested-0000.params'.format(nested_path))
+    empty_file('{}/nested-dummy'.format(nested_path))
+    with open('{}/signature.json'.format(path), 'w') as sig:
+            signature = {
+            "input_type": "image/jpeg",
+            "inputs": [
+                {
+                    'data_name': 'data1',
+                    'data_shape': [1, 3, 64, 64]
+                },
+                {
+                    'data_name': 'data2',
+                    'data_shape': [1, 3, 32, 32]
+                }
+            ],
+            "output_type": "application/json",
+            "outputs": [
+                {
+                    'data_name': 'softmax',
+                    'data_shape': [1, 10]
+                }
+            ]
+            }
+            json.dump(signature, sig)
+
+    return path
 @pytest.fixture()
 def module_dir(tmpdir):
     path = '{}/test'.format(tmpdir)
@@ -188,6 +223,19 @@ def test_export_module(tmpdir, module_dir):
     zip_contents = list_zip(export_path)
 
     for f in ['signature.json', 'test-0000.params', 'test-symbol.json', 'synset.txt', 'MANIFEST.json']:
+        assert f in zip_contents
+
+    assert [f for f in zip_contents if f.endswith('.py')], 'missing service file'
+    os.remove(export_path)
+
+def test_export_nested_module(tmpdir, nested_module_dir):
+    export_path = '{}/test.model'.format(tmpdir)
+    export_model('test', nested_module_dir, None, export_path)
+
+    assert os.path.exists(export_path), 'no model created - export failed'
+    zip_contents = list_zip(export_path)
+    for f in ['signature.json', 'test-0000.params', 'test-symbol.json', 'synset.txt', 'MANIFEST.json','nested/',\
+            'nested/nested-0000.params', 'nested/nested-dummy']:
         assert f in zip_contents
 
     assert [f for f in zip_contents if f.endswith('.py')], 'missing service file'

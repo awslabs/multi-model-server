@@ -379,6 +379,7 @@ def validate_model_files(model_path, onnx_file, params_file, symbol_file, model_
         validate_prefix_match(symbol_file, params_file)
 
 
+
 def export_model(model_name, model_path, service_file=None, export_file=None):
     """
     Internal helper for the exporting model command line interface.
@@ -391,12 +392,21 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
 
         if model_path.startswith('~'):
             model_path = os.path.expanduser(model_path)
-
+        # Entry point model here, this is in the maibn folder
         files = os.listdir(model_path)
         onnx_file = find_unique(files, '.onnx')
         symbol_file = find_unique(files, '-symbol.json')
         params_file = find_unique(files, '.params')
-
+        #getting relative paths, for test scheduling
+        tmp = os.getcwd()
+        os.chdir(model_path)
+        # Look in the nestsed folders for other necessary model/resource files
+        for file in files:
+            if os.path.isdir(file):
+                for directory_path, _, file_names in os.walk(os.path.expanduser(file)):
+                    for f in file_names:
+                        files.append(os.path.join(directory_path, f))
+        os.chdir(tmp)
         signature_file = validate_signature(model_path)
         is_imperative, service_file = validate_service(model_path, service_file, signature_file)
         validate_model_files(model_path, onnx_file, params_file, symbol_file, is_imperative)

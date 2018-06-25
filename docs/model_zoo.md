@@ -20,10 +20,16 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 | [ResNext101-64x4d](#resnext101) | Image Classification | ImageNet | MXNet | 334 MB | [.model](https://s3.amazonaws.com/model-server/models/resnext-101-64x4d/resnext-101-64x4d.model) |
 | [SqueezeNet](#squeezenet) | Image Classification | ImageNet | ONNX | 5 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-squeezenet/squeezenet.model) |
 | [SqueezeNet v1.1](#squeezenet_v1.1) | Image Classification | ImageNet | MXNet | 5 MB | [.model](https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model) |
+| [SqueezeNet v1.1](#squeezenet_v1.1_onnx) | Image Classification | ImageNet | ONNX | 5 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-squeezenet_v1.1/squeezenet_v1.1.model) |
 | [VGG16](#vgg16) | Image Classification | ImageNet | MXNet | 490 MB | [.model](https://s3.amazonaws.com/model-server/models/vgg16/vgg16.model) |
+| [VGG16](#vgg16_onnx) | Image Classification | ImageNet | ONNX | 527 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-vgg16/vgg16.model) |
+| [VGG16_bn](#vgg16_bn_onnx) | Image Classification | ImageNet | ONNX | 527 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-vgg16_bn/vgg16_bn.model) |
 | [VGG19](#vgg19) | Image Classification | ImageNet | MXNet | 509 MB | [.model](https://s3.amazonaws.com/model-server/models/vgg19/vgg19.model) |
 | [VGG19](#vgg19_onnx) | Image Classification | ImageNet | ONNX | 548 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-vgg19/vgg19.model) |
+| [VGG19_bn](#vgg19_bn_onnx) | Image Classification | ImageNet | ONNX | 548 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-vgg19_bn/vgg19_bn.model) |
 | [FERPlus](#ferplus_onnx) | Emotion Detection | FER2013 | ONNX | 35MB | [.model](https://s3.amazonaws.com/model-server/models/FERPlus/FERPlus.model) |
+| [ArcFace-ResNet100](#arcface-resnet100_onnx) | Face Recognition | Refined MS-Celeb1M | ONNX | 236.4 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-arcface/arcface-resnet100.model) |
+| [MobileNetv2-1.0](#mobilenetv2-1.0_onnx) | Image Classification | ImageNet | ONNX | 13.7 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-mobilenet/mobilenetv2-1.0.model) |
 
 ## Details on Each Model
 Each model below comes with a basic description, and where available, a link to a scholarly article about the model.
@@ -250,6 +256,23 @@ mxnet-model-server --models squeezenet_v1.1=https://s3.amazonaws.com/model-serve
 curl -X POST http://127.0.0.1:8080/squeezenet_v1.1/predict -F "data=@kitten.jpeg"
 ```
 
+## <a name="squeezenet_v1.1_onnx"></a>SqueezeNet v1.1
+* **Type**: Image classification trained on ImageNet (imported from ONNX)
+
+* **Reference**: [Iandola, et al.](https://arxiv.org/pdf/1602.07360v4.pdf)
+
+* **Model Service**: [mxnet_vision_service.py](https://s3.amazonaws.com/model-server/models/onnx-squeezenet_v1.1/mxnet_vision_service.py)
+
+* **Start Server**:
+```bash
+mxnet-model-server --models squeezenet_v1.1=https://s3.amazonaws.com/model-server/models/onnx-squeezenet_v1.1/squeezenet_v1.1.model
+```
+
+* **Run Prediction**:
+```bash
+curl -X POST http://127.0.0.1:8080/squeezenet_v1.1/predict -F "data=@kitten.jpeg"
+```
+
 
 ## <a name="vgg16"></a>VGG16
 * **Type**: Image classification trained on ImageNet
@@ -266,6 +289,40 @@ mxnet-model-server --models vgg16=https://s3.amazonaws.com/model-server/models/v
 * **Run Prediction**:
 ```bash
 curl -X POST http://127.0.0.1:8080/vgg16/predict -F "data=@kitten.jpeg"
+```
+
+## <a name="vgg16_onnx"></a>VGG16
+* **Type**: Image classification trained on ImageNet (imported from ONNX)
+
+* **Reference**: [Simonyan, et al.](https://arxiv.org/pdf/1409.1556v6.pdf)
+
+* **Model Service**: [mxnet_vision_service.py](https://s3.amazonaws.com/model-server/models/onnx-squeezenet_v1.1/mxnet_vision_service.py)
+
+* **Start Server**:
+```bash
+mxnet-model-server --models vgg16=https://s3.amazonaws.com/model-server/models/onnx-vgg16/vgg16.model
+```
+
+* **Run Prediction**:
+```bash
+curl -X POST http://127.0.0.1:8080/vgg16/predict -F "data=@kitten.jpeg"
+```
+
+## <a name="vgg16_bn_onnx"></a>VGG16_bn
+* **Type**: Image classification trained on ImageNet (imported from ONNX)
+
+* **Reference**: [Simonyan, et al.](https://arxiv.org/pdf/1409.1556v6.pdf) (Batch normalization applied after each conv layer of VGG16)
+
+* **Model Service**: [mxnet_vision_service.py](https://s3.amazonaws.com/model-server/models/onnx-squeezenet_v1.1/mxnet_vision_service.py)
+
+* **Start Server**:
+```bash
+mxnet-model-server --models vgg16_bn=https://s3.amazonaws.com/model-server/models/onnx-vgg16_bn/vgg16_bn.model
+```
+
+* **Run Prediction**:
+```bash
+curl -X POST http://127.0.0.1:8080/vgg16_bn/predict -F "data=@kitten.jpeg"
 ```
 
 
@@ -291,7 +348,7 @@ curl -X POST http://127.0.0.1:8080/vgg19/predict -F "data=@kitten.jpeg"
 
 * **Reference**: [Simonyan, et al.](https://arxiv.org/pdf/1409.1556v6.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/mms/model_service/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://s3.amazonaws.com/model-server/models/onnx-squeezenet_v1.1/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
@@ -301,6 +358,23 @@ mxnet-model-server --models vgg19=https://s3.amazonaws.com/model-server/models/o
 * **Run Prediction**:
 ```bash
 curl -X POST http://127.0.0.1:8080/vgg19/predict -F "input_0=@kitten.jpeg"
+```
+
+## <a name="vgg19_bn_onnx"></a>VGG19_bn
+* **Type**: Image classification trained on ImageNet (imported from ONNX)
+
+* **Reference**: [Simonyan, et al.](https://arxiv.org/pdf/1409.1556v6.pdf) (Batch normalization applied after each conv layer of VGG19)
+
+* **Model Service**: [mxnet_vision_service.py](https://s3.amazonaws.com/model-server/models/onnx-squeezenet_v1.1/mxnet_vision_service.py)
+
+* **Start Server**:
+```bash
+mxnet-model-server --models vgg19=https://s3.amazonaws.com/model-server/models/onnx-vgg19_bn/vgg19_bn.model
+```
+
+* **Run Prediction**:
+```bash
+curl -X POST http://127.0.0.1:8080/vgg19_bn/predict -F "data=@kitten.jpeg"
 ```
 
 ## <a name="ferplus_onnx"></a>FERPlus
@@ -323,4 +397,54 @@ curl -O https://s3.amazonaws.com/model-server/models/FERPlus/input.jpg
 * **Run Prediction**:
 ```bash
 curl -X POST http://127.0.0.1:8080/emotion_detection/predict -F "Input2505=@input.jpg"
+```
+
+## <a name="arcface-resnet100_onnx"></a>ArcFace-ResNet100
+* **Type**: Face Recognition model trained on refined MS-Celeb1M dataset (model imported from ONNX)
+
+* **Reference**: [Deng et al.](https://arxiv.org/abs/1801.07698)
+
+* **Model Service**: [arcface_service.py](https://s3.amazonaws.com/model-server/models/onnx-arcface/arcface_service.py)
+
+* **Install dependencies**:
+```bash
+pip install opencv-python
+pip install scikit-learn
+pip install easydict
+pip install scikit-image
+pip install numpy
+```
+
+* **Start Server**:
+```bash
+mxnet-model-server --models arcface=https://s3.amazonaws.com/model-server/models/onnx-arcface/arcface-resnet100.model
+```
+
+* **Get two test images**:
+```bash
+curl -O https://s3.amazonaws.com/model-server/models/onnx-arcface/input1.jpg
+
+curl -O https://s3.amazonaws.com/model-server/models/onnx-arcface/input2.jpg
+```
+
+* **Run Prediction**:
+```bash
+bash arcface_inference.sh arcface input1.jpg input2.jpg
+```
+
+## <a name="mobilenetv2-1.0_onnx"></a>MobileNetv2-1.0
+* **Type**: Image classification trained on ImageNet (imported from ONNX)
+
+* **Reference**: [Sandler et al.](https://arxiv.org/abs/1801.04381)
+
+* **Model Service**: [mxnet_vision_service.py](https://s3.amazonaws.com/model-server/models/onnx-squeezenet_v1.1/mxnet_vision_service.py)
+
+* **Start Server**:
+```bash
+mxnet-model-server --models mobilenet=https://s3.amazonaws.com/model-server/models/onnx-mobilenet/mobilenetv2-1.0.model
+```
+
+* **Run Prediction**:
+```bash
+curl -X POST http://127.0.0.1:8080/mobilenet/predict -F "input_0=@kitten.jpeg"
 ```

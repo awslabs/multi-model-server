@@ -206,6 +206,7 @@ def start_test(
             form_data = {data_name: b64img.replace(b'=',b'')}
             request = Request('http://127.0.0.1:' + port + '/' + models + '/predict', 
                                   urlencode(form_data).encode())
+            request.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)     Chrome/37.0.2049.0 Safari/537.36')
             output = urlopen(request).read()
                        
   

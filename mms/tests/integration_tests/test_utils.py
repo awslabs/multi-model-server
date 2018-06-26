@@ -7,7 +7,8 @@ import sys
 import time
 import signal
 import base64
-from urllib.parse import urlencode
+
+import requests
 
 try:
     from urllib2 import Request, urlopen, URLError, HTTPError
@@ -203,15 +204,9 @@ def start_test(
             
             # Using urllib library instead of curl to prevent against argument too long error1
             form_data = {data_name: b64img.replace(b'=',b'')}
-            request = Request('http://127.0.0.1:' + port + '/' + models + '/predict', 
-                                  urlencode(form_data).encode())
-            request.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)     Chrome/37.0.2049.0 Safari/537.36')
-            output = urlopen(request).read()
-                       
-  
-            if sys.version_info[0] >= 3:
-                output = output.decode("utf-8")
-            predictions = json.dumps(json.loads(output))
+            request = requests.post('http://127.0.0.1:' + port + '/' + models + '/predict', 
+                                     data = form_data)
+            predictions = request.json()
             # Assert objects are detected.
             assert predictions is not None
             assert len(predictions) > 0

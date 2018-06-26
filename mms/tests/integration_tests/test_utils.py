@@ -7,6 +7,9 @@ import sys
 import time
 import signal
 import base64
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
 try:
     from urllib2 import urlopen, URLError, HTTPError
 except BaseException:
@@ -194,24 +197,17 @@ def start_test(
             assert len(predictions) > 0
             
             # Test when image is sent as URL encoded form field without padding
-            #Read image as base64 string
+            # Read image and encode as base64 string
             with open("{}/kitten.jpg".format(tmpdir),'rb') as fp:
                 temp_img = fp.read()
                 b64img = base64.encodestring(temp_img)
             
-            
-            #Write image to file to prevent against OSError while executing curl command using subprocess
-            with open("{}/kitten_b64.txt".format(tmpdir),'w') as fp:
-                fp.write(b64img.strip().decode('ascii').replace("=",''))
-
-            output = subprocess.check_output(['curl',
-                                              '-X',
-                                              'POST',
-                                              'http://127.0.0.1:' + port + '/' + models + '/predict',
-                                              '-H',
-                                              '"Content-Type: application/x-www-form-urlencoded"',
-                                              '-d',
-                                              '{}=$(cat {}/kitten_b64.txt)'.format(data_name,tmpdir)])
+            # Using urllib library instead of curl to prevent against argument too long error1
+            form_data = {data_name: b64img.replace(b'=',b'')}
+            request = Request('http://127.0.0.1:' + port + '/' + models + '/predict', 
+                                  urlencode(form_data).encode())
+            output = urlopen(request).read()
+                       
   
             if sys.version_info[0] >= 3:
                 output = output.decode("utf-8")

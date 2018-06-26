@@ -7,12 +7,11 @@ import sys
 import time
 import signal
 import base64
+from urllib.parse import urlencode
 
 try:
-    from urllib import urlencode
     from urllib2 import Request, urlopen, URLError, HTTPError
 except BaseException:
-    from urllib.parse import urlencode
     from urllib.request import Request, urlopen, URLError, HTTPError
 
 # models from onnx-mxnet model zoo

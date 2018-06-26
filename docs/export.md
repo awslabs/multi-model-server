@@ -176,3 +176,36 @@ This optional text file is for classification labels. Simply put, if it were for
 
 
 If `synset.txt` is included in exported archive file and each line represents a category, `MXNetBaseModel` will load this file and create `labels` attribute automatically. If this file is named differently or has a different format, you need to override `__init__` method and manually load it.
+
+### Dependent/Nested Models
+
+If there is a model that is dependent on another model, in cases like transfer learning. MMS export tool requires the following structure to be followed
+
+```bash
+/Model-folder/
+  main-model-symbol-file
+  main-model-parameter-file
+  main-model-signature-file
+  dependency-model-1-sub-folder/
+    dependency-model-1-symbol-file
+    dependency-model-1-parameter-file
+  dependency-model-2-sub-folder/
+      dependency-model-2-symbol-file
+      dependency-model-2-parameter-file
+```
+
+The dependency models can also be part of a single sub folder
+
+```bash
+/Model-folder/
+  main-model-symbol-file
+  main-model-parameter-file
+  main-model-signature-file
+  dependency-model-sub-folder/
+    dependency-model-1-symbol-file
+    dependency-model-1-parameter-file
+    dependency-model-2-symbol-file
+    dependency-model-2-parameter-file
+```
+
+Handling the data flow between the dependent models can be handled in the preprocess, postprocess and inference methods of a [custom service](custom_service.md).

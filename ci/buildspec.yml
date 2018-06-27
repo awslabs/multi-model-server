@@ -1,0 +1,32 @@
+# Build Spec for AWS CodeBuild CI
+
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - apt-get update
+      - apt-get install -y curl
+      - apt-get install -y libgfortran3
+      - pip install pip -U
+      - pip install flask
+      #- pip install -U mxnet
+      - pip install Pillow
+      - pip install requests
+      - pip install flask-cors
+      - pip install fasteners
+      - pip install jsonschema
+      # - pip install onnx -U
+      # - pip install onnx-mxnet -U
+      - pip install -U -e .
+  build:
+    commands:
+      - python -m pytest mms/tests/unit_tests
+      # integration test is broken: https://github.com/awslabs/mxnet-model-server/issues/437
+      #- python -m pytest mms/tests/integration_tests
+      - pylint -rn --rcfile=./mms/tests/pylintrc mms/.
+
+# local build will hang without artifacts section
+artifacts:
+  files:
+    - README.md

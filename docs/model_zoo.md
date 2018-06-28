@@ -522,6 +522,7 @@ curl -X POST http://127.0.0.1:8080/vgg19/predict -F "data=@kitten.jpeg"
 ```
 
 ## <a name="vgg_header"></a>VGG (from ONNX model zoo)
+
 ### <a name="vgg16_onnx"></a>VGG16
 * **Type**: Image classification trained on ImageNet (imported from ONNX)
 
@@ -589,4 +590,3 @@ mxnet-model-server --models vgg19=https://s3.amazonaws.com/mxnet-model-server/on
 ```bash
 curl -X POST http://127.0.0.1:8080/vgg19_bn/predict -F "data=@kitten.jpeg"
 ```
-

@@ -35,19 +35,20 @@ onnx_mxnet_model_urls = {
     'onnx-inception_v1': 'https://s3.amazonaws.com/model-server/models/onnx-inception_v1/inception_v1.onnx',
     'onnx-vgg19': 'https://s3.amazonaws.com/model-server/models/onnx-vgg19/vgg19.onnx'}
 
-# models from onnx-mxnet model zoo
+# models from mxnet-model-server model zoo
 mxnet_model_urls = {
-    # TODO: check why these two models are failing github issue #345
     'caffenet': 'https://s3.amazonaws.com/model-server/models/caffenet/caffenet.model',
     'Inception-BN': 'https://s3.amazonaws.com/model-server/models/inception-bn/Inception-BN.model',
-    # 'lstm_ptb'        : 'https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb.model',
     'nin': 'https://s3.amazonaws.com/model-server/models/nin/nin.model',
     'resnet-152': 'https://s3.amazonaws.com/model-server/models/resnet-152/resnet-152.model',
     'resnet-18': 'https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model',
-    # 'resnet50_ssd_model'    : 'https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model.model',
     'resnext-101-64x4d': 'https://s3.amazonaws.com/model-server/models/resnext-101-64x4d/resnext-101-64x4d.model',
     'squeezenet_v1.1': 'https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model',
     'vgg19': 'https://s3.amazonaws.com/model-server/models/vgg19/vgg19.model',
+    # TODO #340: refactor integration test suite to support different input images and input node names issue
+    # 'lstm_ptb'        : 'https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb.model',
+    # 'resnet50_ssd_model'    : 'https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model.model',
+    # 'ferplus': 'https://s3.amazonaws.com/model-server/models/FERPlus/FERPlus.model',
 }
 
 
@@ -142,7 +143,7 @@ def create_model(
         model_urls,
         model_name,
         model_type):
-    # Download the files required for onnx integ tests.
+    # Download the files required for onnx integration tests.
     try:
         if model_type == 'mxnet':
             _download_file(tmpdir, model_urls[model_name])

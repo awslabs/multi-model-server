@@ -401,9 +401,9 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
         tmp = os.getcwd()
         os.chdir(model_path)
         # Look in the nestsed folders for other necessary model/resource files
-        for file in files:
-            if os.path.isdir(file):
-                for directory_path, _, file_names in os.walk(os.path.expanduser(file)):
+        for treefile in files:
+            if os.path.isdir(treefile):
+                for directory_path, _, file_names in os.walk(os.path.expanduser(treefile)):
                     for f in file_names:
                         files.append(os.path.join(directory_path, f))
         os.chdir(tmp)

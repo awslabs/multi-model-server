@@ -28,9 +28,9 @@ import org.apache.commons.io.IOUtils;
 
 public final class ConfigManager {
 
-    public static final String MODEL_METRICS = "MODEL_METRICS";
-    public static final String MODEL_LOG = "MODEL_METRICS";
-    public static final String MMS_METRICS = "MODEL_METRICS";
+    public static final String MODEL_METRICS_LOGGER = "MODEL_METRICS_LOGGER";
+    public static final String MODEL_LOGGER = "MODEL_LOGGER";
+    public static final String MMS_METRICS_LOGGER = "MMS_METRICS_LOGGER";
 
     private static final String DEBUG = "debug";
     private static final String PORT = "port";

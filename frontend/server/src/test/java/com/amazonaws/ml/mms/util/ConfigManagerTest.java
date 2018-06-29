@@ -21,15 +21,15 @@ public class ConfigManagerTest {
         ConfigManager configManager = new ConfigManager();
         configManager.setProperty("keystore", "src/test/resources/keystore.p12");
 
-        Logger logger = LoggerFactory.getLogger(ConfigManager.MMS_METRICS);
+        Logger logger = LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
         logger.debug("test mms_metrics");
         Assert.assertTrue(new File("build/logs/mms_metrics.log").exists());
 
-        logger = LoggerFactory.getLogger(ConfigManager.MODEL_METRICS);
+        logger = LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
         logger.debug("test model_metrics");
         Assert.assertTrue(new File("build/logs/model_metrics.log").exists());
 
-        logger = LoggerFactory.getLogger(ConfigManager.MODEL_LOG);
+        logger = LoggerFactory.getLogger(ConfigManager.MODEL_LOGGER);
         logger.debug("test model_log");
         Assert.assertTrue(new File("build/logs/model_log.log").exists());
 

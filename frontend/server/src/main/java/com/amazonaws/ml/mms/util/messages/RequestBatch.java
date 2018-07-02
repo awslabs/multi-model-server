@@ -13,13 +13,17 @@
 package com.amazonaws.ml.mms.util.messages;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class RequestBatch {
+
     private String requestId;
-    private String encoding;
-    private ArrayList<ModelInputs> modelInputs;
+    private String contentType;
+    private List<ModelInputs> modelInputs;
 
     public RequestBatch() {
+        requestId = UUID.randomUUID().toString();
         modelInputs = new ArrayList<>();
     }
 
@@ -31,25 +35,32 @@ public class RequestBatch {
         this.requestId = requestId;
     }
 
-    public String getEncoding() {
-        return encoding;
+    public String getContentType() {
+        return contentType;
     }
 
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
-    public ArrayList<ModelInputs> getModelInputs() {
+    public List<ModelInputs> getModelInputs() {
         return modelInputs;
     }
 
-    public void setModelInputs(ArrayList<ModelInputs> modelInputs) {
+    public void setModelInputs(List<ModelInputs> modelInputs) {
         this.modelInputs = modelInputs;
     }
 
-    public void appendModelInput(ModelInputs modelInput) {
-        if (modelInput != null) {
-            this.modelInputs.add(modelInput);
+    public void addModelInput(ModelInputs modelInput) {
+        modelInputs.add(modelInput);
+    }
+
+    public String getStringParameter(String key) {
+        for (ModelInputs param : modelInputs) {
+            if (key.equals(param.getName())) {
+                return param.getValue();
+            }
         }
+        return null;
     }
 }

@@ -81,7 +81,7 @@ public class WorkLoadManager {
                     gpuCounter = 0;
                 }
             }
-            BatchAggregator aggregator = new BatchAggregator(configManager, model);
+            BatchAggregator aggregator = new BatchAggregator(model);
             WorkerThread thread =
                     new WorkerThread(
                             configManager, threads, backendGroup, port, gpuId, model, aggregator);

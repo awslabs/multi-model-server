@@ -13,11 +13,16 @@
 package com.amazonaws.ml.mms.util.messages;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ModelInferenceRequest extends BaseModelRequest {
 
     private String contentType;
-    private ArrayList<RequestBatch> requestBatch;
+    private List<RequestBatch> requestBatch;
+
+    public ModelInferenceRequest() {
+        this(null);
+    }
 
     public ModelInferenceRequest(String modelName) {
         super("predict", modelName);
@@ -32,17 +37,15 @@ public class ModelInferenceRequest extends BaseModelRequest {
         this.contentType = contentType;
     }
 
-    public ArrayList<RequestBatch> getRequestBatch() {
+    public List<RequestBatch> getRequestBatch() {
         return requestBatch;
     }
 
-    public void setRequestBatch(ArrayList<RequestBatch> requestBatch) {
+    public void setRequestBatch(List<RequestBatch> requestBatch) {
         this.requestBatch = requestBatch;
     }
 
-    public void appendRequestBatches(RequestBatch req) {
-        if (req != null) {
-            this.requestBatch.add(req);
-        }
+    public void addRequestBatches(RequestBatch req) {
+        requestBatch.add(req);
     }
 }

@@ -177,9 +177,8 @@ public class MockWorker {
             resp.setCode("200");
             resp.setMessage("Loaded.");
             if (msg instanceof ModelInferenceRequest) {
-                ArrayList<RequestBatch> requestBatches =
-                        ((ModelInferenceRequest) msg).getRequestBatch();
-                ArrayList<Predictions> predictions = new ArrayList<>(requestBatches.size());
+                List<RequestBatch> requestBatches = ((ModelInferenceRequest) msg).getRequestBatch();
+                List<Predictions> predictions = new ArrayList<>(requestBatches.size());
                 Base64.Encoder encoder = Base64.getEncoder();
                 for (RequestBatch requestBatch : requestBatches) {
                     String requestId = requestBatch.getRequestId();
@@ -195,6 +194,26 @@ public class MockWorker {
                     Unpooled.copiedBuffer(
                             JsonUtils.GSON.toJson(resp) + "\r\n", StandardCharsets.UTF_8);
             ctx.writeAndFlush(buf);
+
+            //            Request<byte[]> request = new Request<>("application/json");
+            //            request.setContent(msg.getPayloads().get(0).getData());
+            //
+            //            Noop noop = new Noop();
+            //            noop.initialize(null);
+            //
+            //            List<Payload> payloads = msg.getPayloads();
+            //
+            //            Message result = new Message(modelName);
+            //            for (Payload payload : payloads) {
+            //                byte[] data = payload.getData();
+            //
+            //                Response<?> resp = noop.predict(request);
+            //                String json = JsonUtils.GSON_PRETTY.toJson(resp.getContent());
+            //                result.addPayload(
+            //                        new Payload(payload.getId(), json.getBytes(StandardCharsets.UTF_8)));
+            //            }
+            //
+            //            ctx.writeAndFlush(result);
         }
 
         @Override

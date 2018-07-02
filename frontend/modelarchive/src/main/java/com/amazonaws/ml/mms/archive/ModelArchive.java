@@ -21,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.Enumeration;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -175,84 +174,118 @@ public class ModelArchive {
     private static ModelArchive load(String url, File dir, boolean copyOnMigrate)
             throws InvalidModelException {
         File manifestFile = findFile(dir, MANIFEST_FILE, true); // for 0.1 model archive
+        File modelDir;
         if (manifestFile == null) {
-            throw new InvalidModelException("MANIFEST.json file not found.");
+            modelDir = dir;
+        } else {
+            modelDir = manifestFile.getParentFile();
         }
-        File modelDir = manifestFile.getParentFile();
         File signatureFile = new File(modelDir, SIGNATURE_FILE);
-        if (!signatureFile.exists()) {
-            throw new InvalidModelException("signature.json file not found.");
+
+        Manifest manifest = null;
+        Signature signature;
+        if (manifestFile != null && manifestFile.exists()) {
+            JsonObject json;
+            try (Reader reader =
+                    new InputStreamReader(
+                            new FileInputStream(manifestFile), StandardCharsets.UTF_8)) {
+                JsonParser parser = new JsonParser();
+                json = (JsonObject) parser.parse(reader);
+            } catch (IOException | JsonParseException e) {
+                throw new InvalidModelException("Failed to parse MANIFEST.json.", e);
+            }
+
+            JsonPrimitive version = json.getAsJsonPrimitive("specificationVersion");
+            if (version == null) {
+                // MMS 0.4
+                return migrateOnLoad(url, modelDir, json, signatureFile, copyOnMigrate);
+            }
+
+            manifest = GSON.fromJson(json, Manifest.class);
+            signature = readFile(signatureFile, Signature.class);
+        } else {
+            // Must be MMS 1.0 or later
+            if (manifestFile != null) {
+                manifest = readFile(manifestFile, Manifest.class);
+            }
+            if (manifest == null) {
+                // Must be 1.0
+                manifest = new Manifest();
+                Manifest.Model model = new Manifest.Model();
+                model.setModelName(dir.getName());
+                manifest.setModel(model);
+            }
+            signature = readFile(signatureFile, Signature.class);
+            if (signature == null) {
+                signature = new Signature();
+            }
         }
 
-        try (Reader reader =
-                new InputStreamReader(new FileInputStream(manifestFile), StandardCharsets.UTF_8)) {
-            Manifest manifest;
-            Signature signature;
+        ModelArchive archive = new ModelArchive(manifest, signature, url, modelDir);
+        archive.validate();
+        return archive;
+    }
 
-            JsonParser parser = new JsonParser();
-            JsonObject json = (JsonObject) parser.parse(reader);
-            JsonPrimitive version = json.getAsJsonPrimitive("specificationVersion");
+    private static ModelArchive migrateOnLoad(
+            String url, File modelDir, JsonObject json, File signatureFile, boolean copyOnMigrate)
+            throws InvalidModelException {
+        LegacyManifest legacyManifest = GSON.fromJson(json, LegacyManifest.class);
+        Manifest manifest = legacyManifest.migrate();
+        LegacySignature legacySignature = readFile(signatureFile, LegacySignature.class);
+        if (legacySignature == null) {
+            throw new InvalidModelException("Missing signature file.");
+        }
+        Signature signature = legacySignature.migrate();
 
-            if (version != null) {
-                manifest = GSON.fromJson(json, Manifest.class);
-                try (Reader r =
-                        new InputStreamReader(
-                                new FileInputStream(signatureFile), StandardCharsets.UTF_8)) {
-                    signature = GSON.fromJson(r, Signature.class);
-                } catch (IOException | JsonParseException e) {
-                    throw new InvalidModelException("Failed to parse signature.json.", e);
-                }
-                ModelArchive archive = new ModelArchive(manifest, signature, url, modelDir);
-                archive.validate();
-                return archive;
-            }
-
-            // MMS 0.4
-            LegacyManifest legacyManifest = GSON.fromJson(json, LegacyManifest.class);
-            manifest = legacyManifest.migrate();
-
-            try (Reader r =
-                    new InputStreamReader(
-                            new FileInputStream(signatureFile), StandardCharsets.UTF_8)) {
-                LegacySignature legacySignature = GSON.fromJson(r, LegacySignature.class);
-                signature = legacySignature.migrate();
-            } catch (IOException | JsonParseException e) {
-                throw new InvalidModelException("Failed to parse legacy signature.json.", e);
-            }
-
+        try {
             if (copyOnMigrate) {
                 File tmpDir = FileUtils.getTempDirectory();
                 File copyDir = new File(tmpDir, "models/" + manifest.getModel().getModelName());
                 FileUtils.deleteDirectory(copyDir);
                 FileUtils.forceMkdir(copyDir);
                 FileUtils.copyDirectory(
-                        dir,
+                        modelDir,
                         copyDir,
                         f ->
                                 !f.isHidden()
                                         && !SIGNATURE_FILE.equalsIgnoreCase(f.getName())
                                         && !MANIFEST_FILE.equalsIgnoreCase(f.getName()));
-                modelDir = copyDir;
             }
 
             File output = new File(modelDir, MANIFEST_FILE);
+            File bak = new File(modelDir, "MANIFEST.legacy");
+            FileUtils.copyFile(output, bak);
             try (Writer writer =
                     new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.UTF_8)) {
                 writer.write(GSON.toJson(manifest));
             }
 
             output = new File(modelDir, SIGNATURE_FILE);
+            bak = new File(modelDir, "signature.legacy");
+            FileUtils.copyFile(output, bak);
             try (Writer writer =
                     new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.UTF_8)) {
                 writer.write(GSON.toJson(signature));
             }
-
-            ModelArchive archive = new ModelArchive(manifest, signature, url, modelDir);
-            archive.validate();
-            return archive;
-        } catch (IOException | JsonParseException e) {
-            throw new InvalidModelException("Failed to parse MANIFEST.json.", e);
+        } catch (IOException e) {
+            throw new InvalidModelException("Failed to migrate legacy model", e);
         }
+
+        ModelArchive archive = new ModelArchive(manifest, signature, url, modelDir);
+        archive.validate();
+        return archive;
+    }
+
+    private static <T> T readFile(File file, Class<T> type) throws InvalidModelException {
+        if (file.exists()) {
+            try (Reader r =
+                    new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+                return GSON.fromJson(r, type);
+            } catch (IOException | JsonParseException e) {
+                throw new InvalidModelException("Failed to parse signature.json.", e);
+            }
+        }
+        return null;
     }
 
     private static File findFile(File dir, String fileName, boolean recursive) {
@@ -290,7 +323,7 @@ public class ModelArchive {
         }
         ZipUtils.unzip(new DigestInputStream(is, md), tmp);
         if (eTag == null) {
-            eTag = Base64.getEncoder().encodeToString(md.digest());
+            eTag = Hex.toHexString(md.digest());
         }
         File dir = new File(modelDir, eTag);
         if (dir.exists()) {
@@ -312,10 +345,6 @@ public class ModelArchive {
 
         if (model.getModelName() == null) {
             throw new InvalidModelException("Missing Model name in manifest file.");
-        }
-
-        if (model.getHandler() == null) {
-            throw new InvalidModelException("Missing Model handler in manifest file.");
         }
 
         if (signature.getRequest() == null) {

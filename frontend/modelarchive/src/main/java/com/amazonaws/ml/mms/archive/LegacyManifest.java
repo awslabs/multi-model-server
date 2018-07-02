@@ -100,7 +100,6 @@ public class LegacyManifest {
             Manifest.Model model = new Manifest.Model();
             model.setModelName(modelInfo.getModelName());
             model.setDescription(modelInfo.getDescription());
-            model.setModelFormat(modelInfo.getFormat());
             model.setHandler(modelInfo.getService());
             model.setModelVersion("snapshot");
             model.setParametersFile(modelInfo.getParameters());
@@ -146,14 +145,8 @@ public class LegacyManifest {
         @SerializedName("Symbol")
         private String symbol;
 
-        @SerializedName("LegacySignature")
-        private String signature;
-
         @SerializedName("Description")
         private String description;
-
-        @SerializedName("Model-Format")
-        private String format;
 
         @SerializedName("Model-Name")
         private String modelName;
@@ -179,28 +172,12 @@ public class LegacyManifest {
             this.symbol = symbol;
         }
 
-        public String getSignature() {
-            return signature;
-        }
-
-        public void setSignature(String signature) {
-            this.signature = signature;
-        }
-
         public String getDescription() {
             return description;
         }
 
         public void setDescription(String description) {
             this.description = description;
-        }
-
-        public String getFormat() {
-            return format;
-        }
-
-        public void setFormat(String format) {
-            this.format = format;
         }
 
         public String getModelName() {

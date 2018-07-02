@@ -50,30 +50,16 @@ public class LegacySignature {
 
     public Signature migrate() {
         Signature signature = new Signature();
-        Signature.Request request = new Signature.Request();
-        if (inputs != null) {
-            for (LegacyShape legacyShape : inputs) {
-                Signature.Shape shape = new Signature.Shape();
-                shape.setContentType(inputContentType);
-                shape.setName(legacyShape.getName());
-                shape.setShape(legacyShape.getShape());
-                request.addInputShape(shape);
-            }
+        // MMS 0.4 only support "image/jpeg" and "application/json"
+        for (LegacyShape legacyShape : inputs) {
+            Signature.Parameter parameter = new Signature.Parameter();
+            parameter.setName(legacyShape.getName());
+            parameter.setShape(legacyShape.getShape());
+            signature.addRequest(inputContentType, parameter);
         }
-        signature.setRequest(request);
 
-        Signature.Response response = new Signature.Response();
-        if (outputs != null) {
-            for (LegacyShape legacyShape : outputs) {
-                Signature.Shape shape = new Signature.Shape();
-                shape.setContentType(inputContentType);
-                shape.setName(legacyShape.getName());
-                shape.setShape(legacyShape.getShape());
-                response.addOutputShape(shape);
-            }
-        }
-        signature.setResponse(response);
-
+        // MMS 0.4 actually only output json data
+        signature.addResponse("application/json", null);
         return signature;
     }
 

@@ -12,10 +12,8 @@
  */
 package com.amazonaws.ml.mms.wlm;
 
-import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelInferenceRequest;
-import com.amazonaws.ml.mms.util.messages.ModelInputs;
 import com.amazonaws.ml.mms.util.messages.ModelLoadModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
@@ -33,12 +31,10 @@ public class BatchAggregator {
 
     private static final Logger logger = LoggerFactory.getLogger(BatchAggregator.class);
 
-    private ConfigManager configManager;
     private Model model;
     private Map<String, Job> jobs;
 
-    public BatchAggregator(ConfigManager configManager, Model model) {
-        this.configManager = configManager;
+    public BatchAggregator(Model model) {
         this.model = model;
         jobs = new LinkedHashMap<>();
     }
@@ -49,17 +45,17 @@ public class BatchAggregator {
         // first job is a blocking call;
         Job job = model.nextJob();
         if (job.isControlCmd()) {
-            ModelLoadModelRequest req = new ModelLoadModelRequest(model.getModelName());
-            req.setModelPath(model.getModelUrl());
-            return req;
+            RequestBatch input = job.getPayload();
+            String gpu = input.getStringParameter("gpu");
+            return new ModelLoadModelRequest(model, gpu);
         }
 
         jobs.put(job.getJobId(), job);
 
         logger.debug("get first job: {}", job.getJobId());
 
-        long maxBatchDelay = configManager.getMaxBatchDelay();
-        int size = configManager.getMaxBatchSize() - 1;
+        long maxBatchDelay = model.getMaxBatchDelay();
+        int size = model.getBatchSize() - 1;
         long begin = System.currentTimeMillis();
         for (int i = 0; i < size; ++i) {
             if (job.isControlCmd()) {
@@ -71,9 +67,9 @@ public class BatchAggregator {
                     Job j = iterator.next();
                     model.addFirst(j);
                 }
-                ModelLoadModelRequest req = new ModelLoadModelRequest(model.getModelName());
-                req.setModelPath(model.getModelDir());
-                return req;
+                RequestBatch input = job.getPayload();
+                String gpu = input.getStringParameter("gpu");
+                return new ModelLoadModelRequest(model, gpu);
             }
 
             job = model.nextJob(maxBatchDelay);
@@ -93,15 +89,7 @@ public class BatchAggregator {
 
         ModelInferenceRequest req = new ModelInferenceRequest(model.getModelName());
         for (Job j : jobs.values()) {
-            RequestBatch batch = new RequestBatch();
-            batch.setRequestId(j.getJobId());
-            batch.appendModelInput(
-                    new ModelInputs(
-                            "base64",
-                            //Base64.getMimeEncoder().encodeToString(j.getPayload().getData()),
-                            Base64.getEncoder().encodeToString(j.getPayload().getData()),
-                            "data"));
-            req.appendRequestBatches(batch);
+            req.addRequestBatches(j.getPayload());
         }
         return req;
     }
@@ -115,15 +103,15 @@ public class BatchAggregator {
                 return;
             }
 
-            for (Predictions payload : message.getPredictions()) {
-                String jobId = payload.getRequestId();
+            for (Predictions prediction : message.getPredictions()) {
+                String jobId = prediction.getRequestId();
                 Job job = jobs.remove(jobId);
                 if (job == null) {
                     throw new IllegalStateException("Unexpected job: " + jobId);
                 }
                 job.response(
-                        Base64.getDecoder().decode(payload.getValue()),
-                        model.getResponseContentType());
+                        Base64.getDecoder().decode(prediction.getValue()),
+                        prediction.getContentType());
             }
         } else {
             for (String reqId : jobs.keySet()) {
@@ -147,18 +135,24 @@ public class BatchAggregator {
         }
     }
 
-    public void sendError(Object message, String error) {
-        //        byte[] body = error.getBytes(StandardCharsets.UTF_8);
-        //        for (Payload payload : message.getPayloads()) {
-        //            String jobId = payload.getId();
-        //            Job job = jobs.remove(jobId);
-        //            if (job == null) {
-        //                throw new IllegalStateException("Unexpected job: " + jobId);
-        //            }
-        //            job.response(body, HttpHeaderValues.APPLICATION_JSON);
-        //        }
-        //        if (!jobs.isEmpty()) {
-        //            throw new IllegalStateException("Not all jobs get response.");
-        //        }
+    public void sendError(BaseModelRequest message, String error) {
+        if (message instanceof ModelLoadModelRequest) {
+            logger.warn("Load model failed: {}", message.getModelName());
+            return;
+        }
+
+        ModelInferenceRequest msg = (ModelInferenceRequest) message;
+        for (RequestBatch req : msg.getRequestBatch()) {
+            String requestId = req.getRequestId();
+            Job job = jobs.remove(requestId);
+            if (job == null) {
+                throw new IllegalStateException("Unexpected job: " + requestId);
+            }
+            job.sendError(error);
+        }
+
+        if (!jobs.isEmpty()) {
+            throw new IllegalStateException("Not all jobs get response.");
+        }
     }
 }

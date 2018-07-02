@@ -12,13 +12,13 @@
  */
 package com.amazonaws.ml.mms.openapi;
 
+import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.archive.Signature;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.wlm.Model;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpUtil;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -26,64 +26,90 @@ public final class OpenApiUtils {
 
     private OpenApiUtils() {}
 
-    public static String getMetadata(String host, String protocol, Map<String, Model> models) {
-        Swagger swagger = new Swagger();
+    public static String listApis() {
+        OpenApi openApi = new OpenApi();
         Info info = new Info();
         info.setTitle("Model Serving APIs");
         info.setDescription(
                 "Model Server is a flexible and easy to use tool for serving deep learning models");
         info.setVersion("1.0.0");
-        swagger.setInfo(info);
+        openApi.setInfo(info);
 
-        swagger.setHost(host);
-        swagger.addScheme(protocol);
+        openApi.addPath("/api-description", getApiDescriptionPath());
+        openApi.addPath("/{model_name}/predict", getLegacyPredictPath());
+        openApi.addPath("/", getListApisPath());
+        openApi.addPath("/ping", getPingPath());
+        openApi.addPath("/invocations", getInvocationsPath());
+        openApi.addPath("/predictions/{model_name}", getPredictionsPath());
+        openApi.addPath("/models", getModelsPath());
+        openApi.addPath("/models/{model_name}", getModelManagerPath());
 
-        swagger.addPath("/api-description", getApiDescriptionPath());
-        swagger.addPath("/ping", getPingPath());
-        swagger.addPath("/invocations", getInvocationsPath());
-        swagger.addPath("/register", getRegisterModelPath());
-        swagger.addPath("/unregister", getUnRegisterModelPath());
-        swagger.addPath("/models", getListModelsPath());
-        swagger.addPath("/model", getDescribeModelPath());
-        swagger.addPath("/groups", getListGroupsPath());
-        swagger.addPath("/scale", getScaleWorkerPath());
+        return JsonUtils.GSON_PRETTY.toJson(openApi);
+    }
 
-        List<String> modelNames = new ArrayList<>(models.keySet());
-        Collections.sort(modelNames);
+    public static String getModelApi(Model model) {
+        String modelName = model.getModelName();
+        OpenApi openApi = new OpenApi();
+        Info info = new Info();
+        info.setTitle("RESTful API for: " + modelName);
+        info.setVersion("1.0.0");
+        openApi.setInfo(info);
 
-        for (String modelName : modelNames) {
-            Signature signature = models.get(modelName).getModelArchive().getSignature();
-            swagger.addPath(modelName + "/predict", getModelPath(modelName, signature));
-        }
+        Signature signature = model.getModelArchive().getSignature();
+        openApi.addPath("/prediction/" + modelName, getModelPath(modelName, signature));
 
-        return JsonUtils.GSON_PRETTY.toJson(swagger);
+        return JsonUtils.GSON_PRETTY.toJson(openApi);
     }
 
     private static Path getApiDescriptionPath() {
-        Response resp = new Response("200", "A swagger 2.0 json descriptor.");
+        Schema schema = new Schema("object");
+        schema.addProperty("openapi", new Schema("string"), true);
+        schema.addProperty("info", new Schema("object"), true);
+        schema.addProperty("paths", new Schema("object"), true);
+        MediaType mediaType = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
 
-        ObjectProperty schema = new ObjectProperty();
-        resp.setSchema(schema);
+        Response resp = new Response("200", "A openapi 3.0.1 descriptor.");
+        resp.addContent(mediaType);
 
-        Operation operation = new Operation("openApiDescription");
+        Operation operation = new Operation("apiDescription");
         operation.addResponse(resp);
-        operation.addProduce(HttpHeaderValues.APPLICATION_JSON.toString());
+        operation.setDeprecated(true);
 
         Path path = new Path();
         path.setGet(operation);
         return path;
     }
 
-    private static Path getPingPath() {
-        Response resp = new Response("200", "Model server status.");
+    private static Path getListApisPath() {
+        Schema schema = new Schema("object");
+        schema.addProperty("openapi", new Schema("string"), true);
+        schema.addProperty("info", new Schema("object"), true);
+        schema.addProperty("paths", new Schema("object"), true);
+        MediaType mediaType = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
 
-        ObjectProperty schema = new ObjectProperty();
-        schema.addProperty(new StringProperty("status", "Overall status of the Model Server."));
-        resp.setSchema(schema);
+        Response resp =
+                new Response("200", "List available RESTful APIs with openapi 3.0.1 descriptor.");
+        resp.addContent(mediaType);
+
+        Operation operation = new Operation("listAPIs");
+        operation.addResponse(resp);
+
+        Path path = new Path();
+        path.setOptions(operation);
+        return path;
+    }
+
+    private static Path getPingPath() {
+        Schema schema = new Schema("object");
+        schema.addProperty(
+                "status", new Schema("string", "Overall status of the Model Server."), true);
+        MediaType mediaType = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
+
+        Response resp = new Response("200", "Model server status.");
+        resp.addContent(mediaType);
 
         Operation operation = new Operation("ping");
         operation.addResponse(resp);
-        operation.addProduce(HttpHeaderValues.APPLICATION_JSON.toString());
 
         Path path = new Path();
         path.setGet(operation);
@@ -91,294 +117,429 @@ public final class OpenApiUtils {
     }
 
     private static Path getInvocationsPath() {
+        Schema schema = new Schema();
+        schema.addProperty("model_name", new Schema("string", "Name of model"), false);
+
+        Schema dataProp = new Schema("string", "Inference input data");
+        dataProp.setFormat("binary");
+        schema.addProperty("data", dataProp, true);
+
+        MediaType multipart =
+                new MediaType(HttpHeaderValues.MULTIPART_FORM_DATA.toString(), schema);
+
+        RequestBody requestBody = new RequestBody();
+        requestBody.setRequired(true);
+        requestBody.addContent(multipart);
+
         Operation operation =
                 new Operation("invocations", "A generic invocation entry point for all models.");
-
-        FormParameter param = new FormParameter();
-        param.setName("modelName");
-        param.setRequired(true);
-        param.setDescription("Name of model");
-        param.setType("string");
-        operation.addParameter(param);
-
-        param = new FormParameter();
-        param.setName("data");
-        param.setRequired(true);
-        param.setDescription("Inference input data");
-        param.setType("file");
-        operation.addParameter(param);
+        operation.setRequestBody(requestBody);
+        operation.addParameter(new QueryParameter("model_name", "Name of model"));
 
         Response resp = new Response("200", "OK");
-        resp.setSchema(new ObjectProperty());
-
         operation.addResponse(resp);
-        operation.addConsume(HttpHeaderValues.MULTIPART_FORM_DATA.toString());
+        operation.setDeprecated(true);
 
         Path path = new Path();
         path.setPost(operation);
         return path;
     }
 
-    private static Path getRegisterModelPath() {
+    private static Path getPredictionsPath() {
+        Operation post =
+                new Operation(
+                        "predictions",
+                        "Predictions entry point for each model."
+                                + " Use OPTIONS method to get detailed model API input and output description.");
+        post.addParameter(new PathParameter("model_name", "Name of model."));
+
+        Schema schema = new Schema("string");
+        schema.setFormat("binary");
+        MediaType mediaType = new MediaType("*/*", schema);
+        RequestBody requestBody = new RequestBody();
+        requestBody.setDescription(
+                "Input data format is defined by each model. Use OPTIONS method to get details for model input format.");
+        requestBody.setRequired(true);
+        requestBody.addContent(mediaType);
+
+        post.setRequestBody(requestBody);
+
+        schema = new Schema("string");
+        schema.setFormat("binary");
+        mediaType = new MediaType("*/*", schema);
+
+        Response resp = new Response("200", "OK");
+        resp.setDescription(
+                "Output data format is defined by each model. Use OPTIONS method to get details for model output and output format.");
+        resp.addContent(mediaType);
+
+        post.addResponse(resp);
+
+        Operation options =
+                new Operation("predictionsApi", "Display details of per model input and output.");
+        options.addParameter(new PathParameter("model_name", "Name of model."));
+
+        resp = new Response("200", "OK");
+        resp.addContent(new MediaType("application/json", new Schema("object")));
+        options.addResponse(resp);
+
+        Path path = new Path();
+        path.setPost(post);
+        path.setOptions(options);
+        return path;
+    }
+
+    private static Path getLegacyPredictPath() {
         Operation operation =
-                new Operation("registerModel", "Register a new model in Model Server.");
-        operation.addConsume(HttpHeaderValues.APPLICATION_JSON.toString());
+                new Operation("predict", "A legacy predict entry point for each model.");
+        operation.addParameter(new PathParameter("model_name", "Name of model to unregister."));
+
+        Schema schema = new Schema("string");
+        schema.setFormat("binary");
+        MediaType mediaType = new MediaType("*/*", schema);
+        RequestBody requestBody = new RequestBody();
+        requestBody.setRequired(true);
+        requestBody.setDescription("Input data format is defined by each model.");
+        requestBody.addContent(mediaType);
+
+        operation.setRequestBody(requestBody);
+
+        schema = new Schema("string");
+        schema.setFormat("binary");
+        mediaType = new MediaType("*/*", schema);
+
+        Response resp = new Response("200", "OK");
+        resp.setDescription("Output data format is defined by each model.");
+        resp.addContent(mediaType);
+
+        operation.addResponse(resp);
+        operation.setDeprecated(true);
+
+        Path path = new Path();
+        path.setPost(operation);
+        return path;
+    }
+
+    private static Path getModelsPath() {
+        Path path = new Path();
+        path.setGet(getListModelsOperation());
+        path.setPost(getRegisterOperation());
+        return path;
+    }
+
+    private static Path getModelManagerPath() {
+        Path path = new Path();
+        path.setGet(getDescribeModelOperation());
+        path.setPut(getScaleOperation());
+        path.setDelete(getUnRegisterOperation());
+        return path;
+    }
+
+    private static Operation getListModelsOperation() {
+        Operation operation =
+                new Operation("listModels", "List registered models in Model Server.");
+
+        operation.addParameter(
+                new QueryParameter(
+                        "limit",
+                        "integer",
+                        "100",
+                        "Use this parameter to specify the maximum number of items to return. When"
+                                + " this value is present, Model Server does not return more than the specified"
+                                + " number of items, but it might return fewer. This value is optional. If you"
+                                + " include a value, it must be between 1 and 1000, inclusive. If you do not"
+                                + " include a value, it defaults to 100."));
+        operation.addParameter(
+                new QueryParameter(
+                        "next_page_token",
+                        "The token to retrieve the next set of results. Model Server provides the"
+                                + " token when the response from a previous call has more results than the"
+                                + " maximum page size."));
+        operation.addParameter(
+                new QueryParameter(
+                        "model_name_pattern", "A model name filter to list only matching models."));
 
         Schema schema = new Schema("object");
-        schema.addProperty(new StringProperty("modelName", true, "Name of model to register."));
         schema.addProperty(
-                new StringProperty(
-                        "modelUrl",
-                        true,
-                        "Model archive download url, support local file or HTTP(s) protocol. For S3, consider use pre-signed url."));
+                "nextPageToken",
+                new Schema(
+                        "string",
+                        "Use this parameter in a subsequent request after you receive a response"
+                                + " with truncated results. Set it to the value of NextMarker from the"
+                                + " truncated response you just received."),
+                false);
 
-        BodyParameter param = new BodyParameter("Model", schema);
-        operation.addParameter(param);
+        Schema modelProp = new Schema("object");
+        modelProp.addProperty("modelName", new Schema("string", "Name of the model."), true);
+        modelProp.addProperty("modelUrl", new Schema("string", "URL of the model."), true);
+        Schema modelsProp = new Schema("array", "A list of registered models.");
+        modelsProp.setItems(modelProp);
+        schema.addProperty("models", modelsProp, true);
+        MediaType json = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
+
+        Response resp = new Response("200", "OK");
+        resp.addContent(json);
+
+        operation.addResponse(resp);
+
+        return operation;
+    }
+
+    private static Operation getRegisterOperation() {
+        Operation operation =
+                new Operation("registerModel", "Register a new model in Model Server.");
+
+        operation.addParameter(
+                new QueryParameter(
+                        "model_url",
+                        "string",
+                        null,
+                        true,
+                        "Model archive download url, support local file or HTTP(s) protocol."
+                                + " For S3, consider use pre-signed url."));
+        operation.addParameter(
+                new QueryParameter(
+                        "model_name",
+                        "Name of model. This value will override modelName in MANIFEST.json if present."));
+        operation.addParameter(
+                new QueryParameter(
+                        "handler",
+                        "Inference handler entry-point. This value will override handler in MANIFEST.json if present."));
+
+        Parameter runtime =
+                new QueryParameter(
+                        "runtime",
+                        "Runtime for the model custom service code. This value will override runtime in MANIFEST.json if present.");
+        operation.addParameter(runtime);
+        operation.addParameter(
+                new QueryParameter("batch_size", "Inference batch size, default: 1."));
+        operation.addParameter(
+                new QueryParameter(
+                        "max_batch_delay", "Maximum delay for batch aggregation, default: 100."));
+
+        Manifest.RuntimeType[] types = Manifest.RuntimeType.values();
+        List<String> runtimeTypes = new ArrayList<>(types.length);
+        for (Manifest.RuntimeType type : types) {
+            runtimeTypes.add(type.toString());
+        }
+        runtime.getSchema().setEnumeration(runtimeTypes);
 
         operation.addResponse(new Response("200", "Register success"));
         operation.addResponse(new Response("400", "Invalid model URL."));
-        operation.addResponse(new Response("404", "Unable to download model archive"));
+        operation.addResponse(new Response("400", "Missing modelName parameter."));
+        operation.addResponse(new Response("400", "Missing handler parameter."));
+        operation.addResponse(new Response("400", "Missing runtime parameter."));
         operation.addResponse(
                 new Response("400", "Invalid model archive file format, expecting a zip file."));
         operation.addResponse(new Response("400", "Unable to parse model archive manifest file."));
         operation.addResponse(
                 new Response("400", "Unable to open dependent files specified in manifest file."));
+        operation.addResponse(new Response("404", "Unable to download model archive"));
 
-        Path path = new Path();
-        path.setPost(operation);
-        return path;
+        return operation;
     }
 
-    private static Path getUnRegisterModelPath() {
+    private static Operation getUnRegisterOperation() {
         Operation operation =
-                new Operation("unregisterModel", "Unregister a model from Model Server.");
-        operation.addConsume(HttpHeaderValues.APPLICATION_JSON.toString());
+                new Operation(
+                        "unregisterModel",
+                        "Unregister a model from Model Server. This is an asynchronized call."
+                                + " Caller need to call listModels to confirm if all the works has be terminated.");
 
-        Schema schema = new Schema("object");
-        schema.addProperty(new StringProperty("modelName", true, "Name of model to register."));
-        schema.addProperty(
-                new Property("boolean", "forced", "Force terminate backend worker process."));
+        operation.addParameter(new PathParameter("model_name", "Name of model to unregister."));
+        operation.addParameter(
+                new QueryParameter(
+                        "timeout",
+                        "integer",
+                        "-1",
+                        "Waiting up to the specified wait time if necessary for"
+                                + " a worker to complete all pending requests. Use 0 to terminate backend"
+                                + " worker process immediately. Use -1 for wait infinitely."));
 
-        BodyParameter param = new BodyParameter("model", schema);
-        operation.addParameter(param);
-
-        operation.addResponse(new Response("200", "Unregister success"));
+        operation.addResponse(new Response("202", "Accepted."));
         operation.addResponse(new Response("404", "Model not found."));
 
-        Path path = new Path();
-        path.setPost(operation);
-        return path;
+        return operation;
     }
 
-    private static Path getListModelsPath() {
-        Operation operation =
-                new Operation("listModels", "List registered models in Model Server.");
-
-        Schema requestSchema = new Schema("object");
-        Property property =
-                new IntegerProperty(
-                        "Limit",
-                        "Use this parameter to specify the maximum number of items to return. When this value is present, Model Server does not return more than the specified number of items, but it might return fewer. This value is optional. If you include a value, it must be between 1 and 1000, inclusive. If you do not include a value, it defaults to 100.");
-        property.setDefaultValue("100");
-        requestSchema.addProperty(property);
-
-        property =
-                new StringProperty(
-                        "NextPageToken",
-                        "The token to retrieve the next set of results. Model Server provides the token when the response from a previous call has more results than the maximum page size.");
-        requestSchema.addProperty(property);
-
-        BodyParameter param = new BodyParameter("pagination", requestSchema);
-        operation.addParameter(param);
-
-        Response okResp = new Response("200", "OK");
-
-        ObjectProperty responseSchema = new ObjectProperty();
-        responseSchema.addProperty(
-                new StringProperty(
-                        "NextPageToken",
-                        "Use this parameter in a subsequent request after you receive a response with truncated results. Set it to the value of NextMarker from the truncated response you just received."));
-        ArrayProperty modelsProp = new ArrayProperty("models", "A list of registered models.");
-        ObjectProperty modelProp = new ObjectProperty();
-        modelProp.addProperty(new StringProperty("modelName", "Name of the model."));
-        modelProp.addProperty(
-                new IntegerProperty("modelGroupId", "Model group that the model belongs to."));
-        modelProp.addProperty(new StringProperty("modelHash", "SHA1 hash of the model."));
-        modelProp.addProperty(new StringProperty("modelUrl", "URL of the model."));
-        modelsProp.setItems(modelProp);
-
-        responseSchema.addProperty(modelsProp);
-        okResp.setSchema(responseSchema);
-
-        operation.addResponse(okResp);
-        operation.addConsume(HttpHeaderValues.APPLICATION_JSON.toString());
-        operation.addProduce(HttpHeaderValues.APPLICATION_JSON.toString());
-
-        Path path = new Path();
-        path.setPost(operation);
-        return path;
-    }
-
-    private static Path getDescribeModelPath() {
+    private static Operation getDescribeModelOperation() {
         Operation operation =
                 new Operation(
                         "describeModel",
                         "Provides detailed information about the specified model.");
 
-        Schema requestSchema = new Schema("object");
-        requestSchema.addProperty(
-                new StringProperty("modelName", true, "Name of model to describe."));
-
-        BodyParameter param = new BodyParameter("model", requestSchema);
-        operation.addParameter(param);
-
-        Response okResp = new Response("200", "OK");
-
-        ObjectProperty responseSchema = new ObjectProperty();
-        responseSchema.addProperty(new StringProperty("modelName", "The name of the model."));
-        responseSchema.addProperty(
-                new IntegerProperty("modelGroupId", "Model group id that the model belongs to."));
-        responseSchema.addProperty(
-                new IntegerProperty(
-                        "rejectedRequests",
-                        "Number requests has been rejected in last 10 minutes."));
-        responseSchema.addProperty(
-                new IntegerProperty("waitingQueueSize", "Number requests waiting in the queue."));
-        responseSchema.addProperty(new IntegerProperty("batchSize", "Configured batch size."));
-        responseSchema.addProperty(
-                new IntegerProperty("batchDelay", "Configured batch delay in ms."));
-        responseSchema.addProperty(new IntegerProperty("requestPerSecond", "Request per second."));
-
-        ArrayProperty modelsProp =
-                new ArrayProperty("workers", "A list of workers that serving the models.");
-        ObjectProperty modelProp = new ObjectProperty();
-        modelProp.addProperty(new StringProperty("type", "GPU or CPU"));
-        modelProp.addProperty(new StringProperty("status", "Health status of the worker process"));
-        modelsProp.setItems(modelProp);
-
-        responseSchema.addProperty(modelsProp);
-        okResp.setSchema(responseSchema);
-
-        operation.addResponse(okResp);
-        operation.addConsume(HttpHeaderValues.APPLICATION_JSON.toString());
-        operation.addProduce(HttpHeaderValues.APPLICATION_JSON.toString());
-
-        Path path = new Path();
-        path.setPost(operation);
-        return path;
-    }
-
-    private static Path getListGroupsPath() {
-        Operation operation = new Operation("listGroups", "List registered model groups.");
-
-        Response okResp = new Response("200", "OK");
-
-        ObjectProperty responseSchema = new ObjectProperty();
-        ArrayProperty modelsProp =
-                new ArrayProperty("groups", "A list of registered model groups.");
-        ObjectProperty modelProp = new ObjectProperty();
-        modelProp.addProperty(new IntegerProperty("modelGroupId", "Model group ID."));
-        modelProp.addProperty(
-                new StringProperty("minWorker", "Configured minimum number of worker processes."));
-        modelProp.addProperty(
-                new StringProperty("maxWorker", "Configured maximum number of worker processes."));
-        modelProp.addProperty(
-                new StringProperty(
-                        "numberGpu", "Configured number of GPU worker processes to create."));
-        modelProp.addProperty(
-                new StringProperty("activeWorkers", "Active running worker processes."));
-        modelProp.addProperty(new StringProperty("status", "Status of the model group."));
-        modelsProp.setItems(modelProp);
-
-        responseSchema.addProperty(modelsProp);
-        okResp.setSchema(responseSchema);
-
-        operation.addResponse(okResp);
-        operation.addProduce(HttpHeaderValues.APPLICATION_JSON.toString());
-
-        Path path = new Path();
-        path.setPost(operation);
-        return path;
-    }
-
-    private static Path getScaleWorkerPath() {
-        Operation operation =
-                new Operation(
-                        "setAutoScale",
-                        "Configure number of workers for a model group, This is a asynchronized call.");
-        operation.addConsume(HttpHeaderValues.APPLICATION_JSON.toString());
+        operation.addParameter(new PathParameter("model_name", "Name of model to describe."));
 
         Schema schema = new Schema("object");
         schema.addProperty(
-                new IntegerProperty("modelGroupId", true, "ID of model group to scale."));
-        schema.addProperty(
-                new IntegerProperty("minWorker", true, "Minimum number of worker processes."));
-        schema.addProperty(
-                new IntegerProperty("maxWorker", true, "Maximum number of worker processes."));
-        schema.addProperty(
-                new IntegerProperty(
-                        "numberGpu", true, "Number of GPU worker processes to create."));
-        schema.addProperty(
-                new IntegerProperty(
+                "nextPageToken",
+                new Schema(
+                        "string",
+                        "Use this parameter in a subsequent request after you receive a response"
+                                + " with truncated results. Set it to the value of NextMarker from the truncated"
+                                + " response you just received."),
+                false);
+
+        Schema model = new Schema("object");
+        model.addProperty("modelName", new Schema("string", "Name of the model."), true);
+        model.addProperty("modelUrl", new Schema("string", "URL of the model."), true);
+        model.addProperty("type", new Schema("string", "GPU or CPU"), true);
+        model.addProperty(
+                "targetWorkers", new Schema("integer", "Configured number of worker."), true);
+
+        Schema workers =
+                new Schema("array", "Number requests has been rejected in last 10 minutes.");
+        Schema worker = new Schema("object");
+        Schema workerStatus = new Schema("string", "Worker status");
+        List<String> status = new ArrayList<>();
+        status.add("READY");
+        status.add("LOADING");
+        status.add("UNLOADING");
+        workerStatus.setEnumeration(status);
+        worker.addProperty("status", workerStatus, true);
+        workers.setItems(worker);
+
+        model.addProperty("workers", workers, true);
+        model.addProperty("batchSize", new Schema("integer", "Configured batch size."), false);
+        model.addProperty(
+                "maxBatchDelay",
+                new Schema("integer", "Configured maximum batch delay in ms."),
+                false);
+        model.addProperty(
+                "rejectedRequests",
+                new Schema("integer", "Number requests has been rejected in last 10 minutes."),
+                true);
+        model.addProperty(
+                "waitingQueueSize",
+                new Schema("integer", "Number requests waiting in the queue."),
+                true);
+        model.addProperty(
+                "requests",
+                new Schema("integer", "Number requests processed in last 10 minutes."),
+                true);
+        model.addProperty(
+                "status", new Schema("string", "Overall health status of the model"), true);
+
+        schema.addProperty("model", model, true);
+
+        MediaType mediaType = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
+
+        Response resp = new Response("200", "OK");
+        resp.addContent(mediaType);
+        operation.addResponse(resp);
+
+        return operation;
+    }
+
+    private static Operation getScaleOperation() {
+        Operation operation =
+                new Operation(
+                        "setAutoScale",
+                        "Configure number of workers for a model, This is a asynchronized call."
+                                + " Caller need to call describeModel check if the model workers has been changed.");
+        operation.addParameter(new PathParameter("model_name", "Name of model to describe."));
+        operation.addParameter(
+                new QueryParameter(
+                        "minWorker", "integer", "1", "Minimum number of worker processes."));
+        operation.addParameter(
+                new QueryParameter(
+                        "maxWorker", "integer", "1", "Maximum number of worker processes."));
+        operation.addParameter(
+                new QueryParameter(
+                        "numberGpu", "integer", "0", "Number of GPU worker processes to create."));
+        operation.addParameter(
+                new QueryParameter(
                         "timeout",
-                        "Waiting up to the specified wait time if necessary for a worker to complete all pending requests. Use 0 to terminate backend worker process immediately. Use -1 for wait infinitely."));
+                        "integer",
+                        "-1",
+                        "Waiting up to the specified wait time if necessary for"
+                                + " a worker to complete all pending requests. Use 0 to terminate backend"
+                                + " worker process immediately. Use -1 for wait infinitely."));
 
-        BodyParameter param = new BodyParameter("scaleParam", schema);
-        operation.addParameter(param);
+        operation.addResponse(new Response("202", "Accepted."));
+        operation.addResponse(new Response("404", "Model not found."));
 
-        operation.addResponse(new Response("200", "Scale configuration set."));
-        operation.addResponse(new Response("404", "Group not found."));
-
-        Path path = new Path();
-        path.setPost(operation);
-        return path;
+        return operation;
     }
 
     private static Path getModelPath(String modelName, Signature signature) {
         Operation operation =
-                new Operation(
-                        modelName + "_predict",
-                        "A predict entry point for model: " + modelName + '.');
-        Signature.Request req = signature.getRequest();
-        String contentType = req.getContentType();
-        if (contentType != null) {
-            operation.addConsume(req.getContentType());
+                new Operation(modelName, "A predict entry point for model: " + modelName + '.');
+        if (signature == null) {
+            Response resp = new Response("200", "OK");
+            operation.addResponse(resp);
+            Path path = new Path();
+            path.setPost(operation);
+            return path;
+        }
 
-            CharSequence mimeType = HttpUtil.getMimeType(contentType);
-            List<Signature.Shape> inputs = req.getInputs();
-            if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(mimeType)) {
-                Schema schema = new Schema("object");
-                for (Signature.Shape shape : inputs) {
-                    schema.addProperty(
-                            new StringProperty(
-                                    shape.getName(), shape.isRequired(), shape.getDescription()));
-                }
-                BodyParameter param = new BodyParameter("body", schema);
-                operation.addParameter(param);
-            } else if (HttpHeaderValues.MULTIPART_FORM_DATA.contentEqualsIgnoreCase(mimeType)) {
-                for (Signature.Shape shape : inputs) {
-                    FormParameter param = new FormParameter();
-                    param.setName(shape.getName());
-                    param.setRequired(shape.isRequired());
-                    param.setDescription(shape.getDescription());
-                    param.setType(shape.getType());
-                    operation.addParameter(param);
-                }
+        Map<String, List<Signature.Parameter>> requests = signature.getRequest();
+        if (!requests.isEmpty()) {
+            RequestBody body = new RequestBody();
+            for (Map.Entry<String, List<Signature.Parameter>> entry : requests.entrySet()) {
+                String contentType = entry.getKey();
+                List<Signature.Parameter> parameters = entry.getValue();
+                MediaType mediaType = getMediaType(contentType, parameters);
+                body.addContent(mediaType);
             }
+            operation.setRequestBody(body);
         }
 
-        Signature.Response resp = signature.getResponse();
-        contentType = resp.getContentType();
-        if (contentType != null) {
-            operation.addProduce(contentType);
+        Response response = new Response("200", "OK");
+
+        Map<String, List<Signature.Parameter>> responses = signature.getResponse();
+        for (Map.Entry<String, List<Signature.Parameter>> entry : responses.entrySet()) {
+            String contentType = entry.getKey();
+            List<Signature.Parameter> parameters = entry.getValue();
+            MediaType mediaType = getMediaType(contentType, parameters);
+            response.addContent(mediaType);
         }
 
-        Response swaggerResponse = new Response("200", "OK");
-
-        operation.addResponse(swaggerResponse);
+        operation.addResponse(response);
 
         Path path = new Path();
         path.setPost(operation);
         return path;
+    }
+
+    private static MediaType getMediaType(
+            String contentType, List<Signature.Parameter> parameters) {
+        CharSequence mimeType;
+        if (contentType != null) {
+            mimeType = HttpUtil.getMimeType(contentType);
+        } else {
+            mimeType = HttpHeaderValues.APPLICATION_OCTET_STREAM;
+        }
+
+        Schema schema = new Schema();
+        MediaType mediaType = new MediaType(mimeType.toString(), schema);
+
+        if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(mimeType)
+                || HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.contentEqualsIgnoreCase(
+                        mimeType)) {
+            schema.setType("object");
+            for (Signature.Parameter parameter : parameters) {
+                schema.addProperty(
+                        parameter.getName(),
+                        new Schema("string", parameter.getDescription()),
+                        parameter.isRequired());
+            }
+        } else if (HttpHeaderValues.MULTIPART_FORM_DATA.contentEqualsIgnoreCase(mimeType)) {
+            schema.setType("object");
+            for (Signature.Parameter parameter : parameters) {
+                String paramType = parameter.getContentType();
+                Schema paramSchema = new Schema(parameter.getType(), parameter.getDescription());
+                schema.addProperty(parameter.getName(), paramSchema, parameter.isRequired());
+                if (paramType != null && !paramType.startsWith("text/")) {
+                    paramSchema.setFormat("binary");
+                    mediaType.addEncoding(parameter.getName(), new Encoding(paramType));
+                }
+            }
+        } else {
+            schema.setType("string");
+            schema.setFormat("binary");
+        }
+
+        return mediaType;
     }
 }

@@ -52,8 +52,6 @@ public final class ConfigManager {
     private static final String NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
     private static final String MAX_WORKERS = "max_workers";
     private static final String JOB_QUEUE_SIZE = "job_queue_size";
-    private static final String MAX_BATCH_SIZE = "batch_size";
-    private static final String MAX_BATCH_DELAY = "batch_delay";
     private static final String NUMBER_OF_GPU = "number_of_gpu";
 
     private static final String USE_SSL = "use_ssl";
@@ -117,14 +115,6 @@ public final class ConfigManager {
         return getIntProperty(JOB_QUEUE_SIZE, 100);
     }
 
-    public int getMaxBatchSize() {
-        return getIntProperty(MAX_BATCH_SIZE, 1);
-    }
-
-    public int getMaxBatchDelay() {
-        return getIntProperty(MAX_BATCH_DELAY, 100);
-    }
-
     public int getNumberOfGpu() {
         return getIntProperty(NUMBER_OF_GPU, 0);
     }
@@ -150,7 +140,7 @@ public final class ConfigManager {
     }
 
     public String getLoadModels() {
-        return getProperty(LOAD_MODELS, "ALL");
+        return getProperty(LOAD_MODELS, "NONE");
     }
 
     public boolean isUseSsl() {

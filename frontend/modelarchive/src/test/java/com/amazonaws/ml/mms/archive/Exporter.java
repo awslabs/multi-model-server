@@ -85,67 +85,70 @@ public final class Exporter {
             }
 
             File signatureFile = new File(modelPath, "signature.json");
-            if (!signatureFile.exists()) {
-                System.err.println("signature.json is not found in: " + modelPath);
-                return;
-            }
-
-            Signature signature;
-            try (Reader reader =
-                    new InputStreamReader(
-                            new FileInputStream(signatureFile), StandardCharsets.UTF_8)) {
-                signature = GSON.fromJson(reader, Signature.class);
-            } catch (JsonSyntaxException e) {
-                System.err.println("signature.json is not a valid json file.");
-                return;
+            Signature signature = null;
+            if (signatureFile.exists()) {
+                try (Reader reader =
+                        new InputStreamReader(
+                                new FileInputStream(signatureFile), StandardCharsets.UTF_8)) {
+                    signature = GSON.fromJson(reader, Signature.class);
+                } catch (JsonSyntaxException e) {
+                    System.err.println("signature.json is not a valid json file.");
+                    return;
+                }
             }
 
             File[] files = modelPath.listFiles();
             if (files == null) {
-                System.err.println("Symbol file is not found in: " + modelPath);
-                return;
-            }
-
-            File symbolFile = findUniqueFile(files, "-symbol.json");
-            if (symbolFile == null) {
-                System.err.println("Symbol file is not found in: " + modelPath);
-                return;
-            }
-
-            File paramsFile = findUniqueFile(files, ".params");
-            if (paramsFile == null) {
-                System.err.println("Parameters file is not found in: " + modelPath);
-                return;
-            }
-
-            String handler = config.getService();
-            File serviceFile;
-            if (handler == null) {
-                serviceFile = findUniqueFile(files, "_service.py");
-                if (serviceFile == null) {
-                    System.err.println("service file is not found in: " + modelPath);
-                    return;
-                }
-            } else {
-                serviceFile = new File(modelPath, handler);
-                if (serviceFile.exists()) {
-                    System.err.println("service file is not found in: " + modelPath);
-                    return;
-                }
+                throw new AssertionError(
+                        "Failed list files in folder: " + modelPath.getAbsolutePath());
             }
 
             Manifest manifest = new Manifest();
             Manifest.Model model = new Manifest.Model();
-            model.setSymbolFile(symbolFile.getName());
-            model.setParametersFile(paramsFile.getName());
-            model.setHandler(serviceFile.getName());
             manifest.setModel(model);
+
+            String runtime = config.getRuntime();
+            if (runtime != null) {
+                manifest.getEngine().setRuntime(Manifest.RuntimeType.fromValue(runtime));
+            }
+
+            File symbolFile = findUniqueFile(files, "-symbol.json");
+            if (symbolFile != null) {
+                model.setSymbolFile(symbolFile.getName());
+            }
+
+            File paramsFile = findUniqueFile(files, ".params");
+            if (paramsFile != null) {
+                model.setParametersFile(paramsFile.getName());
+            }
+
+            String handler = config.getHandler();
+            if (handler == null) {
+                File serviceFile = findUniqueFile(files, "_service.py");
+                if (serviceFile != null) {
+                    model.setHandler(serviceFile.getName());
+                }
+            } else {
+                Manifest.RuntimeType runtimeType = manifest.getEngine().getRuntime();
+                if (runtimeType == Manifest.RuntimeType.PYTHON2_7
+                        || runtimeType == Manifest.RuntimeType.PYTHON3_6) {
+                    String[] tokens = handler.split(":");
+                    File serviceFile = new File(modelPath, tokens[0]);
+                    if (serviceFile.exists()) {
+                        System.err.println("handler file is not found in: " + modelPath);
+                        return;
+                    }
+                }
+                model.setHandler(handler);
+            }
 
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(outputFile))) {
                 zos.putNextEntry(new ZipEntry("MANIFEST.json"));
                 zos.write(GSON.toJson(manifest).getBytes(StandardCharsets.UTF_8));
-                zos.putNextEntry(new ZipEntry("signature.json"));
-                zos.write(GSON.toJson(signature).getBytes(StandardCharsets.UTF_8));
+                if (signature != null) {
+                    zos.putNextEntry(new ZipEntry("signature.json"));
+                    zos.write(GSON.toJson(signature).getBytes(StandardCharsets.UTF_8));
+                }
 
                 int prefix = modelPath.getCanonicalPath().length();
 
@@ -215,13 +218,16 @@ public final class Exporter {
 
         private String modelName;
         private String modelPath;
-        private String service;
+        private String handler;
+        private String runtime;
         private String outputFile;
 
         public Config(CommandLine cmd) {
             modelName = cmd.getOptionValue("model-name");
             modelPath = cmd.getOptionValue("model-path");
-            service = cmd.getOptionValue("service-file-path");
+            handler = cmd.getOptionValue("handler");
+            runtime = cmd.getOptionValue("runtime");
+            handler = cmd.getOptionValue("handler");
             outputFile = cmd.getOptionValue("output-file");
         }
 
@@ -246,12 +252,27 @@ public final class Exporter {
                                     "Path to the folder containing model related files or legacy model archive. Signature file is required.")
                             .build());
             options.addOption(
-                    Option.builder("s")
-                            .longOpt("service-file-path")
+                    Option.builder("r")
+                            .longOpt("runtime")
                             .hasArg()
-                            .argName("SERVICE_FILE_PATH")
+                            .argName("RUNTIME")
                             .desc(
-                                    "Service file path to handle custom MMS inference logic. If path is not provided and the input defined in signature.json is application/json, this tool will include the MXNetBaseService in the archive. Alternatively, if the input defined in signature.json is image/jpeg this tool will include the MXNetVisionService in the archive.")
+                                    "The runtime environment for the MMS to execute your model custom code, default python2.7")
+                            .build());
+            options.addOption(
+                    Option.builder("e")
+                            .longOpt("engine")
+                            .hasArg()
+                            .argName("engine")
+                            .desc("The ML framework for your model, default MxNet")
+                            .build());
+            options.addOption(
+                    Option.builder("s")
+                            .longOpt("handler")
+                            .hasArg()
+                            .argName("HANDLER")
+                            .desc(
+                                    "The entry-point within your code that MMS can call to begin execution.")
                             .build());
             options.addOption(
                     Option.builder("o")
@@ -279,12 +300,12 @@ public final class Exporter {
             this.modelPath = modelPath;
         }
 
-        public String getService() {
-            return service;
+        public String getHandler() {
+            return handler;
         }
 
-        public void setService(String service) {
-            this.service = service;
+        public void setHandler(String handler) {
+            this.handler = handler;
         }
 
         public String getOutputFile() {
@@ -293,6 +314,14 @@ public final class Exporter {
 
         public void setOutputFile(String outputFile) {
             this.outputFile = outputFile;
+        }
+
+        public String getRuntime() {
+            return runtime;
+        }
+
+        public void setRuntime(String runtime) {
+            this.runtime = runtime;
         }
     }
 }

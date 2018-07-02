@@ -12,24 +12,38 @@
  */
 package com.amazonaws.ml.mms.util.messages;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 public class ModelInputs {
 
-    private String encoding;
-    private String value;
     private String name;
+    private String value;
+    private String encoding;
+    private String contentType;
 
-    public ModelInputs(String encoding, String value, String name) {
-        this.encoding = encoding;
-        this.value = value;
+    public ModelInputs(String name, String value) {
         this.name = name;
+        this.value = value;
     }
 
-    public String getEncoding() {
-        return encoding;
+    public ModelInputs(String name, byte[] data) {
+        this(name, data, null);
     }
 
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
+    public ModelInputs(String name, byte[] data, String contentType) {
+        this.name = name;
+        this.contentType = contentType;
+        encoding = "base64";
+        value = Base64.getEncoder().encodeToString(data);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getValue() {
@@ -40,11 +54,18 @@ public class ModelInputs {
         this.value = value;
     }
 
-    public String getName() {
-        return name;
+    public String getContentType() {
+        return contentType;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public byte[] getBytes() {
+        if ("base64".equals(encoding)) {
+            return Base64.getDecoder().decode(value);
+        }
+        return value.getBytes(StandardCharsets.UTF_8);
     }
 }

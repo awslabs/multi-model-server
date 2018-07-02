@@ -26,11 +26,8 @@ class ModelWorkerCodecHelper(object):
         try:
             if encoding == u'base64':
                 return base64.b64decode(msg)
-            elif encoding == u'utf-8':
-                return str(msg).decode(encoding)
-            else:
-                raise TypeError("Invalid encoding type defined in the request metadata from frontend."
-                                "({})".format(encoding))
+
+            return msg
         except (binascii.Error, TypeError) as e:
             raise MMSError(err.DECODE_FAILED, "base64 decode error {}".format(e))
 

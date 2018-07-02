@@ -10,31 +10,23 @@
  * OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package com.amazonaws.ml.mms.wlm;
+package com.amazonaws.ml.mms.http;
 
-import java.util.ArrayList;
-import java.util.List;
+public class StatusResponse {
 
-public class Message {
+    private String status;
 
-    private String modelName;
+    public StatusResponse() {}
 
-    private List<Payload> payloads;
-
-    public Message(String modelName) {
-        this.modelName = modelName;
-        payloads = new ArrayList<>();
+    public StatusResponse(String status) {
+        this.status = status;
     }
 
-    public String getModelName() {
-        return modelName;
+    public String getStatus() {
+        return status;
     }
 
-    public void addPayload(Payload payload) {
-        payloads.add(payload);
-    }
-
-    public List<Payload> getPayloads() {
-        return payloads;
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

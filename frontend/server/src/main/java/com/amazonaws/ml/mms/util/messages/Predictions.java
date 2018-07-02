@@ -13,7 +13,9 @@
 package com.amazonaws.ml.mms.util.messages;
 
 public class Predictions {
+
     private String requestId;
+    private String contentType;
     private String value; // base64 encoded
 
     public String getRequestId() {
@@ -22,6 +24,14 @@ public class Predictions {
 
     public void setRequestId(String requestId) {
         this.requestId = requestId;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
     public String getValue() {

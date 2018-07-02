@@ -12,21 +12,19 @@
  */
 package com.amazonaws.ml.mms.openapi;
 
-public class Parameter {
+@SuppressWarnings("PMD.AbstractClassWithoutAbstractMethod")
+public abstract class Parameter {
 
     protected String type;
     protected String in;
     protected String name;
     protected String description;
     protected boolean required;
-    protected String pattern;
-    protected String format;
-    protected String collectionFormat;
-    protected Property items;
-    protected Boolean exclusiveMaximum;
-    protected Double maximum;
-    protected Boolean exclusiveMinimum;
-    protected Double minimum;
+    protected Boolean deprecated;
+    protected Boolean allowEmptyValue;
+    protected String style;
+    protected Boolean explode;
+    protected Schema schema;
 
     public void setType(String type) {
         this.type = type;
@@ -68,67 +66,43 @@ public class Parameter {
         this.required = required;
     }
 
-    public String getPattern() {
-        return pattern;
+    public Boolean getDeprecated() {
+        return deprecated;
     }
 
-    public void setPattern(String pattern) {
-        this.pattern = pattern;
+    public void setDeprecated(Boolean deprecated) {
+        this.deprecated = deprecated;
     }
 
-    public String getFormat() {
-        return format;
+    public Boolean getAllowEmptyValue() {
+        return allowEmptyValue;
     }
 
-    public void setFormat(String format) {
-        this.format = format;
+    public void setAllowEmptyValue(Boolean allowEmptyValue) {
+        this.allowEmptyValue = allowEmptyValue;
     }
 
-    public String getCollectionFormat() {
-        return collectionFormat;
+    public String getStyle() {
+        return style;
     }
 
-    public void setCollectionFormat(String collectionFormat) {
-        this.collectionFormat = collectionFormat;
+    public void setStyle(String style) {
+        this.style = style;
     }
 
-    public Property getItems() {
-        return items;
+    public Boolean getExplode() {
+        return explode;
     }
 
-    public void setItems(Property items) {
-        this.items = items;
+    public void setExplode(Boolean explode) {
+        this.explode = explode;
     }
 
-    public Boolean getExclusiveMaximum() {
-        return exclusiveMaximum;
+    public Schema getSchema() {
+        return schema;
     }
 
-    public void setExclusiveMaximum(Boolean exclusiveMaximum) {
-        this.exclusiveMaximum = exclusiveMaximum;
-    }
-
-    public Double getMaximum() {
-        return maximum;
-    }
-
-    public void setMaximum(Double maximum) {
-        this.maximum = maximum;
-    }
-
-    public Boolean getExclusiveMinimum() {
-        return exclusiveMinimum;
-    }
-
-    public void setExclusiveMinimum(Boolean exclusiveMinimum) {
-        this.exclusiveMinimum = exclusiveMinimum;
-    }
-
-    public Double getMinimum() {
-        return minimum;
-    }
-
-    public void setMinimum(Double minimum) {
-        this.minimum = minimum;
+    public void setSchema(Schema schema) {
+        this.schema = schema;
     }
 }

@@ -93,11 +93,11 @@ class MXNetModelServiceWorker(object):
         encoding = u'base64'  # TODO: Remove this hardcoding and encode based on output mime type
         result = {}
         try:
-            for idx in enumerate(ret):
+            for idx, val in enumerate(ret):
                 result.update({"requestId": req_id_map[idx]})
                 result.update({"code": 200})
                 result.update({"value":
-                               ModelWorkerCodecHelper.encode_msg(encoding, bytes(json.dumps(ret[idx]).encode()))})
+                               ModelWorkerCodecHelper.encode_msg(encoding, bytes(json.dumps(val).encode()))})
                 result.update({"encoding": encoding})
 
             for req in invalid_reqs.keys():
@@ -106,8 +106,7 @@ class MXNetModelServiceWorker(object):
                 result.update({"value": "Invalid input provided".encode(encoding)})
                 result.update({"encoding": encoding})
 
-            resp = []
-            resp.append(result)
+            resp = [result]
 
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.CODEC_FAIL, "codec failed {}".format(repr(e)))
@@ -124,6 +123,9 @@ class MXNetModelServiceWorker(object):
         try:
             while True:
                 pkt = client_sock.recv(1024)
+                if not pkt:
+                    exit(1)
+
                 data += pkt
                 # Check if we received last segment
                 if pkt[-2:] == '\r\n':
@@ -143,7 +145,7 @@ class MXNetModelServiceWorker(object):
     def retrieve_model_input(self, model_inputs, input_names=None):
         """
         MODEL_INPUTS = [{
-                "encoding": "base64/utf-8", (This is how the value is encoded)
+                "encoding": "base64", (This is how the value is encoded)
                 "value": "val1"
                 "name" : model_input_name (This is defined in the symbol file and the signature file)
         }]
@@ -155,13 +157,12 @@ class MXNetModelServiceWorker(object):
 
         model_in = {}
         validation_set = set()  # Set to validate if all the inputs were provided
-        for input_idx in enumerate(model_inputs):
-            ip = model_inputs[input_idx]
+        for ip in model_inputs:
             ModelWorkerMessageValidators.validate_predict_inputs(ip)
-            input_name = ip[u'name']
-            encoding = ip[u'encoding']
+            input_name = ip['name']
+            encoding = ip.get('encoding')
             validation_set.add(input_name)
-            decoded_val = ModelWorkerCodecHelper.decode_msg(encoding, ip[u'value'])
+            decoded_val = ModelWorkerCodecHelper.decode_msg(encoding, ip['value'])
 
             model_in.update({input_name: decoded_val})
 
@@ -208,13 +209,13 @@ class MXNetModelServiceWorker(object):
             log_msg("Attribute error {}".format(e))
             input_data_names = {u'data'}  # TODO: Remove this default
 
-        for batch_idx in enumerate(requests):
-            ModelWorkerMessageValidators.validate_predict_data(requests[batch_idx])
-            req_id = requests[batch_idx][u'requestId']
+        for batch_idx, request_batch in enumerate(requests):
+            ModelWorkerMessageValidators.validate_predict_data(request_batch)
+            req_id = request_batch['requestId']
             # TODO: If encoding present in "REQUEST" we shouldn't look for input-names and just pass it to the
             # custom service code.
 
-            model_inputs = requests[batch_idx][u'modelInputs']
+            model_inputs = request_batch['modelInputs']
             try:
                 input_data = self.retrieve_model_input(model_inputs, input_data_names)
                 input_batch.append(input_data)

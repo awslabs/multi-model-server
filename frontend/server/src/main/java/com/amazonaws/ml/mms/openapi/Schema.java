@@ -12,6 +12,7 @@
  */
 package com.amazonaws.ml.mms.openapi;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,18 +24,33 @@ public class Schema {
     private String format;
     private String name;
     private List<String> required;
-    private Map<String, Property> properties;
-    private boolean isSimple;
+    private Map<String, Schema> properties;
+    private Schema items;
     private String description;
     private Object example;
-    private Property additionalProperties;
+    private Schema additionalProperties;
     private String discriminator;
+
+    @SerializedName("enum")
+    private List<String> enumeration;
+
+    @SerializedName("default")
     private String defaultValue;
 
     public Schema() {}
 
     public Schema(String type) {
+        this(type, null, null);
+    }
+
+    public Schema(String type, String description) {
+        this(type, description, null);
+    }
+
+    public Schema(String type, String description, String defaultValue) {
         this.type = type;
+        this.description = description;
+        this.defaultValue = defaultValue;
     }
 
     public String getType() {
@@ -69,33 +85,33 @@ public class Schema {
         this.required = required;
     }
 
-    public Map<String, Property> getProperties() {
+    public Map<String, Schema> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<String, Property> properties) {
+    public void setProperties(Map<String, Schema> properties) {
         this.properties = properties;
     }
 
-    public void addProperty(Property property) {
+    public void addProperty(String key, Schema schema, boolean requiredProperty) {
         if (properties == null) {
             properties = new LinkedHashMap<>();
         }
-        properties.put(property.getName(), property);
-        if (property.isRequired()) {
+        properties.put(key, schema);
+        if (requiredProperty) {
             if (required == null) {
                 required = new ArrayList<>();
             }
-            required.add(property.getName());
+            required.add(key);
         }
     }
 
-    public boolean isSimple() {
-        return isSimple;
+    public Schema getItems() {
+        return items;
     }
 
-    public void setSimple(boolean simple) {
-        isSimple = simple;
+    public void setItems(Schema items) {
+        this.items = items;
     }
 
     public String getDescription() {
@@ -114,11 +130,11 @@ public class Schema {
         this.example = example;
     }
 
-    public Property getAdditionalProperties() {
+    public Schema getAdditionalProperties() {
         return additionalProperties;
     }
 
-    public void setAdditionalProperties(Property additionalProperties) {
+    public void setAdditionalProperties(Schema additionalProperties) {
         this.additionalProperties = additionalProperties;
     }
 
@@ -128,6 +144,14 @@ public class Schema {
 
     public void setDiscriminator(String discriminator) {
         this.discriminator = discriminator;
+    }
+
+    public List<String> getEnumeration() {
+        return enumeration;
+    }
+
+    public void setEnumeration(List<String> enumeration) {
+        this.enumeration = enumeration;
     }
 
     public String getDefaultValue() {

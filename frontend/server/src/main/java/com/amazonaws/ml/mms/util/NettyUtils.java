@@ -13,6 +13,7 @@
 package com.amazonaws.ml.mms.util;
 
 import com.amazonaws.ml.mms.http.ErrorResponse;
+import com.amazonaws.ml.mms.util.messages.ModelInputs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -50,7 +51,6 @@ import io.netty.util.CharsetUtil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /** A utility class that handling Netty request and response. */
@@ -61,14 +61,25 @@ public final class NettyUtils {
     private NettyUtils() {}
 
     public static void sendJsonResponse(ChannelHandlerContext ctx, Object json) {
-        sendJsonResponse(ctx, JsonUtils.GSON_PRETTY.toJson(json));
+        sendJsonResponse(ctx, JsonUtils.GSON_PRETTY.toJson(json), HttpResponseStatus.OK);
+    }
+
+    public static void sendJsonResponse(
+            ChannelHandlerContext ctx, Object json, HttpResponseStatus status) {
+        sendJsonResponse(ctx, JsonUtils.GSON_PRETTY.toJson(json), status);
     }
 
     public static void sendJsonResponse(ChannelHandlerContext ctx, String json) {
-        FullHttpResponse resp =
-                new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+        sendJsonResponse(ctx, json, HttpResponseStatus.OK);
+    }
+
+    public static void sendJsonResponse(
+            ChannelHandlerContext ctx, String json, HttpResponseStatus status) {
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
         resp.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
-        resp.content().writeCharSequence(json, CharsetUtil.UTF_8);
+        ByteBuf content = resp.content();
+        content.writeCharSequence(json, CharsetUtil.UTF_8);
+        content.writeByte('\n');
         sendHttpResponse(ctx, resp, true);
     }
 
@@ -79,10 +90,17 @@ public final class NettyUtils {
      * @param status HttpResponseStatus to send
      */
     public static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
+        sendError(ctx, status, status.reasonPhrase());
+    }
+
+    public static void sendError(
+            ChannelHandlerContext ctx, HttpResponseStatus status, String errorMessage) {
         FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
-        ErrorResponse error =
-                new ErrorResponse(status.code(), status.toString(), status.reasonPhrase());
-        resp.content().writeCharSequence(JsonUtils.GSON.toJson(error), CharsetUtil.UTF_8);
+        resp.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+        ErrorResponse error = new ErrorResponse(status.code(), status.toString(), errorMessage);
+        ByteBuf content = resp.content();
+        content.writeCharSequence(JsonUtils.GSON_PRETTY.toJson(error), CharsetUtil.UTF_8);
+        content.writeByte('\n');
         sendHttpResponse(ctx, resp, false);
     }
 
@@ -187,41 +205,25 @@ public final class NettyUtils {
         return Integer.parseInt(value);
     }
 
-    public static String getFormField(InterfaceHttpData data) {
+    public static ModelInputs getFormData(InterfaceHttpData data) {
         if (data == null) {
             return null;
         }
 
-        InterfaceHttpData.HttpDataType type = data.getHttpDataType();
-        if (type != InterfaceHttpData.HttpDataType.Attribute) {
-            throw new IllegalArgumentException("Except form field, but got " + type);
-        }
-
-        Attribute attribute = (Attribute) data;
-        try {
-            return attribute.getValue();
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    public static byte[] getFormData(InterfaceHttpData data) {
-        if (data == null) {
-            return null;
-        }
-
+        String name = data.getName();
         switch (data.getHttpDataType()) {
             case Attribute:
                 Attribute attribute = (Attribute) data;
                 try {
-                    return attribute.getValue().getBytes(StandardCharsets.UTF_8);
+                    return new ModelInputs(name, attribute.getValue());
                 } catch (IOException e) {
                     throw new AssertionError(e);
                 }
             case FileUpload:
                 FileUpload fileUpload = (FileUpload) data;
+                String contentType = fileUpload.getContentType();
                 try {
-                    return getBytes(fileUpload.getByteBuf());
+                    return new ModelInputs(name, getBytes(fileUpload.getByteBuf()), contentType);
                 } catch (IOException e) {
                     throw new AssertionError(e);
                 }

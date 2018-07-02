@@ -12,15 +12,14 @@
  */
 package com.amazonaws.ml.mms.openapi;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Response {
 
     private transient String code;
     private String description;
-    private Property schema;
-    private Map<String, Object> examples;
-    private Map<String, Property> headers;
+    private Map<String, MediaType> content;
 
     public Response() {}
 
@@ -41,27 +40,18 @@ public class Response {
         this.description = description;
     }
 
-    public Property getSchema() {
-        return schema;
+    public Map<String, MediaType> getContent() {
+        return content;
     }
 
-    public void setSchema(Property schema) {
-        this.schema = schema;
+    public void setContent(Map<String, MediaType> content) {
+        this.content = content;
     }
 
-    public Map<String, Object> getExamples() {
-        return examples;
-    }
-
-    public void setExamples(Map<String, Object> examples) {
-        this.examples = examples;
-    }
-
-    public Map<String, Property> getHeaders() {
-        return headers;
-    }
-
-    public void setHeaders(Map<String, Property> headers) {
-        this.headers = headers;
+    public void addContent(MediaType mediaType) {
+        if (content == null) {
+            content = new LinkedHashMap<>();
+        }
+        content.put(mediaType.getContentType(), mediaType);
     }
 }

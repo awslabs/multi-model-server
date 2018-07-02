@@ -13,28 +13,13 @@
 package com.amazonaws.ml.mms.openapi;
 
 public class Info {
-    private String description;
-    private String version;
+
     private String title;
+    private String description;
     private String termsOfService;
+    private String version;
 
     public Info() {}
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
 
     public String getTitle() {
         return title;
@@ -44,11 +29,27 @@ public class Info {
         this.title = title;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getTermsOfService() {
         return termsOfService;
     }
 
     public void setTermsOfService(String termsOfService) {
         this.termsOfService = termsOfService;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

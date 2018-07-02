@@ -13,13 +13,13 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.util.NettyUtils;
+import com.amazonaws.ml.mms.util.messages.RequestBatch;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,26 +27,28 @@ public class Job {
 
     private static final Logger logger = LoggerFactory.getLogger(Job.class);
 
-    private static AtomicInteger seq = new AtomicInteger(1);
-
-    private String jobId;
-
-    private String cmd; // Else its data msg or inf requests
     private ChannelHandlerContext ctx;
-    private Payload payload;
+
+    private String modelName;
+    private String cmd; // Else its data msg or inf requests
+    private RequestBatch input;
     private long begin;
 
-    public Job(ChannelHandlerContext ctx, String cmd, Payload req) {
-        jobId = String.valueOf(seq.incrementAndGet());
-        this.cmd = cmd;
+    public Job(ChannelHandlerContext ctx, String modelName, String cmd, RequestBatch input) {
         this.ctx = ctx;
-        this.payload = req;
+        this.modelName = modelName;
+        this.cmd = cmd;
+        this.input = input;
 
         begin = System.currentTimeMillis();
     }
 
     public String getJobId() {
-        return jobId;
+        return input.getRequestId();
+    }
+
+    public String getModelName() {
+        return modelName;
     }
 
     public String getCmd() {
@@ -57,8 +59,8 @@ public class Job {
         return !"predict".equals(cmd);
     }
 
-    public Payload getPayload() {
-        return payload;
+    public RequestBatch getPayload() {
+        return input;
     }
 
     public void response(byte[] body, CharSequence contentType) {
@@ -68,12 +70,29 @@ public class Job {
             resp.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
         }
         resp.content().writeBytes(body);
-        // We can load the models based on the configuration file. Since this Job is not driven by the
-        // external connections, we could have a empty context for this job. We shouldn't try to send a response
-        // to ctx if this is not triggered by external clients.
 
+        /*
+         * We can load the models based on the configuration file.Since this Job is
+         * not driven by the external connections, we could have a empty context for
+         * this job. We shouldn't try to send a response to ctx if this is not triggered
+         * by external clients.
+         */
         if (ctx != null) {
             NettyUtils.sendHttpResponse(ctx, resp, true);
+        }
+
+        logger.debug("Inference time: {}", System.currentTimeMillis() - begin);
+    }
+
+    public void sendError(String error) {
+        /*
+         * We can load the models based on the configuration file.Since this Job is
+         * not driven by the external connections, we could have a empty context for
+         * this job. We shouldn't try to send a response to ctx if this is not triggered
+         * by external clients.
+         */
+        if (ctx != null) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, error);
         }
 
         logger.debug("Inference time: {}", System.currentTimeMillis() - begin);

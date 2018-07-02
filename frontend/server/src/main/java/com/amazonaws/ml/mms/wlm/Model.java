@@ -13,6 +13,9 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.archive.ModelArchive;
+import com.amazonaws.ml.mms.archive.Signature;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
@@ -21,12 +24,16 @@ public class Model {
     private ModelArchive modelArchive;
     private int minWorker;
     private int maxWorker;
+    private int batchSize;
+    private int maxBatchDelay;
     private LinkedBlockingDeque<Job> jobs;
 
     public Model(ModelArchive modelArchive, int queueSize) {
         this.modelArchive = modelArchive;
         minWorker = 1;
         maxWorker = 1;
+        batchSize = 1;
+        maxBatchDelay = 100;
         jobs = new LinkedBlockingDeque<>(queueSize);
     }
 
@@ -47,11 +54,27 @@ public class Model {
     }
 
     public String getRequestContentType() {
-        return modelArchive.getSignature().getRequest().getContentType();
+        Signature signature = modelArchive.getSignature();
+        if (signature == null) {
+            return null;
+        }
+        Map<String, List<Signature.Parameter>> request = signature.getRequest();
+        if (request.isEmpty()) {
+            return null;
+        }
+        return request.keySet().iterator().next();
     }
 
     public String getResponseContentType() {
-        return modelArchive.getSignature().getResponse().getContentType();
+        Signature signature = modelArchive.getSignature();
+        if (signature == null) {
+            return null;
+        }
+        Map<String, List<Signature.Parameter>> resp = signature.getResponse();
+        if (resp.isEmpty()) {
+            return null;
+        }
+        return resp.keySet().iterator().next();
     }
 
     public int getMinWorker() {
@@ -68,6 +91,22 @@ public class Model {
 
     public void setMaxWorker(int maxWorker) {
         this.maxWorker = maxWorker;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    public int getMaxBatchDelay() {
+        return maxBatchDelay;
+    }
+
+    public void setMaxBatchDelay(int maxBatchDelay) {
+        this.maxBatchDelay = maxBatchDelay;
     }
 
     public boolean addJob(Job job) {

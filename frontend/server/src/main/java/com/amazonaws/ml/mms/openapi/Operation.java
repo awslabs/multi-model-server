@@ -19,15 +19,13 @@ import java.util.Map;
 
 public class Operation {
 
-    private List<String> tags;
     private String summary;
     private String description;
     private String operationId;
-    private List<String> schemes;
-    private List<String> consumes;
-    private List<String> produces;
     private List<Parameter> parameters = new ArrayList<>();
+    private RequestBody requestBody;
     private Map<String, Response> responses;
+    private Boolean deprecated;
 
     public Operation() {}
 
@@ -38,14 +36,6 @@ public class Operation {
     public Operation(String operationId, String description) {
         this.operationId = operationId;
         this.description = description;
-    }
-
-    public List<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(List<String> tags) {
-        this.tags = tags;
     }
 
     public String getSummary() {
@@ -72,44 +62,6 @@ public class Operation {
         this.operationId = operationId;
     }
 
-    public List<String> getSchemes() {
-        return schemes;
-    }
-
-    public void setSchemes(List<String> schemes) {
-        this.schemes = schemes;
-    }
-
-    public List<String> getConsumes() {
-        return consumes;
-    }
-
-    public void setConsumes(List<String> consumes) {
-        this.consumes = consumes;
-    }
-
-    public void addConsume(String consume) {
-        if (consumes == null) {
-            consumes = new ArrayList<>();
-        }
-        consumes.add(consume);
-    }
-
-    public List<String> getProduces() {
-        return produces;
-    }
-
-    public void setProduces(List<String> produces) {
-        this.produces = produces;
-    }
-
-    public void addProduce(String produce) {
-        if (produces == null) {
-            produces = new ArrayList<>();
-        }
-        produces.add(produce);
-    }
-
     public List<Parameter> getParameters() {
         return parameters;
     }
@@ -125,6 +77,14 @@ public class Operation {
         parameters.add(parameter);
     }
 
+    public RequestBody getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(RequestBody requestBody) {
+        this.requestBody = requestBody;
+    }
+
     public Map<String, Response> getResponses() {
         return responses;
     }
@@ -138,5 +98,13 @@ public class Operation {
             responses = new LinkedHashMap<>();
         }
         responses.put(response.getCode(), response);
+    }
+
+    public Boolean getDeprecated() {
+        return deprecated;
+    }
+
+    public void setDeprecated(Boolean deprecated) {
+        this.deprecated = deprecated;
     }
 }

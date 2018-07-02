@@ -7,6 +7,8 @@ dependencies {
     testCompile "org.testng:testng:${testng_version}"
 }
 
+apply from: file("${project.rootProject.projectDir}/tools/gradle/launcher.gradle")
+
 sourceSets {
     main {
         output.resourcesDir = "build/classes/java/main"

@@ -114,6 +114,12 @@ If needed it can be configured via the config [here](https://github.com/awslabs/
 Next, you will have to configure the health-checks. This is the command that ECS should run to find out whether MMS is running within the container or not. MMS has a pre-configured endpoint `/ping`
 that can be used for health checks. Configure ECS to reach that endpoint at `http://127.0.0.1:8080/ping` using the `curl` command as shown below:
 
+```bash
+curl, http://127.0.0.1:8080/ping
+```
+
+The healthcheck portion of your container configuration should look like the image below:
+
 ![](https://s3.amazonaws.com/mxnet-model-server/mms-github-docs/MMS+with+Fargate+Article/add+container+healthcheck.png)
 
 After configuring the health-checks, you can go onto configuring the environment, with the entry point that we have discussed earlier:

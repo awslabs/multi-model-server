@@ -6,10 +6,14 @@ import tarfile
 import sys
 import time
 import signal
+import base64
+
+import requests
+
 try:
-    from urllib2 import urlopen, URLError, HTTPError
+    from urllib2 import Request, urlopen, URLError, HTTPError
 except BaseException:
-    from urllib.request import urlopen, URLError, HTTPError
+    from urllib.request import Request, urlopen, URLError, HTTPError
 
 # models from onnx-mxnet model zoo
 onnx_model_urls = {
@@ -192,7 +196,22 @@ def start_test(
             # Assert objects are detected.
             assert predictions is not None
             assert len(predictions) > 0
-        # Check root API and Ping API calls
+            
+            # Test when image is sent as URL encoded form field without padding
+            # Read image and encode as base64 string
+            with open("{}/kitten.jpg".format(tmpdir),'rb') as fp:
+                temp_img = fp.read()
+                b64img = base64.encodestring(temp_img)
+            
+            # Using urllib library instead of curl to prevent against argument too long error1
+            form_data = {data_name: b64img.replace(b'=',b'')}
+            request = requests.post('http://127.0.0.1:' + port + '/' + models + '/predict', 
+                                     data = form_data)
+            predictions = request.json()
+            # Assert objects are detected.
+            assert predictions is not None
+            assert len(predictions) > 0
+        # Chck root API and Ping API calls
         output = subprocess.check_output(['curl',
                                             '-X',
                                             'GET',

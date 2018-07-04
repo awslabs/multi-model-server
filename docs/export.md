@@ -179,7 +179,7 @@ If `synset.txt` is included in exported archive file and each line represents a 
 
 ### Dependent/Nested Models
 
-If there is a model that is dependent on another model, in cases like transfer learning. MMS export tool requires the following structure to be followed
+In some cases, there is a need to nest multiple models in the same Model Archive. To package multiple models in the same archive, MMS export tool requires the following structure:
 
 ```bash
 /Model-folder/
@@ -208,4 +208,4 @@ The dependency models can also be part of a single sub folder
     dependency-model-2-parameter-file
 ```
 
-Handling the data flow between the dependent models can be handled in the preprocess, postprocess and inference methods of a [custom service](custom_service.md).
+It is recommended that all the custom code for the model is added into the custom service file [custom service](custom_service.md). 

@@ -392,18 +392,18 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
 
         if model_path.startswith('~'):
             model_path = os.path.expanduser(model_path)
-        # Entry point model here, this is in the maibn folder
+        # Entry point model here, this is in the main folder
         files = os.listdir(model_path)
         onnx_file = find_unique(files, '.onnx')
         symbol_file = find_unique(files, '-symbol.json')
         params_file = find_unique(files, '.params')
-        #getting relative paths, for test scheduling
+        # Getting relative paths, for inflating the sub-folders
         tmp = os.getcwd()
         os.chdir(model_path)
-        # Look in the nestsed folders for other necessary model/resource files
-        for treefile in files:
-            if os.path.isdir(treefile):
-                for directory_path, _, file_names in os.walk(os.path.expanduser(treefile)):
+        directories = [d for d in files if os.path.isdir(d)]
+        # Look in the nested folders for other necessary model/resource files
+        for directory in directories:
+                for directory_path, _, file_names in os.walk(os.path.expanduser(directory)):
                     for f in file_names:
                         files.append(os.path.join(directory_path, f))
         os.chdir(tmp)

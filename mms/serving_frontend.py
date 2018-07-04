@@ -478,7 +478,7 @@ class ServingFrontend(object):
                         form_data = self.handler.get_form_data(name)
                         if form_data:
                             # pylint: disable=deprecated-method
-                            file_data = base64.decodestring(self.handler.get_form_data(name))
+                            file_data = base64.decodestring(self.handler.get_form_data(name) + b"====")
                         else:
                             raise ValueError('This end point is expecting a data_name of %s. '
                                              'End point details can be found here:http://<host>:<port>/api-description'

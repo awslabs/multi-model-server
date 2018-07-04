@@ -403,9 +403,9 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
         directories = [d for d in files if os.path.isdir(d)]
         # Look in the nested folders for other necessary model/resource files
         for directory in directories:
-                for directory_path, _, file_names in os.walk(os.path.expanduser(directory)):
-                    for f in file_names:
-                        files.append(os.path.join(directory_path, f))
+            for directory_path, _, file_names in os.walk(os.path.expanduser(directory)):
+                for f in file_names:
+                    files.append(os.path.join(directory_path, f))
         os.chdir(tmp)
         signature_file = validate_signature(model_path)
         is_imperative, service_file = validate_service(model_path, service_file, signature_file)

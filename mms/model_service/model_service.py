@@ -18,10 +18,10 @@ import time
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from mms.log import get_logger
-from mms.metrics_manager import MetricsManager
+from mms.mxnet_model_service_error import MMSError
+from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 
 logger = get_logger()
-URL_PREFIX = ('http://', 'https://', 's3://')
 
 
 class ModelService(object):
@@ -97,29 +97,29 @@ class SingleNodeService(ModelService):
         list of outputs to be sent back to client.
             data to be sent back
         """
-        pre_start_time = time.time()
-        data = self._preprocess(data)
-        infer_start_time = time.time()
-        data = self._inference(data)
-        post_start_ms = time.time()
-        data = self._postprocess(data)
-        post_end_ms = time.time()
+        try:
+            pre_start_time = time.time()
+            data = self._preprocess(data)
+            infer_start_time = time.time()
+            data = self._inference(data)
+            post_start_ms = time.time()
+            data = self._postprocess(data)
+            post_end_ms = time.time()
 
-        pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
-        if self.model_name + '_LatencyPreprocess' in MetricsManager.metrics:
-            MetricsManager.metrics[self.model_name + '_LatencyPreprocess'].update(pre_time_in_ms)
+            pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
 
-        infer_time_in_ms = (post_start_ms - infer_start_time) * 1000
-        if self.model_name + '_LatencyInference' in MetricsManager.metrics:
-            MetricsManager.metrics[self.model_name + '_LatencyInference'].update(infer_time_in_ms)
+            infer_time_in_ms = (post_start_ms - infer_start_time) * 1000
 
-        post_time_in_ms = (post_end_ms - post_start_ms) * 1000
-        if self.model_name + '_LatencyPostprocess' in MetricsManager.metrics:
-            MetricsManager.metrics[self.model_name + '_LatencyPostprocess'].update(post_time_in_ms)
+            post_time_in_ms = (post_end_ms - post_start_ms) * 1000
 
-        if self.model_name + '_LatencyOverall' in MetricsManager.metrics:
-            MetricsManager.metrics[self.model_name + '_LatencyOverall'].update(pre_time_in_ms + infer_time_in_ms +
-                                                                               post_time_in_ms)
+            # TODO: Redo this metrics
+            print ("Metrics are {}, {}, {}".format(pre_time_in_ms, infer_time_in_ms, post_time_in_ms))
+        except MMSError as m:
+            m.set_code(err.CUSTOM_SERVICE_ERROR)
+            raise m
+        except Exception as e:
+            raise MMSError(err.CUSTOM_SERVICE_ERROR, repr(e))
+
         return data
 
     @abstractmethod
@@ -173,10 +173,6 @@ class SingleNodeService(ModelService):
             list of outputs to be sent back.
         """
         return data
-
-
-class MultiNodesService(ModelService):
-    pass
 
 
 def load_service(path, name=None):

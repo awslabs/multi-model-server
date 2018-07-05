@@ -2,9 +2,9 @@ package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.http.HttpRequestHandler;
+import com.amazonaws.ml.mms.util.CodecUtils.MessageEncoder;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
-import com.amazonaws.ml.mms.wlm.MessageCodec;
 import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
@@ -263,7 +263,7 @@ public class ModelServerTest {
                                     p.addLast(new HttpContentDecompressor());
                                     p.addLast(new ChunkedWriteHandler());
                                     p.addLast(new HttpObjectAggregator(6553600));
-                                    p.addLast(new MessageCodec());
+                                    p.addLast(new MessageEncoder());
                                     p.addLast(new TestHandler());
                                 }
                             });

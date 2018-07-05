@@ -1,9 +1,17 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
-import io.netty.handler.codec.http.HttpHeaderValues;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import com.amazonaws.ml.mms.util.messages.AbstractRequest;
+import com.amazonaws.ml.mms.util.messages.ModelInferenceRequest;
+import com.amazonaws.ml.mms.util.messages.ModelInputs;
+import com.amazonaws.ml.mms.util.messages.ModelLoadRequest;
+import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
+import com.amazonaws.ml.mms.util.messages.Predictions;
+import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.ListIterator;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,14 +27,20 @@ public class BatchAggregator {
     public BatchAggregator(ConfigManager configManager, Model model) {
         this.configManager = configManager;
         this.model = model;
-        jobs = new HashMap<>();
+        jobs = new LinkedHashMap<>();
     }
 
-    public Message getRequest() throws InterruptedException {
+    public AbstractRequest getRequest() throws InterruptedException {
         jobs.clear();
 
         // first job is a blocking call;
         Job job = model.nextJob();
+        if (job.isControlCmd()) {
+            ModelLoadRequest req = new ModelLoadRequest(model.getModelName());
+            req.setModelPath(model.getModelUrl());
+            return req;
+        }
+
         jobs.put(job.getJobId(), job);
 
         logger.debug("get first job: {}", job.getJobId());
@@ -35,6 +49,19 @@ public class BatchAggregator {
         int size = configManager.getMaxBatchSize() - 1;
         long begin = System.currentTimeMillis();
         for (int i = 0; i < size; ++i) {
+            if (job.isControlCmd()) {
+                jobs.remove(job.getJobId());
+
+                ListIterator<Job> iterator =
+                        new ArrayList<>(jobs.values()).listIterator(jobs.size());
+                while (iterator.hasNext()) {
+                    Job j = iterator.next();
+                    model.addToFront(j);
+                }
+                ModelLoadRequest req = new ModelLoadRequest(model.getModelName());
+                req.setModelPath(model.getModelDir());
+                return req;
+            }
 
             job = model.nextJob(maxBatchDelay);
             if (job == null) {
@@ -51,44 +78,75 @@ public class BatchAggregator {
 
         logger.debug("sending jobs, size: {}", jobs.size());
 
-        Message message = new Message(model.getModelName());
+        ModelInferenceRequest req = new ModelInferenceRequest(model.getModelName());
         for (Job j : jobs.values()) {
-            Payload payload = j.getPayload();
-            Payload p = new Payload(j.getJobId(), payload.getData());
-            message.addPayload(p);
+            RequestBatch batch = new RequestBatch();
+            batch.setRequestId(j.getJobId());
+            batch.appendModelInput(
+                    new ModelInputs(
+                            "base64",
+                            //Base64.getMimeEncoder().encodeToString(j.getPayload().getData()),
+                            Base64.getEncoder().encodeToString(j.getPayload().getData()),
+                            "data"));
+            req.appendRequestBatches(batch);
         }
-
-        return message;
+        return req;
     }
 
-    public void sendResponse(Message message) {
-        logger.debug("received response, size: {}", message.getPayloads().size());
+    public void sendResponse(ModelWorkerResponse message) {
+        // logger.debug("received response, size: {}", message.getPredictions().size());
+        // TODO: Handle prediction level code
 
-        for (Payload payload : message.getPayloads()) {
-            String jobId = payload.getId();
-            Job job = jobs.remove(jobId);
-            if (job == null) {
-                throw new IllegalStateException("Unexpected job: " + jobId);
+        if (message.getCode().equals(String.valueOf(200))) {
+            if (jobs.isEmpty()) {
+                // this is from initial load.
+                return;
             }
-            job.response(payload.getData(), model.getResponseContentType());
-        }
-        if (!jobs.isEmpty()) {
-            throw new IllegalStateException("Not all jobs get response.");
+
+            for (Predictions payload : message.getPredictions()) {
+                String jobId = payload.getRequestId();
+                Job job = jobs.remove(jobId);
+                if (job == null) {
+                    throw new IllegalStateException("Unexpected job: " + jobId);
+                }
+                job.response(
+                        Base64.getDecoder().decode(payload.getValue()),
+                        model.getResponseContentType());
+            }
+        } else {
+            for (String reqId : jobs.keySet()) {
+                Job j = jobs.remove(reqId);
+                if (j == null) {
+                    throw new IllegalStateException("Unexpected job: " + reqId);
+                }
+                String err =
+                        "code"
+                                + ":"
+                                + message.getCode()
+                                + ","
+                                + "message"
+                                + ":"
+                                + message.getMessage();
+                j.response(err.getBytes(), "application/json");
+            }
+            if (!jobs.isEmpty()) {
+                throw new IllegalStateException("Not all jobs get response.");
+            }
         }
     }
 
-    public void sendError(Message message, String error) {
-        byte[] body = error.getBytes(StandardCharsets.UTF_8);
-        for (Payload payload : message.getPayloads()) {
-            String jobId = payload.getId();
-            Job job = jobs.remove(jobId);
-            if (job == null) {
-                throw new IllegalStateException("Unexpected job: " + jobId);
-            }
-            job.response(body, HttpHeaderValues.APPLICATION_JSON);
-        }
-        if (!jobs.isEmpty()) {
-            throw new IllegalStateException("Not all jobs get response.");
-        }
+    public void sendError(Object message, String error) {
+        //        byte[] body = error.getBytes(StandardCharsets.UTF_8);
+        //        for (Payload payload : message.getPayloads()) {
+        //            String jobId = payload.getId();
+        //            Job job = jobs.remove(jobId);
+        //            if (job == null) {
+        //                throw new IllegalStateException("Unexpected job: " + jobId);
+        //            }
+        //            job.response(body, HttpHeaderValues.APPLICATION_JSON);
+        //        }
+        //        if (!jobs.isEmpty()) {
+        //            throw new IllegalStateException("Not all jobs get response.");
+        //        }
     }
 }

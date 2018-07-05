@@ -120,6 +120,24 @@ class ArgParser(object):
 
         return parser_export
 
+    @staticmethod
+    def model_service_worker_args():
+        parser = argparse.ArgumentParser(prog='mxnet-model-server', description='MXNet Model Server')
+        parser.add_argument('--sock-type',
+                            required=True,
+                            type=str,
+                            choices=["unix", "host"],
+                            help='Socket type the model service worker would use. The options are\n'
+                                 'unix: The model worker expects to unix domain-socket\n'
+                                 'host: The model worker expects a host-name and port-number')
+        parser.add_argument('--sock-name',
+                            required=True,
+                            type=str,
+                            help='If \'sock-type\' is \'unix\', sock-name is expected to be a string. '
+                                 'Eg: --sock-name \"test_sock\"'
+                                 'If \'sock-type\' is \'host\' sock-name is expected to be a \':\' host-name and port.'
+                                 'Eg: --sock-name \"127.0.0.1:8000\"')
+        return parser
 
     @staticmethod
     def extract_args(args=None):

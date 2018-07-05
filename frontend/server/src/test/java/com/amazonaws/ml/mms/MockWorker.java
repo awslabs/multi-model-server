@@ -1,8 +1,8 @@
 package com.amazonaws.ml.mms;
 
+import com.amazonaws.ml.mms.util.CodecUtils.MessageEncoder;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.Message;
-import com.amazonaws.ml.mms.wlm.MessageCodec;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -69,7 +69,7 @@ public class MockWorker {
                     @Override
                     protected void initChannel(Channel ch) {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new MessageCodec());
+                        pipeline.addLast(new MessageEncoder());
                         pipeline.addLast(new MockHandler());
                     }
                 });

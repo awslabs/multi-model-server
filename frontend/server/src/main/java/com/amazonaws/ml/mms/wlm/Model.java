@@ -1,7 +1,7 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.archive.ModelArchive;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 public class Model {
@@ -9,13 +9,13 @@ public class Model {
     private ModelArchive modelArchive;
     private int minWorker;
     private int maxWorker;
-    private ArrayBlockingQueue<Job> jobs;
+    private LinkedBlockingDeque<Job> jobs;
 
     public Model(ModelArchive modelArchive, int queueSize) {
         this.modelArchive = modelArchive;
         minWorker = 1;
         maxWorker = 1;
-        jobs = new ArrayBlockingQueue<>(queueSize);
+        jobs = new LinkedBlockingDeque<>(queueSize);
     }
 
     public String getModelName() {
@@ -60,6 +60,10 @@ public class Model {
 
     public boolean addJob(Job job) {
         return jobs.offer(job);
+    }
+
+    public void addToFront(Job j) {
+        jobs.addFirst(j);
     }
 
     public Job nextJob() throws InterruptedException {

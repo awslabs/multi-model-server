@@ -250,7 +250,7 @@ def generate_manifest(symbol_file=None, params_file=None, service_file=None, sig
     return manifest
 
 
-def convert_onnx_model(model_path, onnx_file):
+def convert_onlnx_model(model_path, onnx_file):
     """
     Util to convert onnx model to MXNet model
     :param model_path:

@@ -18,19 +18,31 @@ public class Job {
     private static AtomicInteger seq = new AtomicInteger(1);
 
     private String jobId;
+
+    private String cmd; // Else its data msg or inf requests
     private ChannelHandlerContext ctx;
     private Payload payload;
     private long begin;
 
-    public Job(ChannelHandlerContext ctx, Payload req) {
+    public Job(ChannelHandlerContext ctx, String cmd, Payload req) {
         jobId = String.valueOf(seq.incrementAndGet());
+        this.cmd = cmd;
         this.ctx = ctx;
         this.payload = req;
+
         begin = System.currentTimeMillis();
     }
 
     public String getJobId() {
         return jobId;
+    }
+
+    public String getCmd() {
+        return cmd;
+    }
+
+    public boolean isControlCmd() {
+        return !"predict".equals(cmd);
     }
 
     public Payload getPayload() {
@@ -44,7 +56,9 @@ public class Job {
             resp.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
         }
         resp.content().writeBytes(body);
-        NettyUtils.sendHttpResponse(ctx, resp, true);
+        if (ctx != null) {
+            NettyUtils.sendHttpResponse(ctx, resp, true);
+        }
 
         logger.debug("Inference time: {}", System.currentTimeMillis() - begin);
     }

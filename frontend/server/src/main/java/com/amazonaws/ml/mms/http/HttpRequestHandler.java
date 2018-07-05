@@ -80,8 +80,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             case "/invocations":
                 handleInvocations(ctx, decoder, req);
                 return;
-            case "/register":
+            case "/load-model":
                 handleRegisterModel(ctx, decoder, req);
+                handleScaleModel(ctx, decoder, req);
                 return;
             case "/unregister":
                 handleUnregisterModel(ctx, decoder, req);
@@ -118,7 +119,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 return;
             }
             Payload payload = new Payload(modelName, data);
-            Job job = new Job(ctx, payload);
+            Job job = new Job(ctx, "predict", payload);
             logger.debug("received request: {}", job.getJobId());
             HttpResponseStatus status = ModelManager.getInstance().addJob(job);
             if (status != HttpResponseStatus.OK) {
@@ -173,7 +174,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             payload.setData(buf);
         }
 
-        Job job = new Job(ctx, payload);
+        Job job = new Job(ctx, "predict", payload);
+
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
             NettyUtils.sendError(ctx, status);
@@ -204,7 +206,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        NettyUtils.sendJsonResponse(ctx, "{\"status\":\"Model registered\"}");
+        // NettyUtils.sendJsonResponse(ctx, "{\"status\":\"Model registered\"}");
     }
 
     private void handleUnregisterModel(

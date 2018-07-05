@@ -1,7 +1,11 @@
 package com.amazonaws.ml.mms.wlm;
 
+import com.amazonaws.ml.mms.util.CodecUtils.MessageDecoder;
+import com.amazonaws.ml.mms.util.CodecUtils.MessageEncoder;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
+import com.amazonaws.ml.mms.util.messages.AbstractRequest;
+import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -11,10 +15,14 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.Delimiters;
+import io.netty.handler.codec.string.StringDecoder;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +30,8 @@ import org.slf4j.LoggerFactory;
 public class WorkerThread extends Thread {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
+
+    private static final StringDecoder DECODER = new StringDecoder();
 
     private ConfigManager configManager;
     private EventLoopGroup backendEventGroup;
@@ -33,7 +43,9 @@ public class WorkerThread extends Thread {
     private AtomicBoolean running = new AtomicBoolean(true);
 
     private BatchAggregator aggregator;
-    ArrayBlockingQueue<Message> replies;
+    ArrayBlockingQueue<ModelWorkerResponse> replies;
+    private int gpuId;
+    private Thread currentThread;
 
     private WorkerLifeCycle lifeCycle;
 
@@ -52,6 +64,7 @@ public class WorkerThread extends Thread {
         this.port = port;
         this.model = model;
         this.aggregator = aggregator;
+        this.gpuId = gpuId;
         lifeCycle = new WorkerLifeCycle(configManager, gpuId);
         replies = new ArrayBlockingQueue<>(1);
         this.setDaemon(true);
@@ -59,24 +72,25 @@ public class WorkerThread extends Thread {
 
     @Override
     public void run() {
-        Message message = null;
+        currentThread = Thread.currentThread();
+        AbstractRequest req = null;
         try {
             while (running.get()) {
-                message = aggregator.getRequest();
-                backendChannel.write(message);
+                req = aggregator.getRequest();
+                backendChannel.write(req);
                 backendChannel.flush();
 
-                Message reply = replies.take();
+                ModelWorkerResponse reply = replies.take();
                 aggregator.sendResponse(reply);
-                message = null;
+                req = null;
             }
         } catch (InterruptedException e) {
             logger.warn("Backend worker thread interrupted.", e);
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);
         } finally {
-            if (message != null) {
-                aggregator.sendError(message, "Worker execution error.");
+            if (req != null) {
+                aggregator.sendError(req, "Worker execution error.");
             }
             lifeCycle.exit();
         }
@@ -86,6 +100,8 @@ public class WorkerThread extends Thread {
         if (!configManager.isDebug() && !lifeCycle.startWorker(port, model)) {
             throw new WorkerInitializationException("Failed start worker process.");
         }
+        final CountDownLatch latch = new CountDownLatch(1);
+        boolean channelConnectionSuccess = false;
 
         try {
             Bootstrap b = new Bootstrap();
@@ -96,25 +112,46 @@ public class WorkerThread extends Thread {
                                 @Override
                                 public void initChannel(Channel ch) {
                                     ChannelPipeline p = ch.pipeline();
-                                    p.addLast(new MessageCodec());
+                                    p.addLast(
+                                            new DelimiterBasedFrameDecoder(
+                                                    81920000,
+                                                    Delimiters
+                                                            .lineDelimiter())); // TODO: Make this config based
+                                    p.addLast(DECODER);
+                                    p.addLast(new MessageDecoder());
+                                    p.addLast(new MessageEncoder());
                                     p.addLast(new WorkerHandler());
                                 }
                             });
 
             SocketAddress address = NettyUtils.getSocketAddress(port);
+            logger.debug("Connecting to: {}", address);
             backendChannel = b.connect(address).sync().channel();
             backendChannel
                     .closeFuture()
                     .addListener(
                             (ChannelFutureListener)
                                     future -> {
+                                        latch.countDown();
                                         parentThreads.remove(WorkerThread.this); // NOPMD
                                         shutdown();
                                         logger.info("Worker disconnected.");
                                     });
+
+            backendChannel
+                    .newSucceededFuture()
+                    .addListener((ChannelFutureListener) future -> latch.countDown());
+
+            if (!sendLoadMessage(latch)) {
+                lifeCycle.exit();
+                throw new WorkerInitializationException("Failed to load the new model");
+            }
         } catch (InterruptedException e) {
+            lifeCycle.exit();
             throw new WorkerInitializationException(e);
         } catch (Throwable t) {
+            lifeCycle.exit();
+
             // https://github.com/netty/netty/issues/2597
             if (t instanceof IOException) {
                 throw new WorkerInitializationException(t);
@@ -123,19 +160,37 @@ public class WorkerThread extends Thread {
         }
     }
 
+    public boolean sendLoadMessage(CountDownLatch latch) {
+        try {
+            latch.await();
+            Job job = new Job(null, "load", new Payload(null, ""));
+            model.addToFront(job);
+        } catch (InterruptedException e) {
+            logger.warn("Backend worker thread interrupted.", e);
+            return false;
+        } catch (Throwable t) {
+            logger.warn("Backend worker thread exception.", t);
+            return false;
+        }
+
+        return true;
+    }
+
     public void shutdown() {
         running.set(false);
         backendChannel.close();
-        interrupt();
+        if (currentThread != null) {
+            currentThread.interrupt();
+        }
         // TODO: push current message back to queue, if no more worker,
         // drain the queue and send error back
     }
 
     @ChannelHandler.Sharable
-    private class WorkerHandler extends SimpleChannelInboundHandler<Message> {
+    private class WorkerHandler extends SimpleChannelInboundHandler<ModelWorkerResponse> {
 
         @Override
-        public void channelRead0(ChannelHandlerContext ctx, Message msg) {
+        public void channelRead0(ChannelHandlerContext ctx, ModelWorkerResponse msg) {
             if (!replies.offer(msg)) {
                 throw new IllegalStateException("Reply queue is full.");
             }

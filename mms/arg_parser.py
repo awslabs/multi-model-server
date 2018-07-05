@@ -130,10 +130,10 @@ class ArgParser(object):
         parser.add_argument('--sock-type',
                             required=True,
                             type=str,
-                            choices=["unix", "host"],
+                            choices=["unix", "tcp"],
                             help='Socket type the model service worker would use. The options are\n'
                                  'unix: The model worker expects to unix domain-socket\n'
-                                 'host: The model worker expects a host-name and port-number')
+                                 'tcp: The model worker expects a host-name and port-number')
         parser.add_argument('--sock-name',
                             required=True,
                             type=str,

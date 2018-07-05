@@ -62,7 +62,7 @@ public class Model {
         return jobs.offer(job);
     }
 
-    public void addToFront(Job j) {
+    public void addFirst(Job j) {
         jobs.addFirst(j);
     }
 

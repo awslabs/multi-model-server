@@ -8,6 +8,8 @@ import com.amazonaws.ml.mms.util.messages.ModelLoadRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
+
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -56,7 +58,7 @@ public class BatchAggregator {
                         new ArrayList<>(jobs.values()).listIterator(jobs.size());
                 while (iterator.hasNext()) {
                     Job j = iterator.next();
-                    model.addToFront(j);
+                    model.addFirst(j);
                 }
                 ModelLoadRequest req = new ModelLoadRequest(model.getModelName());
                 req.setModelPath(model.getModelDir());
@@ -94,7 +96,6 @@ public class BatchAggregator {
     }
 
     public void sendResponse(ModelWorkerResponse message) {
-        // logger.debug("received response, size: {}", message.getPredictions().size());
         // TODO: Handle prediction level code
 
         if (message.getCode().equals(String.valueOf(200))) {
@@ -127,7 +128,7 @@ public class BatchAggregator {
                                 + "message"
                                 + ":"
                                 + message.getMessage();
-                j.response(err.getBytes(), "application/json");
+                j.response(err.getBytes(Charset.forName("UTF-8")), "application/json");
             }
             if (!jobs.isEmpty()) {
                 throw new IllegalStateException("Not all jobs get response.");

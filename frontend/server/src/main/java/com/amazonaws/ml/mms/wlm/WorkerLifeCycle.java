@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -19,16 +18,14 @@ public class WorkerLifeCycle {
 
     private ConfigManager configManager;
     private Process process;
-    private int gpuId;
     private CountDownLatch latch;
     private boolean success;
 
-    public WorkerLifeCycle(ConfigManager configManager, int gpuId) {
+    public WorkerLifeCycle(ConfigManager configManager) {
         this.configManager = configManager;
-        this.gpuId = gpuId;
     }
 
-    public boolean startWorker(int port, Model model) {
+    public boolean startWorker(int port) {
         String[] args = new String[3];
         args[0] = "python";
         args[1] = "mms/model_service_worker.py";
@@ -55,7 +52,6 @@ public class WorkerLifeCycle {
 
         try {
             latch = new CountDownLatch(1);
-            System.out.println(Arrays.toString(args));
 
             synchronized (this) {
                 process = Runtime.getRuntime().exec(args, envp, workingDir);

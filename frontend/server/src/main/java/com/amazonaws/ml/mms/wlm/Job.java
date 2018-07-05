@@ -56,6 +56,10 @@ public class Job {
             resp.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
         }
         resp.content().writeBytes(body);
+        // We can load the models based on the configuration file. Since this Job is not driven by the
+        // external connections, we could have a empty context for this job. We shouldn't try to send a response
+        // to ctx if this is not triggered by external clients.
+
         if (ctx != null) {
             NettyUtils.sendHttpResponse(ctx, resp, true);
         }

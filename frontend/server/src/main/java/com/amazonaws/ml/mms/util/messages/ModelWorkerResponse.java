@@ -1,11 +1,12 @@
 package com.amazonaws.ml.mms.util.messages;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ModelWorkerResponse {
     private String code;
     private String message;
-    private ArrayList<Predictions> predictions;
+    private List<Predictions> predictions;
 
     public String getCode() {
         return code;
@@ -23,7 +24,7 @@ public class ModelWorkerResponse {
         this.message = message;
     }
 
-    public ArrayList<Predictions> getPredictions() {
+    public List<Predictions> getPredictions() {
         return predictions;
     }
 

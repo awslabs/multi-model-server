@@ -65,7 +65,7 @@ public class WorkerThread extends Thread {
         this.model = model;
         this.aggregator = aggregator;
         this.gpuId = gpuId;
-        lifeCycle = new WorkerLifeCycle(configManager, gpuId);
+        lifeCycle = new WorkerLifeCycle(configManager);
         replies = new ArrayBlockingQueue<>(1);
         this.setDaemon(true);
     }
@@ -97,7 +97,7 @@ public class WorkerThread extends Thread {
     }
 
     public void connect() throws WorkerInitializationException {
-        if (!configManager.isDebug() && !lifeCycle.startWorker(port, model)) {
+        if (!configManager.isDebug() && !lifeCycle.startWorker(port)) {
             throw new WorkerInitializationException("Failed start worker process.");
         }
         final CountDownLatch latch = new CountDownLatch(1);
@@ -164,7 +164,7 @@ public class WorkerThread extends Thread {
         try {
             latch.await();
             Job job = new Job(null, "load", new Payload(null, ""));
-            model.addToFront(job);
+            model.addFirst(job);
         } catch (InterruptedException e) {
             logger.warn("Backend worker thread interrupted.", e);
             return false;

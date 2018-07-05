@@ -102,6 +102,8 @@ The containers are optimized for 8 vCPUs, however in this example you are going 
 4. Now it is time to configure the actual container that the task should be executing.
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/container+step+1.png)
+<br></br>
+*Note:* If you are using a [custom container](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#customize-the-containers-to-serve-your-custom-deep-learning-models), make sure to first upload your container to Amazon ECR or Dockerhub and replace the link in this step with the link to your uploaded container.
 
 5. The next task is to specify the port mapping. You need to expose container port 8080. 
 This is the port that the MMS application inside the container is listening on. 
@@ -109,10 +111,16 @@ If needed it can be configured via the config [here](https://github.com/awslabs/
 
 ![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/port+8080.png)
 
-Next, you will have to configure the health-checks. MMS has a pre-configured endpoint `/ping` 
-that can be used for health checks.
+Next, you will have to configure the health-checks. This is the command that ECS should run to find out whether MMS is running within the container or not. MMS has a pre-configured endpoint `/ping`
+that can be used for health checks. Configure ECS to reach that endpoint at `http://127.0.0.1:8080/ping` using the `curl` command as shown below:
 
-![](https://s3.amazonaws.com/mms-github-assets/MMS+with+Fargate+Article/container+health+checks.png)
+```bash
+curl, http://127.0.0.1:8080/ping
+```
+
+The healthcheck portion of your container configuration should look like the image below:
+
+![](https://s3.amazonaws.com/mxnet-model-server/mms-github-docs/MMS+with+Fargate+Article/add+container+healthcheck.png)
 
 After configuring the health-checks, you can go onto configuring the environment, with the entry point that we have discussed earlier:
 

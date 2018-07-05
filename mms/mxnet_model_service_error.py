@@ -8,9 +8,17 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+Class to trigger MMS Errors
+"""
+
 
 class MMSError(Exception):
-    def __init__(self, code=None, message=None):
+    """
+    Class defining the MMS Error. This is used by backend worker and custom service code to throw errors.
+    """
+    def __init__(self, code, message):
+        super(MMSError, self).__init__(message)
         self.code = code
         self.message = message
 

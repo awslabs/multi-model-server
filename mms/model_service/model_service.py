@@ -113,7 +113,7 @@ class SingleNodeService(ModelService):
             post_time_in_ms = (post_end_ms - post_start_ms) * 1000
 
             # TODO: Redo this metrics
-            print ("Metrics are {}, {}, {}".format(pre_time_in_ms, infer_time_in_ms, post_time_in_ms))
+            print("Metrics are {}, {}, {}".format(pre_time_in_ms, infer_time_in_ms, post_time_in_ms))
         except MMSError as m:
             m.set_code(err.CUSTOM_SERVICE_ERROR)
             raise m

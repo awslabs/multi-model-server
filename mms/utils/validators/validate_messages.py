@@ -7,14 +7,25 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
+"""
+Helper utils to validate messages and inputs to backend worker
+"""
 
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 
 
 class ModelWorkerMessageValidators(object):
+    """
+    Class lists all the validators for backend-worker messages
+    """
     @staticmethod
     def validate_load_message(msg):
+        """
+        Validate the load messages
+        :param msg:
+        :return:
+        """
         if u'modelPath' not in msg:
             raise MMSError(err.INVALID_LOAD_MESSAGE, "Load command missing \"model-path\" key")
 
@@ -29,6 +40,7 @@ class ModelWorkerMessageValidators(object):
                 "input1" : {}
                 "input2" : {}
         }
+
         :param msg:
         :return:
         """
@@ -43,12 +55,13 @@ class ModelWorkerMessageValidators(object):
             "value": "val1"
         }...
 
-        :param msg: 
-        :return: 
+        :param msg:
+        :return:
         """
+
         if u'encoding' not in msg:
             raise MMSError(err.INVALID_PREDICT_INPUT, "Predict command input data missing \"encoding\" field")
-        
+
         if u'value' not in msg:
             raise MMSError(err.INVALID_PREDICT_INPUT, "Predict command input data missing \"value\" field")
 

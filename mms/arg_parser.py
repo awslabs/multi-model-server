@@ -122,6 +122,10 @@ class ArgParser(object):
 
     @staticmethod
     def model_service_worker_args():
+        """
+        Argparser for backend worker. Takes the socket name and socket type.
+        :return:
+        """
         parser = argparse.ArgumentParser(prog='mxnet-model-server', description='MXNet Model Server')
         parser.add_argument('--sock-type',
                             required=True,

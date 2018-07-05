@@ -217,7 +217,13 @@ class ServiceManager(object):
         return self.get_modelservices_registry(modelservice_names)
 
     def register_and_load_modules(self, module_file_path, models, gpu):
-
+        """
+        Register all the modules and load them. This is a wrapper method around register_module and load_models.
+        :param module_file_path:
+        :param models:
+        :param gpu:
+        :return:
+        """
         if models is None:
             raise Exception("Models set incorrectly. Models:{}".format(models))
 

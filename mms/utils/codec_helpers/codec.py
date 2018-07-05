@@ -7,7 +7,9 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
-
+"""
+Utils class to have all encode and decode helper functions for the backend worker
+"""
 import base64
 import binascii
 
@@ -30,7 +32,7 @@ class ModelWorkerCodecHelper(object):
                 raise TypeError("Invalid encoding type defined in the request metadata from frontend."
                                 "({})".format(encoding))
         except (binascii.Error, TypeError) as e:
-             raise MMSError(err.DECODE_FAILED, "base64 decode error {}".format(e))
+            raise MMSError(err.DECODE_FAILED, "base64 decode error {}".format(e))
 
     @staticmethod
     def encode_msg(encoding, msg):

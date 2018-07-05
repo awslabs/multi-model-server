@@ -8,6 +8,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+ModelServiceWorker is the worker that is started by the MMS front-end.
+Communication message format: JSON message
+"""
 
 import socket
 import os
@@ -18,43 +22,39 @@ from mms.service_manager import ServiceManager
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.utils.codec_helpers.codec import ModelWorkerCodecHelper
 from mms.mxnet_model_service_error import MMSError
-from mms.utils.validators.validate_model_artifacts import ModelArtifactValidator
+from mms.utils.validators.validate_model_artifacts import MXNetModelArtifactValidator
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
-
-"""
-ModelServiceWorker is the worker that is started by the MMS front-end. 
-
-Communication message format: JSON message 
- 
-"""
 
 MAX_FAILURE_THRESHOLD = 5
 
 
 class MXNetModelServiceWorker(object):
-    def __init__(self, sock_name=None):
-        if sock_name is None:
+    """
+    Backend worker to handle Model Server's python service code
+    """
+    def __init__(self, s_name=None):
+        if s_name is None:
             raise ValueError("Incomplete data provided: Model worker expects \"socket name\"")
-        self.sock_name = sock_name
+        self.sock_name = s_name
         self.model_services = {}
         self.service_manager = ServiceManager()
         self.send_failures = 0
 
         try:
-            os.unlink(sock_name)
+            os.unlink(s_name)
         except OSError:
-            if os.path.exists(sock_name):
-                raise MMSError(err.SOCKET_ERROR, "socket already in use: {}.".format(sock_name))
+            if os.path.exists(s_name):
+                raise MMSError(err.SOCKET_ERROR, "socket already in use: {}.".format(s_name))
 
         try:
-            msg = "Listening on port: {}".format(sock_name)
+            msg = "Listening on port: {}".format(s_name)
             log_msg(msg)
 
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             # self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except (IOError, OSError) as e:
             raise MMSError(err.SOCKET_ERROR, "Socket error in init {}. {}".format(self.sock_name, repr(e)))
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(repr(e)))
 
     def retrieve_input_names_from_signature(self, signature_file_inputs):
@@ -92,7 +92,7 @@ class MXNetModelServiceWorker(object):
         encoding = u'base64'  # TODO: Remove this hardcoding and encode based on output mime type
         result = {}
         try:
-            for idx in range(len(ret)):
+            for idx in enumerate(ret):
                 result.update({"requestId": req_id_map[idx]})
                 result.update({"code": 200})
                 result.update({"value":
@@ -108,12 +108,17 @@ class MXNetModelServiceWorker(object):
             resp = []
             resp.append(result)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.CODEC_FAIL, "codec failed {}".format(repr(e)))
         return resp
 
     @staticmethod
     def recv_msg(client_sock):
+        """
+        Receive a message from a given socket file descriptor
+        :param client_sock:
+        :return:
+        """
         data = b''
         try:
             while True:
@@ -129,7 +134,7 @@ class MXNetModelServiceWorker(object):
             raise MMSError(err.RECEIVE_ERROR, "{}".format(sock_err.message))
         except ValueError as v:
             raise MMSError(err.INVALID_MESSAGE, "JSON message format error: {}".format(v))
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(e))
 
         return in_msg['command'], in_msg
@@ -149,13 +154,13 @@ class MXNetModelServiceWorker(object):
 
         model_in = {}
         validation_set = set()  # Set to validate if all the inputs were provided
-        for input_idx in range(len(model_inputs)):
-            input = model_inputs[input_idx]
-            ModelWorkerMessageValidators.validate_predict_inputs(input)
-            input_name = input[u'name']
-            encoding = input[u'encoding']
+        for input_idx in enumerate(model_inputs):
+            ip = model_inputs[input_idx]
+            ModelWorkerMessageValidators.validate_predict_inputs(ip)
+            input_name = ip[u'name']
+            encoding = ip[u'encoding']
             validation_set.add(input_name)
-            decoded_val = ModelWorkerCodecHelper.decode_msg(encoding, input[u'value'])
+            decoded_val = ModelWorkerCodecHelper.decode_msg(encoding, ip[u'value'])
 
             model_in.update({input_name: decoded_val})
 
@@ -199,11 +204,10 @@ class MXNetModelServiceWorker(object):
             signature = model_service.signature
             input_data_names = self.retrieve_input_names_from_signature(signature['inputs'])
         except AttributeError as e:
-            msg = "Attribute error {}".format(e)
-            log_msg(msg)
+            log_msg("Attribute error {}".format(e))
             input_data_names = {u'data'}  # TODO: Remove this default
 
-        for batch_idx in range(len(requests)):
+        for batch_idx in enumerate(requests):
             ModelWorkerMessageValidators.validate_predict_data(requests[batch_idx])
             req_id = requests[batch_idx][u'requestId']
             # TODO: If encoding present in "REQUEST" we shouldn't look for input-names and just pass it to the
@@ -294,7 +298,7 @@ class MXNetModelServiceWorker(object):
             model_dict = {model_name: path}
 
             models = ModelLoader.load(model_dict)
-            ModelArtifactValidator.validate_model_metadata(models)
+            MXNetModelArtifactValidator.validate_model_metadata(models)
             manifest = models[0][3]
             service_file_path = os.path.join(models[0][2], manifest['Model']['Service'])
 
@@ -303,7 +307,7 @@ class MXNetModelServiceWorker(object):
             raise MMSError(err.VALUE_ERROR_WHILE_LOADING, "{}".format(v))
         except MMSError as m:
             raise m
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION_WHILE_LOADING, "{}".format(repr(e)))
 
         return "loaded model {}".format(service_file_path), 200
@@ -327,7 +331,7 @@ class MXNetModelServiceWorker(object):
             raise MMSError(err.MODEL_CURRENTLY_NOT_LOADED, "Model is not being served on model server")
         except MMSError as m:
             raise m
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION, "Unknown error {}".format(repr(e)))
         return "Unloaded model {}".format(model_name), 200
 
@@ -349,9 +353,8 @@ class MXNetModelServiceWorker(object):
             self.send_response(sock, json.dumps(resp).encode('utf-8'))
             sock.close()
             # os.unlink(self.sock_name)
-        except Exception as e:
-            msg = "Error closing the socket {}. Msg: {}".format(sock, repr(e))
-            log_msg(msg)
+        except Exception as e:  # pylint: disable=broad-except
+            log_msg("Error closing the socket {}. Msg: {}".format(sock, repr(e)))
 
     def send_response(self, sock, msg):
         """
@@ -366,62 +369,61 @@ class MXNetModelServiceWorker(object):
         except (IOError, OSError) as e:
             # Can't send this response. So, log it.
             self.send_failures += 1
-            msg = "{}: Send failed. {}.\nMsg: {}".format(err.SEND_MSG_FAIL, repr(e), msg)
-            log_msg(msg)
+            log_msg("{}: Send failed. {}.\nMsg: {}".format(err.SEND_MSG_FAIL, repr(e), msg))
 
             if self.send_failures >= MAX_FAILURE_THRESHOLD:
                 exit(err.SEND_FAILS_EXCEEDS_LIMITS)
 
-    def create_and_send_response(self, sock, c, m, p=None):
+    def create_and_send_response(self, sock, c, message, p=None):
         resp = {}
         resp['code'] = c
-        resp['message'] = m
+        resp['message'] = message
         if p is not None:
             resp['predictions'] = p
         self.send_response(sock, json.dumps(resp))
 
     def handle_connection(self, cl_socket):
-            predictions = None
-            code = 200
-            result = None
-            cmd = None
+        predictions = None
+        code = 200
+        result = None
+        cmd = None
 
-            while True:
-                try:
-                    cmd, data = self.recv_msg(cl_socket)
-                    resp = {}
-                    if cmd.lower() == u'stop':
-                        self.stop_server(cl_socket)
-                        exit(1)
-                    elif cmd.lower() == u'predict':
-                        predictions, result, code = self.predict(data)
-                    elif cmd.lower() == u'load':
-                        result, code = self.load_model(data)
-                    elif cmd.lower() == u'unload':
-                        result, code = self.unload_model(data)
-                    else:
-                        result = "Received unknown command: {}".format(cmd)
-                        code = err.UNKNOWN_COMMAND
+        while True:
+            try:
+                cmd, data = self.recv_msg(cl_socket)
+                if cmd.lower() == u'stop':
+                    self.stop_server(cl_socket)
+                    exit(1)
+                elif cmd.lower() == u'predict':
+                    predictions, result, code = self.predict(data)
+                elif cmd.lower() == u'load':
+                    result, code = self.load_model(data)
+                elif cmd.lower() == u'unload':
+                    result, code = self.unload_model(data)
+                else:
+                    result = "Received unknown command: {}".format(cmd)
+                    code = err.UNKNOWN_COMMAND
 
-                    self.create_and_send_response(cl_socket, code, result, predictions)
+                self.create_and_send_response(cl_socket, code, result, predictions)
 
-                except MMSError as m:
-                    msg = "MMSError {} data {}".format(cmd, m.get_message())
-                    log_msg(msg)
-                    self.create_and_send_response(cl_socket, m.get_code(), m.get_message())
-                except Exception as e:
-                    msg = "Exception {} data {}".format(cmd, repr(e))
-                    log_msg(msg)
-                    self.create_and_send_response(cl_socket, err.UNKNOWN_EXCEPTION, repr(e))
+            except MMSError as m:
+                log_msg("MMSError {} data {}".format(cmd, m.get_message()))
+                self.create_and_send_response(cl_socket, m.get_code(), m.get_message())
+            except Exception as e:  # pylint: disable=broad-except
+                log_msg("Exception {} data {}".format(cmd, repr(e)))
+                self.create_and_send_response(cl_socket, err.UNKNOWN_EXCEPTION, repr(e))
 
     def run_server(self):
+        """
+        Run the backend worker process and listen on a socket
+        :return:
+        """
         try:
             self.sock.bind(self.sock_name)
             self.sock.listen(1)
-            msg = "MxNet worker started.\n"
-            log_msg(msg)
+            log_msg("MxNet worker started.\n")
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.SOCKET_BIND_ERROR,
                            "Socket {} could not be bound to. {}: {}".format(self.sock_name, e.__module__, e.message))
 
@@ -430,37 +432,39 @@ class MXNetModelServiceWorker(object):
         # socket fails, the backend worker will quit
 
         try:
-            msg = "Waiting for a connections"
-            log_msg(msg)
+            log_msg("Waiting for a connections")
 
-            (cl_socket, address) = self.sock.accept()
+            (cl_socket, _) = self.sock.accept()
             self.handle_connection(cl_socket)
         except (OSError, IOError) as e:
             raise e
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             raise
 
 
 def log_msg(*args):
+    """
+    TODO: Move this to a seperate class obj
+    :param args:
+    :return:
+    """
     print(" ".join(map(str, args)))
     sys.stdout.flush()
 
 
 if __name__ == "__main__":
+    # TODO: Use the argprocess
     if len(sys.argv) != 2:
         assert 0, "Invalid parameters given"
-    sock_name = sys.argv[1]
+    socket_name = sys.argv[1]
     worker = None
     try:
-        worker = MXNetModelServiceWorker(sock_name)
+        worker = MXNetModelServiceWorker(socket_name)
         worker.run_server()
     except MMSError as m:
-        msg = "{}".format(m.message())
-        log_msg(msg)
+        log_msg("{}".format(m.message()))
         exit(1)
-    except Exception as e:
-        print()
-        msg = "Error starting the server. {}".format(str(e))
-        log_msg(msg)
+    except Exception as e:  # pylint: disable=broad-except
+        log_msg("Error starting the server. {}".format(str(e)))
         exit(1)
     exit(0)

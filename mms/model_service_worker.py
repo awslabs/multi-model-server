@@ -462,7 +462,7 @@ if __name__ == "__main__":
         worker = MXNetModelServiceWorker(socket_name)
         worker.run_server()
     except MMSError as m:
-        log_msg("{}".format(m.message()))
+        log_msg("{}".format(m.get_message()))
         exit(1)
     except Exception as e:  # pylint: disable=broad-except
         log_msg("Error starting the server. {}".format(str(e)))

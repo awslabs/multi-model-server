@@ -80,9 +80,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             case "/invocations":
                 handleInvocations(ctx, decoder, req);
                 return;
-            case "/load-model":
+            case "/register":
                 handleRegisterModel(ctx, decoder, req);
-                handleScaleModel(ctx, decoder, req);
                 return;
             case "/unregister":
                 handleUnregisterModel(ctx, decoder, req);
@@ -206,7 +205,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        // NettyUtils.sendJsonResponse(ctx, "{\"status\":\"Model registered\"}");
+        NettyUtils.sendJsonResponse(ctx, "{\"status\":\"Model registered\"}");
     }
 
     private void handleUnregisterModel(

@@ -66,7 +66,7 @@ public class ModelServer {
             serverGroups.shutdown(true);
             logger.info("Model server stopped.");
         }
-        System.exit(-1); // NOPMD
+        Runtime.getRuntime().halt(-1); // NOPMD
     }
 
     public void initModelStore() throws InvalidModelException, WorkerInitializationException {

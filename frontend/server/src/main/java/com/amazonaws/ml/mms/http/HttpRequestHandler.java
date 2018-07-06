@@ -118,7 +118,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 return;
             }
             Payload payload = new Payload(modelName, data);
-            Job job = new Job(ctx, payload);
+            Job job = new Job(ctx, "predict", payload);
             logger.debug("received request: {}", job.getJobId());
             HttpResponseStatus status = ModelManager.getInstance().addJob(job);
             if (status != HttpResponseStatus.OK) {
@@ -173,7 +173,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             payload.setData(buf);
         }
 
-        Job job = new Job(ctx, payload);
+        Job job = new Job(ctx, "predict", payload);
+
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
             NettyUtils.sendError(ctx, status);

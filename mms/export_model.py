@@ -393,19 +393,19 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
         if model_path.startswith('~'):
             model_path = os.path.expanduser(model_path)
         # Entry point model here, this is in the main folder
-        files = os.listdir(model_path)
+        files = set(os.listdir(model_path))
         onnx_file = find_unique(files, '.onnx')
         symbol_file = find_unique(files, '-symbol.json')
         params_file = find_unique(files, '.params')
         # Getting relative paths, for inflating the sub-folders
         tmp = os.getcwd()
         os.chdir(model_path)
-        directories = [d for d in files if os.path.isdir(d)]
         # Look in the nested folders for other necessary model/resource files
-        for directory in directories:
-            for directory_path, _, file_names in os.walk(os.path.expanduser(directory)):
-                for f in file_names:
-                    files.append(os.path.join(directory_path, f))
+        for directory_path, _, file_names in os.walk('.'):
+            for f in file_names:
+                if directory_path != '.':
+                    files.add(os.path.join(directory_path, f))
+        files = list(files)
         os.chdir(tmp)
         signature_file = validate_signature(model_path)
         is_imperative, service_file = validate_service(model_path, service_file, signature_file)

@@ -393,10 +393,10 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
         if model_path.startswith('~'):
             model_path = os.path.expanduser(model_path)
         # Entry point model here, this is in the main folder
-        files = set(os.listdir(model_path))
-        onnx_file = find_unique(files, '.onnx')
-        symbol_file = find_unique(files, '-symbol.json')
-        params_file = find_unique(files, '.params')
+        filesSet = set(os.listdir(model_path))
+        onnx_file = find_unique(filesSet, '.onnx')
+        symbol_file = find_unique(filesSet, '-symbol.json')
+        params_file = find_unique(filesSet, '.params')
         # Getting relative paths, for inflating the sub-folders
         tmp = os.getcwd()
         os.chdir(model_path)
@@ -404,20 +404,20 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
         for directory_path, _, file_names in os.walk('.'):
             for f in file_names:
                 if directory_path != '.':
-                    files.add(os.path.join(directory_path, f))
-        files = list(files)
+                    filesSet.add(os.path.join(directory_path, f))
+        filesList = list(filesSet)
         os.chdir(tmp)
         signature_file = validate_signature(model_path)
         is_imperative, service_file = validate_service(model_path, service_file, signature_file)
         validate_model_files(model_path, onnx_file, params_file, symbol_file, is_imperative)
-        if os.path.basename(service_file) not in files:
+        if os.path.basename(service_file) not in filesList:
             temp_files.append(os.path.basename(service_file))
             shutil.copyfile(service_file, os.path.join(model_path, os.path.basename(service_file)))
         service_file = os.path.basename(service_file)
 
         if onnx_file:
             symbol_file, params_file = convert_onnx_model(model_path, onnx_file)
-            files.remove(onnx_file)
+            filesList.remove(onnx_file)
             temp_files.extend([symbol_file, params_file])
 
         manifest = generate_manifest(symbol_file, params_file, service_file, signature_file, model_name, is_imperative)
@@ -426,7 +426,7 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
         temp_files.append(MANIFEST_FILE_NAME)
 
         with zipfile.ZipFile(export_file, 'w') as z:
-            for f in files + temp_files:
+            for f in filesList + temp_files:
                 z.write(os.path.join(model_path, f), f)
         logger.info("Successfully exported model %s to file %s", model_name, export_file)
 

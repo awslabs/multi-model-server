@@ -2,9 +2,9 @@ package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.http.HttpRequestHandler;
-import com.amazonaws.ml.mms.util.CodecUtils.MessageEncoder;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
+import com.amazonaws.ml.mms.util.codec.MessageEncoder;
 import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
@@ -198,7 +198,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "test");
+        Assert.assertEquals(result, "OK");
     }
 
     private void testInvocationsJson(Channel channel) throws InterruptedException {
@@ -213,7 +213,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "test");
+        Assert.assertEquals(result, "OK");
     }
 
     private void testInvocationsMultipart(Channel channel)
@@ -238,7 +238,7 @@ public class ModelServerTest {
 
         latch.await();
 
-        Assert.assertEquals(result, "test");
+        Assert.assertEquals(result, "OK");
     }
 
     private Channel connect() {

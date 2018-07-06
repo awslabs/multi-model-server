@@ -1,9 +1,9 @@
 package com.amazonaws.ml.mms.wlm;
 
-import com.amazonaws.ml.mms.util.CodecUtils.MessageDecoder;
-import com.amazonaws.ml.mms.util.CodecUtils.MessageEncoder;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
+import com.amazonaws.ml.mms.util.codec.MessageDecoder;
+import com.amazonaws.ml.mms.util.codec.MessageEncoder;
 import com.amazonaws.ml.mms.util.messages.AbstractRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import io.netty.bootstrap.Bootstrap;
@@ -31,7 +31,7 @@ public class WorkerThread extends Thread {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
 
-    private static final StringDecoder DECODER = new StringDecoder();
+    //private static final StringDecoder DECODER = new StringDecoder();
 
     private ConfigManager configManager;
     private EventLoopGroup backendEventGroup;
@@ -101,7 +101,6 @@ public class WorkerThread extends Thread {
             throw new WorkerInitializationException("Failed start worker process.");
         }
         final CountDownLatch latch = new CountDownLatch(1);
-        boolean channelConnectionSuccess = false;
 
         try {
             Bootstrap b = new Bootstrap();
@@ -117,7 +116,7 @@ public class WorkerThread extends Thread {
                                                     81920000,
                                                     Delimiters
                                                             .lineDelimiter())); // TODO: Make this config based
-                                    p.addLast(DECODER);
+                                    p.addLast(new StringDecoder());
                                     p.addLast(new MessageDecoder());
                                     p.addLast(new MessageEncoder());
                                     p.addLast(new WorkerHandler());
@@ -161,12 +160,13 @@ public class WorkerThread extends Thread {
     }
 
     public boolean sendLoadMessage(CountDownLatch latch) {
+        int gpu = this.gpuId;
         try {
             latch.await();
             Job job = new Job(null, "load", new Payload(null, ""));
             model.addFirst(job);
         } catch (InterruptedException e) {
-            logger.warn("Backend worker thread interrupted.", e);
+            logger.warn("Backend worker thread interrupted to start in gpu {}.", gpu, e);
             return false;
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);

@@ -8,7 +8,6 @@ import com.amazonaws.ml.mms.util.messages.ModelLoadRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
-
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Base64;

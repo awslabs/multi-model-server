@@ -19,6 +19,7 @@ import sys
 import json
 
 from mms.service_manager import ServiceManager
+from mms.log import log_msg
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.utils.codec_helpers.codec import ModelWorkerCodecHelper
 from mms.mxnet_model_service_error import MMSError
@@ -440,16 +441,6 @@ class MXNetModelServiceWorker(object):
             raise e
         except Exception:  # pylint: disable=broad-except
             raise
-
-
-def log_msg(*args):
-    """
-    TODO: Move this to a seperate class obj
-    :param args:
-    :return:
-    """
-    print(" ".join(map(str, args)))
-    sys.stdout.flush()
 
 
 if __name__ == "__main__":

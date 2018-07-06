@@ -1,6 +1,6 @@
 package com.amazonaws.ml.mms.util.messages;
 
-public abstract class AbstractRequest {
+public class AbstractRequest {
 
     private String command;
     private String modelName;

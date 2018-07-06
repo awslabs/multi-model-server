@@ -3,8 +3,8 @@ package com.amazonaws.ml.mms.util.messages;
 public class ModelLoadModelRequest extends BaseModelRequest {
 
     /**
-     * ModelLoadModelRequest is a interface between frontend and backend to notify the backend to load a
-     * particular model.
+     * ModelLoadModelRequest is a interface between frontend and backend to notify the backend to
+     * load a particular model.
      */
     private String modelPath;
 

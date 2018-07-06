@@ -166,7 +166,7 @@ public class WorkerThread extends Thread {
             Job job = new Job(null, "load", new Payload(null, ""));
             model.addFirst(job);
         } catch (InterruptedException e) {
-            logger.warn("Backend worker thread interrupted to start in gpu "+ gpu, e);
+            logger.warn("Backend worker thread interrupted to start in gpu " + gpu, e);
             return false;
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);

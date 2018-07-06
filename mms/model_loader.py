@@ -75,17 +75,17 @@ def _download_and_extract(model_location, path=None, overwrite=False):
     model_file_prefix = model_name if model_extension == '.model' else model_file
 
     model_dir = os.path.join(os.path.dirname(model_file), model_file_prefix)
-
+    print("model dir {}".format(model_dir))
     if not os.path.isdir(model_dir):
         os.mkdir(model_dir)
-        try:
-            if '.model' in model_file:
-                _extract_zip(model_file, model_dir)
-        except Exception as e:
-            # Remove the directory being created if invalid model specified
-            shutil.rmtree(model_dir)
-            raise Exception('Failed to open model file %s for model %s. Removed Folder %s Stacktrace: %s'
-                            % (model_file, model_file_prefix, model_dir, e))
+    try:
+        if '.model' in model_file:
+            _extract_zip(model_file, model_dir)
+    except Exception as e:
+        # Remove the directory being created if invalid model specified
+        shutil.rmtree(model_dir)
+        raise Exception('Failed to open model file %s for model %s. Removed Folder %s Stacktrace: %s'
+                        % (model_file, model_file_prefix, model_dir, e))
     return model_dir
 
 
@@ -99,6 +99,7 @@ def _extract_zip(zip_file, destination):
         destination : str
             Destination directory.
     '''
+    print("Unzipping the model archive")
     with zipfile.ZipFile(zip_file) as file_buf:
         for item in file_buf.namelist():
             filename = os.path.basename(item)

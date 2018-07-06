@@ -2,7 +2,7 @@ package com.amazonaws.ml.mms.util.messages;
 
 import java.util.ArrayList;
 
-public class ModelInferenceRequest extends AbstractRequest {
+public class ModelInferenceRequest extends BaseModelRequest {
 
     private String contentType;
     private ArrayList<RequestBatch> requestBatch;

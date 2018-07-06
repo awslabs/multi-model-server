@@ -4,7 +4,7 @@ import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.codec.MessageDecoder;
 import com.amazonaws.ml.mms.util.codec.MessageEncoder;
-import com.amazonaws.ml.mms.util.messages.AbstractRequest;
+import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -73,7 +73,7 @@ public class WorkerThread extends Thread {
     @Override
     public void run() {
         currentThread = Thread.currentThread();
-        AbstractRequest req = null;
+        BaseModelRequest req = null;
         try {
             while (running.get()) {
                 req = aggregator.getRequest();
@@ -166,7 +166,7 @@ public class WorkerThread extends Thread {
             Job job = new Job(null, "load", new Payload(null, ""));
             model.addFirst(job);
         } catch (InterruptedException e) {
-            logger.warn("Backend worker thread interrupted to start in gpu {}.", gpu, e);
+            logger.warn("Backend worker thread interrupted to start in gpu "+ gpu, e);
             return false;
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);

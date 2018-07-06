@@ -2,9 +2,9 @@ package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
-import com.amazonaws.ml.mms.util.messages.AbstractRequest;
+import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelInferenceRequest;
-import com.amazonaws.ml.mms.util.messages.ModelLoadRequest;
+import com.amazonaws.ml.mms.util.messages.ModelLoadModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
@@ -106,7 +106,7 @@ public class MockWorker {
                                         if ("load".equalsIgnoreCase(cmd)) {
                                             out.add(
                                                     JsonUtils.GSON.fromJson(
-                                                            json, ModelLoadRequest.class));
+                                                            json, ModelLoadModelRequest.class));
                                         } else {
                                             out.add(
                                                     JsonUtils.GSON.fromJson(
@@ -150,7 +150,7 @@ public class MockWorker {
         }
     }
 
-    private static final class MockHandler extends SimpleChannelInboundHandler<AbstractRequest> {
+    private static final class MockHandler extends SimpleChannelInboundHandler<BaseModelRequest> {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -159,7 +159,7 @@ public class MockWorker {
         }
 
         @Override
-        public void channelRead0(ChannelHandlerContext ctx, AbstractRequest msg) {
+        public void channelRead0(ChannelHandlerContext ctx, BaseModelRequest msg) {
             logger.debug("Mock worker received: {}", msg.getModelName());
             ModelWorkerResponse resp = new ModelWorkerResponse();
             resp.setCode("200");

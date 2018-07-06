@@ -1,10 +1,10 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.amazonaws.ml.mms.util.messages.AbstractRequest;
+import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelInferenceRequest;
 import com.amazonaws.ml.mms.util.messages.ModelInputs;
-import com.amazonaws.ml.mms.util.messages.ModelLoadRequest;
+import com.amazonaws.ml.mms.util.messages.ModelLoadModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
@@ -31,13 +31,13 @@ public class BatchAggregator {
         jobs = new LinkedHashMap<>();
     }
 
-    public AbstractRequest getRequest() throws InterruptedException {
+    public BaseModelRequest getRequest() throws InterruptedException {
         jobs.clear();
 
         // first job is a blocking call;
         Job job = model.nextJob();
         if (job.isControlCmd()) {
-            ModelLoadRequest req = new ModelLoadRequest(model.getModelName());
+            ModelLoadModelRequest req = new ModelLoadModelRequest(model.getModelName());
             req.setModelPath(model.getModelUrl());
             return req;
         }
@@ -59,7 +59,7 @@ public class BatchAggregator {
                     Job j = iterator.next();
                     model.addFirst(j);
                 }
-                ModelLoadRequest req = new ModelLoadRequest(model.getModelName());
+                ModelLoadModelRequest req = new ModelLoadModelRequest(model.getModelName());
                 req.setModelPath(model.getModelDir());
                 return req;
             }

@@ -1,16 +1,16 @@
 package com.amazonaws.ml.mms.util.messages;
 
-public class ModelLoadRequest extends AbstractRequest {
+public class ModelLoadModelRequest extends BaseModelRequest {
 
     /**
-     * ModelLoadRequest is a interface between frontend and backend to notify the backend to load a
+     * ModelLoadModelRequest is a interface between frontend and backend to notify the backend to load a
      * particular model.
      */
     private String modelPath;
 
     private String gpu;
 
-    public ModelLoadRequest(String modelName) {
+    public ModelLoadModelRequest(String modelName) {
         super("load", modelName);
     }
 

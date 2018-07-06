@@ -1,6 +1,7 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.util.NettyUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,30 +18,28 @@ public class WorkerLifeCycle {
 
     private ConfigManager configManager;
     private Process process;
-    private int gpuId;
     private CountDownLatch latch;
     private boolean success;
 
-    public WorkerLifeCycle(ConfigManager configManager, int gpuId) {
+    public WorkerLifeCycle(ConfigManager configManager) {
         this.configManager = configManager;
-        this.gpuId = gpuId;
     }
 
-    public boolean startWorker(int port, Model model) {
-        File archivePath = new File(configManager.getModelStore(), model.getModelUrl());
-        String[] args = new String[gpuId >= 0 ? 8 : 6];
+    public boolean startWorker(int port) {
+        String[] args = new String[3];
         args[0] = "python";
-        args[1] = "mms/mxnet_worker.py";
-        args[2] = "--port";
-        args[3] = String.valueOf(port);
-        args[4] = "--models";
-        args[5] = model.getModelName() + '=' + archivePath.getAbsolutePath();
-        if (gpuId >= 0) {
-            args[6] = "--gpu";
-            args[7] = String.valueOf(gpuId);
+        args[1] = "mms/model_service_worker.py";
+        args[2] = NettyUtils.getSocketAddress(port).toString();
+
+        File workingDir;
+
+        try {
+            workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
+        } catch (IOException e) {
+            logger.error("Failed start worker process", e);
+            return false;
         }
 
-        File workingDir = new File(configManager.getModelServerHome());
         String pythonPath = System.getenv("PYTHONPATH");
         String pythonEnv;
         if (pythonPath == null || pythonPath.isEmpty()) {

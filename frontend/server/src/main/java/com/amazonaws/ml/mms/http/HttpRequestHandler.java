@@ -289,6 +289,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     private static RequestBatch parseRequest(FullHttpRequest req) {
         RequestBatch inputData = new RequestBatch();
         CharSequence contentType = HttpUtil.getMimeType(req);
+        inputData.setContentType(contentType.toString());
         if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(contentType)) {
             inputData.addModelInput(new ModelInputs("body", NettyUtils.getBytes(req.content())));
         } else if (HttpPostRequestDecoder.isMultipart(req)

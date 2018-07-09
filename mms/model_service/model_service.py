@@ -8,7 +8,8 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""`ModelService` defines an API for base model service.
+"""
+ModelService defines an API for base model service.
 """
 # pylint: disable=W0223
 
@@ -32,8 +33,28 @@ class ModelService(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, model_name, model_dir, manifest, gpu=None):  # pylint: disable=unused-argument
+    def __init__(self, model_name, model_dir, manifest, gpu=None):
+        self.model_name = model_name
+        self.model_dir = model_dir
+        self.manifest = manifest
+        self.gpu = gpu
         self.ctx = None
+
+    def __initialize__(self, model_name, model_dir, manifest, gpu=None, batch_size=None):
+        """
+        Initialize ModelService. This will be called from model_service_worker. This
+        :param model_name:
+        :param model_dir:
+        :param manifest:
+        :param gpu:
+        :param batch_size:
+        :return:
+        """
+        self.model_name = model_name
+        self.model_dir = model_dir
+        self.manifest = manifest
+        self.gpu = gpu
+        self.batch_size = batch_size
 
     @abstractmethod
     def inference(self, data):

@@ -35,7 +35,7 @@ public class ModelLoadModelRequest extends BaseModelRequest {
         this.handler = model.getModelArchive().getManifest().getModel().getHandler();
         this.batchSize = model.getBatchSize();
         this.gpu = gpu;
-        modelPath = model.getModelUrl();
+        modelPath = model.getModelDir();
     }
 
     public String getModelPath() {

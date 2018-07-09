@@ -37,7 +37,7 @@ class ServiceManager(object):
         # loaded model services
         self.loaded_modelservices = KVStorage('loaded_modelservices')
 
-    def get_modelservices_registry(self, modelservice_names=None):
+    def get_modelservices_registry(self, model_names=None):
         """
         Get all registered Model Service Class Definitions in a dictionary
         from internal registry according to name or list of names.
@@ -45,7 +45,7 @@ class ServiceManager(object):
 
         Parameters
         ----------
-        modelservice_names : List, optional
+        model_names : List, optional
             Names to retrieve registered model services.
 
         Returns
@@ -53,28 +53,28 @@ class ServiceManager(object):
         Dict of name, model service pairs
             Registered model services according to given names.
         """
-        if modelservice_names is None:
+        if model_names is None:
             return self.modelservice_registry
 
         return {
-            modelservice_name: self.modelservice_registry[modelservice_name]
-            for modelservice_name in modelservice_names
+            model_name: self.modelservice_registry[model_name]
+            for model_name in model_names
         }
 
-    def add_modelservice_to_registry(self, modelservice_name, ModelServiceClassDef):
+    def add_modelservice_to_registry(self, model_name, model_service_class_def):
         """
         Add a model service to internal registry.
 
         Parameters
         ----------
-        modelservice_name : string
-            Model service name to be added.
-        ModelServiceClassDef: python class
+        model_name : string
+            Model name to be added.
+        model_service_class_def: python class
             Model Service Class Definition which can initialize a model service.
         """
-        self.modelservice_registry[modelservice_name] = ModelServiceClassDef
+        self.modelservice_registry[model_name] = model_service_class_def
 
-    def get_loaded_modelservices(self, modelservice_names=None):
+    def get_loaded_modelservices(self, model_names=None):
         """
         Get all model services which are loaded in the system into a dictionary
         according to name or list of names.
@@ -82,47 +82,49 @@ class ServiceManager(object):
 
         Parameters
         ----------
-        modelservice_names : List, optional
-             Model service names to retrieve loaded model services.
+        model_names : List, optional
+             Model names to retrieve loaded model services.
 
         Returns
         ----------
         Dict of name, model service pairs
             Loaded model services according to given names.
         """
-        if modelservice_names is None:
+        if model_names is None:
             return self.loaded_modelservices
 
         return {
-            modelservice_name: self.loaded_modelservices[modelservice_name]
-            for modelservice_name in modelservice_names
+            model_name: self.loaded_modelservices[model_name]
+            for model_name in model_names
         }
 
-    def load_model(self, service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu=None):
+    def load_model(self, model_name, model_dir, manifest, model_service_class_def, gpu=None, batch_size=None):
         """
         Load a single model into a model service by using
         user passed Model Service Class Definitions.
 
         Parameters
         ----------
-        service_name : string
-            Service name
         model_name : string
             Model name
-        model_path: stirng
+        model_dir: string
             Model path which can be url or local file path.
         manifest: string
             Model manifest
-        ModelServiceClassDef: python class
+        model_service_class_def: python class
             Model Service Class Definition which can initialize a model service.
         gpu : int
             Id of gpu device. If machine has two gpus, this number can be 0 or 1.
             If it is not set, cpu will be used.
+        batch_size : int
+            batch size
         """
-        self.loaded_modelservices[service_name] = ModelServiceClassDef(model_name, model_path, manifest, gpu)
+        model_service = model_service_class_def(model_name, model_dir, manifest, gpu)
+        model_service.__initialize__(model_name, model_dir, manifest, gpu, batch_size)
+        self.loaded_modelservices[model_name] = model_service
 
-    def unload_models(self, service_name):
-        del(self.loaded_modelservices[service_name])
+    def unload_models(self, model_name):
+        del(self.loaded_modelservices[model_name])
         return self.loaded_modelservices
 
     def parse_modelservices_from_module(self, service_file):
@@ -149,24 +151,6 @@ class ServiceManager(object):
         # Check if class is subclass of base ModelService class
         # pylint: disable=deprecated-lambda
         return list(filter(lambda c: issubclass(c, SingleNodeService), classes))
-
-    def load_models(self, models, ModelServiceClassDef, gpu=None):
-        """
-        Load models by using user passed Model Service Class Definitions.
-
-        Parameters
-        ----------
-        models : List of model_name, model_path pairs
-            List of model_name, model_path pairs that will be initialized.
-        ModelServiceClassDef: python class
-            Model Service Class Definition which can initialize a model service.
-        gpu : int
-            Id of gpu device. If machine has two gpus, this number can be 0 or 1.
-            If it is not set, cpu will be used.
-        """
-        for service_name, model_name, model_path, manifest in models:
-            self.load_model(service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu)
-
 
     def register_module(self, user_defined_module_file_path):
         """
@@ -216,16 +200,17 @@ class ServiceManager(object):
 
         return self.get_modelservices_registry(modelservice_names)
 
-    def register_and_load_modules(self, module_file_path, models, gpu):
+    def register_and_load_modules(self, model_name, model_dir, manifest, module_file_path, gpu, batch_size):
         """
         Register all the modules and load them. This is a wrapper method around register_module and load_models.
+        :param model_name
+        :param model_dir
+        :param manifest
         :param module_file_path:
-        :param models:
         :param gpu:
+        :param batch_size
         :return:
         """
-        if models is None:
-            raise Exception("Models set incorrectly. Models:{}".format(models))
 
         # Retrieve all the classes defined in the custom service file
         classes = self.register_module(module_file_path)
@@ -243,4 +228,4 @@ class ServiceManager(object):
         registered_models = self.get_registered_modelservices()
         model_class_defn = registered_models[model_class_name]
 
-        self.load_models(models, model_class_defn, gpu)
+        self.load_model(model_name, model_dir, manifest, model_class_defn, gpu, batch_size)

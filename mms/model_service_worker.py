@@ -23,7 +23,6 @@ from mms.log import log_msg
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.utils.codec_helpers.codec import ModelWorkerCodecHelper
 from mms.mxnet_model_service_error import MMSError
-from mms.utils.validators.validate_model_artifacts import MXNetModelArtifactValidator
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 
 MAX_FAILURE_THRESHOLD = 5
@@ -58,16 +57,6 @@ class MXNetModelServiceWorker(object):
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(repr(e)))
 
-    def retrieve_input_names_from_signature(self, signature_file_inputs):
-        d_names = set()
-        if signature_file_inputs is None:
-            raise ValueError("Invalid model service given to retrieve input names")
-
-        for item in signature_file_inputs:
-            d_names.add(item['data_name'])
-
-        return d_names
-
     def create_predict_response(self, ret, req_id_map, invalid_reqs):
         """
         Response object is as follows :
@@ -97,7 +86,7 @@ class MXNetModelServiceWorker(object):
                 result.update({"requestId": req_id_map[idx]})
                 result.update({"code": 200})
                 result.update({"value":
-                               ModelWorkerCodecHelper.encode_msg(encoding, bytes(json.dumps(val).encode()))})
+                               ModelWorkerCodecHelper.encode_msg(encoding, bytes(val))})
                 result.update({"encoding": encoding})
 
             for req in invalid_reqs.keys():
@@ -142,7 +131,7 @@ class MXNetModelServiceWorker(object):
 
         return in_msg['command'], in_msg
 
-    def retrieve_model_input(self, model_inputs, input_names=None):
+    def retrieve_model_input(self, model_inputs):
         """
         MODEL_INPUTS = [{
                 "encoding": "base64", (This is how the value is encoded)
@@ -151,7 +140,6 @@ class MXNetModelServiceWorker(object):
         }]
 
         :param model_inputs: list of model_input elements each containing "encoding", "value" and "name"
-        :param input_names:
         :return:
         """
 
@@ -166,9 +154,6 @@ class MXNetModelServiceWorker(object):
 
             model_in.update({input_name: decoded_val})
 
-        if len(input_names.symmetric_difference(validation_set)) != 0:
-            raise MMSError(err.INVALID_PREDICT_MESSAGE, "Missing input data "
-                                                        "{}".format(input_names.symmetric_difference(validation_set)))
         return model_in
 
     def retrieve_data_for_inference(self, requests=None, model_service=None):
@@ -202,13 +187,6 @@ class MXNetModelServiceWorker(object):
             raise ValueError("Model Service metadata is invalid")
 
         input_batch = []
-        try:
-            signature = model_service.signature
-            input_data_names = self.retrieve_input_names_from_signature(signature['inputs'])
-        except AttributeError as e:
-            log_msg("Attribute error {}".format(e))
-            input_data_names = {u'data'}  # TODO: Remove this default
-
         for batch_idx, request_batch in enumerate(requests):
             ModelWorkerMessageValidators.validate_predict_data(request_batch)
             req_id = request_batch['requestId']
@@ -217,7 +195,7 @@ class MXNetModelServiceWorker(object):
 
             model_inputs = request_batch['modelInputs']
             try:
-                input_data = self.retrieve_model_input(model_inputs, input_data_names)
+                input_data = self.retrieve_model_input(model_inputs)
                 input_batch.append(input_data)
                 req_to_id_map[batch_idx] = req_id
             except MMSError as m:
@@ -279,32 +257,34 @@ class MXNetModelServiceWorker(object):
         Expected command
         {
             "command" : "load", string
-            "model-path" : "/path/to/model/file", string
-            "model-name" : "name", string
+            "modelPath" : "/path/to/model/file", string
+            "modelName" : "name", string
             "gpu" : None if CPU else gpu_id, int
+            "handler" : service handler entry point if provided, string
+            "batchSize" : batch size, int
         }
 
         :param data:
         :return:
         """
-        gpu = None
         try:
             from mms.model_loader import ModelLoader
             ModelWorkerMessageValidators.validate_load_message(data)
-            path = data[u'modelPath']
-            model_name = data[u'modelName']
+            model_dir = data['modelPath']
+            model_name = data['modelName']
+            handler = data['handler']
+            batch_size = None
+            if 'batchSize' in data:
+                batch_size = int(data['batchSize']);
 
+            gpu = None
             if u'gpu' in data:
                 gpu = int(data[u'gpu'])
 
-            model_dict = {model_name: path}
+            manifest, service_file_path = ModelLoader.load(model_dir, handler)
 
-            models = ModelLoader.load(model_dict)
-            MXNetModelArtifactValidator.validate_model_metadata(models)
-            manifest = models[0][3]
-            service_file_path = os.path.join(models[0][2], manifest['Model']['Service'])
-
-            self.service_manager.register_and_load_modules(service_file_path, models, gpu)
+            self.service_manager.register_and_load_modules(model_name, model_dir, manifest,
+                                                           service_file_path, gpu, batch_size)
         except ValueError as v:
             raise MMSError(err.VALUE_ERROR_WHILE_LOADING, "{}".format(v))
         except MMSError as m:

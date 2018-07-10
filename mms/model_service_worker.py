@@ -117,7 +117,7 @@ class MXNetModelServiceWorker(object):
 
                 data += pkt
                 # Check if we received last segment
-                if pkt[-2:] == '\r\n':
+                if data[-2:] == b'\r\n':
                     break
             in_msg = json.loads(data.decode('utf8'))
             if u'command' not in in_msg:

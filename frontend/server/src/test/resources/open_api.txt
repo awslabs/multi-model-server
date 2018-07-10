@@ -1,0 +1,467 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Model Server is a flexible and easy to use tool for serving deep learning models",
+    "version": "1.0.0",
+    "title": "Model Serving APIs"
+  },
+  "schemes": [
+    "https"
+  ],
+  "paths": {
+    "/api-description": {
+      "get": {
+        "operationId": "openApiDescription",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "A swagger 2.0 json descriptor.",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/ping": {
+      "get": {
+        "operationId": "ping",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Model server status.",
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "description": "Overall status of the Model Server."
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/invocations": {
+      "post": {
+        "description": "A generic invocation entry point for all models.",
+        "operationId": "invocations",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "parameters": [
+          {
+            "type": "string",
+            "in": "formData",
+            "name": "modelName",
+            "description": "Name of model",
+            "required": true
+          },
+          {
+            "type": "file",
+            "in": "formData",
+            "name": "data",
+            "description": "Inference input data",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "description": "Register a new model in Model Server.",
+        "operationId": "registerModel",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "object",
+              "required": [
+                "modelName",
+                "modelUrl"
+              ],
+              "properties": {
+                "modelName": {
+                  "type": "string",
+                  "description": "Name of model to register."
+                },
+                "modelUrl": {
+                  "type": "string",
+                  "description": "Model archive download url, support local file or HTTP(s) protocol. For S3, consider use pre-signed url."
+                }
+              },
+              "isSimple": false
+            },
+            "in": "body",
+            "name": "Model",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Register success"
+          },
+          "400": {
+            "description": "Unable to open dependent files specified in manifest file."
+          },
+          "404": {
+            "description": "Unable to download model archive"
+          }
+        }
+      }
+    },
+    "/unregister": {
+      "post": {
+        "description": "Unregister a model from Model Server.",
+        "operationId": "unregisterModel",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "object",
+              "required": [
+                "modelName"
+              ],
+              "properties": {
+                "modelName": {
+                  "type": "string",
+                  "description": "Name of model to register."
+                },
+                "forced": {
+                  "type": "boolean",
+                  "description": "Force terminate backend worker process."
+                }
+              },
+              "isSimple": false
+            },
+            "in": "body",
+            "name": "model",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unregister success"
+          },
+          "404": {
+            "description": "Model not found."
+          }
+        }
+      }
+    },
+    "/models": {
+      "post": {
+        "description": "List registered models in Model Server.",
+        "operationId": "listModels",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Limit": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Use this parameter to specify the maximum number of items to return. When this value is present, Model Server does not return more than the specified number of items, but it might return fewer. This value is optional. If you include a value, it must be between 1 and 1000, inclusive. If you do not include a value, it defaults to 100.",
+                  "default": "100"
+                },
+                "NextPageToken": {
+                  "type": "string",
+                  "description": "The token to retrieve the next set of results. Model Server provides the token when the response from a previous call has more results than the maximum page size."
+                }
+              },
+              "isSimple": false
+            },
+            "in": "body",
+            "name": "pagination",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "NextPageToken": {
+                  "type": "string",
+                  "description": "Use this parameter in a subsequent request after you receive a response with truncated results. Set it to the value of NextMarker from the truncated response you just received."
+                },
+                "models": {
+                  "items": {
+                    "properties": {
+                      "modelName": {
+                        "type": "string",
+                        "description": "Name of the model."
+                      },
+                      "modelGroupId": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Model group that the model belongs to."
+                      },
+                      "modelHash": {
+                        "type": "string",
+                        "description": "SHA1 hash of the model."
+                      },
+                      "modelUrl": {
+                        "type": "string",
+                        "description": "URL of the model."
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "description": "A list of registered models."
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/model": {
+      "post": {
+        "description": "Provides detailed information about the specified model.",
+        "operationId": "describeModel",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "object",
+              "required": [
+                "modelName"
+              ],
+              "properties": {
+                "modelName": {
+                  "type": "string",
+                  "description": "Name of model to describe."
+                }
+              },
+              "isSimple": false
+            },
+            "in": "body",
+            "name": "model",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "modelName": {
+                  "type": "string",
+                  "description": "The name of the model."
+                },
+                "modelGroupId": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Model group id that the model belongs to."
+                },
+                "rejectedRequests": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Number requests has been rejected in last 10 minutes."
+                },
+                "waitingQueueSize": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Number requests waiting in the queue."
+                },
+                "batchSize": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Configured batch size."
+                },
+                "batchDelay": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Configured batch delay in ms."
+                },
+                "requestPerSecond": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Request per second."
+                },
+                "workers": {
+                  "items": {
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "GPU or CPU"
+                      },
+                      "status": {
+                        "type": "string",
+                        "description": "Health status of the worker process"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "description": "A list of workers that serving the models."
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/groups": {
+      "post": {
+        "description": "List registered model groups.",
+        "operationId": "listGroups",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "properties": {
+                "groups": {
+                  "items": {
+                    "properties": {
+                      "modelGroupId": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Model group ID."
+                      },
+                      "minWorker": {
+                        "type": "string",
+                        "description": "Configured minimum number of worker processes."
+                      },
+                      "maxWorker": {
+                        "type": "string",
+                        "description": "Configured maximum number of worker processes."
+                      },
+                      "numberGpu": {
+                        "type": "string",
+                        "description": "Configured number of GPU worker processes to create."
+                      },
+                      "activeWorkers": {
+                        "type": "string",
+                        "description": "Active running worker processes."
+                      },
+                      "status": {
+                        "type": "string",
+                        "description": "Status of the model group."
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "description": "A list of registered model groups."
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/scale": {
+      "post": {
+        "description": "Configure number of workers for a model group, This is a asynchronized call.",
+        "operationId": "setAutoScale",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "object",
+              "required": [
+                "modelGroupId",
+                "minWorker",
+                "maxWorker",
+                "numberGpu"
+              ],
+              "properties": {
+                "modelGroupId": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "ID of model group to scale."
+                },
+                "minWorker": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Minimum number of worker processes."
+                },
+                "maxWorker": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Maximum number of worker processes."
+                },
+                "numberGpu": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Number of GPU worker processes to create."
+                },
+                "timeout": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Waiting up to the specified wait time if necessary for a worker to complete all pending requests. Use 0 to terminate backend worker process immediately. Use -1 for wait infinitely."
+                }
+              },
+              "isSimple": false
+            },
+            "in": "body",
+            "name": "scaleParam",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scale configuration set."
+          },
+          "404": {
+            "description": "Group not found."
+          }
+        }
+      }
+    },
+    "noop_v0.1/predict": {
+      "post": {
+        "description": "A predict entry point for model: noop_v0.1.",
+        "operationId": "noop_v0.1_predict",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}

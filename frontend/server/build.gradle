@@ -1,0 +1,37 @@
+dependencies {
+    compile "io.netty:netty-all:${netty_version}"
+    compile (project(":modelarchive")) {
+        exclude group: 'commons-cli', module: 'commons-cli'
+    }
+
+    testCompile "org.testng:testng:${testng_version}"
+}
+
+apply from: file("${project.rootProject.projectDir}/tools/gradle/launcher.gradle")
+
+sourceSets {
+    main {
+        output.resourcesDir = "build/classes/java/main"
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.amazonaws.ml.mms.ModelServer'
+    }
+    includeEmptyDirs = false
+    from configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
+
+    exclude "META-INF/maven/**"
+    exclude "META-INF/INDEX.LIST"
+    exclude "META-INF/MANIFEST*"
+    exclude "META-INF//LICENSE*"
+    exclude "META-INF//NOTICE*"
+}
+
+test.doFirst {
+    systemProperty "mmsConfigFile", 'src/test/resources/config.properties'
+    systemProperty "METRICS_LOCATION","build/logs"
+    systemProperty "LOG_LOCATION","build/logs"
+}
+test.finalizedBy(project.tasks.jacocoTestReport)

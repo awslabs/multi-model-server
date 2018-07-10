@@ -1,6 +1,6 @@
 # Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
+    # You may not use this file except in compliance with the License.
 # A copy of the License is located at
 #     http://www.apache.org/licenses/LICENSE-2.0
 # or in the "license" file accompanying this file. This file is distributed
@@ -17,7 +17,7 @@ import PIL
 import unittest
 import numpy as np
 import mxnet as mx
-import utils.mxnet.image as image
+import mms.utils.mxnet.image as image
 from io import BytesIO
 
 class TestMXNetImageUtils(unittest.TestCase):

@@ -16,9 +16,8 @@ c. Exposes standard "ping" and "api-description" endpoints.
 d. Waits for servicing inference requests.
 """
 from . import log
-from . import metric
 from . import model_service
-from . import metrics_manager
 from . import version
+from . import utils
 
 __version__ = version.__version__

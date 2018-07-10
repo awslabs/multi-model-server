@@ -143,16 +143,13 @@ class MXNetModelServiceWorker(object):
         :return:
         """
 
-        model_in = {}
-        validation_set = set()  # Set to validate if all the inputs were provided
+        model_in = []
         for ip in model_inputs:
             ModelWorkerMessageValidators.validate_predict_inputs(ip)
-            input_name = ip['name']
             encoding = ip.get('encoding')
-            validation_set.add(input_name)
             decoded_val = ModelWorkerCodecHelper.decode_msg(encoding, ip['value'])
 
-            model_in.update({input_name: decoded_val})
+            model_in.append(decoded_val)
 
         return model_in
 
@@ -240,7 +237,7 @@ class MXNetModelServiceWorker(object):
             batch_size = len(req_batch)  # num-inputs gives the batch size
             input_batch, req_id_map, invalid_reqs = self.retrieve_data_for_inference(req_batch, model_service)
             if batch_size == 1:
-                retval.append(model_service.inference([input_batch[0][i] for i in input_batch[0]]))
+                retval.append(model_service.inference(input_batch[0]))
             else:
                 raise MMSError(err.UNSUPPORTED_PREDICT_OPERATION, "Invalid batch size {}".format(batch_size))
 

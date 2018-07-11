@@ -272,7 +272,7 @@ class MXNetModelServiceWorker(object):
             handler = data['handler']
             batch_size = None
             if 'batchSize' in data:
-                batch_size = int(data['batchSize']);
+                batch_size = int(data['batchSize'])
 
             gpu = None
             if u'gpu' in data:
@@ -326,9 +326,7 @@ class MXNetModelServiceWorker(object):
         if sock is None:
             raise ValueError("Invalid parameter passed to stop server connection")
         try:
-            resp = {}
-            resp['code'] = 200
-            resp['response'] = "Stopped server"
+            resp = {'code': 200, 'response': "Stopped server"}
             self.send_response(sock, json.dumps(resp).encode('utf-8'))
             sock.close()
             # os.unlink(self.sock_name)
@@ -354,14 +352,18 @@ class MXNetModelServiceWorker(object):
                 exit(err.SEND_FAILS_EXCEEDS_LIMITS)
 
     def create_and_send_response(self, sock, c, message, p=None):
-        resp = {}
-        resp['code'] = c
-        resp['message'] = message
+        resp = {'code': c, 'message': message}
         if p is not None:
             resp['predictions'] = p
         self.send_response(sock, json.dumps(resp))
 
     def handle_connection(self, cl_socket):
+        """
+        Handle socket connection.
+
+        :param cl_socket:
+        :return:
+        """
         predictions = None
         code = 200
         result = None

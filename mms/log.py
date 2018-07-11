@@ -8,13 +8,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-#!/usr/bin/env python
-
 """Logging utilities.
 """
 import logging
 import sys
-import warnings
 
 LOG_LEVEL_DICT = {
     "CRITICAL": logging.CRITICAL,
@@ -58,17 +55,6 @@ class _Formatter(logging.Formatter):
         return super(_Formatter, self).format(record)
 
 
-def getLogger(name=None, filename=None, filemode=None, level='NOTSET'):
-    """Gets a customized logger.
-
-    .. note:: `getLogger` is deprecated. Use `get_logger` instead.
-
-    """
-    warnings.warn("getLogger is deprecated, Use get_logger instead.",
-                  DeprecationWarning, stacklevel=2)
-    return get_logger(name, LOG_LEVEL_DICT[level])
-
-
 def get_logger(name=None, level="NOTSET"):
     """Gets a customized logger.
 
@@ -99,6 +85,6 @@ def get_logger(name=None, level="NOTSET"):
     return logger
 
 
-def log_msg(*args, **kwargs):
+def log_msg(*args):
     print(" ".join(a for a in args))
     sys.stdout.flush()

@@ -54,6 +54,7 @@ def check_input_shape(inputs, signature):
                                             input.shape)
 
 
+# pylint: disable=too-many-nested-blocks
 class MXNetBaseService(SingleNodeService):
     """
     MXNetBaseService defines the fundamental loading model and inference
@@ -122,8 +123,8 @@ class MXNetBaseService(SingleNodeService):
         except Exception:  # pylint: disable=broad-except
             logger.info("Failed to parse epoch from param file, setting epoch to 0")
 
-        sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
-                                                               (model_dir, manifest['model']['symbolFile'][:-12]), epoch)
+        sym, arg_params, aux_params = mx.model.load_checkpoint(
+            '%s/%s' % (model_dir, manifest['model']['symbolFile'][:-12]), epoch)
         self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
                                       data_names=data_names, label_names=None)
         self.mx_model.bind(for_training=False, data_shapes=data_shapes)

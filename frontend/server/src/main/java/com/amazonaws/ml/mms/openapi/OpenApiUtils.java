@@ -371,25 +371,26 @@ public final class OpenApiUtils {
         operation.addParameter(new PathParameter("model_name", "Name of model to describe."));
 
         Schema schema = new Schema("object");
+        schema.addProperty("modelName", new Schema("string", "Name of the model."), true);
+        schema.addProperty("modelVersion", new Schema("string", "Version of the model."), true);
+        schema.addProperty("modelUrl", new Schema("string", "URL of the model."), true);
         schema.addProperty(
-                "nextPageToken",
-                new Schema(
-                        "string",
-                        "Use this parameter in a subsequent request after you receive a response"
-                                + " with truncated results. Set it to the value of NextMarker from the truncated"
-                                + " response you just received."),
+                "minWorkers", new Schema("integer", "Configured minimum number of worker."), true);
+        schema.addProperty(
+                "maxWorkers", new Schema("integer", "Configured maximum number of worker."), true);
+        schema.addProperty("batchSize", new Schema("integer", "Configured batch size."), false);
+        schema.addProperty(
+                "maxBatchDelay",
+                new Schema("integer", "Configured maximum batch delay in ms."),
                 false);
+        schema.addProperty(
+                "status", new Schema("string", "Overall health status of the model"), true);
 
-        Schema model = new Schema("object");
-        model.addProperty("modelName", new Schema("string", "Name of the model."), true);
-        model.addProperty("modelUrl", new Schema("string", "URL of the model."), true);
-        model.addProperty("type", new Schema("string", "GPU or CPU"), true);
-        model.addProperty(
-                "targetWorkers", new Schema("integer", "Configured number of worker."), true);
-
-        Schema workers =
-                new Schema("array", "Number requests has been rejected in last 10 minutes.");
+        Schema workers = new Schema("array", "A list of active backend workers.");
         Schema worker = new Schema("object");
+        worker.addProperty("id", new Schema("string", "Worker id"), true);
+        worker.addProperty("startTime", new Schema("string", "Worker start time"), true);
+        worker.addProperty("gpu", new Schema("boolean", "If running on GPU"), false);
         Schema workerStatus = new Schema("string", "Worker status");
         List<String> status = new ArrayList<>();
         status.add("READY");
@@ -399,28 +400,21 @@ public final class OpenApiUtils {
         worker.addProperty("status", workerStatus, true);
         workers.setItems(worker);
 
-        model.addProperty("workers", workers, true);
-        model.addProperty("batchSize", new Schema("integer", "Configured batch size."), false);
-        model.addProperty(
-                "maxBatchDelay",
-                new Schema("integer", "Configured maximum batch delay in ms."),
-                false);
-        model.addProperty(
+        schema.addProperty("workers", workers, true);
+        Schema metrics = new Schema("object");
+        metrics.addProperty(
                 "rejectedRequests",
                 new Schema("integer", "Number requests has been rejected in last 10 minutes."),
                 true);
-        model.addProperty(
+        metrics.addProperty(
                 "waitingQueueSize",
                 new Schema("integer", "Number requests waiting in the queue."),
                 true);
-        model.addProperty(
+        metrics.addProperty(
                 "requests",
                 new Schema("integer", "Number requests processed in last 10 minutes."),
                 true);
-        model.addProperty(
-                "status", new Schema("string", "Overall health status of the model"), true);
-
-        schema.addProperty("model", model, true);
+        schema.addProperty("metrics", metrics, true);
 
         MediaType mediaType = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
 

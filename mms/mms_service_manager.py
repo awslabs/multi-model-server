@@ -62,7 +62,7 @@ class ServiceManager(object):
             for modelservice_name in modelservice_names
         }
 
-    def add_modelservice_to_registry(self, modelservice_name, ModelServiceClassDef):
+    def add_modelservice_to_registry(self, modelservice_name, model_service_class_def):
         """
         Add a model service to internal registry.
 
@@ -70,10 +70,10 @@ class ServiceManager(object):
         ----------
         modelservice_name : string
             Model service name to be added.
-        ModelServiceClassDef: python class
+        model_service_class_def: python class
             Model Service Class Definition which can initialize a model service.
         """
-        self.modelservice_registry[modelservice_name] = ModelServiceClassDef
+        self.modelservice_registry[modelservice_name] = model_service_class_def
 
     def get_loaded_modelservices(self, modelservice_names=None):
         """
@@ -99,7 +99,7 @@ class ServiceManager(object):
             for modelservice_name in modelservice_names
         }
 
-    def load_model(self, service_name, model_name, model_path, manifest, ModelServiceClassDef, gpu=None):
+    def load_model(self, service_name, model_name, model_path, manifest, model_service_class_def, gpu=None):
         """
         Load a single model into a model service by using
         user passed Model Service Class Definitions.
@@ -114,13 +114,13 @@ class ServiceManager(object):
             Model path which can be url or local file path.
         manifest: string
             Model manifest
-        ModelServiceClassDef: python class
+        model_service_class_def: python class
             Model Service Class Definition which can initialize a model service.
         gpu : int
             Id of gpu device. If machine has two gpus, this number can be 0 or 1.
             If it is not set, cpu will be used.
         """
-        self.loaded_modelservices[service_name] = ModelServiceClassDef(model_name, model_path, manifest, gpu)
+        self.loaded_modelservices[service_name] = model_service_class_def(model_name, model_path, manifest, gpu)
 
     def parse_modelservices_from_module(self, service_file):
         """

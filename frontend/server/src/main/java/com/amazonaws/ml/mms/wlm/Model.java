@@ -22,16 +22,16 @@ import java.util.concurrent.TimeUnit;
 public class Model {
 
     private ModelArchive modelArchive;
-    private int minWorker;
-    private int maxWorker;
+    private int minWorkers;
+    private int maxWorkers;
     private int batchSize;
     private int maxBatchDelay;
     private LinkedBlockingDeque<Job> jobs;
 
     public Model(ModelArchive modelArchive, int queueSize) {
         this.modelArchive = modelArchive;
-        minWorker = 1;
-        maxWorker = 1;
+        minWorkers = 1;
+        maxWorkers = 1;
         batchSize = 1;
         maxBatchDelay = 100;
         jobs = new LinkedBlockingDeque<>(queueSize);
@@ -77,20 +77,20 @@ public class Model {
         return resp.keySet().iterator().next();
     }
 
-    public int getMinWorker() {
-        return minWorker;
+    public int getMinWorkers() {
+        return minWorkers;
     }
 
-    public void setMinWorker(int minWorker) {
-        this.minWorker = minWorker;
+    public void setMinWorkers(int minWorkers) {
+        this.minWorkers = minWorkers;
     }
 
-    public int getMaxWorker() {
-        return maxWorker;
+    public int getMaxWorkers() {
+        return maxWorkers;
     }
 
-    public void setMaxWorker(int maxWorker) {
-        this.maxWorker = maxWorker;
+    public void setMaxWorkers(int maxWorkers) {
+        this.maxWorkers = maxWorkers;
     }
 
     public int getBatchSize() {

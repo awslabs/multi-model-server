@@ -61,6 +61,7 @@ public class WorkerThread extends Thread {
     private BatchAggregator aggregator;
     ArrayBlockingQueue<ModelWorkerResponse> replies;
     private int gpuId;
+    private long startTime;
     private Thread currentThread;
 
     private WorkerLifeCycle lifeCycle;
@@ -81,6 +82,7 @@ public class WorkerThread extends Thread {
         this.model = model;
         this.aggregator = aggregator;
         this.gpuId = gpuId;
+        startTime = System.currentTimeMillis();
         lifeCycle = new WorkerLifeCycle(configManager);
         replies = new ArrayBlockingQueue<>(1);
         this.setDaemon(true);
@@ -182,6 +184,18 @@ public class WorkerThread extends Thread {
             }
             throw t;
         }
+    }
+
+    public boolean isRunning() {
+        return running.get();
+    }
+
+    public int getGpuId() {
+        return gpuId;
+    }
+
+    public long getStartTime() {
+        return startTime;
     }
 
     public void shutdown() {

@@ -444,72 +444,91 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "model"
+                    "modelName",
+                    "modelVersion",
+                    "modelUrl",
+                    "minWorkers",
+                    "maxWorkers",
+                    "status",
+                    "workers",
+                    "metrics"
                   ],
                   "properties": {
-                    "nextPageToken": {
+                    "modelName": {
                       "type": "string",
-                      "description": "Use this parameter in a subsequent request after you receive a response with truncated results. Set it to the value of NextMarker from the truncated response you just received."
+                      "description": "Name of the model."
                     },
-                    "model": {
+                    "modelVersion": {
+                      "type": "string",
+                      "description": "Version of the model."
+                    },
+                    "modelUrl": {
+                      "type": "string",
+                      "description": "URL of the model."
+                    },
+                    "minWorkers": {
+                      "type": "integer",
+                      "description": "Configured minimum number of worker."
+                    },
+                    "maxWorkers": {
+                      "type": "integer",
+                      "description": "Configured maximum number of worker."
+                    },
+                    "batchSize": {
+                      "type": "integer",
+                      "description": "Configured batch size."
+                    },
+                    "maxBatchDelay": {
+                      "type": "integer",
+                      "description": "Configured maximum batch delay in ms."
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Overall health status of the model"
+                    },
+                    "workers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "startTime",
+                          "status"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Worker id"
+                          },
+                          "startTime": {
+                            "type": "string",
+                            "description": "Worker start time"
+                          },
+                          "gpu": {
+                            "type": "boolean",
+                            "description": "If running on GPU"
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Worker status",
+                            "enum": [
+                              "READY",
+                              "LOADING",
+                              "UNLOADING"
+                            ]
+                          }
+                        }
+                      },
+                      "description": "A list of active backend workers."
+                    },
+                    "metrics": {
                       "type": "object",
                       "required": [
-                        "modelName",
-                        "modelUrl",
-                        "type",
-                        "targetWorkers",
-                        "workers",
                         "rejectedRequests",
                         "waitingQueueSize",
-                        "requests",
-                        "status"
+                        "requests"
                       ],
                       "properties": {
-                        "modelName": {
-                          "type": "string",
-                          "description": "Name of the model."
-                        },
-                        "modelUrl": {
-                          "type": "string",
-                          "description": "URL of the model."
-                        },
-                        "type": {
-                          "type": "string",
-                          "description": "GPU or CPU"
-                        },
-                        "targetWorkers": {
-                          "type": "integer",
-                          "description": "Configured number of worker."
-                        },
-                        "workers": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": [
-                              "status"
-                            ],
-                            "properties": {
-                              "status": {
-                                "type": "string",
-                                "description": "Worker status",
-                                "enum": [
-                                  "READY",
-                                  "LOADING",
-                                  "UNLOADING"
-                                ]
-                              }
-                            }
-                          },
-                          "description": "Number requests has been rejected in last 10 minutes."
-                        },
-                        "batchSize": {
-                          "type": "integer",
-                          "description": "Configured batch size."
-                        },
-                        "maxBatchDelay": {
-                          "type": "integer",
-                          "description": "Configured maximum batch delay in ms."
-                        },
                         "rejectedRequests": {
                           "type": "integer",
                           "description": "Number requests has been rejected in last 10 minutes."
@@ -521,10 +540,6 @@
                         "requests": {
                           "type": "integer",
                           "description": "Number requests processed in last 10 minutes."
-                        },
-                        "status": {
-                          "type": "string",
-                          "description": "Overall health status of the model"
                         }
                       }
                     }

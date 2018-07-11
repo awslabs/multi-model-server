@@ -17,6 +17,7 @@ import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -90,8 +91,8 @@ public final class ModelManager {
             return false;
         }
 
-        model.setMinWorker(0);
-        model.setMaxWorker(0);
+        model.setMinWorkers(0);
+        model.setMaxWorkers(0);
         wlm.modelChanged(model);
         logger.info("Model {} unregistered.", model.getModelName());
         return true;
@@ -104,14 +105,18 @@ public final class ModelManager {
             logger.warn("Model not found: " + modelName);
             return false;
         }
-        model.setMinWorker(minWorkers);
-        model.setMaxWorker(maxWorkers);
+        model.setMinWorkers(minWorkers);
+        model.setMaxWorkers(maxWorkers);
         wlm.modelChanged(model);
         return true;
     }
 
     public Map<String, Model> getModels() {
         return models;
+    }
+
+    public List<WorkerThread> getWorkers(String modelName) {
+        return wlm.getWorkers(modelName);
     }
 
     public HttpResponseStatus addJob(Job job) {

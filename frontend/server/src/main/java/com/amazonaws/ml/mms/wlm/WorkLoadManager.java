@@ -15,6 +15,7 @@ package com.amazonaws.ml.mms.wlm;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import io.netty.channel.EventLoopGroup;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +38,14 @@ public class WorkLoadManager {
         workers = new ConcurrentHashMap<>();
     }
 
+    public List<WorkerThread> getWorkers(String modelName) {
+        List<WorkerThread> list = workers.get(modelName);
+        if (list == null) {
+            return Collections.emptyList();
+        }
+        return new ArrayList<>(list);
+    }
+
     public boolean hasNoWorker(String modelName) {
         List<WorkerThread> worker = workers.get(modelName);
         if (worker == null) {
@@ -46,7 +55,7 @@ public class WorkLoadManager {
     }
 
     public void modelChanged(Model model) throws WorkerInitializationException {
-        int minWorker = model.getMinWorker();
+        int minWorker = model.getMinWorkers();
         List<WorkerThread> threads;
         if (minWorker == 0) {
             ModelManager modelManager = ModelManager.getInstance();

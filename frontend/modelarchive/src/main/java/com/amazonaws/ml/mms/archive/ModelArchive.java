@@ -77,12 +77,12 @@ public class ModelArchive {
         if (url.endsWith(".model")) {
             try (InputStream is = new FileInputStream(modelLocation)) {
                 File unzipDir = unzip(is, null);
-                return load(modelLocation.getAbsolutePath(), unzipDir, false);
+                return load(url, unzipDir, false);
             } catch (IOException e) {
                 throw new InvalidModelException("Failed to unzip model archive: " + url, e);
             }
         }
-        return load(modelLocation.getAbsolutePath(), modelLocation, true);
+        return load(url, modelLocation, true);
     }
 
     public static void migrate(File legacyModelFile, File destination)

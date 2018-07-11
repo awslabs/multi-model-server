@@ -22,6 +22,7 @@ import com.amazonaws.ml.mms.wlm.Job;
 import com.amazonaws.ml.mms.wlm.Model;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
+import com.amazonaws.ml.mms.wlm.WorkerThread;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -31,6 +32,10 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,7 +125,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         HttpMethod method = req.method();
         if (segments.length < 3) {
             if (HttpMethod.GET.equals(method)) {
-                handleListModels(ctx);
+                handleListModels(ctx, decoder);
                 return;
             } else if (HttpMethod.POST.equals(method)) {
                 handleRegisterModel(ctx, decoder);
@@ -130,7 +135,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         }
 
         if (HttpMethod.GET.equals(method)) {
-            handleDescribeModel(ctx);
+            handleDescribeModel(ctx, segments[2]);
         } else if (HttpMethod.PUT.equals(method)) {
             handleScaleModel(ctx, decoder, segments[2]);
         } else if (HttpMethod.DELETE.equals(method)) {
@@ -204,9 +209,37 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         }
     }
 
-    private void handleListModels(ChannelHandlerContext ctx) {
-        // TODO:
-        NettyUtils.sendJsonResponse(ctx, new StatusResponse("Coming soon"));
+    private void handleListModels(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
+        int limit = NettyUtils.getIntParameter(decoder, "limit", 100);
+        int pageToken = NettyUtils.getIntParameter(decoder, "nextPageToken", 0);
+        if (limit > 100 || limit < 0) {
+            limit = 100;
+        }
+        if (pageToken < 0) {
+            pageToken = 0;
+        }
+
+        ModelManager modelManager = ModelManager.getInstance();
+        Map<String, Model> models = modelManager.getModels();
+
+        List<String> keys = new ArrayList<>(models.keySet());
+        Collections.sort(keys);
+        ListModelsResponse list = new ListModelsResponse();
+
+        int last = pageToken + limit;
+        if (last > keys.size()) {
+            last = keys.size();
+        } else {
+            list.setNextPageToken(String.valueOf(last));
+        }
+
+        for (int i = pageToken; i < last; ++i) {
+            String modelName = keys.get(i);
+            Model model = models.get(modelName);
+            list.addModel(modelName, model.getModelUrl());
+        }
+
+        NettyUtils.sendJsonResponse(ctx, list);
     }
 
     private void handleRegisterModel(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
@@ -281,15 +314,44 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
     }
 
-    private void handleDescribeModel(ChannelHandlerContext ctx) {
-        // TODO:
-        NettyUtils.sendJsonResponse(ctx, new StatusResponse("Coming soon"));
+    private void handleDescribeModel(ChannelHandlerContext ctx, String modelName) {
+        ModelManager modelManager = ModelManager.getInstance();
+        Model model = modelManager.getModels().get(modelName);
+        if (model == null) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+            return;
+        }
+
+        DescribeModelResponse resp = new DescribeModelResponse();
+        resp.setModelName(modelName);
+        resp.setModelUrl(model.getModelUrl());
+        resp.setBatchSize(model.getBatchSize());
+        resp.setMaxBatchDelay(model.getMaxBatchDelay());
+        resp.setMaxWorkers(model.getMaxWorkers());
+        resp.setMinWorkers(model.getMinWorkers());
+        Manifest manifest = model.getModelArchive().getManifest();
+        resp.setEngine(manifest.getEngine().getEngineName().getValue());
+        resp.setModelVersion(manifest.getModel().getModelVersion());
+        resp.setRuntime(manifest.getEngine().getRuntime().getValue());
+
+        List<WorkerThread> workers = modelManager.getWorkers(modelName);
+        for (WorkerThread worker : workers) {
+            String workerId = worker.getName();
+            long startTime = worker.getStartTime();
+            boolean isRunning = worker.isRunning();
+            int gpuId = worker.getGpuId();
+            resp.addWorker(workerId, startTime, isRunning, gpuId);
+        }
+
+        NettyUtils.sendJsonResponse(ctx, resp);
     }
 
     private static RequestBatch parseRequest(FullHttpRequest req) {
         RequestBatch inputData = new RequestBatch();
         CharSequence contentType = HttpUtil.getMimeType(req);
-        inputData.setContentType(contentType.toString());
+        if (contentType != null) {
+            inputData.setContentType(contentType.toString());
+        }
         if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(contentType)) {
             inputData.addModelInput(new ModelInputs("body", NettyUtils.getBytes(req.content())));
         } else if (HttpPostRequestDecoder.isMultipart(req)

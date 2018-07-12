@@ -243,13 +243,8 @@ public class ModelArchive {
                 File copyDir = new File(tmpDir, "models/" + manifest.getModel().getModelName());
                 FileUtils.deleteDirectory(copyDir);
                 FileUtils.forceMkdir(copyDir);
-                FileUtils.copyDirectory(
-                        modelDir,
-                        copyDir,
-                        f ->
-                                !f.isHidden()
-                                        && !SIGNATURE_FILE.equalsIgnoreCase(f.getName())
-                                        && !MANIFEST_FILE.equalsIgnoreCase(f.getName()));
+                FileUtils.copyDirectory(modelDir, copyDir, f -> !f.isHidden());
+                modelDir = copyDir;
             }
 
             File output = new File(modelDir, MANIFEST_FILE);

@@ -377,15 +377,7 @@
               "type": "string",
               "enum": [
                 "PYTHON2_7",
-                "PYTHON3_6",
-                "JAVA8",
-                "GO1_X",
-                "NODEJS4_3",
-                "NODEJS6_10",
-                "NODEJS8_10",
-                "NODEJS8_10_EDGE",
-                "DOTNETCORE1_0",
-                "DOTNETCORE2_0"
+                "PYTHON3_6"
               ]
             }
           },

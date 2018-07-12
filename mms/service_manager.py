@@ -120,7 +120,7 @@ class ServiceManager(object):
             batch size
         """
         model_service = model_service_class_def(model_name, model_dir, manifest, gpu)
-        model_service.__initialize__(model_name, model_dir, manifest, gpu, batch_size)
+        model_service._init_internal(model_name, model_dir, manifest, gpu, batch_size)
         self.loaded_modelservices[model_name] = model_service
 
     def unload_models(self, model_name):

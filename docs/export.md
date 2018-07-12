@@ -11,7 +11,7 @@
     * [Signature](#signature)
     * [Service](#service)
     * [Labels](#labels)
-* [Dependent and Nested models](#Dependent/Nested Models)
+* [Dependent and Nested models](#dependent-and-nested-models)
 
 ## Other Relevant Documents
 * [Export Examples](export_examples.md)
@@ -178,7 +178,7 @@ This optional text file is for classification labels. Simply put, if it were for
 
 If `synset.txt` is included in exported archive file and each line represents a category, `MXNetBaseModel` will load this file and create `labels` attribute automatically. If this file is named differently or has a different format, you need to override `__init__` method and manually load it.
 
-### Dependent/Nested Models
+### Dependent and Nested Models
 
 In some cases, there is a need to nest multiple models in the same Model Archive. To package multiple models in the same archive, MMS export tool requires the following structure:
 
@@ -209,4 +209,4 @@ The dependency models can also be part of a single sub folder:
     dependency-model-2-parameter-file
 ```
 
-It is recommended that all the custom code for the model(s) is added into a single custom service file [custom service](custom_service.md). 
+It is recommended that all the custom code for the model(s) is added into a single [custom service file](custom_service.md).

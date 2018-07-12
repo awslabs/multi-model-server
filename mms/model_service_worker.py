@@ -13,10 +13,14 @@ ModelServiceWorker is the worker that is started by the MMS front-end.
 Communication message format: JSON message
 """
 
+# pylint: disable=redefined-builtin
+
 import socket
 import os
 import sys
 import json
+from builtins import bytes
+from builtins import str
 
 from mms.service_manager import ServiceManager
 from mms.log import log_msg
@@ -79,15 +83,21 @@ class MXNetModelServiceWorker(object):
         :param invalid_reqs:
         :return:
         """
-        encoding = u'base64'  # TODO: Remove this hardcoding and encode based on output mime type
         result = {}
         try:
             for idx, val in enumerate(ret):
                 result.update({"requestId": req_id_map[idx]})
                 result.update({"code": 200})
-                result.update({"value":
-                               ModelWorkerCodecHelper.encode_msg(encoding, bytes(val))})
-                result.update({"encoding": encoding})
+
+                if isinstance(val, bytes):
+                    value = ModelWorkerCodecHelper.encode_msg('base64', val)
+                elif isinstance(val, str):
+                    value = ModelWorkerCodecHelper.encode_msg('base64', val.encode('utf-8'))
+                else:
+                    value = ModelWorkerCodecHelper.encode_msg('base64', json.dumps(val).encode('utf-8'))
+
+                result.update({"value": value})
+                result.update({"encoding": 'base64'})
 
             for req in invalid_reqs.keys():
                 result.update({"requestId": req})

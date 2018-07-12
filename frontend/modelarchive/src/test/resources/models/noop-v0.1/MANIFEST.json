@@ -1,0 +1,22 @@
+{
+	"Created-By": {
+		"Author": "MxNet sdk team",
+		"Author-Email": "noreply@amazon.com"
+	},
+    "Engine": {
+        "MXNet": 0.12
+    }, 
+    "Model-Archive-Description": "noop v0.1",
+    "License": "Apache 2.0", 
+    "Model-Archive-Version": 0.1, 
+    "Model-Server": 0.4,
+    "Model": {
+        "Description": "no operation model", 
+        "Service": "noop_service.py",
+        "Symbol": "noop-symbol.json",
+        "Parameters": "noop-0000.params",
+        "Signature": "signature.json",
+        "Model-Name": "noop_v0.1",
+        "Model-Format": "MXNet-Symbolic"
+    }
+}

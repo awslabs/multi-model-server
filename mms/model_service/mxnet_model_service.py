@@ -34,6 +34,9 @@ def check_input_shape(inputs, signature):
     signature : dict
         Dictionary containing model signature.
     """
+    if signature is None:
+        return
+
     assert isinstance(inputs, list), 'Input data must be a list.'
     assert len(inputs) == len(signature['inputs']), 'Input number mismatches with ' \
                                            'signature. %d expected but got %d.' \
@@ -64,7 +67,6 @@ class MXNetBaseService(SingleNodeService):
     def __init__(self, model_name, model_dir, manifest, gpu=None):
         super(MXNetBaseService, self).__init__(model_name, model_dir, manifest, gpu)
 
-    def __initialize__(self, model_name, model_dir, manifest, gpu=None, batch_size=None):
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
 
         data_names = []
@@ -195,7 +197,10 @@ class MXNetBaseService(SingleNodeService):
         Dict
             Model service signiture.
         """
-        return self._signature
+        if hasattr(self, '_signature'):
+            return self._signature
+
+        return None
 
 
 class GluonImperativeBaseService(SingleNodeService):

@@ -39,10 +39,12 @@ class ModelService(object):
         self.manifest = manifest
         self.gpu = gpu
         self.ctx = None
+        self._signature = None
 
-    def __initialize__(self, model_name, model_dir, manifest, gpu=None, batch_size=None):
+    def _init_internal(self, model_name, model_dir, manifest, gpu=None, batch_size=None):
         """
-        Initialize ModelService. This will be called from model_service_worker. This
+        Initialize ModelService. This will be called from model_service_worker.
+        DO NOT override this method!!!
         :param model_name:
         :param model_dir:
         :param manifest:

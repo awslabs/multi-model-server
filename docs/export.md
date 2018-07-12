@@ -11,6 +11,7 @@
     * [Signature](#signature)
     * [Service](#service)
     * [Labels](#labels)
+* [Dependent and Nested models](#Dependent/Nested Models)
 
 ## Other Relevant Documents
 * [Export Examples](export_examples.md)
@@ -194,7 +195,7 @@ In some cases, there is a need to nest multiple models in the same Model Archive
       dependency-model-2-parameter-file
 ```
 
-The dependency models can also be part of a single sub folder
+The dependency models can also be part of a single sub folder:
 
 ```bash
 /Model-folder/
@@ -208,4 +209,4 @@ The dependency models can also be part of a single sub folder
     dependency-model-2-parameter-file
 ```
 
-It is recommended that all the custom code for the model is added into the custom service file [custom service](custom_service.md). 
+It is recommended that all the custom code for the model(s) is added into a single custom service file [custom service](custom_service.md). 

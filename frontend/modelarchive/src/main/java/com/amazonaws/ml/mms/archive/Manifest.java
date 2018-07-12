@@ -116,8 +116,7 @@ public class Manifest {
         private RuntimeType runtime;
 
         public Engine() {
-            engineName = EngineType.MX_NET;
-            engineVersion = "0.12";
+            engineName = EngineType.NONE;
             runtime = RuntimeType.PYTHON2_7;
         }
 
@@ -207,14 +206,8 @@ public class Manifest {
     public enum EngineType {
         @SerializedName("MxNet")
         MX_NET("MxNet"),
-        @SerializedName("TensorFlow")
-        TENSOR_FLOW("TensorFlow"),
-        @SerializedName("Keras")
-        KERAS("Keras"),
-        @SerializedName("PyTorch")
-        PY_TORCH("PyTorch"),
-        @SerializedName("Caffe")
-        CAFFE("Caffe");
+        @SerializedName("None")
+        NONE("None");
 
         String value;
 
@@ -240,23 +233,7 @@ public class Manifest {
         @SerializedName("python2.7")
         PYTHON2_7("python2.7"),
         @SerializedName("python3.6")
-        PYTHON3_6("python3.6"),
-        @SerializedName("java8")
-        JAVA8("java8"),
-        @SerializedName("go1.x")
-        GO1_X("go1.x"),
-        @SerializedName("nodejs4.3")
-        NODEJS4_3("nodejs4.3"),
-        @SerializedName("nodejs6.10")
-        NODEJS6_10("nodejs6.10"),
-        @SerializedName("nodejs8.10")
-        NODEJS8_10("nodejs8.10"),
-        @SerializedName("nodejs8.10-edge")
-        NODEJS8_10_EDGE("nodejs8.10-edge"),
-        @SerializedName("dotnetcore1.0")
-        DOTNETCORE1_0("dotnetcore1.0"),
-        @SerializedName("dotnetcore2.0")
-        DOTNETCORE2_0("dotnetcore2.0");
+        PYTHON3_6("python3.6");
 
         String value;
 

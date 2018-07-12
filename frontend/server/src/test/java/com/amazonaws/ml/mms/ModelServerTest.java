@@ -187,7 +187,7 @@ public class ModelServerTest {
         latch = new CountDownLatch(1);
         HttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/models?url=noop-v0.1.model");
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/models?url=noop-v0.1");
         channel.writeAndFlush(req);
         latch.await();
 

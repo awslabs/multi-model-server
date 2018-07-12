@@ -53,6 +53,9 @@ public final class ZipUtils {
     public static void addToZip(int prefix, File file, FileFilter filter, ZipOutputStream zos)
             throws IOException {
         String name = file.getCanonicalPath().substring(prefix);
+        if (name.startsWith("/")) {
+            name = name.substring(1);
+        }
         if (file.isDirectory()) {
             if (!name.isEmpty()) {
                 ZipEntry entry = new ZipEntry(name + '/');

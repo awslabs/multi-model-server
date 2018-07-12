@@ -96,6 +96,15 @@ public class LegacyManifest {
             manifest.setPublisher(publisher);
         }
 
+        if (engine != null) {
+            Object engineVersion = engine.get("MXNet");
+            if (engineVersion instanceof Number) {
+                Manifest.Engine eng = manifest.getEngine();
+                eng.setEngineName(Manifest.EngineType.MX_NET);
+                eng.setEngineVersion(engineVersion.toString());
+            }
+        }
+
         if (modelInfo != null) {
             Manifest.Model model = new Manifest.Model();
             model.setModelName(modelInfo.getModelName());

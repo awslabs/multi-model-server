@@ -11,7 +11,7 @@ def test_onnx_fails_fast():
     models = {'onnx': 's3://bucket/prefix/whatever.onnx'}
 
     with pytest.raises(ValueError) as e:
-        ModelLoader.load(models)
+        ModelLoader.load(models, "mxnet_onnx_service.py")
 
     assert 'Convert ONNX model' in str(e.value)
 

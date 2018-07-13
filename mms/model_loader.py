@@ -134,7 +134,7 @@ def _extract_model(service_name, path):
     except Exception as e:
         raise Exception('Failed to open manifest file. Stacktrace: ' + str(e))
 
-    validate(manifest, schema)
+    # validate(manifest, schema)
 
     # check if signature, symbol, parameters and service key-values are non empty and are valid
     try:

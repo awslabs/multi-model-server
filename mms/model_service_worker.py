@@ -17,6 +17,7 @@ import socket
 import os
 import sys
 import json
+import time
 
 from mms.service_manager import ServiceManager
 from mms.log import log_msg
@@ -93,11 +94,11 @@ class MXNetModelServiceWorker(object):
         encoding = u'base64'  # TODO: Remove this hardcoding and encode based on output mime type
         result = {}
         try:
-            for idx in enumerate(ret):
+            for idx, res in enumerate(ret):
                 result.update({"requestId": req_id_map[idx]})
                 result.update({"code": 200})
                 result.update({"value":
-                               ModelWorkerCodecHelper.encode_msg(encoding, bytes(json.dumps(ret[idx]).encode()))})
+                               ModelWorkerCodecHelper.encode_msg(encoding, bytes(json.dumps(res).encode()))})
                 result.update({"encoding": encoding})
 
             for req in invalid_reqs.keys():
@@ -122,11 +123,12 @@ class MXNetModelServiceWorker(object):
         """
         data = b''
         try:
+            print("Receiving data")
             while True:
                 pkt = client_sock.recv(1024)
                 data += pkt
                 # Check if we received last segment
-                if pkt[-2:] == '\r\n':
+                if pkt[-2:] == b'\r\n':
                     break
             in_msg = json.loads(data.decode('utf8'))
             if u'command' not in in_msg:
@@ -155,8 +157,8 @@ class MXNetModelServiceWorker(object):
 
         model_in = {}
         validation_set = set()  # Set to validate if all the inputs were provided
-        for input_idx in enumerate(model_inputs):
-            ip = model_inputs[input_idx]
+        for input_idx, ip in enumerate(model_inputs):
+            # ip = model_inputs[input_idx]
             ModelWorkerMessageValidators.validate_predict_inputs(ip)
             input_name = ip[u'name']
             encoding = ip[u'encoding']
@@ -208,13 +210,13 @@ class MXNetModelServiceWorker(object):
             log_msg("Attribute error {}".format(e))
             input_data_names = {u'data'}  # TODO: Remove this default
 
-        for batch_idx in enumerate(requests):
-            ModelWorkerMessageValidators.validate_predict_data(requests[batch_idx])
-            req_id = requests[batch_idx][u'requestId']
+        for batch_idx, req in enumerate(requests):
+            ModelWorkerMessageValidators.validate_predict_data(req)
+            req_id = req[u'requestId']
             # TODO: If encoding present in "REQUEST" we shouldn't look for input-names and just pass it to the
             # custom service code.
 
-            model_inputs = requests[batch_idx][u'modelInputs']
+            model_inputs = req[u'modelInputs']
             try:
                 input_data = self.retrieve_model_input(model_inputs, input_data_names)
                 input_batch.append(input_data)
@@ -251,6 +253,8 @@ class MXNetModelServiceWorker(object):
         """
         try:
             retval = []
+            #time.sleep(125)
+
             ModelWorkerMessageValidators.validate_predict_msg(data)
             model_name = data[u'modelName']
             loaded_services = self.service_manager.get_loaded_modelservices()
@@ -287,6 +291,7 @@ class MXNetModelServiceWorker(object):
         :return:
         """
         gpu = None
+        log_msg("LOAD: {}".format(data))
         try:
             from mms.model_loader import ModelLoader
             ModelWorkerMessageValidators.validate_load_message(data)
@@ -348,12 +353,15 @@ class MXNetModelServiceWorker(object):
         if sock is None:
             raise ValueError("Invalid parameter passed to stop server connection")
         try:
-            resp = {}
+            resp = dict()
             resp['code'] = 200
             resp['response'] = "Stopped server"
             self.send_response(sock, json.dumps(resp).encode('utf-8'))
             sock.close()
             # os.unlink(self.sock_name)
+        except MMSError as m:
+            if m.get_code() is err.SEND_FAILS_EXCEEDS_LIMITS:
+                log_msg("{}".format(m.get_message()))
         except Exception as e:  # pylint: disable=broad-except
             log_msg("Error closing the socket {}. Msg: {}".format(sock, repr(e)))
 
@@ -370,28 +378,32 @@ class MXNetModelServiceWorker(object):
         except (IOError, OSError) as e:
             # Can't send this response. So, log it.
             self.send_failures += 1
-            log_msg("{}: Send failed. {}.\nMsg: {}".format(err.SEND_MSG_FAIL, repr(e), msg))
-
-            if self.send_failures >= MAX_FAILURE_THRESHOLD:
-                exit(err.SEND_FAILS_EXCEEDS_LIMITS)
+            raise MMSError(err.SEND_FAILS_EXCEEDS_LIMITS, "{}: Send failed. {}.\n".format(err.SEND_MSG_FAIL, repr(e)))
 
     def create_and_send_response(self, sock, c, message, p=None):
-        resp = {}
-        resp['code'] = c
-        resp['message'] = message
-        if p is not None:
-            resp['predictions'] = p
-        self.send_response(sock, json.dumps(resp))
+        try:
+            resp = {}
+            resp['code'] = c
+            resp['message'] = message
+            if p is not None:
+                resp['predictions'] = p
+            self.send_response(sock, json.dumps(resp))
+        except Exception as e:
+            log_msg("{}".format(e))
+            raise
 
     def handle_connection(self, cl_socket):
+        log_msg("Handling connection")
         predictions = None
         code = 200
         result = None
         cmd = None
+        stop_conn = False
 
         while True:
             try:
                 cmd, data = self.recv_msg(cl_socket)
+                log_msg("cmd: {}".format(cmd))
                 if cmd.lower() == u'stop':
                     self.stop_server(cl_socket)
                     exit(1)
@@ -409,10 +421,16 @@ class MXNetModelServiceWorker(object):
 
             except MMSError as m:
                 log_msg("MMSError {} data {}".format(cmd, m.get_message()))
+                if m.get_code() is err.SEND_FAILS_EXCEEDS_LIMITS:
+                    stop_conn = True
+                    pass
                 self.create_and_send_response(cl_socket, m.get_code(), m.get_message())
             except Exception as e:  # pylint: disable=broad-except
                 log_msg("Exception {} data {}".format(cmd, repr(e)))
                 self.create_and_send_response(cl_socket, err.UNKNOWN_EXCEPTION, repr(e))
+
+            if stop_conn is True:
+                break
 
     def run_server(self):
         """
@@ -422,29 +440,32 @@ class MXNetModelServiceWorker(object):
         try:
             self.sock.bind(self.sock_name)
             self.sock.listen(1)
-            log_msg("MxNet worker started.\n")
+            # sys.stdout.write("MxNet worker started.\n")
+            sys.stdout.write("MXNet worker started.\n")
+            sys.stdout.flush()
 
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.SOCKET_BIND_ERROR,
                            "Socket {} could not be bound to. {}: {}".format(self.sock_name, e.__module__, e.message))
 
-        # while True:
-        #  TODO: In the initial release we will only support single connections to a worker. If the
-        # socket fails, the backend worker will quit
+        while True:
+            try:
+                log_msg("Waiting for a connection")
 
-        try:
-            log_msg("Waiting for a connections")
+                (cl_socket, _) = self.sock.accept()
+                self.handle_connection(cl_socket)
+                if debug is False:
+                    break
 
-            (cl_socket, _) = self.sock.accept()
-            self.handle_connection(cl_socket)
-        except (OSError, IOError) as e:
-            raise e
-        except Exception:  # pylint: disable=broad-except
-            raise
+            except Exception as e:  # pylint: disable=broad-except
+                if debug is False:
+                    raise e
+                pass
 
 
 if __name__ == "__main__":
     # TODO: Use the argprocess
+    debug = False
     if len(sys.argv) != 2:
         assert 0, "Invalid parameters given"
     socket_name = sys.argv[1]

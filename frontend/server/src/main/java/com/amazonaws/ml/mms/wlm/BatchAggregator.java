@@ -20,11 +20,11 @@ import com.amazonaws.ml.mms.util.messages.ModelLoadModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedHashMap;
-import java.util.ListIterator;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,11 +43,11 @@ public class BatchAggregator {
         jobs = new LinkedHashMap<>();
     }
 
-    public BaseModelRequest getRequest() throws InterruptedException {
+    public BaseModelRequest getRequest(Long threadId) throws InterruptedException {
         jobs.clear();
 
         // first job is a blocking call;
-        Job job = model.nextJob();
+        Job job = model.nextJob(threadId);
         if (job.isControlCmd()) {
             ModelLoadModelRequest req = new ModelLoadModelRequest(model.getModelName());
             req.setModelPath(model.getModelUrl());
@@ -62,21 +62,8 @@ public class BatchAggregator {
         int size = configManager.getMaxBatchSize() - 1;
         long begin = System.currentTimeMillis();
         for (int i = 0; i < size; ++i) {
-            if (job.isControlCmd()) {
-                jobs.remove(job.getJobId());
 
-                ListIterator<Job> iterator =
-                        new ArrayList<>(jobs.values()).listIterator(jobs.size());
-                while (iterator.hasNext()) {
-                    Job j = iterator.next();
-                    model.addFirst(j);
-                }
-                ModelLoadModelRequest req = new ModelLoadModelRequest(model.getModelName());
-                req.setModelPath(model.getModelDir());
-                return req;
-            }
-
-            job = model.nextJob(maxBatchDelay);
+            job = model.nextJob(maxBatchDelay, (long) -1);
             if (job == null) {
                 break;
             }
@@ -98,7 +85,6 @@ public class BatchAggregator {
             batch.appendModelInput(
                     new ModelInputs(
                             "base64",
-                            //Base64.getMimeEncoder().encodeToString(j.getPayload().getData()),
                             Base64.getEncoder().encodeToString(j.getPayload().getData()),
                             "data"));
             req.appendRequestBatches(batch);
@@ -147,18 +133,28 @@ public class BatchAggregator {
         }
     }
 
-    public void sendError(Object message, String error) {
-        //        byte[] body = error.getBytes(StandardCharsets.UTF_8);
-        //        for (Payload payload : message.getPayloads()) {
-        //            String jobId = payload.getId();
-        //            Job job = jobs.remove(jobId);
-        //            if (job == null) {
-        //                throw new IllegalStateException("Unexpected job: " + jobId);
-        //            }
-        //            job.response(body, HttpHeaderValues.APPLICATION_JSON);
-        //        }
-        //        if (!jobs.isEmpty()) {
-        //            throw new IllegalStateException("Not all jobs get response.");
-        //        }
+    public void sendError(ModelWorkerResponse message, String error) {
+        byte[] body = error.getBytes(StandardCharsets.UTF_8);
+        if ((message != null) && (message.getPredictions() != null)) {
+            for (Predictions payload : message.getPredictions()) {
+                String jobId = payload.getRequestId();
+                Job job = jobs.remove(jobId);
+                if (job == null) {
+                    throw new IllegalStateException("Unexpected job: " + jobId);
+                }
+                job.response(body, HttpHeaderValues.APPLICATION_JSON);
+            }
+        } else {
+            //Send the same error message to all the jobs
+            for (Map.Entry<String, Job> j : jobs.entrySet()) {
+                String jobId = j.getValue().getJobId();
+                Job job = jobs.remove(jobId);
+                job.response(body, HttpHeaderValues.APPLICATION_JSON);
+            }
+        }
+        if (!jobs.isEmpty()) {
+            jobs.clear();
+            //throw new IllegalStateException("Not all jobs get response.");
+        }
     }
 }

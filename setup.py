@@ -10,9 +10,9 @@
 
 import platform
 import os
-import re
 import ctypes
 from setuptools import setup, find_packages
+
 
 def PyPiDescription():
     """Imports the long description for the project page"""

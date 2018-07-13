@@ -35,6 +35,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,23 +87,31 @@ public class WorkerThread extends Thread {
     public void run() {
         currentThread = Thread.currentThread();
         BaseModelRequest req = null;
+        logger.info("Worker started {}", currentThread.getId());
         try {
             while (running.get()) {
-                req = aggregator.getRequest();
+                req = aggregator.getRequest(this.getId());
                 backendChannel.write(req);
                 backendChannel.flush();
 
-                ModelWorkerResponse reply = replies.take();
+                ModelWorkerResponse reply =
+                        replies.poll(120, TimeUnit.SECONDS); // TODO: Make this config based
+                if (reply == null) {
+                    throw new RuntimeException();
+                }
+                model.resetUnsuccessReq();
                 aggregator.sendResponse(reply);
                 req = null;
             }
         } catch (InterruptedException e) {
             logger.warn("Backend worker thread interrupted.", e);
+        } catch (RuntimeException r) {
+            logger.warn("Backend worker is unresponsive", r);
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);
         } finally {
             if (req != null) {
-                aggregator.sendError(req, "Worker execution error.");
+                aggregator.sendError(null, "Internal worker error");
             }
             lifeCycle.exit();
         }
@@ -145,8 +154,8 @@ public class WorkerThread extends Thread {
                                     future -> {
                                         latch.countDown();
                                         parentThreads.remove(WorkerThread.this); // NOPMD
-                                        shutdown();
-                                        logger.info("Worker disconnected.");
+                                        shutdown(true);
+                                        logger.info("Worker disconnected. {}", this.getId());
                                     });
 
             backendChannel
@@ -176,7 +185,7 @@ public class WorkerThread extends Thread {
         try {
             latch.await();
             Job job = new Job(null, "load", new Payload(null, ""));
-            model.addFirst(job);
+            model.addFirst(job, this.getId());
         } catch (InterruptedException e) {
             logger.warn("Backend worker thread interrupted to start in gpu " + gpu, e);
             return false;
@@ -188,14 +197,28 @@ public class WorkerThread extends Thread {
         return true;
     }
 
-    public void shutdown() {
+    public void shutdown(boolean falseStop) {
         running.set(false);
         backendChannel.close();
         if (currentThread != null) {
             currentThread.interrupt();
+            try {
+                if (falseStop) {
+                    aggregator.sendError(null, "Internal Failure" + model.getModelName());
+                    ModelManager.getInstance().updateModel(model.getModelName(), 1, 1);
+                } else {
+                    aggregator.sendError(
+                            null, "Worker shutdown"); // I this error? Or just response?
+                }
+            } catch (WorkerInitializationException wie) {
+                logger.error("Error restarting a thread for modelName " + model.getModelName());
+            }
+            // TODO: push current message back to queue, if no more worker,
+            // drain the queue and send error back
+            ModelManager manager = ModelManager.getInstance();
+            manager.getModels().get(model.getModelName()).removeJobQueue(currentThread.getId());
+            manager.getModels().get(model.getModelName()).incrNumUnsuccessReq();
         }
-        // TODO: push current message back to queue, if no more worker,
-        // drain the queue and send error back
     }
 
     @ChannelHandler.Sharable

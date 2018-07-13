@@ -65,7 +65,7 @@ public class WorkLoadManager {
         } else {
             for (int i = currentWorkers - 1; i >= minWorker; --i) {
                 WorkerThread thread = threads.remove(i);
-                thread.shutdown();
+                thread.shutdown(false);
             }
         }
     }

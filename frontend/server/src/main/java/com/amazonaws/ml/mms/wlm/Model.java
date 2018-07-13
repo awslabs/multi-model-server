@@ -13,21 +13,36 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.archive.ModelArchive;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Model {
 
     private ModelArchive modelArchive;
     private int minWorker;
     private int maxWorker;
-    private LinkedBlockingDeque<Job> jobs;
+    private AtomicInteger numUnsuccessReq;
+
+    private ConcurrentMap<Long, LinkedBlockingDeque<Job>> threadJobs;
 
     public Model(ModelArchive modelArchive, int queueSize) {
         this.modelArchive = modelArchive;
         minWorker = 1;
         maxWorker = 1;
-        jobs = new LinkedBlockingDeque<>(queueSize);
+        threadJobs = new ConcurrentHashMap<>();
+        threadJobs.put((long) -1, new LinkedBlockingDeque<>());
+        numUnsuccessReq = new AtomicInteger(0);
+    }
+
+    public final int incrNumUnsuccessReq() {
+        return numUnsuccessReq.incrementAndGet();
+    }
+
+    public void resetUnsuccessReq() {
+        numUnsuccessReq.set(0);
     }
 
     public String getModelName() {
@@ -70,19 +85,52 @@ public class Model {
         this.maxWorker = maxWorker;
     }
 
+    public boolean addJob(Job job, Long threadId) {
+        if (threadJobs.get(threadId) == null) {
+            threadJobs.put(threadId, new LinkedBlockingDeque<>());
+        }
+        return threadJobs.get(threadId).offer(job);
+    }
+
+    public void removeJobQueue(Long threadId) {
+        if (threadId != (long) -1) {
+            threadJobs.remove(threadId);
+        }
+    }
+
     public boolean addJob(Job job) {
-        return jobs.offer(job);
+        return addJob(job, (long) -1);
     }
 
-    public void addFirst(Job j) {
-        jobs.addFirst(j);
+    public void addFirst(Job j, Long threadId) {
+        if (threadJobs.get(threadId) == null) {
+            threadJobs.put(threadId, new LinkedBlockingDeque<>());
+        }
+        threadJobs.get(threadId).addFirst(j);
     }
 
-    public Job nextJob() throws InterruptedException {
-        return jobs.take();
+    public Job nextJob(Long threadId) throws InterruptedException {
+        Job j;
+        if ((threadId != null)
+                && (threadJobs.get(threadId) != null)
+                && (threadJobs.get(threadId).size() != 0)) {
+            j = threadJobs.get(threadId).take();
+        } else {
+            j = threadJobs.get((long) -1).take();
+        }
+
+        return j;
     }
 
-    public Job nextJob(long timeout) throws InterruptedException {
-        return jobs.poll(timeout, TimeUnit.MILLISECONDS);
+    public Job nextJob(long timeout, Long threadId) throws InterruptedException {
+        Job j;
+        if ((threadId != null)
+                && (threadJobs.get(threadId) != null)
+                && (threadJobs.get(threadId).size() != 0)) {
+            j = threadJobs.get(threadId).poll(timeout, TimeUnit.MILLISECONDS);
+        } else {
+            j = threadJobs.get((long) -1).poll(timeout, TimeUnit.MILLISECONDS);
+        }
+        return j;
     }
 }

@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -44,7 +46,6 @@ public class WorkerLifeCycle {
         args[2] = NettyUtils.getSocketAddress(port).toString();
 
         File workingDir;
-
         try {
             workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
         } catch (IOException e) {
@@ -71,6 +72,7 @@ public class WorkerLifeCycle {
                 String threadName = "W-" + port;
                 new ReaderThread(threadName, process.getErrorStream(), true, this).start();
                 new ReaderThread(threadName, process.getInputStream(), false, this).start();
+                new MonitorThread(this);
             }
 
             if (latch.await(2, TimeUnit.MINUTES)) {
@@ -124,7 +126,7 @@ public class WorkerLifeCycle {
                     if (result == null) {
                         break;
                     }
-                    if ("MxNet worker started.".equals(result)) {
+                    if ("MXNet worker started.".equals(result)) {
                         lifeCycle.setSuccess(true);
                     }
                     if (error) {
@@ -136,6 +138,34 @@ public class WorkerLifeCycle {
             } finally {
                 lifeCycle.setSuccess(false);
             }
+        }
+    }
+
+    private static final class MonitorThread extends Thread {
+        private WorkerLifeCycle lifeCycle;
+        private int failure;
+
+        public MonitorThread(WorkerLifeCycle lifeCycle) {
+            this.lifeCycle = lifeCycle;
+        }
+
+        @Override
+        public void run() {
+            Timer tmr = new Timer("Monitoring Thread");
+
+            TimerTask t =
+                    new TimerTask() {
+                        @Override
+                        public void run() {
+                            if (lifeCycle.success) {
+                                failure += 1;
+                                if (failure > 5) {
+                                    lifeCycle.setSuccess(false);
+                                }
+                            }
+                        }
+                    };
+            tmr.scheduleAtFixedRate(t, 60 * 1000, 5 * 1000);
         }
     }
 }

@@ -1,0 +1,26 @@
+{  
+  "inputs":[  
+    {  
+      "data_name":"data",
+      "shape":[  
+        0,
+        3,
+        224,
+        224
+      ]
+    }
+  ],
+  "input_type":"application/json",
+  "outputs":[  
+    {  
+      "data_name":"data",
+      "shape":[  
+        0,
+        3,
+        224,
+        224
+      ]
+    }
+  ],
+  "output_type":"application/json"
+}

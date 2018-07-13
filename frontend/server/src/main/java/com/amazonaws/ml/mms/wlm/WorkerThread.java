@@ -17,7 +17,9 @@ import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.codec.MessageDecoder;
 import com.amazonaws.ml.mms.util.codec.MessageEncoder;
 import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
+import com.amazonaws.ml.mms.util.messages.ModelInputs;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
+import com.amazonaws.ml.mms.util.messages.RequestBatch;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -44,7 +46,9 @@ public class WorkerThread extends Thread {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
 
-    //private static final StringDecoder DECODER = new StringDecoder();
+    static final StringDecoder STRING_DECODER = new StringDecoder();
+    static final MessageDecoder MSG_DECODER = new MessageDecoder();
+    static final MessageEncoder MSG_ENCODER = new MessageEncoder();
 
     private ConfigManager configManager;
     private EventLoopGroup backendEventGroup;
@@ -58,6 +62,7 @@ public class WorkerThread extends Thread {
     private BatchAggregator aggregator;
     ArrayBlockingQueue<ModelWorkerResponse> replies;
     private int gpuId;
+    private long startTime;
     private Thread currentThread;
 
     private WorkerLifeCycle lifeCycle;
@@ -78,6 +83,7 @@ public class WorkerThread extends Thread {
         this.model = model;
         this.aggregator = aggregator;
         this.gpuId = gpuId;
+        startTime = System.currentTimeMillis();
         lifeCycle = new WorkerLifeCycle(configManager);
         replies = new ArrayBlockingQueue<>(1);
         this.setDaemon(true);
@@ -137,9 +143,9 @@ public class WorkerThread extends Thread {
                                                     81920000,
                                                     Delimiters
                                                             .lineDelimiter())); // TODO: Make this config based
-                                    p.addLast(new StringDecoder());
-                                    p.addLast(new MessageDecoder());
-                                    p.addLast(new MessageEncoder());
+                                    p.addLast(STRING_DECODER);
+                                    p.addLast(MSG_DECODER);
+                                    p.addLast(MSG_ENCODER);
                                     p.addLast(new WorkerHandler());
                                 }
                             });
@@ -160,12 +166,21 @@ public class WorkerThread extends Thread {
 
             backendChannel
                     .newSucceededFuture()
-                    .addListener((ChannelFutureListener) future -> latch.countDown());
+                    .addListener(
+                            (ChannelFutureListener)
+                                    future -> {
+                                        // TODO:
+                                        // use gpu, batch size in load model command
+                                        RequestBatch input = new RequestBatch();
+                                        if (gpuId > 0) {
+                                            input.addModelInput(
+                                                    new ModelInputs("gpu", String.valueOf(gpuId)));
+                                        }
 
-            if (!sendLoadMessage(latch)) {
-                lifeCycle.exit();
-                throw new WorkerInitializationException("Failed to load the new model");
-            }
+                                        Job job =
+                                                new Job(null, model.getModelName(), "load", input);
+                                        model.addFirst(job, this.getId());
+                                    });
         } catch (InterruptedException e) {
             lifeCycle.exit();
             throw new WorkerInitializationException(e);
@@ -180,21 +195,16 @@ public class WorkerThread extends Thread {
         }
     }
 
-    public boolean sendLoadMessage(CountDownLatch latch) {
-        int gpu = this.gpuId;
-        try {
-            latch.await();
-            Job job = new Job(null, "load", new Payload(null, ""));
-            model.addFirst(job, this.getId());
-        } catch (InterruptedException e) {
-            logger.warn("Backend worker thread interrupted to start in gpu " + gpu, e);
-            return false;
-        } catch (Throwable t) {
-            logger.warn("Backend worker thread exception.", t);
-            return false;
-        }
+    public boolean isRunning() {
+        return running.get();
+    }
 
-        return true;
+    public int getGpuId() {
+        return gpuId;
+    }
+
+    public long getStartTime() {
+        return startTime;
     }
 
     public void shutdown(boolean falseStop) {

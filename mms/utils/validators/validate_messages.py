@@ -51,16 +51,13 @@ class ModelWorkerMessageValidators(object):
     def validate_predict_inputs(msg):
         """
         "input1" : {
-            "encoding": "base64/utf-8",
+            "encoding": "base64",
             "value": "val1"
         }...
 
         :param msg:
         :return:
         """
-
-        if u'encoding' not in msg:
-            raise MMSError(err.INVALID_PREDICT_INPUT, "Predict command input data missing \"encoding\" field")
 
         if u'value' not in msg:
             raise MMSError(err.INVALID_PREDICT_INPUT, "Predict command input data missing \"value\" field")

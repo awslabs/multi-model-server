@@ -13,7 +13,7 @@
 package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
-import com.amazonaws.ml.mms.http.HttpRequestHandler;
+import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.codec.MessageEncoder;
@@ -71,7 +71,8 @@ public class ModelServerTest {
     private MockWorker worker;
     CountDownLatch latch;
     String result;
-    private String openApiResult;
+    private String listApisResult;
+    private String noopApiResult;
 
     static {
         TestUtils.init();
@@ -93,7 +94,11 @@ public class ModelServerTest {
         server.start();
 
         try (InputStream is = new FileInputStream("src/test/resources/open_api.txt")) {
-            openApiResult = IOUtils.toString(is, StandardCharsets.UTF_8.name());
+            listApisResult = IOUtils.toString(is, StandardCharsets.UTF_8.name());
+        }
+
+        try (InputStream is = new FileInputStream("src/test/resources/describe_api.txt")) {
+            noopApiResult = IOUtils.toString(is, StandardCharsets.UTF_8.name());
         }
     }
 
@@ -120,10 +125,13 @@ public class ModelServerTest {
         testRoot(channel);
         testPing(channel);
         testApiDescription(channel);
+        testDescribeApi(channel);
         testUnregisterModel(channel);
         testLoadModel(channel);
         testScaleModel(channel);
-        testInvocations(channel);
+        testPredictions(channel);
+        testPredictionsBinary(channel);
+        testPredictionsJson(channel);
         testInvocationsJson(channel);
         testInvocationsMultipart(channel);
         channel.close();
@@ -132,11 +140,11 @@ public class ModelServerTest {
     private void testRoot(Channel channel) throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
-        HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/");
+        HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, "/");
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "OK");
+        Assert.assertEquals(result, listApisResult);
     }
 
     private void testPing(Channel channel) throws InterruptedException {
@@ -146,7 +154,8 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "{\"status\":\"healthy\"}");
+        Assert.assertEquals(
+                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("healthy")) + "\n");
     }
 
     private void testApiDescription(Channel channel) throws InterruptedException {
@@ -158,7 +167,19 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, openApiResult);
+        Assert.assertEquals(result, listApisResult);
+    }
+
+    private void testDescribeApi(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, "/predictions/noop_v0.1");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        Assert.assertEquals(result, noopApiResult);
     }
 
     private void testLoadModel(Channel channel) throws InterruptedException {
@@ -166,11 +187,13 @@ public class ModelServerTest {
         latch = new CountDownLatch(1);
         HttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/register?url=noop-v0.1.model");
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/models?url=noop-v0.1");
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "{\"status\":\"Model registered\"}");
+        Assert.assertEquals(
+                result,
+                JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Model registered")) + "\n");
     }
 
     private void testScaleModel(Channel channel) throws InterruptedException {
@@ -178,13 +201,12 @@ public class ModelServerTest {
         latch = new CountDownLatch(1);
         HttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1,
-                        HttpMethod.GET,
-                        "/scale?model_name=noop_v0.1&min_worker=1");
+                        HttpVersion.HTTP_1_1, HttpMethod.PUT, "/models/noop_v0.1?min_worker=1");
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "{\"status\":\"Worker updated\"}");
+        Assert.assertEquals(
+                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Worker updated")) + "\n");
     }
 
     private void testUnregisterModel(Channel channel) throws InterruptedException {
@@ -192,22 +214,61 @@ public class ModelServerTest {
         latch = new CountDownLatch(1);
         HttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/unregister?model_name=noop_v0.1");
+                        HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/models/noop_v0.1");
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "{\"status\":\"Model unregistered\"}");
+        Assert.assertEquals(
+                result,
+                JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Model unregistered")) + "\n");
     }
 
-    private void testInvocations(Channel channel) throws InterruptedException {
+    private void testPredictions(Channel channel) throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
-        HttpRequest req =
+        DefaultFullHttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1,
-                        HttpMethod.GET,
-                        "/invocations?model_name=noop_v0.1&data=test");
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/noop");
+        req.content().writeCharSequence("data=test", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers()
+                .set(
+                        HttpHeaderNames.CONTENT_TYPE,
+                        HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED);
         channel.writeAndFlush(req);
+
+        latch.await();
+
+        Assert.assertEquals(result, "OK");
+    }
+
+    private void testPredictionsJson(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/noop");
+        req.content().writeCharSequence("data=test", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+        channel.writeAndFlush(req);
+
+        latch.await();
+
+        Assert.assertEquals(result, "OK");
+    }
+
+    private void testPredictionsBinary(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/noop");
+        req.content().writeCharSequence("test", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM);
+        channel.writeAndFlush(req);
+
         latch.await();
 
         Assert.assertEquals(result, "OK");
@@ -217,9 +278,9 @@ public class ModelServerTest {
         result = null;
         latch = new CountDownLatch(1);
         DefaultFullHttpRequest req =
-                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/invocations");
-        HttpRequestHandler.Param param = new HttpRequestHandler.Param("noop_v0.1", "test");
-        req.content().writeCharSequence(JsonUtils.GSON.toJson(param), CharsetUtil.UTF_8);
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/invocations?model_name=noop");
+        req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
         HttpUtil.setContentLength(req, req.content().readableBytes());
         req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
         channel.writeAndFlush(req);

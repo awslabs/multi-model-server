@@ -100,8 +100,10 @@ public class ModelServer {
             } else {
                 String[] models = loadModels.split(",");
                 for (String model : models) {
-                    String fileName = model.endsWith(".model") ? model : model + ".model";
-                    File modelFile = new File(modelStore, fileName);
+                    File modelFile = new File(modelStore, model);
+                    if (!modelFile.exists() && !model.endsWith(".model")) {
+                        modelFile = new File(modelStore, model + ".model");
+                    }
                     if (modelFile.exists()) {
                         ModelArchive archive = modelManager.registerModel(modelFile.getName());
                         modelManager.updateModel(archive.getModelName(), 1, 1);

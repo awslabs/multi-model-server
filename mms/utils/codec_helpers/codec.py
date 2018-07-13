@@ -26,28 +26,23 @@ class ModelWorkerCodecHelper(object):
         try:
             if encoding == u'base64':
                 return base64.b64decode(msg)
-            elif encoding == u'utf-8':
-                return str(msg).decode(encoding)
-            else:
-                raise TypeError("Invalid encoding type defined in the request metadata from frontend."
-                                "({})".format(encoding))
+
+            return msg
         except (binascii.Error, TypeError) as e:
             raise MMSError(err.DECODE_FAILED, "base64 decode error {}".format(e))
 
     @staticmethod
     def encode_msg(encoding, msg):
         """
-        encoding is "utf-8" or "base64"
-        msg is assumed to be a string
+        encode bytes to utf-8 string
+        msg is assumed to be a bytes
         :param encoding:
         :param msg:
         :return:
         """
         try:
             if encoding == u'base64':
-                val = base64.b64encode(msg)
-            elif encoding == u'utf-8':
-                val = str(msg).encode(encoding)
+                val = base64.b64encode(msg).decode('utf-8')
             else:
                 raise TypeError("Invalid encoding type given. {}".format(encoding))
 

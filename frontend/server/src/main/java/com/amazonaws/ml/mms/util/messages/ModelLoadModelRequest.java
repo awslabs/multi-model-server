@@ -12,6 +12,8 @@
  */
 package com.amazonaws.ml.mms.util.messages;
 
+import com.amazonaws.ml.mms.wlm.Model;
+
 public class ModelLoadModelRequest extends BaseModelRequest {
 
     /**
@@ -20,10 +22,20 @@ public class ModelLoadModelRequest extends BaseModelRequest {
      */
     private String modelPath;
 
+    private String handler;
+    private int batchSize;
     private String gpu;
 
-    public ModelLoadModelRequest(String modelName) {
-        super("load", modelName);
+    public ModelLoadModelRequest() {
+        super("load", null);
+    }
+
+    public ModelLoadModelRequest(Model model, String gpu) {
+        super("load", model.getModelName());
+        this.handler = model.getModelArchive().getManifest().getModel().getHandler();
+        this.batchSize = model.getBatchSize();
+        this.gpu = gpu;
+        modelPath = model.getModelDir();
     }
 
     public String getModelPath() {
@@ -32,6 +44,22 @@ public class ModelLoadModelRequest extends BaseModelRequest {
 
     public void setModelPath(String modelPath) {
         this.modelPath = modelPath;
+    }
+
+    public String getHandler() {
+        return handler;
+    }
+
+    public void setHandler(String handler) {
+        this.handler = handler;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
     }
 
     public String getGpu() {

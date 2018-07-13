@@ -13,9 +13,11 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
+import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -46,9 +48,33 @@ public final class ModelManager {
     }
 
     public ModelArchive registerModel(String url) throws InvalidModelException {
+        return registerModel(url, null, null, null, 1, 100);
+    }
+
+    public ModelArchive registerModel(
+            String url,
+            String modelName,
+            Manifest.RuntimeType runtime,
+            String handler,
+            int batchSize,
+            int maxBatchDelay)
+            throws InvalidModelException {
         ModelArchive archive = ModelArchive.downloadModel(configManager.getModelStore(), url);
-        String modelName = archive.getModelName();
+        if (modelName == null || modelName.isEmpty()) {
+            modelName = archive.getModelName();
+        } else {
+            archive.getManifest().getModel().setModelName(modelName);
+        }
+        if (runtime != null) {
+            archive.getManifest().getEngine().setRuntime(runtime);
+        }
+        if (handler != null) {
+            archive.getManifest().getModel().setHandler(handler);
+        }
+
         Model model = new Model(archive, configManager.getJobQueueSize());
+        model.setBatchSize(batchSize);
+        model.setMaxBatchDelay(maxBatchDelay);
         Model existingModel = models.putIfAbsent(modelName, model);
         if (existingModel != null) {
             // model already exists
@@ -65,8 +91,8 @@ public final class ModelManager {
             return false;
         }
 
-        model.setMinWorker(0);
-        model.setMaxWorker(0);
+        model.setMinWorkers(0);
+        model.setMaxWorkers(0);
         wlm.modelChanged(model);
         logger.info("Model {} unregistered.", model.getModelName());
         return true;
@@ -79,8 +105,8 @@ public final class ModelManager {
             logger.warn("Model not found: " + modelName);
             return false;
         }
-        model.setMinWorker(minWorkers);
-        model.setMaxWorker(maxWorkers);
+        model.setMinWorkers(minWorkers);
+        model.setMaxWorkers(maxWorkers);
         wlm.modelChanged(model);
         return true;
     }
@@ -89,9 +115,12 @@ public final class ModelManager {
         return models;
     }
 
+    public List<WorkerThread> getWorkers(String modelName) {
+        return wlm.getWorkers(modelName);
+    }
+
     public HttpResponseStatus addJob(Job job) {
-        Payload payload = job.getPayload();
-        String modelName = payload.getId();
+        String modelName = job.getModelName();
         Model model;
         if (modelName == null) {
             if (models.size() != 1) {

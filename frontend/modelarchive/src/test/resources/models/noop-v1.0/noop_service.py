@@ -7,8 +7,24 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
+
 """
-This is the current version of MMS
+NoopService defines a noop service
 """
 
-__version__ = '1.0'
+from mms.model_service.mxnet_model_service import SingleNodeService
+
+class NoopService(SingleNodeService):
+    """
+    NoopService defines a noop service.
+    """
+
+    def _inference(self, data):
+        return data[0]
+
+    def ping(self):
+        return None
+
+    @property
+    def signature(self):
+        return None

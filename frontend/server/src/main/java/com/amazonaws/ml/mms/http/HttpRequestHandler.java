@@ -13,30 +13,28 @@
 package com.amazonaws.ml.mms.http;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
+import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
-import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
+import com.amazonaws.ml.mms.util.messages.ModelInputs;
+import com.amazonaws.ml.mms.util.messages.RequestBatch;
 import com.amazonaws.ml.mms.wlm.Job;
 import com.amazonaws.ml.mms.wlm.Model;
 import com.amazonaws.ml.mms.wlm.ModelManager;
-import com.amazonaws.ml.mms.wlm.Payload;
 import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
-import com.google.gson.JsonParseException;
-import io.netty.buffer.ByteBufInputStream;
+import com.amazonaws.ml.mms.wlm.WorkerThread;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,162 +76,209 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
     private void handleRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
         QueryStringDecoder decoder = new QueryStringDecoder(req.uri());
-        String body;
-        switch (decoder.path()) {
-            case "/":
-                body = "OK";
-                break;
-            case "/ping":
-                body = "{\"status\":\"healthy\"}";
-                break;
-            case "/api-description":
-                handleOpenApi(ctx, req);
-                return;
-            case "/invocations":
-                handleInvocations(ctx, decoder, req);
-                return;
-            case "/register":
-                handleRegisterModel(ctx, decoder, req);
-                return;
-            case "/unregister":
-                handleUnregisterModel(ctx, decoder, req);
-                return;
-            case "/scale":
-                handleScaleModel(ctx, decoder, req);
-                return;
-            default:
-                NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
-                return;
-        }
-
-        NettyUtils.sendJsonResponse(ctx, body);
-    }
-
-    private void handleOpenApi(ChannelHandlerContext ctx, FullHttpRequest req) {
-        String scheme = ctx.pipeline().get("ssl") == null ? "http" : "https";
-        String host = req.headers().get(HttpHeaderNames.HOST);
-        ModelManager modelManager = ModelManager.getInstance();
-        Map<String, Model> models = modelManager.getModels();
-        String resp = OpenApiUtils.getMetadata(host, scheme, models);
-        NettyUtils.sendJsonResponse(ctx, resp);
-    }
-
-    private void handleInvocations(
-            ChannelHandlerContext ctx, QueryStringDecoder decoder, FullHttpRequest req) {
-        String modelName = NettyUtils.getParameter(decoder, "model_name", null);
-        String data = NettyUtils.getParameter(decoder, "data", null);
-
-        HttpMethod method = req.method();
-        if (method == HttpMethod.GET) {
-            if (data == null) {
-                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
-                return;
-            }
-            Payload payload = new Payload(modelName, data);
-            Job job = new Job(ctx, "predict", payload);
-            logger.debug("received request: {}", job.getJobId());
-            HttpResponseStatus status = ModelManager.getInstance().addJob(job);
-            if (status != HttpResponseStatus.OK) {
-                NettyUtils.sendError(ctx, status);
-            }
+        String path = decoder.path();
+        if ("/".equals(path)) {
+            handleListModels(ctx, req);
             return;
         }
 
-        if (method != HttpMethod.POST) {
+        String[] segments = decoder.path().split("/");
+        switch (segments[1]) {
+            case "ping":
+                handlePing(ctx);
+                break;
+            case "api-description":
+                NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listApis());
+                break;
+            case "invocations":
+                handleInvocations(ctx, req, decoder);
+                break;
+            case "predictions":
+                handlePredictions(ctx, req, segments);
+                break;
+            case "models":
+                handleModelsApi(ctx, req, segments, decoder);
+                break;
+            default:
+                NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+                break;
+        }
+    }
+
+    private void handleListModels(ChannelHandlerContext ctx, FullHttpRequest req) {
+        if (HttpMethod.OPTIONS.equals(req.method())) {
+            NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listApis());
+            return;
+        }
+        NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+    }
+
+    private void handlePing(ChannelHandlerContext ctx) {
+        NettyUtils.sendJsonResponse(ctx, new StatusResponse("healthy"));
+    }
+
+    private void handleModelsApi(
+            ChannelHandlerContext ctx,
+            FullHttpRequest req,
+            String[] segments,
+            QueryStringDecoder decoder) {
+        HttpMethod method = req.method();
+        if (segments.length < 3) {
+            if (HttpMethod.GET.equals(method)) {
+                handleListModels(ctx, decoder);
+                return;
+            } else if (HttpMethod.POST.equals(method)) {
+                handleRegisterModel(ctx, decoder);
+                return;
+            }
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+        }
+
+        if (HttpMethod.GET.equals(method)) {
+            handleDescribeModel(ctx, segments[2]);
+        } else if (HttpMethod.PUT.equals(method)) {
+            handleScaleModel(ctx, decoder, segments[2]);
+        } else if (HttpMethod.DELETE.equals(method)) {
+            handleUnregisterModel(ctx, segments[2]);
+        } else {
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+        }
+    }
+
+    private void handlePredictions(
+            ChannelHandlerContext ctx, FullHttpRequest req, String[] segments) {
+        if (segments.length < 3) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            return;
+        }
+        String modelName = segments[2];
+
+        ModelManager modelManager = ModelManager.getInstance();
+        Model model = modelManager.getModels().get(modelName);
+        if (model == null) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+            return;
+        }
+
+        if (HttpMethod.OPTIONS.equals(req.method())) {
+            String resp = OpenApiUtils.getModelApi(model);
+            NettyUtils.sendJsonResponse(ctx, resp);
+            return;
+        }
+
+        RequestBatch input;
+        try {
+            input = parseRequest(req);
+        } catch (IllegalArgumentException e) {
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
             return;
         }
 
-        Payload payload = new Payload(modelName, data);
-        CharSequence contentType = HttpUtil.getMimeType(req);
-        if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(contentType)) {
-            try (Reader reader =
-                    new InputStreamReader(
-                            new ByteBufInputStream(req.content()), StandardCharsets.UTF_8)) {
-                Param p = JsonUtils.GSON.fromJson(reader, Param.class);
-                if (p.modelName != null) {
-                    payload.setId(p.modelName);
-                }
-                if (p.data != null) {
-                    payload.setData(p.data);
-                }
-            } catch (IOException | JsonParseException e) {
-                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
-                return;
-            }
-        } else if (HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.contentEqualsIgnoreCase(
-                        contentType)
-                || HttpPostRequestDecoder.isMultipart(req)) {
-            HttpPostRequestDecoder form = new HttpPostRequestDecoder(req);
-            try {
-                modelName = NettyUtils.getFormField(form.getBodyHttpData("model_name"));
-                byte[] buf = NettyUtils.getFormData(form.getBodyHttpData("data"));
-                if (modelName != null) {
-                    payload.setId(modelName);
-                }
-                if (buf != null) {
-                    payload.setData(buf);
-                }
-            } catch (IllegalArgumentException e) {
-                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
-                return;
-            } finally {
-                form.cleanFiles();
-            }
-        } else {
-            byte[] buf = NettyUtils.getBytes(req.content());
-            payload.setData(buf);
-        }
-
-        Job job = new Job(ctx, "predict", payload);
-
+        Job job = new Job(ctx, modelName, "predict", input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
             NettyUtils.sendError(ctx, status);
         }
     }
 
-    private void handleRegisterModel(
-            ChannelHandlerContext ctx, QueryStringDecoder decoder, FullHttpRequest req) {
+    private void handleInvocations(
+            ChannelHandlerContext ctx, FullHttpRequest req, QueryStringDecoder decoder) {
+        String modelName = NettyUtils.getParameter(decoder, "model_name", null);
+
         HttpMethod method = req.method();
-        if (method != HttpMethod.GET) {
+        if (!HttpMethod.POST.equals(method)) {
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
             return;
         }
 
-        String modelUrl = NettyUtils.getParameter(decoder, "url", null);
+        RequestBatch input;
+        try {
+            input = parseRequest(req);
+            if (modelName == null) {
+                modelName = input.getStringParameter("model_name");
+            }
+        } catch (IllegalArgumentException e) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            return;
+        }
 
+        Job job = new Job(ctx, modelName, "predict", input);
+        HttpResponseStatus status = ModelManager.getInstance().addJob(job);
+        if (status != HttpResponseStatus.OK) {
+            NettyUtils.sendError(ctx, status);
+        }
+    }
+
+    private void handleListModels(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
+        int limit = NettyUtils.getIntParameter(decoder, "limit", 100);
+        int pageToken = NettyUtils.getIntParameter(decoder, "nextPageToken", 0);
+        if (limit > 100 || limit < 0) {
+            limit = 100;
+        }
+        if (pageToken < 0) {
+            pageToken = 0;
+        }
+
+        ModelManager modelManager = ModelManager.getInstance();
+        Map<String, Model> models = modelManager.getModels();
+
+        List<String> keys = new ArrayList<>(models.keySet());
+        Collections.sort(keys);
+        ListModelsResponse list = new ListModelsResponse();
+
+        int last = pageToken + limit;
+        if (last > keys.size()) {
+            last = keys.size();
+        } else {
+            list.setNextPageToken(String.valueOf(last));
+        }
+
+        for (int i = pageToken; i < last; ++i) {
+            String modelName = keys.get(i);
+            Model model = models.get(modelName);
+            list.addModel(modelName, model.getModelUrl());
+        }
+
+        NettyUtils.sendJsonResponse(ctx, list);
+    }
+
+    private void handleRegisterModel(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
+        String modelUrl = NettyUtils.getParameter(decoder, "url", null);
         if (modelUrl == null) {
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
             return;
         }
 
+        String modelName = NettyUtils.getParameter(decoder, "model_name", null);
+        String runtime = NettyUtils.getParameter(decoder, "runtime", null);
+        String handler = NettyUtils.getParameter(decoder, "handler", null);
+        int batchSize = NettyUtils.getIntParameter(decoder, "batch_size", 1);
+        int maxBatchDelay = NettyUtils.getIntParameter(decoder, "max_batch_delay", 100);
+
+        Manifest.RuntimeType runtimeType = null;
+        if (runtime != null) {
+            try {
+                runtimeType = Manifest.RuntimeType.fromValue(runtime);
+            } catch (IllegalArgumentException e) {
+                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
+                return;
+            }
+        }
+
         ModelManager modelManager = ModelManager.getInstance();
         try {
-            modelManager.registerModel(modelUrl);
+            modelManager.registerModel(
+                    modelUrl, modelName, runtimeType, handler, batchSize, maxBatchDelay);
         } catch (InvalidModelException e) {
             logger.warn("Failed to load model", e);
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
             return;
         }
 
-        NettyUtils.sendJsonResponse(ctx, "{\"status\":\"Model registered\"}");
+        NettyUtils.sendJsonResponse(ctx, new StatusResponse("Model registered"));
     }
 
-    private void handleUnregisterModel(
-            ChannelHandlerContext ctx, QueryStringDecoder decoder, FullHttpRequest req) {
-        HttpMethod method = req.method();
-        if (method != HttpMethod.GET) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
-            return;
-        }
-
-        String modelName = NettyUtils.getParameter(decoder, "model_name", null);
-        if (modelName == null) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
-            return;
-        }
-
+    private void handleUnregisterModel(ChannelHandlerContext ctx, String modelName) {
         ModelManager modelManager = ModelManager.getInstance();
         try {
             if (!modelManager.unregisterModel(modelName)) {
@@ -245,25 +290,13 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        NettyUtils.sendJsonResponse(ctx, "{\"status\":\"Model unregistered\"}");
+        NettyUtils.sendJsonResponse(ctx, new StatusResponse("Model unregistered"));
     }
 
     private void handleScaleModel(
-            ChannelHandlerContext ctx, QueryStringDecoder decoder, FullHttpRequest req) {
-        String modelName = NettyUtils.getParameter(decoder, "model_name", null);
+            ChannelHandlerContext ctx, QueryStringDecoder decoder, String modelName) {
         int minWorkers = NettyUtils.getIntParameter(decoder, "min_worker", 1);
         int maxWorkers = NettyUtils.getIntParameter(decoder, "max_worker", 1);
-
-        HttpMethod method = req.method();
-        if (method != HttpMethod.GET) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
-            return;
-        }
-
-        if (modelName == null) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
-            return;
-        }
 
         ModelManager modelManager = ModelManager.getInstance();
         try {
@@ -277,19 +310,66 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        NettyUtils.sendJsonResponse(ctx, "{\"status\":\"Worker updated\"}");
+        NettyUtils.sendJsonResponse(
+                ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
     }
 
-    public static final class Param {
-
-        String modelName;
-        String data;
-
-        public Param() {}
-
-        public Param(String modelName, String data) {
-            this.modelName = modelName;
-            this.data = data;
+    private void handleDescribeModel(ChannelHandlerContext ctx, String modelName) {
+        ModelManager modelManager = ModelManager.getInstance();
+        Model model = modelManager.getModels().get(modelName);
+        if (model == null) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+            return;
         }
+
+        DescribeModelResponse resp = new DescribeModelResponse();
+        resp.setModelName(modelName);
+        resp.setModelUrl(model.getModelUrl());
+        resp.setBatchSize(model.getBatchSize());
+        resp.setMaxBatchDelay(model.getMaxBatchDelay());
+        resp.setMaxWorkers(model.getMaxWorkers());
+        resp.setMinWorkers(model.getMinWorkers());
+        Manifest manifest = model.getModelArchive().getManifest();
+        resp.setEngine(manifest.getEngine().getEngineName().getValue());
+        resp.setModelVersion(manifest.getModel().getModelVersion());
+        resp.setRuntime(manifest.getEngine().getRuntime().getValue());
+
+        List<WorkerThread> workers = modelManager.getWorkers(modelName);
+        for (WorkerThread worker : workers) {
+            String workerId = worker.getName();
+            long startTime = worker.getStartTime();
+            boolean isRunning = worker.isRunning();
+            int gpuId = worker.getGpuId();
+            resp.addWorker(workerId, startTime, isRunning, gpuId);
+        }
+
+        NettyUtils.sendJsonResponse(ctx, resp);
+    }
+
+    private static RequestBatch parseRequest(FullHttpRequest req) {
+        RequestBatch inputData = new RequestBatch();
+        CharSequence contentType = HttpUtil.getMimeType(req);
+        if (contentType != null) {
+            inputData.setContentType(contentType.toString());
+        }
+        if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(contentType)) {
+            inputData.addModelInput(new ModelInputs("body", NettyUtils.getBytes(req.content())));
+        } else if (HttpPostRequestDecoder.isMultipart(req)
+                || HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.contentEqualsIgnoreCase(
+                        contentType)) {
+            HttpPostRequestDecoder form = new HttpPostRequestDecoder(req);
+            try {
+                while (form.hasNext()) {
+                    inputData.addModelInput(NettyUtils.getFormData(form.next()));
+                }
+            } catch (HttpPostRequestDecoder.EndOfDataDecoderException ignore) {
+                logger.debug("End of multipart items.");
+            } finally {
+                form.cleanFiles();
+            }
+        } else {
+            inputData.addModelInput(new ModelInputs("body", NettyUtils.getBytes(req.content())));
+        }
+        return inputData;
     }
 }

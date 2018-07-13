@@ -116,8 +116,7 @@ public class Manifest {
         private RuntimeType runtime;
 
         public Engine() {
-            engineName = EngineType.MX_NET;
-            engineVersion = "0.12";
+            engineName = EngineType.NONE;
             runtime = RuntimeType.PYTHON2_7;
         }
 
@@ -151,7 +150,6 @@ public class Manifest {
         private String modelName;
         private String description;
         private String modelVersion;
-        private String modelFormat;
         private String parametersFile;
         private String symbolFile;
         private String handler;
@@ -178,14 +176,6 @@ public class Manifest {
 
         public void setModelVersion(String modelVersion) {
             this.modelVersion = modelVersion;
-        }
-
-        public String getModelFormat() {
-            return modelFormat;
-        }
-
-        public void setModelFormat(String modelFormat) {
-            this.modelFormat = modelFormat;
         }
 
         public String getParametersFile() {
@@ -215,37 +205,53 @@ public class Manifest {
 
     public enum EngineType {
         @SerializedName("MxNet")
-        MX_NET,
-        @SerializedName("TensorFlow")
-        TENSOR_FLOW,
-        @SerializedName("Keras")
-        KERAS,
-        @SerializedName("PyTorch")
-        PY_TORCH,
-        @SerializedName("Caffe")
-        CAFFE
+        MX_NET("MxNet"),
+        @SerializedName("None")
+        NONE("None");
+
+        String value;
+
+        EngineType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public static EngineType fromValue(String value) {
+            for (EngineType engineType : values()) {
+                if (engineType.value.equals(value)) {
+                    return engineType;
+                }
+            }
+            throw new IllegalArgumentException("Invalid EngineType value: " + value);
+        }
     }
 
     public enum RuntimeType {
         @SerializedName("python2.7")
-        PYTHON2_7,
+        PYTHON2_7("python2.7"),
         @SerializedName("python3.6")
-        PYTHON3_6,
-        @SerializedName("java8")
-        JAVA8,
-        @SerializedName("go1.x")
-        GO1_X,
-        @SerializedName("nodejs4.3")
-        NODEJS4_3,
-        @SerializedName("nodejs6.10")
-        NODEJS6_10,
-        @SerializedName("nodejs8.10")
-        NODEJS8_10,
-        @SerializedName("nodejs8.10-edge")
-        NODEJS8_10_EDGE,
-        @SerializedName("dotnetcore1.0")
-        DOTNETCORE1_0,
-        @SerializedName("dotnetcore2.0")
-        DOTNETCORE2_0
+        PYTHON3_6("python3.6");
+
+        String value;
+
+        RuntimeType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public static RuntimeType fromValue(String value) {
+            for (RuntimeType runtime : values()) {
+                if (runtime.value.equals(value)) {
+                    return runtime;
+                }
+            }
+            throw new IllegalArgumentException("Invalid RuntimeType value: " + value);
+        }
     }
 }

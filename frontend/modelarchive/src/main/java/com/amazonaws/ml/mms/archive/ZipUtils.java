@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 public final class ZipUtils {
@@ -37,10 +38,10 @@ public final class ZipUtils {
                 String name = entry.getName();
                 File file = new File(dest, name);
                 if (entry.isDirectory()) {
-                    if (!file.exists() && !file.mkdirs()) {
-                        throw new IOException("Failed to create directory: " + name);
-                    }
+                    FileUtils.forceMkdir(file);
                 } else {
+                    File parentFile = file.getParentFile();
+                    FileUtils.forceMkdir(parentFile);
                     try (OutputStream os = new FileOutputStream(file)) {
                         IOUtils.copy(zis, os);
                     }
@@ -52,6 +53,9 @@ public final class ZipUtils {
     public static void addToZip(int prefix, File file, FileFilter filter, ZipOutputStream zos)
             throws IOException {
         String name = file.getCanonicalPath().substring(prefix);
+        if (name.startsWith("/")) {
+            name = name.substring(1);
+        }
         if (file.isDirectory()) {
             if (!name.isEmpty()) {
                 ZipEntry entry = new ZipEntry(name + '/');

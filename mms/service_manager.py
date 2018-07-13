@@ -216,6 +216,7 @@ class ServiceManager(object):
         classes = self.register_module(module_file_path)
 
         # Filter the outer most class defn. Exclude all the superclasses
+        # pylint: disable=deprecated-lambda
         classes = list(filter(lambda c: len(c.__subclasses__()) == 0, classes))
 
         if len(classes) != 1:

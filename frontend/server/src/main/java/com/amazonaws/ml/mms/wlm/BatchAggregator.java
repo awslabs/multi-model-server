@@ -124,7 +124,7 @@ public class BatchAggregator {
             logger.warn("Load model failed: {}", message.getModelName());
             return;
         }
-        if(message != null) {
+        if (message != null) {
             ModelInferenceRequest msg = (ModelInferenceRequest) message;
             for (RequestBatch req : msg.getRequestBatch()) {
                 String requestId = req.getRequestId();

@@ -56,7 +56,7 @@ public class BatchAggregator {
         int size = model.getBatchSize() - 1;
         long begin = System.currentTimeMillis();
         for (int i = 0; i < size; ++i) {
-            job = model.nextJob(maxBatchDelay, (long) -1);
+            job = model.nextJob(maxBatchDelay, WorkerThread.DEFAULT_THREAD_ID);
             if (job == null) {
                 break;
             }

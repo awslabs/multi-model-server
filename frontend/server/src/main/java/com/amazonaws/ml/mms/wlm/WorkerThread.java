@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 public class WorkerThread extends Thread {
 
+    public static Long DEFAULT_THREAD_ID = (long) -1;
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
 
     static final StringDecoder STRING_DECODER = new StringDecoder();
@@ -105,7 +106,7 @@ public class WorkerThread extends Thread {
                 if (reply == null) {
                     throw new RuntimeException();
                 }
-                model.resetUnsuccessReq();
+                model.resetNumFailedInfReqs();
                 aggregator.sendResponse(reply);
                 req = null;
             }
@@ -117,7 +118,7 @@ public class WorkerThread extends Thread {
             logger.warn("Backend worker thread exception.", t);
         } finally {
             if (req != null) {
-                aggregator.sendError(null, "Internal worker error");
+                aggregator.sendError(null, "Internal Service Error");
             }
             lifeCycle.exit();
         }
@@ -214,12 +215,10 @@ public class WorkerThread extends Thread {
             currentThread.interrupt();
             try {
                 if (falseStop) {
-                    aggregator.sendError(null, "Internal Failure" + model.getModelName());
                     ModelManager.getInstance().updateModel(model.getModelName(), 1, 1);
-                } else {
-                    aggregator.sendError(
-                            null, "Worker shutdown"); // I this error? Or just response?
                 }
+
+                aggregator.sendError(null, "Internal Failure");
             } catch (WorkerInitializationException wie) {
                 logger.error("Error restarting a thread for modelName " + model.getModelName());
             }
@@ -227,7 +226,7 @@ public class WorkerThread extends Thread {
             // drain the queue and send error back
             ModelManager manager = ModelManager.getInstance();
             manager.getModels().get(model.getModelName()).removeJobQueue(currentThread.getId());
-            manager.getModels().get(model.getModelName()).incrNumUnsuccessReq();
+            manager.getModels().get(model.getModelName()).incrNumFailedInfReq();
         }
     }
 

@@ -30,9 +30,12 @@ public class Model {
     private int batchSize;
     private int maxBatchDelay;
 
-    private AtomicInteger numUnsuccessReq;
+    // numFailedInfReqs is to used to determine number of unsuccessful starts for backend worker.
+    // Currently success is measured as any response coming back from the backend-worker. This can be changed
+    // to a inference request coming from backend worker in the future.
+    private AtomicInteger numFailedInfReqs;
 
-    private ConcurrentMap<Long, LinkedBlockingDeque<Job>> threadJobs;
+    private ConcurrentMap<Long, LinkedBlockingDeque<Job>> jobsDb;
 
     public Model(ModelArchive modelArchive, int queueSize) {
         this.modelArchive = modelArchive;
@@ -40,17 +43,18 @@ public class Model {
         maxWorker = 1;
         batchSize = 1;
         maxBatchDelay = 100;
-        threadJobs = new ConcurrentHashMap<>();
-        threadJobs.put((long) -1, new LinkedBlockingDeque<>());
-        numUnsuccessReq = new AtomicInteger(0);
+        jobsDb = new ConcurrentHashMap<>();
+        // Set a queue for data
+        jobsDb.put(WorkerThread.DEFAULT_THREAD_ID, new LinkedBlockingDeque<>());
+        numFailedInfReqs = new AtomicInteger(0);
     }
 
-    public final int incrNumUnsuccessReq() {
-        return numUnsuccessReq.incrementAndGet();
+    public final int incrNumFailedInfReq() {
+        return numFailedInfReqs.incrementAndGet();
     }
 
-    public void resetUnsuccessReq() {
-        numUnsuccessReq.set(0);
+    public void resetNumFailedInfReqs() {
+        numFailedInfReqs.set(0);
     }
 
     public String getModelName() {
@@ -126,37 +130,37 @@ public class Model {
     }
 
     public boolean addJob(Job job, Long threadId) {
-        if (threadJobs.get(threadId) == null) {
-            threadJobs.put(threadId, new LinkedBlockingDeque<>());
+        if (jobsDb.get(threadId) == null) {
+            jobsDb.put(threadId, new LinkedBlockingDeque<>());
         }
-        return threadJobs.get(threadId).offer(job);
+        return jobsDb.get(threadId).offer(job);
     }
 
     public void removeJobQueue(Long threadId) {
-        if (threadId != (long) -1) {
-            threadJobs.remove(threadId);
+        if (threadId != WorkerThread.DEFAULT_THREAD_ID) {
+            jobsDb.remove(threadId);
         }
     }
 
     public boolean addJob(Job job) {
-        return addJob(job, (long) -1);
+        return addJob(job, WorkerThread.DEFAULT_THREAD_ID);
     }
 
     public void addFirst(Job j, Long threadId) {
-        if (threadJobs.get(threadId) == null) {
-            threadJobs.put(threadId, new LinkedBlockingDeque<>());
+        if (jobsDb.get(threadId) == null) {
+            jobsDb.put(threadId, new LinkedBlockingDeque<>());
         }
-        threadJobs.get(threadId).addFirst(j);
+        jobsDb.get(threadId).addFirst(j);
     }
 
     public Job nextJob(Long threadId) throws InterruptedException {
         Job j;
         if ((threadId != null)
-                && (threadJobs.get(threadId) != null)
-                && (threadJobs.get(threadId).size() != 0)) {
-            j = threadJobs.get(threadId).take();
+                && (jobsDb.get(threadId) != null)
+                && (jobsDb.get(threadId).size() != 0)) {
+            j = jobsDb.get(threadId).take();
         } else {
-            j = threadJobs.get((long) -1).take();
+            j = jobsDb.get(WorkerThread.DEFAULT_THREAD_ID).take();
         }
 
         return j;
@@ -165,11 +169,11 @@ public class Model {
     public Job nextJob(long timeout, Long threadId) throws InterruptedException {
         Job j;
         if ((threadId != null)
-                && (threadJobs.get(threadId) != null)
-                && (threadJobs.get(threadId).size() != 0)) {
-            j = threadJobs.get(threadId).poll(timeout, TimeUnit.MILLISECONDS);
+                && (jobsDb.get(threadId) != null)
+                && (jobsDb.get(threadId).size() != 0)) {
+            j = jobsDb.get(threadId).poll(timeout, TimeUnit.MILLISECONDS);
         } else {
-            j = threadJobs.get((long) -1).poll(timeout, TimeUnit.MILLISECONDS);
+            j = jobsDb.get(WorkerThread.DEFAULT_THREAD_ID).poll(timeout, TimeUnit.MILLISECONDS);
         }
         return j;
     }

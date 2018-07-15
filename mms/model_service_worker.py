@@ -22,6 +22,7 @@ import json
 from builtins import bytes
 from builtins import str
 
+
 from mms.service_manager import ServiceManager
 from mms.log import log_msg
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
@@ -156,7 +157,6 @@ class MXNetModelServiceWorker(object):
 
         model_in = {}
         for input_idx, ip in enumerate(model_inputs):
-            # ip = model_inputs[input_idx]
             ModelWorkerMessageValidators.validate_predict_inputs(ip)
             ip_name = ip.get(u'name')
             encoding = ip.get(u'encoding')
@@ -197,12 +197,6 @@ class MXNetModelServiceWorker(object):
             raise ValueError("Model Service metadata is invalid")
 
         input_batch = []
-        # try:
-        #     signature = model_service.signature
-        #     input_data_names = self.retrieve_input_names_from_signature(signature['inputs'])
-        # except AttributeError as e:
-        #     log_msg("Attribute error {}".format(e))
-        #     input_data_names = {u'data'}  # TODO: Remove this default
 
         for batch_idx, req in enumerate(requests):
             ModelWorkerMessageValidators.validate_predict_data(req)
@@ -385,7 +379,6 @@ class MXNetModelServiceWorker(object):
             log_msg("{}".format(e))
             raise
 
-
     def handle_connection(self, cl_socket):
         """
         Handle socket connection.
@@ -425,7 +418,6 @@ class MXNetModelServiceWorker(object):
             except Exception as e:  # pylint: disable=broad-except
                 log_msg("Exception {} data {}".format(cmd, repr(e)))
                 self.create_and_send_response(cl_socket, err.UNKNOWN_EXCEPTION, repr(e))
-
 
     def run_server(self):
         """

@@ -158,7 +158,7 @@ class MXNetModelServiceWorker(object):
         """
 
         model_in = dict()
-        for ip_idx, ip in enumerate(model_inputs):
+        for _, ip in enumerate(model_inputs):
             ModelWorkerMessageValidators.validate_predict_inputs(ip)
             ip_name = ip.get(u'name')
             encoding = ip.get('encoding')

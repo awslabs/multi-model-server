@@ -27,14 +27,16 @@ import org.slf4j.LoggerFactory;
 public class WorkerLifeCycle {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerLifeCycle.class);
-
     private ConfigManager configManager;
+    private Logger modelMetricsLogger;
+
     private Process process;
     private CountDownLatch latch;
     private boolean success;
 
     public WorkerLifeCycle(ConfigManager configManager) {
         this.configManager = configManager;
+        this.modelMetricsLogger = LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
     }
 
     public boolean startWorker(int port) {
@@ -119,6 +121,8 @@ public class WorkerLifeCycle {
         @Override
         public void run() {
             try (Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
+                boolean metricFound = false;
+                StringBuilder jsonString = new StringBuilder();
                 while (scanner.hasNext()) {
                     String result = scanner.nextLine();
                     if (result == null) {
@@ -127,6 +131,19 @@ public class WorkerLifeCycle {
                     if ("MxNet worker started.".equals(result)) {
                         lifeCycle.setSuccess(true);
                     }
+                    if ("[/METRICS]".equals(result) && metricFound) {
+                        lifeCycle.modelMetricsLogger.info(jsonString.toString());
+                        jsonString = new StringBuilder();
+                        metricFound = false;
+                    }
+                    if (metricFound) {
+                        jsonString.append(result);
+                    }
+                    if ("[METRICS]".equals(result) && !metricFound) {
+                        metricFound = true;
+                    }
+
+
                     if (error) {
                         logger.error(result);
                     } else {

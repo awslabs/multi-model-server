@@ -31,10 +31,11 @@ public class ModelLoadModelRequest extends BaseModelRequest {
     }
 
     public ModelLoadModelRequest(Model model, String gpu) {
-        super("load", model.getModelName());
+        super(CommandStrings.LOAD, model.getModelName());
         this.handler = model.getModelArchive().getManifest().getModel().getHandler();
         this.batchSize = model.getBatchSize();
         this.gpu = gpu;
+        this.setIsSynchronous();
         modelPath = model.getModelDir();
     }
 

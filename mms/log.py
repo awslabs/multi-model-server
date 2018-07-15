@@ -86,5 +86,12 @@ def get_logger(name=None, level="NOTSET"):
 
 
 def log_msg(*args):
-    print(" ".join(a for a in args))
+    msg = " ".join(a for a in args)
+    print("INFO: {}".format(msg), file=sys.stdout)
     sys.stdout.flush()
+
+
+def log_error(*args):
+    msg = " ".join(a for a in args)
+    print("ERROR: {}".format(msg), file=sys.stderr)
+    sys.stderr.flush()

@@ -10,7 +10,6 @@
 
 import platform
 import os
-import re
 import ctypes
 from setuptools import setup, find_packages
 

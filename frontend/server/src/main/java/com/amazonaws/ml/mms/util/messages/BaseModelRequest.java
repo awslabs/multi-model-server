@@ -16,10 +16,20 @@ public class BaseModelRequest {
 
     private String command;
     private String modelName;
+    private boolean isSynchronous;
 
     public BaseModelRequest(String command, String modelName) {
         this.command = command;
         this.modelName = modelName;
+        this.isSynchronous = false;
+    }
+
+    public void setIsSynchronous() {
+        isSynchronous = true;
+    }
+
+    public boolean getIsSynchronous() {
+        return isSynchronous;
     }
 
     public String getCommand() {

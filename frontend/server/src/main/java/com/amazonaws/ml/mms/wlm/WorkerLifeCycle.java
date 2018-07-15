@@ -44,7 +44,6 @@ public class WorkerLifeCycle {
         args[2] = NettyUtils.getSocketAddress(port).toString();
 
         File workingDir;
-
         try {
             workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
         } catch (IOException e) {
@@ -124,7 +123,7 @@ public class WorkerLifeCycle {
                     if (result == null) {
                         break;
                     }
-                    if ("MxNet worker started.".equals(result)) {
+                    if ("MXNet worker started.".equals(result)) {
                         lifeCycle.setSuccess(true);
                     }
                     if (error) {

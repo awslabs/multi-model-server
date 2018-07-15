@@ -22,6 +22,7 @@ import json
 from builtins import bytes
 from builtins import str
 
+
 from mms.service_manager import ServiceManager
 from mms.log import log_msg
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
@@ -84,6 +85,7 @@ class MXNetModelServiceWorker(object):
         :return:
         """
         result = {}
+        encoding = u'base64'
         try:
             for idx, val in enumerate(ret):
                 result.update({"requestId": req_id_map[idx]})
@@ -95,7 +97,6 @@ class MXNetModelServiceWorker(object):
                     value = ModelWorkerCodecHelper.encode_msg('base64', val.encode('utf-8'))
                 else:
                     value = ModelWorkerCodecHelper.encode_msg('base64', json.dumps(val).encode('utf-8'))
-
                 result.update({"value": value})
                 result.update({"encoding": 'base64'})
 
@@ -120,6 +121,7 @@ class MXNetModelServiceWorker(object):
         """
         data = b''
         try:
+            print("Receiving data")
             while True:
                 pkt = client_sock.recv(1024)
                 if not pkt:
@@ -127,7 +129,7 @@ class MXNetModelServiceWorker(object):
 
                 data += pkt
                 # Check if we received last segment
-                if data[-2:] == b'\r\n':
+                if pkt[-2:] == b'\r\n':
                     break
             in_msg = json.loads(data.decode('utf8'))
             if u'command' not in in_msg:
@@ -153,13 +155,14 @@ class MXNetModelServiceWorker(object):
         :return:
         """
 
-        model_in = []
-        for ip in model_inputs:
+        model_in = {}
+        for input_idx, ip in enumerate(model_inputs):
             ModelWorkerMessageValidators.validate_predict_inputs(ip)
-            encoding = ip.get('encoding')
-            decoded_val = ModelWorkerCodecHelper.decode_msg(encoding, ip['value'])
+            ip_name = ip.get(u'name')
+            encoding = ip.get(u'encoding')
+            decoded_val = ModelWorkerCodecHelper.decode_msg(encoding, ip[u'value'])
 
-            model_in.append(decoded_val)
+            model_in.update({ip_name:decoded_val})
 
         return model_in
 
@@ -194,13 +197,15 @@ class MXNetModelServiceWorker(object):
             raise ValueError("Model Service metadata is invalid")
 
         input_batch = []
-        for batch_idx, request_batch in enumerate(requests):
-            ModelWorkerMessageValidators.validate_predict_data(request_batch)
-            req_id = request_batch['requestId']
+
+        for batch_idx, req in enumerate(requests):
+            ModelWorkerMessageValidators.validate_predict_data(req)
+            req_id = req[u'requestId']
             # TODO: If encoding present in "REQUEST" we shouldn't look for input-names and just pass it to the
             # custom service code.
 
-            model_inputs = request_batch['modelInputs']
+            model_inputs = req[u'modelInputs']
+
             try:
                 input_data = self.retrieve_model_input(model_inputs)
                 input_batch.append(input_data)
@@ -237,6 +242,7 @@ class MXNetModelServiceWorker(object):
         """
         try:
             retval = []
+
             ModelWorkerMessageValidators.validate_predict_msg(data)
             model_name = data[u'modelName']
             loaded_services = self.service_manager.get_loaded_modelservices()
@@ -247,7 +253,7 @@ class MXNetModelServiceWorker(object):
             batch_size = len(req_batch)  # num-inputs gives the batch size
             input_batch, req_id_map, invalid_reqs = self.retrieve_data_for_inference(req_batch, model_service)
             if batch_size == 1:
-                retval.append(model_service.inference(input_batch[0]))
+                retval.append(model_service.inference(input_batch[0][i] for i in input_batch[0]))
             else:
                 raise MMSError(err.UNSUPPORTED_PREDICT_OPERATION, "Invalid batch size {}".format(batch_size))
 
@@ -274,6 +280,8 @@ class MXNetModelServiceWorker(object):
         :param data:
         :return:
         """
+        gpu = None
+        log_msg("LOAD: {}".format(data))
         try:
             from mms.model_loader import ModelLoader
             ModelWorkerMessageValidators.validate_load_message(data)
@@ -340,6 +348,9 @@ class MXNetModelServiceWorker(object):
             self.send_response(sock, json.dumps(resp).encode('utf-8'))
             sock.close()
             # os.unlink(self.sock_name)
+        except MMSError as m:
+            if m.get_code() is err.SEND_FAILS_EXCEEDS_LIMITS:
+                log_msg("{}".format(m.get_message()))
         except Exception as e:  # pylint: disable=broad-except
             log_msg("Error closing the socket {}. Msg: {}".format(sock, repr(e)))
 
@@ -356,16 +367,17 @@ class MXNetModelServiceWorker(object):
         except (IOError, OSError) as e:
             # Can't send this response. So, log it.
             self.send_failures += 1
-            log_msg("{}: Send failed. {}.\nMsg: {}".format(err.SEND_MSG_FAIL, repr(e), msg))
-
-            if self.send_failures >= MAX_FAILURE_THRESHOLD:
-                exit(err.SEND_FAILS_EXCEEDS_LIMITS)
+            raise MMSError(err.SEND_FAILS_EXCEEDS_LIMITS, "{}: Send failed. {}.\n".format(err.SEND_MSG_FAIL, repr(e)))
 
     def create_and_send_response(self, sock, c, message, p=None):
-        resp = {'code': c, 'message': message}
-        if p is not None:
-            resp['predictions'] = p
-        self.send_response(sock, json.dumps(resp))
+        try:
+            resp = {'code': c, 'message': message}
+            if p is not None:
+                resp['predictions'] = p
+            self.send_response(sock, json.dumps(resp))
+        except Exception as e:
+            log_msg("{}".format(e))
+            raise
 
     def handle_connection(self, cl_socket):
         """
@@ -382,6 +394,7 @@ class MXNetModelServiceWorker(object):
         while True:
             try:
                 cmd, data = self.recv_msg(cl_socket)
+                log_msg("cmd: {}".format(cmd))
                 if cmd.lower() == u'stop':
                     self.stop_server(cl_socket)
                     exit(1)
@@ -399,6 +412,8 @@ class MXNetModelServiceWorker(object):
 
             except MMSError as m:
                 log_msg("MMSError {} data {}".format(cmd, m.get_message()))
+                if m.get_code() is err.SEND_FAILS_EXCEEDS_LIMITS:
+                    break
                 self.create_and_send_response(cl_socket, m.get_code(), m.get_message())
             except Exception as e:  # pylint: disable=broad-except
                 log_msg("Exception {} data {}".format(cmd, repr(e)))
@@ -412,29 +427,32 @@ class MXNetModelServiceWorker(object):
         try:
             self.sock.bind(self.sock_name)
             self.sock.listen(1)
-            log_msg("MxNet worker started.\n")
+            # sys.stdout.write("MxNet worker started.\n")
+            sys.stdout.write("MXNet worker started.\n")
+            sys.stdout.flush()
 
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.SOCKET_BIND_ERROR,
                            "Socket {} could not be bound to. {}: {}".format(self.sock_name, e.__module__, e.message))
 
-        # while True:
-        #  TODO: In the initial release we will only support single connections to a worker. If the
-        # socket fails, the backend worker will quit
+        while True:
+            try:
+                log_msg("Waiting for a connection")
 
-        try:
-            log_msg("Waiting for a connections")
+                (cl_socket, _) = self.sock.accept()
+                self.handle_connection(cl_socket)
+                if debug is False:
+                    break
 
-            (cl_socket, _) = self.sock.accept()
-            self.handle_connection(cl_socket)
-        except (OSError, IOError) as e:
-            raise e
-        except Exception:  # pylint: disable=broad-except
-            raise
+            except Exception as e:  # pylint: disable=broad-except
+                if debug is False:
+                    raise e
+                pass
 
 
 if __name__ == "__main__":
     # TODO: Use the argprocess
+    debug = False
     if len(sys.argv) != 2:
         assert 0, "Invalid parameters given"
     socket_name = sys.argv[1]

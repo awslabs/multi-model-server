@@ -15,6 +15,8 @@ package com.amazonaws.ml.mms.wlm;
 import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.archive.ModelArchive;
+import com.amazonaws.ml.mms.http.ErrorResponse;
+import com.amazonaws.ml.mms.http.StatusCodes;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.List;
@@ -78,7 +80,11 @@ public final class ModelManager {
         Model existingModel = models.putIfAbsent(modelName, model);
         if (existingModel != null) {
             // model already exists
-            throw new InvalidModelException("Model have been registered already: " + modelName);
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.MODEL_ALREADY_REGISTERED.getCode(),
+                                    "Model \"" + modelName + "\" is already registered")
+                            .getJsonErrorResponse());
         }
         logger.info("Model {} loaded.", model.getModelName());
         return archive;

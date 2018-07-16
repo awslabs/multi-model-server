@@ -20,8 +20,7 @@ import os
 import sys
 import json
 import datetime
-from builtins import bytes
-from builtins import str
+
 
 from mms.service_manager import ServiceManager
 from mms.log import log_msg

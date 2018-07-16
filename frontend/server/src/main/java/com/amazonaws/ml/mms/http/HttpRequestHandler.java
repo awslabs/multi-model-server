@@ -245,7 +245,13 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     private void handleRegisterModel(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
         String modelUrl = NettyUtils.getParameter(decoder, "url", null);
         if (modelUrl == null) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(
+                    ctx,
+                    HttpResponseStatus.BAD_REQUEST,
+                    new ErrorResponse(
+                                    StatusCodes.GENERAL.INVALID_REQUEST.getCode(),
+                                    "Invalid Request")
+                            .getJsonErrorResponse());
             return;
         }
 
@@ -260,7 +266,14 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             try {
                 runtimeType = Manifest.RuntimeType.fromValue(runtime);
             } catch (IllegalArgumentException e) {
-                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
+                String msg = e.getMessage();
+                NettyUtils.sendError(
+                        ctx,
+                        HttpResponseStatus.BAD_REQUEST,
+                        new ErrorResponse(
+                                        StatusCodes.REGISTER.MANIFEST_INVALID_RUNTIME.getCode(),
+                                        "Invalid model runtime given" + msg)
+                                .getJsonErrorResponse());
                 return;
             }
         }
@@ -271,11 +284,15 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                     modelUrl, modelName, runtimeType, handler, batchSize, maxBatchDelay);
         } catch (InvalidModelException e) {
             logger.warn("Failed to load model", e);
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
             return;
         }
 
-        NettyUtils.sendJsonResponse(ctx, new StatusResponse("Model registered"));
+        NettyUtils.sendJsonResponse(
+                ctx,
+                new ErrorResponse(
+                        StatusCodes.GENERAL.SUCCESS.getCode(),
+                        "Model \"" + modelName + "\" registered"));
     }
 
     private void handleUnregisterModel(ChannelHandlerContext ctx, String modelName) {
@@ -290,7 +307,11 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        NettyUtils.sendJsonResponse(ctx, new StatusResponse("Model unregistered"));
+        NettyUtils.sendJsonResponse(
+                ctx,
+                new ErrorResponse(
+                        StatusCodes.GENERAL.SUCCESS.getCode(),
+                        "Model \"" + modelName + "\" unregistered"));
     }
 
     private void handleScaleModel(
@@ -311,7 +332,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         }
 
         NettyUtils.sendJsonResponse(
-                ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
+                ctx,
+                new ErrorResponse(StatusCodes.GENERAL.SUCCESS.getCode(), "Worker updated"),
+                HttpResponseStatus.ACCEPTED);
     }
 
     private void handleDescribeModel(ChannelHandlerContext ctx, String modelName) {

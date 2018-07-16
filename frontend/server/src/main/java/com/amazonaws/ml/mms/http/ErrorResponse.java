@@ -12,6 +12,8 @@
  */
 package com.amazonaws.ml.mms.http;
 
+import com.amazonaws.ml.mms.util.JsonUtils;
+
 public class ErrorResponse {
 
     private int code;
@@ -39,5 +41,9 @@ public class ErrorResponse {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getJsonErrorResponse() {
+        return JsonUtils.GSON.toJson(this);
     }
 }

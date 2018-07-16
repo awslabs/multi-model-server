@@ -12,6 +12,8 @@
  */
 package com.amazonaws.ml.mms.archive;
 
+import com.amazonaws.ml.mms.http.ErrorResponse;
+import com.amazonaws.ml.mms.http.StatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -74,24 +76,46 @@ public class ModelArchive {
                 File modelDir = download(url);
                 return load(url, modelDir, false);
             } catch (IOException e) {
-                throw new InvalidModelException("Failed to download model archive: " + url, e);
+                throw new InvalidModelException(
+                        new ErrorResponse(
+                                        StatusCodes.REGISTER.MODEL_ARCHIVE_DOWNLOAD_FAIL.getCode(),
+                                        "Failed to download model archive: "
+                                                + url
+                                                + ". Err: "
+                                                + e.getMessage())
+                                .getJsonErrorResponse());
             }
         }
 
         if (url.startsWith(".")) {
-            throw new InvalidModelException("Invalid url: " + url);
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.INVALID_MODEL_URL.getCode(),
+                                    "Invalid url: " + url)
+                            .getJsonErrorResponse());
         }
 
         File modelLocation = new File(modelStore, url);
         if (!modelLocation.exists()) {
-            throw new InvalidModelException("Model not found: " + url);
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.MODEL_NOT_FOUND.getCode(),
+                                    "Model not found: " + url)
+                            .getJsonErrorResponse());
         }
         if (url.endsWith(".model")) {
             try (InputStream is = new FileInputStream(modelLocation)) {
                 File unzipDir = unzip(is, null);
                 return load(url, unzipDir, false);
             } catch (IOException e) {
-                throw new InvalidModelException("Failed to unzip model archive: " + url, e);
+                throw new InvalidModelException(
+                        new ErrorResponse(
+                                        StatusCodes.REGISTER.MODEL_UNARCHIVE_ERROR.getCode(),
+                                        "Failed to unzip model archive: "
+                                                + url
+                                                + " Err: "
+                                                + e.getMessage())
+                                .getJsonErrorResponse());
             }
         }
         return load(url, modelLocation, true);
@@ -104,7 +128,11 @@ public class ModelArchive {
 
             ZipEntry manifestEntry = zip.getEntry(MANIFEST_FILE);
             if (manifestEntry == null) {
-                throw new InvalidModelException("Missing manifest file in model archive.");
+                throw new InvalidModelException(
+                        new ErrorResponse(
+                                        StatusCodes.REGISTER.MISSING_ARTIFACT_MANIFEST.getCode(),
+                                        "Missing manifest file in model archive.")
+                                .getJsonErrorResponse());
             }
 
             InputStream is = zip.getInputStream(manifestEntry);
@@ -121,7 +149,11 @@ public class ModelArchive {
             LegacyManifest legacyManifest = GSON.fromJson(json, LegacyManifest.class);
             ZipEntry signatureEntry = zip.getEntry(SIGNATURE_FILE);
             if (signatureEntry == null) {
-                throw new InvalidModelException("Missing signature file in model archive.");
+                throw new InvalidModelException(
+                        new ErrorResponse(
+                                        StatusCodes.REGISTER.MISSING_ARTIFACT_SIGNATURE.getCode(),
+                                        "Missing signature file in model archive.")
+                                .getJsonErrorResponse());
             }
             is = zip.getInputStream(signatureEntry);
             reader = new InputStreamReader(is, StandardCharsets.UTF_8);
@@ -129,7 +161,11 @@ public class ModelArchive {
             Signature signature = legacySignature.migrate();
             manifest = legacyManifest.migrate();
             if (manifest.getModel() == null) {
-                throw new InvalidModelException("Missing Model entry in manifest file.");
+                throw new InvalidModelException(
+                        new ErrorResponse(
+                                        StatusCodes.REGISTER.INVALID_ARTIFACT_MANIFEST.getCode(),
+                                        "Missing Model entry in manifest file.")
+                                .getJsonErrorResponse());
             }
 
             zos.putNextEntry(new ZipEntry(MANIFEST_FILE));
@@ -154,7 +190,11 @@ public class ModelArchive {
             }
         } catch (IOException e) {
             FileUtils.deleteQuietly(destination);
-            throw new InvalidModelException("Unable to extract model file.", e);
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.MODEL_UNARCHIVE_ERROR.getCode(),
+                                    "Unable to extract model file. Err: " + e.getMessage())
+                            .getJsonErrorResponse());
         }
     }
 
@@ -204,7 +244,11 @@ public class ModelArchive {
                 JsonParser parser = new JsonParser();
                 json = (JsonObject) parser.parse(reader);
             } catch (IOException | JsonParseException e) {
-                throw new InvalidModelException("Failed to parse MANIFEST.json.", e);
+                throw new InvalidModelException(
+                        new ErrorResponse(
+                                        StatusCodes.REGISTER.INVALID_ARTIFACT_MANIFEST.getCode(),
+                                        "Failed to parse MANIFEST.json. Err " + e.getMessage())
+                                .getJsonErrorResponse());
             }
 
             JsonPrimitive version = json.getAsJsonPrimitive("specificationVersion");
@@ -245,7 +289,11 @@ public class ModelArchive {
         Manifest manifest = legacyManifest.migrate();
         LegacySignature legacySignature = readFile(signatureFile, LegacySignature.class);
         if (legacySignature == null) {
-            throw new InvalidModelException("Missing signature file.");
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.MISSING_ARTIFACT_SIGNATURE.getCode(),
+                                    "Missing signature file.")
+                            .getJsonErrorResponse());
         }
         Signature signature = legacySignature.migrate();
 
@@ -275,7 +323,12 @@ public class ModelArchive {
                 writer.write(GSON.toJson(signature));
             }
         } catch (IOException e) {
-            throw new InvalidModelException("Failed to migrate legacy model", e);
+            // TODO: Should migration be supported?
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.INVALID_MODEL_ARTIFACT.getCode(),
+                                    "Failed to migrate legacy model. Err " + e.getMessage())
+                            .getJsonErrorResponse());
         }
 
         ModelArchive archive = new ModelArchive(manifest, signature, url, modelDir);
@@ -289,7 +342,12 @@ public class ModelArchive {
                     new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
                 return GSON.fromJson(r, type);
             } catch (IOException | JsonParseException e) {
-                throw new InvalidModelException("Failed to parse signature.json.", e);
+                throw new InvalidModelException(
+                        new ErrorResponse(
+                                        StatusCodes.REGISTER.INVALID_MODEL_ARTIFACT_SIGNATURE
+                                                .getCode(),
+                                        "Failed to parse signature.json. Err: " + e)
+                                .getJsonErrorResponse());
             }
         }
         return null;
@@ -347,19 +405,35 @@ public class ModelArchive {
     public void validate() throws InvalidModelException {
         Manifest.Model model = manifest.getModel();
         if (model == null) {
-            throw new InvalidModelException("Missing Model entry in manifest file.");
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.INVALID_ARTIFACT_MANIFEST.getCode(),
+                                    "Missing Model entry in manifest file.")
+                            .getJsonErrorResponse());
         }
 
         if (model.getModelName() == null) {
-            throw new InvalidModelException("Missing Model name in manifest file.");
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.INVALID_ARTIFACT_MANIFEST.getCode(),
+                                    "Missing Model name in manifest file.")
+                            .getJsonErrorResponse());
         }
 
         if (signature.getRequest() == null) {
-            throw new InvalidModelException("Missing <Request> in signature.json.");
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.INVALID_MODEL_ARTIFACT_SIGNATURE.getCode(),
+                                    "Missing <Request> in signature.json.")
+                            .getJsonErrorResponse());
         }
 
         if (signature.getResponse() == null) {
-            throw new InvalidModelException("Missing <Response> in signature.json.");
+            throw new InvalidModelException(
+                    new ErrorResponse(
+                                    StatusCodes.REGISTER.INVALID_MODEL_ARTIFACT_SIGNATURE.getCode(),
+                                    "Missing <Response> in signature.json.")
+                            .getJsonErrorResponse());
         }
 
         // TODO: Add more validation

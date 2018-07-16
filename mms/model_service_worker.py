@@ -438,6 +438,7 @@ class MXNetModelServiceWorker(object):
         except Exception:  # pylint: disable=broad-except
             raise
 
+
 def emit_metrics(metrics):
     """
     Emit the metrics in the provided Dictionary
@@ -452,8 +453,11 @@ def emit_metrics(metrics):
     cur_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
     metrics['time'] = cur_time
     print('[METRICS]')
+    sys.stdout.flush()
     print(json.dumps(metrics, indent=4, separators=(',', ':'), cls=MetricEncoder))
+    sys.stdout.flush()
     print('[/METRICS]')
+    sys.stdout.flush()
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import sys
 import os
 import pytest
-from mms.metrics import Metrics
+from mms.metrics_store import MetricsStore
 from mms.model_service_worker import emit_metrics
 def test_metrics(capsys):
     """
@@ -14,7 +14,7 @@ def test_metrics(capsys):
     model_name = "dummy model"
 
     # Create a metrics objects
-    metrics = Metrics(request_ids, model_name)
+    metrics = MetricsStore(request_ids, model_name)
 
     # Counter tests
     metrics.addCounter('CorrectCounter', 1, 1)

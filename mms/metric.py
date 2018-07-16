@@ -42,7 +42,7 @@ class Metric(object):
         self.metric_method = metric_method
         self.value = value
 
-    def update(self, value, reverse=False):
+    def update(self, value):
         """Update function for Metric class
 
         Parameters
@@ -54,10 +54,7 @@ class Metric(object):
         """
 
         if self.metric_method == 'counter':
-            if not reverse:
-                self.value += value
-            else:
-                self.value -= value
+            self.value += value
         else:
             self.value = value
         # TODO: Add specific operations for other metric methods as required.

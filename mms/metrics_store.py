@@ -13,7 +13,7 @@ Metrics collection module
 """
 from collections import OrderedDict
 from mms.metric import Metric
-class Metrics(object):
+class MetricsStore(object):
     """
     Class for creating, modifying different metrics. And keep them in a dictionary
     """
@@ -65,7 +65,7 @@ class Metrics(object):
             req_id = 'ERROR'
         return req_id
 
-    def addCounter(self, name, value, idx=None, unit='count', reverse=False):
+    def addCounter(self, name, value, idx=None, unit='count'):
         """
         Add a counter metric or increment an existing counter metric
 
@@ -77,15 +77,12 @@ class Metrics(object):
             value of metric
         idx: int
             request id index
-        reverse: boolean, optional
-            by default counters are forward counters, set true to
-            get a decrementing counter
         """
         req_id = self._get_req(idx)
         if name not in self.metrics[self.model_name][req_id]:
             self._add(name, value, req_id, unit, 'counter')
             return
-        self.metrics[self.model_name][req_id][name].update(value, reverse)
+        self.metrics[self.model_name][req_id][name].update(value)
 
     def addTime(self, name, value, idx=None, unit='ms'):
         """

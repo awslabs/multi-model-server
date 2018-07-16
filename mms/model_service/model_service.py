@@ -8,8 +8,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""
-ModelService defines an API for base model service.
+"""`ModelService` defines an API for base model service.
 """
 # pylint: disable=W0223
 
@@ -21,7 +20,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from mms.log import get_logger
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
-
+from mms.metrics import Metrics
 logger = get_logger()
 
 
@@ -33,30 +32,8 @@ class ModelService(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        self.model_name = model_name
-        self.model_dir = model_dir
-        self.manifest = manifest
-        self.gpu = gpu
+    def __init__(self, model_name, model_dir, manifest, gpu=None):  # pylint: disable=unused-argument
         self.ctx = None
-        self._signature = None
-
-    def _init_internal(self, model_name, model_dir, manifest, gpu=None, batch_size=None):
-        """
-        Initialize ModelService. This will be called from model_service_worker.
-        DO NOT override this method!!!
-        :param model_name:
-        :param model_dir:
-        :param manifest:
-        :param gpu:
-        :param batch_size:
-        :return:
-        """
-        self.model_name = model_name
-        self.model_dir = model_dir
-        self.manifest = manifest
-        self.gpu = gpu
-        self.batch_size = batch_size
 
     @abstractmethod
     def inference(self, data):
@@ -99,6 +76,9 @@ class ModelService(object):
         """
         pass
 
+    def metrics_init(self, model_name, reqIdMap=None):
+        self.metrics = Metrics(reqIdMap, model_name)
+
 
 class SingleNodeService(ModelService):
     """
@@ -135,8 +115,10 @@ class SingleNodeService(ModelService):
 
             post_time_in_ms = (post_end_ms - post_start_ms) * 1000
 
-            # TODO: Redo this metrics
-            print("Metrics are {}, {}, {}".format(pre_time_in_ms, infer_time_in_ms, post_time_in_ms))
+            self.metrics.addTime('MMS_Worker_Preprocess_time_batch', pre_time_in_ms)
+            self.metrics.addTime('MMS_Worker_Inference_time_batch', infer_time_in_ms)
+            self.metrics.addTime('MMS_Worker_Postprocess_time_batch', post_time_in_ms)
+
         except MMSError as m:
             m.set_code(err.CUSTOM_SERVICE_ERROR)
             raise m

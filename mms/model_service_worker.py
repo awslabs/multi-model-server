@@ -19,6 +19,7 @@ import socket
 import os
 import sys
 import json
+import datetime
 from builtins import bytes
 from builtins import str
 
@@ -28,6 +29,7 @@ from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.utils.codec_helpers.codec import ModelWorkerCodecHelper
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
+from mms.metric import MetricEncoder
 
 MAX_FAILURE_THRESHOLD = 5
 
@@ -247,7 +249,11 @@ class MXNetModelServiceWorker(object):
             batch_size = len(req_batch)  # num-inputs gives the batch size
             input_batch, req_id_map, invalid_reqs = self.retrieve_data_for_inference(req_batch, model_service)
             if batch_size == 1:
+                # Initialize metrics at service level
+                model_service.metrics_init(model_name, req_id_map)
                 retval.append(model_service.inference(input_batch[0]))
+                # Dump metrics
+                emit_metrics(model_service.metrics.metrics)
             else:
                 raise MMSError(err.UNSUPPORTED_PREDICT_OPERATION, "Invalid batch size {}".format(batch_size))
 
@@ -431,6 +437,23 @@ class MXNetModelServiceWorker(object):
             raise e
         except Exception:  # pylint: disable=broad-except
             raise
+
+def emit_metrics(metrics):
+    """
+    Emit the metrics in the provided Dictionary
+
+    Parameters
+    ----------
+    metrics: Dictionary
+    A dictionary of all metrics, when key is metric_name
+    value is a metric object
+    """
+
+    cur_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
+    metrics['time'] = cur_time
+    print('[METRICS]')
+    print(json.dumps(metrics, indent=4, separators=(',', ':'), cls=MetricEncoder))
+    print('[/METRICS]')
 
 
 if __name__ == "__main__":

@@ -1,10 +1,23 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License").
+# You may not use this file except in compliance with the License.
+# A copy of the License is located at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
+# permissions and limitations under the License.
+"""
+Module to collect system metrics for front-end
+"""
 import sys
 import types
-import psutil
 import json
-
-from mms.metric import Metric, MetricEncoder
 from collections import OrderedDict
+
+import psutil
+from mms.metric import Metric, MetricEncoder
+
 overall_metrics = OrderedDict()
 metrics = OrderedDict()
 overall_metrics['SYSTEM'] = metrics
@@ -42,11 +55,13 @@ def disk_available():
 
 
 def collect_all(mod):
-    all = dir(mod)
-    for i in all:
+    members = dir(mod)
+    for i in members:
         value = getattr(mod, i)
         if isinstance(value, types.FunctionType) and value.__name__ != 'collect_all':
             value()
     print(json.dumps(overall_metrics, indent=4, separators=(',', ':'), cls=MetricEncoder))
+
+
 if __name__ == '__main__':
     collect_all(sys.modules[__name__])

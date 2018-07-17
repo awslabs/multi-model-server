@@ -2,15 +2,13 @@ package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.TestUtils;
 import com.amazonaws.ml.mms.util.ConfigManager;
-
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
 import java.util.Map;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -37,6 +35,5 @@ public class MetricManagerTest {
         Assert.assertTrue(metricsMap.containsKey("DiskUsage"));
         Metric testMetric = (Metric) metricsMap.get("MemoryUsed");
         Assert.assertTrue(testMetric.getUnit().equals("Megabytes"));
-
     }
 }

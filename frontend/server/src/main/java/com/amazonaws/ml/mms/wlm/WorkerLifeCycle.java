@@ -108,7 +108,8 @@ public class WorkerLifeCycle {
         private InputStream is;
         private boolean error;
         private WorkerLifeCycle lifeCycle;
-        static final Logger modelMetricsLogger = LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
+        static final Logger loggerModelMetrics =
+                LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
 
         public ReaderThread(String name, InputStream is, boolean error, WorkerLifeCycle lifeCycle) {
             super(name + (error ? "-stderr" : "-stdout"));
@@ -139,21 +140,18 @@ public class WorkerLifeCycle {
                     } else {
                         if (!metricFound) {
                             logger.info(result);
-                        }
-                        else {
-                                if ("[/METRICS]".equals(result)) {
-                                    modelMetricsLogger.info(jsonString.toString());
-                                    jsonString = new StringBuilder();
-                                    metricFound = false;
-                                }
-                                else {
-                                    jsonString.append(result);
-                                }
+                        } else {
+                            if ("[/METRICS]".equals(result)) {
+                                loggerModelMetrics.info(jsonString.toString());
+                                jsonString = new StringBuilder();
+                                metricFound = false;
+                            } else {
+                                jsonString.append(result);
                             }
                         }
                     }
                 }
-            finally {
+            } finally {
                 lifeCycle.setSuccess(false);
             }
         }

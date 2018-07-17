@@ -29,7 +29,7 @@ public class MetricManager {
     private MetricStore metricStore = new MetricStore();
     private Type metricType = new TypeToken<Map<String, Map<String, Metric>>>() {}.getType();
     private Logger logger = LoggerFactory.getLogger(MetricManager.class);
-    private Logger metrics_logger = LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+    private Logger metricsLogger = LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
 
     public MetricManager(ConfigManager configManager, int timeInterval) {
         Timer t;
@@ -46,7 +46,7 @@ public class MetricManager {
                             collector.collect();
                             String metricJsonString = collector.getJsonString();
                             metricStore.setMap(gson.fromJson(metricJsonString, metricType));
-                            metrics_logger.info(metricJsonString);
+                            metricsLogger.info(metricJsonString);
                         } catch (IOException | JsonParseException e) {
                             logger.error(e.getMessage());
                         }

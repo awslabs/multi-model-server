@@ -59,6 +59,6 @@ public class MetricManager {
     }
 
     public MetricManager(ConfigManager configManager) {
-        this(configManager,60000);
+        this(configManager, 60000);
     }
 }

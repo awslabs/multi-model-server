@@ -12,11 +12,10 @@
  */
 package com.amazonaws.ml.mms.metrics;
 
+import com.amazonaws.ml.mms.util.ConfigManager;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
-
-import com.amazonaws.ml.mms.util.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +47,6 @@ public class MetricCollector {
             return;
         }
 
-
         String pythonPath = System.getenv("PYTHONPATH");
         String pythonEnv;
         if (pythonPath == null || pythonPath.isEmpty()) {
@@ -73,10 +71,9 @@ public class MetricCollector {
         // read any errors from the attempted command
 
         scanner = new Scanner(stdErr, StandardCharsets.UTF_8.name());
-        if(scanner.hasNext()){
+        if (scanner.hasNext()) {
             throw new IOException("Error while running system metrics script");
         }
-
     }
 
     public String getJsonString() {

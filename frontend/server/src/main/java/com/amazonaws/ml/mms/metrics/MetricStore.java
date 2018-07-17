@@ -25,5 +25,4 @@ public class MetricStore {
     public void setMap(Map<String, Map<String, Metric>> map) {
         this.map = map;
     }
-
 }

@@ -13,20 +13,22 @@ Metrics collection module
 """
 from collections import OrderedDict
 from mms.metric import Metric
+
+
 class MetricsStore(object):
     """
     Class for creating, modifying different metrics. And keep them in a dictionary
     """
 
-    def __init__(self, req_id_map, model_name):
+    def __init__(self, request_ids, model_name):
         """
         Initialize metrics map,model name and request map
         """
         self.metrics = OrderedDict()
-        self.req_id_map = req_id_map
+        self.request_ids = request_ids
         self.metrics[model_name] = OrderedDict()
-        if req_id_map != None:
-            for req_id in req_id_map.values():
+        if request_ids is not None:
+            for req_id in request_ids.values():
                 self.metrics[model_name][req_id] = OrderedDict()
         # When request id is not given it goes to ALL dimension
         self.metrics[model_name]['ALL'] = OrderedDict()
@@ -47,7 +49,7 @@ class MetricsStore(object):
             request id
         unit: str
             unit of metric
-        metric_method: str, optional
+        metrics_method: str, optional
             indicates type of metric operation if it is defined
         """
         # Create a metric object
@@ -55,17 +57,23 @@ class MetricsStore(object):
 
     def _get_req(self, idx):
         """
+        Provide the request id dimension
 
+        Parameters
+        ----------
+
+        idx : int
+            request_id index in batch
         """
         # check if request id for the metric is given, if so use it else have 'ALL'
         req_id = 'ALL'
-        if idx != None and self.req_id_map != None and idx in self.req_id_map:
-            req_id = self.req_id_map[idx]
+        if idx is not None and self.request_ids is not None and idx in self.request_ids:
+            req_id = self.request_ids[idx]
         elif idx == -1:
             req_id = 'ERROR'
         return req_id
 
-    def addCounter(self, name, value, idx=None, unit='count'):
+    def add_counter(self, name, value, idx=None):
         """
         Add a counter metric or increment an existing counter metric
 
@@ -76,15 +84,16 @@ class MetricsStore(object):
         value: int
             value of metric
         idx: int
-            request id index
+            request_id index in batch
         """
+        unit = 'count'
         req_id = self._get_req(idx)
         if name not in self.metrics[self.model_name][req_id]:
             self._add(name, value, req_id, unit, 'counter')
             return
         self.metrics[self.model_name][req_id][name].update(value)
 
-    def addTime(self, name, value, idx=None, unit='ms'):
+    def add_time(self, name, value, idx=None, unit='ms'):
         """
         Add a time based metric like latency, default unit is 'ms'
 
@@ -95,19 +104,19 @@ class MetricsStore(object):
         value: int
             value of metric
         idx: int
-            request id index
+            request_id index in batch
         unit: str
             unit of metric,  default here is ms, s is also accepted
         """
         if unit not in ['ms', 's']:
-            raise Exception("the unit for a timed metric should be one of ['ms', 's']")
+            raise ValueError("the unit for a timed metric should be one of ['ms', 's']")
         req_id = self._get_req(idx)
         if name not in self.metrics:
             self._add(name, value, req_id, unit)
             return
         self.metrics[self.model_name][req_id][name].update(value)
 
-    def addSize(self, name, value, idx=None, unit='MB'):
+    def add_size(self, name, value, idx=None, unit='MB'):
         """
         Add a size based metric
 
@@ -118,19 +127,19 @@ class MetricsStore(object):
         value: int, float
             value of metric
         idx: int
-            request id index
+            request_id index in batch
         unit: str
             unit of metric, default here is 'MB', 'kB', 'GB' also supported
         """
         if unit not in ['MB', 'kB', 'GB']:
-            raise Exception("The unit for size based metric is one of ['MB','kB', 'GB']")
+            raise ValueError("The unit for size based metric is one of ['MB','kB', 'GB']")
         req_id = self._get_req(idx)
         if name not in self.metrics:
             self._add(name, value, req_id, unit)
             return
         self.metrics[self.model_name][req_id][name].update(value)
 
-    def addPercent(self, name, value, idx=None, unit='percent'):
+    def add_percent(self, name, value, idx=None):
         """
         Add a percentage based metric
 
@@ -141,17 +150,16 @@ class MetricsStore(object):
         value: int, float
             value of metric
         idx: int
-            request id index
-        unit: str
-            unit of metric, default and only accepeted unit is percent
+            request_id index in batch
         """
+        unit = 'percent'
         req_id = self._get_req(idx)
         if name not in self.metrics:
             self._add(name, value, req_id, unit)
             return
         self.metrics[self.model_name][req_id][name].update(value)
 
-    def addError(self, name, value, unit='Error'):
+    def add_error(self, name, value):
         """
         Add a Error Metric
         Parameters
@@ -160,11 +168,8 @@ class MetricsStore(object):
             metric name
         value: str
             value of metric, in this case a str
-        idx: int
-            request id index
-        unit: str
-
         """
+        unit = 'end_error'
         idx = -1
         req_id = self._get_req(idx)
         if name not in self.metrics:
@@ -172,7 +177,7 @@ class MetricsStore(object):
             return
         self.metrics[self.model_name][req_id][name].update(value)
 
-    def addMetric(self, name, value, idx=None, unit='unit'):
+    def add_metric(self, name, value, idx=None, unit=None):
         """
         Add a metric which is generic with custom metrics
 
@@ -183,7 +188,7 @@ class MetricsStore(object):
         value: int, float
             value of metric
         idx: int
-            request id index
+            request_id index in batch
         unit: str
             unit of metric
         """

@@ -61,6 +61,7 @@ def collect_all(mod):
         if isinstance(value, types.FunctionType) and value.__name__ != 'collect_all':
             value()
     print(json.dumps(overall_metrics, indent=4, separators=(',', ':'), cls=MetricEncoder))
+    sys.stdout.flush()
 
 
 if __name__ == '__main__':

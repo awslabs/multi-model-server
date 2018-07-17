@@ -22,7 +22,9 @@ from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 from mms.metrics_store import MetricsStore
 logger = get_logger()
-
+PREPROCESS_METRIC = 'MMS_Worker_Preprocess_time_batch'
+INFERENCE_METRIC = 'MMS_Worker_Inference_time_batch'
+POSTPROCESS_METRIC = 'MMS_Worker_Postprocess_time_batch'
 
 class ModelService(object):
     """
@@ -32,8 +34,30 @@ class ModelService(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, model_name, model_dir, manifest, gpu=None):  # pylint: disable=unused-argument
+    def __init__(self, model_name, model_dir, manifest, gpu=None):
+        self.model_name = model_name
+        self.model_dir = model_dir
+        self.manifest = manifest
+        self.gpu = gpu
         self.ctx = None
+        self._signature = None
+
+    def _init_internal(self, model_name, model_dir, manifest, gpu=None, batch_size=None):
+        """
+        Initialize ModelService. This will be called from model_service_worker.
+        DO NOT override this method!!!
+        :param model_name:
+        :param model_dir:
+        :param manifest:
+        :param gpu:
+        :param batch_size:
+        :return:
+        """
+        self.model_name = model_name
+        self.model_dir = model_dir
+        self.manifest = manifest
+        self.gpu = gpu
+        self.batch_size = batch_size
 
     @abstractmethod
     def inference(self, data):
@@ -115,9 +139,9 @@ class SingleNodeService(ModelService):
 
             post_time_in_ms = (post_end_ms - post_start_ms) * 1000
 
-            self.metrics_store.addTime('MMS_Worker_Preprocess_time_batch', pre_time_in_ms)
-            self.metrics_store.addTime('MMS_Worker_Inference_time_batch', infer_time_in_ms)
-            self.metrics_store.addTime('MMS_Worker_Postprocess_time_batch', post_time_in_ms)
+            self.metrics_store.add_time(PREPROCESS_METRIC, pre_time_in_ms)
+            self.metrics_store.add_time(INFERENCE_METRIC, infer_time_in_ms)
+            self.metrics_store.add_time(POSTPROCESS_METRIC, post_time_in_ms)
 
         except MMSError as m:
             m.set_code(err.CUSTOM_SERVICE_ERROR)

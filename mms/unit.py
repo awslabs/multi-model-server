@@ -24,4 +24,5 @@ class Units(object):
             'MB': 'Megabytes',
             'GB': 'Gigabytes',
             'kB': 'Kilobytes',
+            None: 'unit',
         }

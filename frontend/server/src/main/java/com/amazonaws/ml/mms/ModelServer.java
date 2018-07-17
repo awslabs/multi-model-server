@@ -14,6 +14,7 @@ package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.ModelArchive;
+import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.ServerGroups;
@@ -48,10 +49,12 @@ public class ModelServer {
     private AtomicBoolean stopped = new AtomicBoolean(false);
 
     private ConfigManager configManager;
+    private MetricManager metricManager;
 
     /** Creates a new {@code ModelServer} instance. */
     public ModelServer(ConfigManager configManager) {
         this.configManager = configManager;
+        metricManager = new MetricManager(configManager);
         serverGroups = new ServerGroups(configManager);
     }
 

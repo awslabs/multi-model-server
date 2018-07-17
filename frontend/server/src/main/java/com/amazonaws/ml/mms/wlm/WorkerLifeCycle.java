@@ -143,7 +143,6 @@ public class WorkerLifeCycle {
                         metricFound = true;
                     }
 
-
                     if (error) {
                         logger.error(result);
                     } else {

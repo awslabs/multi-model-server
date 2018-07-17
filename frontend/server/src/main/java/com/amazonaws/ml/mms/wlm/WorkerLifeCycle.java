@@ -28,7 +28,6 @@ public class WorkerLifeCycle {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerLifeCycle.class);
     private ConfigManager configManager;
-    private Logger modelMetricsLogger;
 
     private Process process;
     private CountDownLatch latch;
@@ -36,7 +35,6 @@ public class WorkerLifeCycle {
 
     public WorkerLifeCycle(ConfigManager configManager) {
         this.configManager = configManager;
-        this.modelMetricsLogger = LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
     }
 
     public boolean startWorker(int port) {
@@ -110,6 +108,7 @@ public class WorkerLifeCycle {
         private InputStream is;
         private boolean error;
         private WorkerLifeCycle lifeCycle;
+        static final Logger modelMetricsLogger = LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
 
         public ReaderThread(String name, InputStream is, boolean error, WorkerLifeCycle lifeCycle) {
             super(name + (error ? "-stderr" : "-stdout"));
@@ -131,25 +130,30 @@ public class WorkerLifeCycle {
                     if ("MxNet worker started.".equals(result)) {
                         lifeCycle.setSuccess(true);
                     }
-                    if ("[/METRICS]".equals(result) && metricFound) {
-                        lifeCycle.modelMetricsLogger.info(jsonString.toString());
-                        jsonString = new StringBuilder();
-                        metricFound = false;
-                    }
-                    if (metricFound) {
-                        jsonString.append(result);
-                    }
                     if ("[METRICS]".equals(result) && !metricFound) {
                         metricFound = true;
+                        continue;
                     }
-
                     if (error) {
                         logger.error(result);
                     } else {
-                        logger.info(result);
+                        if (!metricFound) {
+                            logger.info(result);
+                        }
+                        else {
+                                if ("[/METRICS]".equals(result)) {
+                                    modelMetricsLogger.info(jsonString.toString());
+                                    jsonString = new StringBuilder();
+                                    metricFound = false;
+                                }
+                                else {
+                                    jsonString.append(result);
+                                }
+                            }
+                        }
                     }
                 }
-            } finally {
+            finally {
                 lifeCycle.setSuccess(false);
             }
         }

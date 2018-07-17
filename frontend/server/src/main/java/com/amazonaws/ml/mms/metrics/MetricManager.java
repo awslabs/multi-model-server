@@ -58,6 +58,10 @@ public class MetricManager {
         t.scheduleAtFixedRate(timerTask, 0, timeInterval);
     }
 
+    public MetricStore getMetricStore() {
+        return metricStore;
+    }
+
     public MetricManager(ConfigManager configManager) {
         this(configManager, 60000);
     }

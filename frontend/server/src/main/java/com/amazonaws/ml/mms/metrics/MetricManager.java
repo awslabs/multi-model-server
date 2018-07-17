@@ -31,6 +31,7 @@ public class MetricManager {
     private Logger logger = LoggerFactory.getLogger(MetricManager.class);
     private Logger metricsLogger = LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
 
+    @SuppressWarnings("PMD.AccessorMethodGeneration")
     public MetricManager(ConfigManager configManager, int timeInterval) {
         Timer t;
         TimerTask timerTask;

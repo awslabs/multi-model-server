@@ -59,7 +59,12 @@ public class MetricCollector {
         }
         // sbin added for macs for python sysctl pythonpath
         String path = System.getenv("PATH");
-        path = "PATH=" + path + File.pathSeparator + "/sbin/";
+        StringBuilder pathBuilder = new StringBuilder();
+        pathBuilder.append("PATH=");
+        pathBuilder.append(path);
+        pathBuilder.append(File.pathSeparator);
+        pathBuilder.append("/sbin/");
+        path = pathBuilder.toString();
         String[] env = new String[] {pythonEnv, path};
         Process p = Runtime.getRuntime().exec(args, env, workingDir);
         InputStream stdOut = p.getInputStream();
@@ -76,7 +81,12 @@ public class MetricCollector {
 
         scanner = new Scanner(stdErr, StandardCharsets.UTF_8.name());
         if (scanner.hasNext()) {
-            throw new IOException("Error while running system metrics script");
+            StringBuilder error = new StringBuilder();
+            error.append("Error while running system metrics script:\n");
+            while (scanner.hasNext()) {
+                error.append(scanner.nextLine());
+            }
+            throw new IOException(error.toString());
         }
     }
 

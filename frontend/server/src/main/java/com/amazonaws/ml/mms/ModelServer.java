@@ -40,6 +40,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
 public class ModelServer {
 
     private Logger logger = LoggerFactory.getLogger(ModelServer.class);
@@ -54,7 +55,6 @@ public class ModelServer {
     /** Creates a new {@code ModelServer} instance. */
     public ModelServer(ConfigManager configManager) {
         this.configManager = configManager;
-        metricManager = new MetricManager(configManager);
         serverGroups = new ServerGroups(configManager);
     }
 
@@ -75,6 +75,7 @@ public class ModelServer {
             initModelStore();
 
             ChannelFuture f = start();
+            metricManager = new MetricManager(configManager);
             System.out.println("Model server started.");
             f.sync();
         } finally {

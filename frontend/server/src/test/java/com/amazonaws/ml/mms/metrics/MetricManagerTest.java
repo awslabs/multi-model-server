@@ -26,14 +26,17 @@ public class MetricManagerTest {
         MetricCollector collector = new MetricCollector(configManager);
         MetricStore metricStore = new MetricStore();
         Gson gson = new Gson();
-        try {
-            collector.collect();
-            String metricJsonString = collector.getJsonString();
-            metricStore.setMap(gson.fromJson(metricJsonString, metricType));
-        } catch (IOException | JsonParseException e) {
-        }
+        collector.collect();
+        String metricJsonString = collector.getJsonString();
+        metricStore.setMap(gson.fromJson(metricJsonString, metricType));
         Map localMap = metricStore.getMap();
         Assert.assertTrue(localMap.containsKey("SYSTEM"));
+        Map metricsMap = (Map) localMap.get("SYSTEM");
+        Assert.assertTrue(metricsMap.containsKey("CPUUtilization"));
+        Assert.assertTrue(metricsMap.containsKey("MemoryUsed"));
+        Assert.assertTrue(metricsMap.containsKey("DiskUsage"));
+        Metric testMetric = (Metric) metricsMap.get("MemoryUsed");
+        Assert.assertTrue(testMetric.getUnit().equals("Megabytes"));
 
     }
 }

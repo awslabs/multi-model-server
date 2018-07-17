@@ -55,8 +55,10 @@ public class MetricCollector {
             pythonEnv =
                     "PYTHONPATH=" + pythonPath + File.pathSeparator + workingDir.getAbsolutePath();
         }
-        String[] env = new String[] {pythonEnv};
-
+        // sbin added for macs for python sysctl pythonpath
+        String path = System.getenv("PATH");
+        path = "PATH=" + path + File.pathSeparator + "/sbin/";
+        String[] env = new String[] {pythonEnv, path};
         Process p = Runtime.getRuntime().exec(args, env, workingDir);
         InputStream stdOut = p.getInputStream();
 

@@ -64,4 +64,5 @@ def test_metrics(capsys):
 
     # Check a error metric
     metrics.add_error('CorrectError', 'Wrong values')
-    assert metrics.metrics[model_name]['ERROR']['CorrectError'].unit == 'end_error'
+    assert metrics.metrics['ERROR']['CorrectError'].unit == 'end_error'
+

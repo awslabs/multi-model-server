@@ -23,6 +23,14 @@ class ModelWorkerMessageValidators(object):
     def validate_load_message(msg):
         """
         Validate the load messages
+        {
+            "command" : "load", string
+            "modelPath" : "/path/to/model/file", string
+            "modelName" : "name", string
+            "gpu" : None if CPU else gpu_id, int
+            "handler" : service handler entry point if provided, string
+            "batchSize" : batch size, int
+        }
         :param msg:
         :return:
         """
@@ -35,10 +43,16 @@ class ModelWorkerMessageValidators(object):
     @staticmethod
     def validate_predict_data(msg):
         """
-        {
-                "request-id" : "111-222-3333",
-                "input1" : {}
-                "input2" : {}
+       REQUESTS = [ {
+            "requestId" : "111-222-3333",
+            "encoding" : "None | base64 | utf-8",
+            "modelInputs" : [ MODEL_INPUTS ]
+        } ]
+
+        MODEL_INPUTS = {
+                "encoding": "base64/utf-8", (This is how the value is encoded)
+                "value": "val1"
+                "name" : model_input_name (This is defined in the symbol file and the signature file)
         }
 
         :param msg:

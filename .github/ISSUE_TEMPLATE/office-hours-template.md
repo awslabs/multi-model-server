@@ -4,7 +4,7 @@ about: Template to sign up for office hours session with with MXNet ModelServer 
 
 ---
 
-MXNet SDK Office hours: slot _ of 2 on ??/??/??.
+Copy this to issue title: MXNet SDK Office hours: slot _ of 2 on ??/??/??.
 
 Describe your issue or question here. Please make sure to provide enough context and details so that engineers would be able to investigate and prepare.
 

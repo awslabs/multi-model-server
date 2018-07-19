@@ -23,6 +23,7 @@ phases:
       - pip install -U -e .
   build:
     commands:
+      - frontend/gradlew -p frontend build
       - python -m pytest mms/tests/unit_tests
       # integration test is broken: https://github.com/awslabs/mxnet-model-server/issues/437
       #- python -m pytest mms/tests/integration_tests

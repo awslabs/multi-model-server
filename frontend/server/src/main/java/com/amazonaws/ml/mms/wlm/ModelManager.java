@@ -71,7 +71,7 @@ public final class ModelManager {
             archive.getManifest().getModel().setModelName(modelName);
         }
         if (runtime != null) {
-            archive.getManifest().getEngine().setRuntime(runtime);
+            archive.getManifest().setRuntime(runtime);
         }
         if (handler != null) {
             archive.getManifest().getModel().setHandler(handler);

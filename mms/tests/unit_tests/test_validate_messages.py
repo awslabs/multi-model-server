@@ -15,25 +15,35 @@ from mms.utils.model_server_error_codes import ModelServerErrorCodes
 
 
 def test_validate_load_message_missing_model_path():
-    invalid_object = {'command': 'some-command', 'modelName': 'some-model-name'}
+    invalid_object = {'command': 'some-command', 'modelName': 'some-model-name', 'handler': 'some handler string'}
     with pytest.raises(MMSError) as error:
         ModelWorkerMessageValidators.validate_load_message(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE, 'error codes don\'t match'
-    assert error.value.get_message() == 'Load command missing \"model-path\" key'
+    assert error.value.get_message() == 'Load command missing \"modelPath\" key'
 
 
 def test_validate_load_message_missing_model_name():
-    invalid_object = {'command': 'load', 'modelPath': 'some-model-path'}
+    invalid_object = {'command': 'load', 'modelPath': 'some-model-path', 'handler': 'some handler string'}
     with pytest.raises(MMSError) as error:
         ModelWorkerMessageValidators.validate_load_message(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE, 'error codes don\'t match'
-    assert error.value.get_message() == 'Load command missing \"model-name\" key'
+    assert error.value.get_message() == 'Load command missing \"modelName\" key'
+
+
+def test_validate_load_messages_missing_handler():
+    invalid_object = {'command': 'load', 'modelPath': 'some-model-path', 'modelName': 'some model name'}
+    with pytest.raises(MMSError) as error:
+        ModelWorkerMessageValidators.validate_load_message(invalid_object)
+
+    assert error.value.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE, 'error codes don\'t match'
+    assert error.value.get_message() == 'Load command missing \"handler\" key'
 
 
 def test_valudate_load_message_with_valid_msg():
-    valid_object = {'command': 'load', 'modelPath': 'some-model-path', 'modelName': 'some-model-name'}
+    valid_object = {'command': 'load', 'modelPath': 'some-model-path', 'modelName': 'some-model-name',
+                    'handler': 'some handler string'}
     ModelWorkerMessageValidators.validate_load_message(valid_object)
 
 

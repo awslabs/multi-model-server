@@ -12,43 +12,36 @@ import pytest
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.utils.model_server_error_codes import ModelServerErrorCodes
-import json
-
-
-def get_jsonified_str(string):
-    return json.loads(string)
 
 
 def test_validate_load_message_missing_model_path():
-    invalid_msg = get_jsonified_str('{ \"command\" : \"load\", \"modelName\" : \"some-model-name\" }')
+    invalid_object = {'command': 'some-command', 'modelName': 'some-model-name'}
     with pytest.raises(MMSError) as error:
-        ModelWorkerMessageValidators.validate_load_message(invalid_msg)
+        ModelWorkerMessageValidators.validate_load_message(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE, 'error codes don\'t match'
     assert error.value.get_message() == 'Load command missing \"model-path\" key'
 
 
 def test_validate_load_message_missing_model_name():
-    invalid_msg = get_jsonified_str('{ \"command\" : \"load\", \"modelPath\" : \"some-model-path\" }')
+    invalid_object = {'command': 'load', 'modelPath': 'some-model-path'}
     with pytest.raises(MMSError) as error:
-        ModelWorkerMessageValidators.validate_load_message(invalid_msg)
+        ModelWorkerMessageValidators.validate_load_message(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE, 'error codes don\'t match'
     assert error.value.get_message() == 'Load command missing \"model-name\" key'
 
 
 def test_valudate_load_message_with_valid_msg():
-    valid_msg = get_jsonified_str('{ \"command\" : \"load\", \"modelPath\" : \"some-model-path\", \"modelName\" : '
-                                  '\"some-model-name\" }')
-    ModelWorkerMessageValidators.validate_load_message(valid_msg)
+    valid_object = {'command': 'load', 'modelPath': 'some-model-path', 'modelName': 'some-model-name'}
+    ModelWorkerMessageValidators.validate_load_message(valid_object)
 
 
 def test_validate_predict_data_with_missing_request_id():
-    invalid_msg = get_jsonified_str('{\"encoding\": "None|base64|utf-8", '
-                                    '\"modelInputs\": [ {} ] } ')
+    invalid_object = {'encoding': 'None|base64|utf-8', 'modelInputs': []}
 
     with pytest.raises(MMSError) as error:
-        ModelWorkerMessageValidators.validate_predict_data(invalid_msg)
+        ModelWorkerMessageValidators.validate_predict_data(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_INPUT
     assert error.value.get_message() == 'Predict command input missing \"request-id\" field'
@@ -58,93 +51,83 @@ def test_validate_predict_data_with_missing_request_id():
 
 
 def test_validate_predict_data_with_valid_msg():
-    valid_msg =  get_jsonified_str('{ \"requestId\": \"111-222-3333\", \"encoding\": "None|base64|utf-8", '
-                                   '\"modelInputs\": [ {} ] } ')
-
-    ModelWorkerMessageValidators.validate_predict_data(valid_msg)
+    valid_object = {'requestId': '111-222-3333', 'encoding': 'None|base64|utf-8', 'modelInputs': '[{}]'}
+    ModelWorkerMessageValidators.validate_predict_data(valid_object)
 
 
 def test_validate_predict_inputs_missing_value():
-    invalid_input = get_jsonified_str('{\"encoding\": \"base64\",  \"name\" : '
-                                      '\"model_input_name\" }')
+    invalid_object = {'encoding': 'base64', 'name': 'model_input_name'}
 
     with pytest.raises(MMSError) as error:
-        ModelWorkerMessageValidators.validate_predict_inputs(invalid_input)
+        ModelWorkerMessageValidators.validate_predict_inputs(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_INPUT
     assert error.value.get_message() == 'Predict command input data missing \"value\" field'
 
 
 def test_validate_predict_inputs_missing_name():
-    invalid_input = get_jsonified_str('{\"encoding\": \"base64\",  \"value\": \"val1\"}')
+    invalid_object = {'encoding': 'base64', 'value': 'val1'}
 
     with pytest.raises(MMSError) as error:
-        ModelWorkerMessageValidators.validate_predict_inputs(invalid_input)
+        ModelWorkerMessageValidators.validate_predict_inputs(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_INPUT
     assert error.value.get_message() == 'Predict command input data missing \"name\" field'
 
 
 def test_validate_predict_inputs_with_valid_input():
-    valid_input = get_jsonified_str('{\"encoding\": \"base64\",  \"value\": \"val1\",  \"name\" : '
-                                    '\"model_input_name\" }')
-    ModelWorkerMessageValidators.validate_predict_inputs(valid_input)
+    valid_object = {'encoding': 'base64', 'value': 'val1', 'name': 'model_input_name'}
+    ModelWorkerMessageValidators.validate_predict_inputs(valid_object)
 
 
 def test_validate_predict_msg_missing_model_name():
-    invalid_input = get_jsonified_str(
-        '{ \"command\": \"some-predict-command\", \"model_name\": \"name\", \"requestBatch\": [ { \"requestId\": '
-        '\"111-222-3333\", \"encoding\": "None|base64|utf-8", \"modelInputs\": [ {} ] } ] } ')
+    invalid_object = {'command': 'some-prediction-command', 'requestBatch': []}
 
     with pytest.raises(MMSError) as error:
-        ModelWorkerMessageValidators.validate_predict_msg(invalid_input)
+        ModelWorkerMessageValidators.validate_predict_msg(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_MESSAGE
     assert error.value.get_message() == 'Predict command input missing \"modelName\" field.'
 
 
 def test_validate_predict_msg_missing_request_batch():
-    invalid_input = get_jsonified_str(
-        '{ \"command\": \"some-predict-command\", \"modelName\": \"name\", \"request_some_key\": [ { \"requestId\": '
-        '\"111-222-3333\", \"encoding\": "None|base64|utf-8", \"modelInputs\": [ {} ] } ] } ')
+    invalid_object = {'command': 'some-prediction-command', 'modelName': 'name'}
 
     with pytest.raises(MMSError) as error:
-        ModelWorkerMessageValidators.validate_predict_msg(invalid_input)
+        ModelWorkerMessageValidators.validate_predict_msg(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_MESSAGE
     assert error.value.get_message() == 'Predict command input missing \"requestBatch\" field.'
 
 
 def test_validate_predict_msg_missing_model_inputs():
-    invalid_input = get_jsonified_str(
-        '{ \"command\": \"some-predict-command\", \"modelName\": \"name\", \"requestBatch\": [ { \"requestId\": '
-        '\"111-222-3333\", \"encoding\": \"None|base64|utf-8\" } ] } ')
+    invalid_object = {'command': 'some-pred-command', 'modelName': 'name', 'requestBatch':
+                      [{'requestId': '111', 'encoding': 'None|base64|utf-8'}]}
 
     with pytest.raises(MMSError) as error:
-        ModelWorkerMessageValidators.validate_predict_msg(invalid_input)
+        ModelWorkerMessageValidators.validate_predict_msg(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_MESSAGE
     assert error.value.get_message() == 'Predict command input\'s requestBatch missing \"modelInputs\" field.'
 
 
 def test_validate_predict_msg_valid_input():
-    valid_input = get_jsonified_str(
-        '{ \"command\": \"some-predict-command\", \"modelName\": \"name\", \"requestBatch\": [ { \"requestId\": '
-        '\"111-222-3333\", \"encoding\": \"None|base64|utf-8\", \"modelInputs\": [ {} ] } ] } ')
+    valid_object = {'command': 'some-pred-command', 'modelName': 'name', 'requestBatch':
+                    [{'requestId': '111', 'encoding': 'None|base64|utf-8', 'modelInputs': [{}]}]}
 
-    ModelWorkerMessageValidators.validate_predict_msg(valid_input)
+    ModelWorkerMessageValidators.validate_predict_msg(valid_object)
 
 
 def test_validate_unload_msg_with_invalid_msg():
-    invalid_msg = get_jsonified_str('{ \"command\" : \"unload\" }')
+    invalid_object = {'command': 'unload'}
 
     with pytest.raises(MMSError) as error:
-        ModelWorkerMessageValidators.validate_unload_msg(invalid_msg)
+        ModelWorkerMessageValidators.validate_unload_msg(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_UNLOAD_MESSAGE
     assert error.value.get_message() == 'Unload command input missing \"model-name\" field'
 
 
 def test_validate_unload_msg_with_valid_msg():
-    valid_msg = get_jsonified_str('{ \"command\" : \"unload\", \"model-name\" : \"name\"}')
-    ModelWorkerMessageValidators.validate_unload_msg(valid_msg)
+    valid_object = {'command': 'unload', 'model-name': 'name'}
+    ModelWorkerMessageValidators.validate_unload_msg(valid_object)

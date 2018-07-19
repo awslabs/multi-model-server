@@ -13,6 +13,8 @@
 package com.amazonaws.ml.mms.archive;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Manifest {
 
@@ -21,6 +23,7 @@ public class Manifest {
     private String description;
     private String modelServerVersion;
     private String license;
+    private RuntimeType runtime;
     private Engine engine;
     private Model model;
     private Publisher publisher;
@@ -30,7 +33,7 @@ public class Manifest {
         implementationVersion = "1.0";
         modelServerVersion = "1.0";
         license = "Apache 2.0";
-        engine = new Engine();
+        runtime = RuntimeType.PYTHON2_7;
     }
 
     public String getSpecificationVersion() {
@@ -71,6 +74,14 @@ public class Manifest {
 
     public void setLicense(String license) {
         this.license = license;
+    }
+
+    public RuntimeType getRuntime() {
+        return runtime;
+    }
+
+    public void setRuntime(RuntimeType runtime) {
+        this.runtime = runtime;
     }
 
     public Engine getEngine() {
@@ -125,12 +136,8 @@ public class Manifest {
 
         private EngineType engineName;
         private String engineVersion;
-        private RuntimeType runtime;
 
-        public Engine() {
-            engineName = EngineType.NONE;
-            runtime = RuntimeType.PYTHON2_7;
-        }
+        public Engine() {}
 
         public EngineType getEngineName() {
             return engineName;
@@ -147,14 +154,6 @@ public class Manifest {
         public void setEngineVersion(String engineVersion) {
             this.engineVersion = engineVersion;
         }
-
-        public RuntimeType getRuntime() {
-            return runtime;
-        }
-
-        public void setRuntime(RuntimeType runtime) {
-            this.runtime = runtime;
-        }
     }
 
     public static final class Model {
@@ -162,9 +161,10 @@ public class Manifest {
         private String modelName;
         private String description;
         private String modelVersion;
-        private String parametersFile;
-        private String symbolFile;
+        private Map<String, Object> extensions;
         private String handler;
+
+        public Model() {}
 
         public String getModelName() {
             return modelName;
@@ -190,20 +190,19 @@ public class Manifest {
             this.modelVersion = modelVersion;
         }
 
-        public String getParametersFile() {
-            return parametersFile;
+        public Map<String, Object> getExtensions() {
+            return extensions;
         }
 
-        public void setParametersFile(String parametersFile) {
-            this.parametersFile = parametersFile;
+        public void setExtensions(Map<String, Object> extensions) {
+            this.extensions = extensions;
         }
 
-        public String getSymbolFile() {
-            return symbolFile;
-        }
-
-        public void setSymbolFile(String symbolFile) {
-            this.symbolFile = symbolFile;
+        public void addExtension(String key, Object value) {
+            if (extensions == null) {
+                extensions = new LinkedHashMap<>();
+            }
+            extensions.put(key, value);
         }
 
         public String getHandler() {
@@ -217,9 +216,7 @@ public class Manifest {
 
     public enum EngineType {
         @SerializedName("MxNet")
-        MX_NET("MxNet"),
-        @SerializedName("None")
-        NONE("None");
+        MX_NET("MxNet");
 
         String value;
 

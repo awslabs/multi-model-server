@@ -121,17 +121,17 @@ public final class Exporter {
 
             String runtime = config.getRuntime();
             if (runtime != null) {
-                manifest.getEngine().setRuntime(Manifest.RuntimeType.fromValue(runtime));
+                manifest.setRuntime(Manifest.RuntimeType.fromValue(runtime));
             }
 
             File symbolFile = findUniqueFile(files, "-symbol.json");
             if (symbolFile != null) {
-                model.setSymbolFile(symbolFile.getName());
+                model.addExtension("symbolFile", symbolFile.getName());
             }
 
             File paramsFile = findUniqueFile(files, ".params");
             if (paramsFile != null) {
-                model.setParametersFile(paramsFile.getName());
+                model.addExtension("parametersFile", paramsFile.getName());
             }
 
             String handler = config.getHandler();
@@ -141,7 +141,7 @@ public final class Exporter {
                     model.setHandler(serviceFile.getName());
                 }
             } else {
-                Manifest.RuntimeType runtimeType = manifest.getEngine().getRuntime();
+                Manifest.RuntimeType runtimeType = manifest.getRuntime();
                 if (runtimeType == Manifest.RuntimeType.PYTHON2_7
                         || runtimeType == Manifest.RuntimeType.PYTHON3_6) {
                     String[] tokens = handler.split(":");

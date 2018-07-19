@@ -399,9 +399,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         Manifest.Engine engine = manifest.getEngine();
         if (engine != null) {
             resp.setEngine(engine.getEngineName().getValue());
-            resp.setRuntime(engine.getRuntime().getValue());
         }
         resp.setModelVersion(manifest.getModel().getModelVersion());
+        resp.setRuntime(manifest.getRuntime().getValue());
 
         List<WorkerThread> workers = modelManager.getWorkers(modelName);
         for (WorkerThread worker : workers) {

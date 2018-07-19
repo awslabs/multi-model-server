@@ -13,7 +13,6 @@ Module to collect system metrics for front-end
 import sys
 import types
 import json
-from collections import OrderedDict
 
 import psutil
 from mms.metric import Metric

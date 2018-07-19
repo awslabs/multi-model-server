@@ -16,7 +16,9 @@ from collections import OrderedDict
 
 
 class Dimension(object):
-
+    """
+    Dimension class defining key value pair
+    """
     def __init__(self, name, value):
         """
         Constructor for Dimension class

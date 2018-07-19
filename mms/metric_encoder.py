@@ -11,10 +11,11 @@
 """
 Metric Encoder class for json dumps
 """
+
+from json import JSONEncoder
+
 from mms.metric import Metric
 from mms.dimension import Dimension
-from json import JSONEncoder
-import json
 
 
 class MetricEncoder(JSONEncoder):
@@ -25,6 +26,6 @@ class MetricEncoder(JSONEncoder):
         """
         Override only when object is of type Metric
         """
-        if isinstance(obj, Metric) or isinstance(obj, Dimension):
+        if isinstance(obj, (Metric, Dimension)):
             return obj.to_dict()
         return json.JSONEncoder.default(self, obj)

@@ -73,6 +73,3 @@ class Metric(object):
         return an Ordered Dictionary
         """
         return OrderedDict({'name': self.name, 'value': self.value, 'unit': self.unit, 'dimensions': self.dimensions})
-
-
-

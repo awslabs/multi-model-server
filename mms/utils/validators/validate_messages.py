@@ -110,7 +110,8 @@ class ModelWorkerMessageValidators(object):
         req_batch = msg[u'requestBatch']
         for req in req_batch:
             if u'modelInputs' not in req:
-                raise MMSError(err.INVALID_PREDICT_MESSAGE, "Predict command input's requestBatch missing \"modelInputs\" field.")
+                raise MMSError(err.INVALID_PREDICT_MESSAGE, "Predict command input's requestBatch missing "
+                                                            "\"modelInputs\" field.")
 
     @staticmethod
     def validate_unload_msg(msg):

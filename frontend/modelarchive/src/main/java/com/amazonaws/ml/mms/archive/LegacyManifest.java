@@ -111,9 +111,10 @@ public class LegacyManifest {
         if (engine != null) {
             Object engineVersion = engine.get("MXNet");
             if (engineVersion instanceof Number) {
-                Manifest.Engine eng = manifest.getEngine();
+                Manifest.Engine eng = new Manifest.Engine();
                 eng.setEngineName(Manifest.EngineType.MX_NET);
                 eng.setEngineVersion(engineVersion.toString());
+                manifest.setEngine(eng);
             }
         }
 
@@ -123,8 +124,8 @@ public class LegacyManifest {
             model.setDescription(modelInfo.getDescription());
             model.setHandler(modelInfo.getService());
             model.setModelVersion("snapshot");
-            model.setParametersFile(modelInfo.getParameters());
-            model.setSymbolFile(modelInfo.getSymbol());
+            model.addExtension("parametersFile", modelInfo.getParameters());
+            model.addExtension("symbolFile", modelInfo.getSymbol());
             manifest.setModel(model);
         }
 

@@ -66,7 +66,7 @@ def collect_all(mod):
         value = getattr(mod, i)
         if isinstance(value, types.FunctionType) and value.__name__ != 'collect_all':
             value()
-    print(json.dumps(system_metrics, indent=4, separators=(',', ':'), cls=MetricEncoder))
+    print(json.dumps(system_metrics, separators=(',', ':'), cls=MetricEncoder))
     sys.stdout.flush()
 
 

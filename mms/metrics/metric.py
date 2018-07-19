@@ -32,7 +32,7 @@ class Metric(object):
         Parameters
         ----------
         name: str
-            NAme of metric
+            Name of metric
         value : int, float
            Can be integer or float
         unit: str

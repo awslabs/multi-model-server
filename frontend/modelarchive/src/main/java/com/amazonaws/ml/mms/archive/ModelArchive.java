@@ -81,7 +81,7 @@ public class ModelArchive {
             }
         }
 
-        if (url.startsWith(".")) {
+        if (url.contains("..")) {
             throw new InvalidModelException(ErrorCodes.INVALID_URL, "Invalid url: " + url);
         }
 

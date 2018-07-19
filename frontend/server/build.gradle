@@ -34,4 +34,3 @@ test.doFirst {
     systemProperty "METRICS_LOCATION","build/logs"
     systemProperty "LOG_LOCATION","build/logs"
 }
-test.finalizedBy(project.tasks.jacocoTestReport)

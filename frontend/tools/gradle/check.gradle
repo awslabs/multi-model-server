@@ -44,6 +44,9 @@ tasks.withType(Checkstyle) {
 }
 
 apply plugin: "jacoco"
+jacoco {
+    toolVersion = "0.8.1"
+}
 jacocoTestReport {
     group = "Reporting"
     reports {
@@ -53,3 +56,4 @@ jacocoTestReport {
 }
 
 check.dependsOn jacocoTestReport
+check.dependsOn jacocoTestCoverageVerification

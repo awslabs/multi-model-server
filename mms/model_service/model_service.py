@@ -20,7 +20,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from mms.log import get_logger
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
-from mms.metrics_store import MetricsStore
+from mms.metrics.metrics_store import MetricsStore
 logger = get_logger()
 PREPROCESS_METRIC = 'MMS_Worker_Preprocess_time_batch'
 INFERENCE_METRIC = 'MMS_Worker_Inference_time_batch'

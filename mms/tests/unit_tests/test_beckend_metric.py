@@ -1,24 +1,20 @@
-import sys
-import os
-import pytest
-from mms.metrics_store import MetricsStore
-from mms.dimension import Dimension
+from mms.metrics.metrics_store import MetricsStore
+from mms.metrics.dimension import Dimension
 from mms.model_service_worker import emit_metrics
 
 
 def get_model_key(name, unit, req_id, model_name):
     dimensions = list()
-    dimensions.append(Dimension("RequestID", req_id))
     dimensions.append(Dimension("ModelName", model_name))
     dimensions.append(Dimension("Level", "Model"))
-    dim_str = [name, unit] + [str(d) for d in dimensions]
+    dim_str = [name, unit, str(req_id)] + [str(d) for d in dimensions]
     return ';'.join(dim_str)
 
 
 def get_error_key(name, unit):
     dimensions=list()
     dimensions.append(Dimension("Level", "Error"))
-    dim_str = [name, unit] + [str(d) for d in dimensions]
+    dim_str = [name, unit, 'None'] + [str(d) for d in dimensions]
     return ';'.join(dim_str)
 
 
@@ -55,10 +51,9 @@ def test_metrics(capsys):
     # Check what is emitted is correct
     emit_metrics(metrics.store)
     out, err = capsys.readouterr()
-    assert '"dimensions":[' in out
-    assert '"value":"hjshfj"' in out
-    assert '"value":"ALL"' in out
-    assert '"value":"ALL"' in out
+    assert '"Dimensions":[' in out
+    assert '"Value":"Model"' in out
+
 
     # Adding other types of metrics
     # Check for time metric

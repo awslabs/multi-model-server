@@ -28,7 +28,7 @@ from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.utils.codec_helpers.codec import ModelWorkerCodecHelper
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
-from mms.metric_encoder import MetricEncoder
+from mms.metrics.metric_encoder import MetricEncoder
 
 MAX_FAILURE_THRESHOLD = 5
 

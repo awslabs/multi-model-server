@@ -13,49 +13,51 @@ Module to collect system metrics for front-end
 import sys
 import types
 import json
+import socket
 
 import psutil
-from mms.metric import Metric
-from mms.metric_encoder import MetricEncoder
-from mms.dimension import Dimension
+from mms.metrics.metric import Metric
+from mms.metrics.metric_encoder import MetricEncoder
+from mms.metrics.dimension import Dimension
 
 system_metrics = []
-dimension = Dimension('Level', 'System')
+dimension = [Dimension('Level', 'Host'), Dimension('Host', socket.gethostname())]
+
 
 
 def cpu_utilization():
     data = psutil.cpu_percent()
-    system_metrics.append(Metric('CPUUtilization', data, 'percent', [dimension]))
+    system_metrics.append(Metric('CPUUtilization', data, 'percent', dimension))
 
 
 def memory_used():
     data = psutil.virtual_memory().used / (1024 * 1024)  # in MB
-    system_metrics.append(Metric('MemoryUsed', data, 'MB', [dimension]))
+    system_metrics.append(Metric('MemoryUsed', data, 'MB', dimension))
 
 
 def memory_available():
     data = psutil.virtual_memory().available / (1024 * 1024)  # in MB
-    system_metrics.append(Metric('MemoryAvailable', data, 'MB', [dimension]))
+    system_metrics.append(Metric('MemoryAvailable', data, 'MB', dimension))
 
 
 def memory_utilization():
     data = psutil.virtual_memory().percent
-    system_metrics.append(Metric('MemoryUtilization', data, 'percent', [dimension]))
+    system_metrics.append(Metric('MemoryUtilization', data, 'percent', dimension))
 
 
 def disk_used():
     data = psutil.disk_usage('/').used / (1024 * 1024 * 1024)  # in GB
-    system_metrics.append(Metric('DiskUsage', data, 'GB', [dimension]))
+    system_metrics.append(Metric('DiskUsage', data, 'GB', dimension))
 
 
 def disk_utilization():
     data = psutil.disk_usage('/').percent
-    system_metrics.append(Metric('DiskUtilization', data, 'percent', [dimension]))
+    system_metrics.append(Metric('DiskUtilization', data, 'percent', dimension))
 
 
 def disk_available():
     data = psutil.disk_usage('/').free / (1024 * 1024 * 1024)  # in GB
-    system_metrics.append(Metric('DiskAvailable', data, 'GB', [dimension]))
+    system_metrics.append(Metric('DiskAvailable', data, 'GB', dimension))
 
 
 def collect_all(mod):

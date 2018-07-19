@@ -14,8 +14,8 @@ Metric Encoder class for json dumps
 
 from json import JSONEncoder
 
-from mms.metric import Metric
-from mms.dimension import Dimension
+from mms.metrics.metric import Metric
+from mms.metrics.dimension import Dimension
 
 
 class MetricEncoder(JSONEncoder):

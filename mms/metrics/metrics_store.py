@@ -11,8 +11,8 @@
 """
 Metrics collection module
 """
-from mms.metric import Metric
-from mms.dimension import Dimension
+from mms.metrics.metric import Metric
+from mms.metrics.dimension import Dimension
 
 
 class MetricsStore(object):
@@ -54,16 +54,15 @@ class MetricsStore(object):
         elif not isinstance(dimensions, list):
             raise ValueError("Please provide a list of dimensions")
         if req_id is not None:
-            dimensions.append(Dimension("RequestID", req_id))
             dimensions.append(Dimension("ModelName", self.model_name))
             dimensions.append(Dimension("Level", "Model"))
         if req_id is None:
             dimensions.append(Dimension("Level", "Error"))
         # Cache the metric with an unique key for update
-        dim_str = [name, unit] + [str(d) for d in dimensions]
+        dim_str = [name, unit, str(req_id)] + [str(d) for d in dimensions]
         dim_str = ';'.join(dim_str)
         if dim_str not in self.cache:
-            metric = Metric(name, value, unit, dimensions, metrics_method)
+            metric = Metric(name, value, unit, dimensions, req_id, metrics_method)
             self.store.append(metric)
             self.cache[dim_str] = metric
         else:

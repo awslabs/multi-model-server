@@ -12,7 +12,7 @@
 Metric class for model server
 """
 from collections import OrderedDict
-
+import datetime
 from mms.unit import Units
 
 MetricUnit = Units()
@@ -23,7 +23,7 @@ class Metric(object):
     Class for generating metrics and printing it to stdout of the worker
     """
     def __init__(self, name, value,
-                 unit, dimensions, metric_method=None):
+                 unit, dimensions, req_id='None', metric_method=None):
         """
         Constructor for Metric class
 
@@ -39,6 +39,8 @@ class Metric(object):
             unit can be one of ms, percent, count, MB, GB or a generic string
         dimensions: list
             list of dimension objects
+        req_id: str
+            req_id of metric
         metric_method: str
            useful for defining different operations, optional
 
@@ -51,6 +53,7 @@ class Metric(object):
         self.metric_method = metric_method
         self.value = value
         self.dimensions = dimensions
+        self.req_id = req_id
 
     def update(self, value):
         """
@@ -72,4 +75,7 @@ class Metric(object):
         """
         return an Ordered Dictionary
         """
-        return OrderedDict({'name': self.name, 'value': self.value, 'unit': self.unit, 'dimensions': self.dimensions})
+        return OrderedDict({'MetricName': self.name, 'Value': self.value, 'Unit': self.unit,
+                            'Dimensions': self.dimensions,
+                            'Timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ'),
+                            'RequestId': self.req_id})

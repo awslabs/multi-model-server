@@ -12,8 +12,6 @@
 Metric class for model server
 """
 from collections import OrderedDict
-from json import JSONEncoder
-import json
 
 from mms.unit import Units
 
@@ -24,8 +22,8 @@ class Metric(object):
     """
     Class for generating metrics and printing it to stdout of the worker
     """
-    def __init__(self, value,
-                 unit, metric_method=None):
+    def __init__(self, name, value,
+                 unit, dimensions, metric_method=None):
         """
         Constructor for Metric class
 
@@ -33,19 +31,26 @@ class Metric(object):
 
         Parameters
         ----------
+        name: str
+            NAme of metric
         value : int, float
            Can be integer or float
         unit: str
             unit can be one of ms, percent, count, MB, GB or a generic string
+        dimensions: list
+            list of dimension objects
         metric_method: str
            useful for defining different operations, optional
+
         """
 
+        self.name = name
         self.unit = unit
         if unit in list(MetricUnit.units.keys()):
             self.unit = MetricUnit.units[unit]
         self.metric_method = metric_method
         self.value = value
+        self.dimensions = dimensions
 
     def update(self, value):
         """
@@ -67,17 +72,7 @@ class Metric(object):
         """
         return an Ordered Dictionary
         """
-        return OrderedDict({'value' : self.value, 'unit' : self.unit,})
+        return OrderedDict({'name': self.name, 'value': self.value, 'unit': self.unit, 'dimensions': self.dimensions})
 
 
-class MetricEncoder(JSONEncoder):
-    """
-    Encoder class for json encoding Metric Object
-    """
-    def default(self, obj):  # pylint: disable=arguments-differ, method-hidden
-        """
-        Override only when object is of type Metric
-        """
-        if isinstance(obj, Metric):
-            return obj.to_dict()
-        return json.JSONEncoder.default(self, obj)
+

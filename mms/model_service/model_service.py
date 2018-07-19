@@ -41,6 +41,7 @@ class ModelService(object):
         self.gpu = gpu
         self.ctx = None
         self._signature = None
+        self.metrics_store = None
 
     def _init_internal(self, model_name, model_dir, manifest, gpu=None, batch_size=None):
         """
@@ -100,8 +101,8 @@ class ModelService(object):
         """
         pass
 
-    def metrics_init(self, model_name, reqIdMap=None):
-        self.metrics_store = MetricsStore(reqIdMap, model_name)
+    def metrics_init(self, model_name, req_id_map=None):
+        self.metrics_store = MetricsStore(req_id_map, model_name)
 
 
 class SingleNodeService(ModelService):

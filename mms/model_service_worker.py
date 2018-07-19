@@ -19,7 +19,6 @@ import socket
 import os
 import sys
 import json
-import datetime
 from builtins import bytes
 from builtins import str
 
@@ -29,7 +28,7 @@ from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.utils.codec_helpers.codec import ModelWorkerCodecHelper
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
-from mms.metric import MetricEncoder
+from mms.metric_encoder import MetricEncoder
 
 MAX_FAILURE_THRESHOLD = 5
 
@@ -253,7 +252,7 @@ class MXNetModelServiceWorker(object):
                 model_service.metrics_init(model_name, req_id_map)
                 retval.append(model_service.inference(input_batch[0]))
                 # Dump metrics
-                emit_metrics(model_service.metrics.metrics)
+                emit_metrics(model_service.metrics.store)
             else:
                 raise MMSError(err.UNSUPPORTED_PREDICT_OPERATION, "Invalid batch size {}".format(batch_size))
 
@@ -450,8 +449,6 @@ def emit_metrics(metrics):
     value is a metric object
     """
 
-    cur_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
-    metrics['time'] = cur_time
     print('[METRICS]')
     sys.stdout.flush()
     print(json.dumps(metrics, indent=4, separators=(',', ':'), cls=MetricEncoder))

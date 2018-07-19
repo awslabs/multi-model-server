@@ -16,42 +16,47 @@ import json
 from collections import OrderedDict
 
 import psutil
-from mms.metric import Metric, MetricEncoder
+from mms.metric import Metric
+from mms.metric_encoder import MetricEncoder
+from mms.dimension import Dimension
 
-overall_metrics = OrderedDict()
-metrics = OrderedDict()
-overall_metrics['SYSTEM'] = metrics
+system_metrics = []
+dimension = Dimension('Level', 'System')
+
 
 def cpu_utilization():
     data = psutil.cpu_percent()
-    metrics['CPUUtilization'] = Metric(data, 'percent')
+    system_metrics.append(Metric('CPUUtilization', data, 'percent', [dimension]))
 
 
 def memory_used():
     data = psutil.virtual_memory().used / (1024 * 1024)  # in MB
-    metrics['MemoryUsed'] = Metric(data, 'MB')
+    system_metrics.append(Metric('MemoryUsed', data, 'MB', [dimension]))
+
 
 def memory_available():
     data = psutil.virtual_memory().available / (1024 * 1024)  # in MB
-    metrics['MemoryAvailable'] = Metric(data, 'MB')
+    system_metrics.append(Metric('MemoryAvailable', data, 'MB', [dimension]))
 
 
 def memory_utilization():
     data = psutil.virtual_memory().percent
-    metrics['MemoryUtilization'] = Metric(data, 'percent')
+    system_metrics.append(Metric('MemoryUtilization', data, 'percent', [dimension]))
+
 
 def disk_used():
     data = psutil.disk_usage('/').used / (1024 * 1024 * 1024)  # in GB
-    metrics['DiskUsage'] = Metric(data, 'GB')
+    system_metrics.append(Metric('DiskUsage', data, 'GB', [dimension]))
+
 
 def disk_utilization():
     data = psutil.disk_usage('/').percent
-    metrics['DiskUtilization'] = Metric(data, 'percent')
+    system_metrics.append(Metric('DiskUtilization', data, 'percent', [dimension]))
 
 
 def disk_available():
     data = psutil.disk_usage('/').free / (1024 * 1024 * 1024)  # in GB
-    metrics['DiskAvailable'] = Metric(data, 'GB')
+    system_metrics.append(Metric('DiskAvailable', data, 'GB', [dimension]))
 
 
 def collect_all(mod):
@@ -60,7 +65,7 @@ def collect_all(mod):
         value = getattr(mod, i)
         if isinstance(value, types.FunctionType) and value.__name__ != 'collect_all':
             value()
-    print(json.dumps(overall_metrics, indent=4, separators=(',', ':'), cls=MetricEncoder))
+    print(json.dumps(system_metrics, indent=4, separators=(',', ':'), cls=MetricEncoder))
     sys.stdout.flush()
 
 

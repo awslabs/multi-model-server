@@ -11,8 +11,8 @@
 """
 Metrics collection module
 """
-from collections import OrderedDict
 from mms.metric import Metric
+from mms.dimension import Dimension
 
 
 class MetricsStore(object):
@@ -24,34 +24,12 @@ class MetricsStore(object):
         """
         Initialize metrics map,model name and request map
         """
-        self.metrics = OrderedDict()
+        self.store = list()
         self.request_ids = request_ids
-        self._add_dimensions([model_name])
-        if request_ids is not None:
-            for request_id in request_ids.values():
-                self._add_dimensions([model_name, request_id])
-        self._add_dimensions([model_name, 'ALL'])
-        self._add_dimensions(['ERROR'])
         self.model_name = model_name
+        self.cache = {}
 
-    def _add_dimensions(self, dimensions):
-        """
-        Parameters
-        ----------
-        dimensions : list
-        list of dimensions for the metric
-
-        """
-        if not len(dimensions):
-            raise ValueError("Dimension(s) needs to be provided")
-        leaf = self.metrics
-        for dimension in dimensions:
-            if dimension not in leaf:
-                leaf[dimension] = OrderedDict()
-            leaf = leaf[dimension]
-        return leaf
-
-    def _add_or_update(self, name, value, req_id, unit, metrics_method=None):
+    def _add_or_update(self, name, value, req_id, unit, metrics_method=None, dimensions=None):
         """
         Add a metric key value pair
 
@@ -70,16 +48,26 @@ class MetricsStore(object):
         metrics_method: str, optional
             indicates type of metric operation if it is defined
         """
-        # Create a metric object
-        leaf = None
-        if unit == 'end_error':
-            leaf = self._add_dimensions(['ERROR'])
+        # IF req_id is none error Metric
+        if dimensions is None:
+            dimensions = list()
+        elif not isinstance(dimensions, list):
+            raise ValueError("Please provide a list of dimensions")
+        if req_id is not None:
+            dimensions.append(Dimension("RequestID", req_id))
+            dimensions.append(Dimension("ModelName", self.model_name))
+            dimensions.append(Dimension("Level", "Model"))
+        if req_id is None:
+            dimensions.append(Dimension("Level", "Error"))
+        # Cache the metric with an unique key for update
+        dim_str = [name, unit] + [str(d) for d in dimensions]
+        dim_str = ';'.join(dim_str)
+        if dim_str not in self.cache:
+            metric = Metric(name, value, unit, dimensions, metrics_method)
+            self.store.append(metric)
+            self.cache[dim_str] = metric
         else:
-            leaf = self._add_dimensions([self.model_name, req_id])
-        if name not in leaf:
-            leaf[name] = Metric(value, unit, metrics_method)
-        else:
-            leaf[name].update(value)
+            self.cache[dim_str].update(value)
 
     def _get_req(self, idx):
         """
@@ -95,11 +83,9 @@ class MetricsStore(object):
         req_id = 'ALL'
         if idx is not None and self.request_ids is not None and idx in self.request_ids:
             req_id = self.request_ids[idx]
-        elif idx == -1:
-            req_id = 'ERROR'
         return req_id
 
-    def add_counter(self, name, value, idx=None):
+    def add_counter(self, name, value, idx=None, dimensions=None):
         """
         Add a counter metric or increment an existing counter metric
 
@@ -111,12 +97,14 @@ class MetricsStore(object):
             value of metric
         idx: int
             request_id index in batch
+        dimensions: list
+            list of dimensions for the metric
         """
         unit = 'count'
         req_id = self._get_req(idx)
-        self._add_or_update(name, value, req_id, unit, 'counter')
+        self._add_or_update(name, value, req_id, unit, 'counter', dimensions)
 
-    def add_time(self, name, value, idx=None, unit='ms'):
+    def add_time(self, name, value, idx=None, unit='ms', dimensions=None):
         """
         Add a time based metric like latency, default unit is 'ms'
 
@@ -134,9 +122,9 @@ class MetricsStore(object):
         if unit not in ['ms', 's']:
             raise ValueError("the unit for a timed metric should be one of ['ms', 's']")
         req_id = self._get_req(idx)
-        self._add_or_update(name, value, req_id, unit)
+        self._add_or_update(name, value, req_id, unit, dimensions)
 
-    def add_size(self, name, value, idx=None, unit='MB'):
+    def add_size(self, name, value, idx=None, unit='MB', dimensions=None):
         """
         Add a size based metric
 
@@ -154,9 +142,9 @@ class MetricsStore(object):
         if unit not in ['MB', 'kB', 'GB']:
             raise ValueError("The unit for size based metric is one of ['MB','kB', 'GB']")
         req_id = self._get_req(idx)
-        self._add_or_update(name, value, req_id, unit)
+        self._add_or_update(name, value, req_id, unit, dimensions)
 
-    def add_percent(self, name, value, idx=None):
+    def add_percent(self, name, value, idx=None, dimensions=None):
         """
         Add a percentage based metric
 
@@ -171,9 +159,9 @@ class MetricsStore(object):
         """
         unit = 'percent'
         req_id = self._get_req(idx)
-        self._add_or_update(name, value, req_id, unit)
+        self._add_or_update(name, value, req_id, unit, dimensions)
 
-    def add_error(self, name, value):
+    def add_error(self, name, value, dimensions=None):
         """
         Add a Error Metric
         Parameters
@@ -183,12 +171,10 @@ class MetricsStore(object):
         value: str
             value of metric, in this case a str
         """
-        unit = 'end_error'
-        idx = -1
-        req_id = self._get_req(idx)
-        self._add_or_update(name, value, req_id, unit)
+        unit = ''
+        self._add_or_update(name, value, None, unit, dimensions)
 
-    def add_metric(self, name, value, idx=None, unit=None):
+    def add_metric(self, name, value, idx=None, unit=None, dimensions=None):
         """
         Add a metric which is generic with custom metrics
 
@@ -204,4 +190,4 @@ class MetricsStore(object):
             unit of metric
         """
         req_id = self._get_req(idx)
-        self._add_or_update(name, value, req_id, unit)
+        self._add_or_update(name, value, req_id, unit, dimensions)

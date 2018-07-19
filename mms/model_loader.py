@@ -49,19 +49,23 @@ class ModelLoader(object):
             except Exception as e:
                 raise Exception('Failed to open manifest file. Stacktrace: ' + str(e))
             model = manifest['model']
-            engine = manifest['engine']
-            if engine['engineName'] == 'MxNet':
+            engine = manifest.get('engine')
+            if engine is not None and engine['engineName'] == 'MxNet':
                 # symbol, parameters are required for MxNet
-                parameter_file = model.get('parametersFile')
+                extensions = model.get('extensions')
+                if extensions is None:
+                    raise Exception("extensions is required for MxNet in MANIFEST.json.")
+
+                parameter_file = extensions.get('parametersFile')
                 if not parameter_file:
                     raise Exception("parameterFile not defined in MANIFEST.json.")
-                if not os.path.isfile(model_dir + '/' + parameter_file):
+                if not os.path.isfile(os.path.join(model_dir, parameter_file)):
                     raise Exception("parameterFile not found: {}.".format(parameter_file))
 
-                symbol_file = model.get('symbolFile')
+                symbol_file = extensions.get('symbolFile')
                 if not symbol_file:
                     raise Exception("symbolFile not defined in MANIFEST.json.")
-                if not os.path.isfile(model_dir + '/' + symbol_file):
+                if not os.path.isfile(os.path.join(model_dir, symbol_file)):
                     raise Exception("symbolFile not found: {}.".format(symbol_file))
 
         if handler is None:

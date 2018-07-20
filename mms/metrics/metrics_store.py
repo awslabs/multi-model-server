@@ -60,7 +60,7 @@ class MetricsStore(object):
             dimensions.append(Dimension("Level", "Error"))
         # Cache the metric with an unique key for update
         dim_str = [name, unit, str(req_id)] + [str(d) for d in dimensions]
-        dim_str = ';'.join(dim_str)
+        dim_str = '-'.join(dim_str)
         if dim_str not in self.cache:
             metric = Metric(name, value, unit, dimensions, req_id, metrics_method)
             self.store.append(metric)

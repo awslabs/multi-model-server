@@ -75,7 +75,7 @@ class Metric(object):
         """
         return an Ordered Dictionary
         """
-        return OrderedDict({'MetricName': self.name, 'Value': self.value, 'Unit': self.unit,
-                            'Dimensions': self.dimensions,
-                            'Timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ'),
-                            'RequestId': self.req_id})
+        return OrderedDict({'metricName': self.name, 'Value': self.value, 'Unit': self.unit,
+                            'dimensions': self.dimensions,
+                            'timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ'),
+                            'requestId': self.req_id})

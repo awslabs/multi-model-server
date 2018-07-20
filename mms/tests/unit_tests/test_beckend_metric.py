@@ -8,14 +8,14 @@ def get_model_key(name, unit, req_id, model_name):
     dimensions.append(Dimension("ModelName", model_name))
     dimensions.append(Dimension("Level", "Model"))
     dim_str = [name, unit, str(req_id)] + [str(d) for d in dimensions]
-    return ';'.join(dim_str)
+    return '-'.join(dim_str)
 
 
 def get_error_key(name, unit):
     dimensions=list()
     dimensions.append(Dimension("Level", "Error"))
     dim_str = [name, unit, 'None'] + [str(d) for d in dimensions]
-    return ';'.join(dim_str)
+    return '-'.join(dim_str)
 
 
 def test_metrics(capsys):
@@ -51,8 +51,8 @@ def test_metrics(capsys):
     # Check what is emitted is correct
     emit_metrics(metrics.store)
     out, err = capsys.readouterr()
-    assert '"Dimensions":[' in out
-    assert '"Value":"Model"' in out
+    assert '"dimensions":[' in out
+    assert '"value":"Model"' in out
 
 
     # Adding other types of metrics

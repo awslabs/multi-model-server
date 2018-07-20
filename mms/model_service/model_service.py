@@ -22,9 +22,9 @@ from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 from mms.metrics.metrics_store import MetricsStore
 logger = get_logger()
-PREPROCESS_METRIC = 'MMS_Worker_Preprocess_time_batch'
-INFERENCE_METRIC = 'MMS_Worker_Inference_time_batch'
-POSTPROCESS_METRIC = 'MMS_Worker_Postprocess_time_batch'
+PREPROCESS_METRIC = 'MMSWorkerPreprocessTimeBatch'
+INFERENCE_METRIC = 'MMSWorkerInferenceTimeBatch'
+POSTPROCESS_METRIC = 'MMSWorkerPostprocessTimeBatch'
 
 class ModelService(object):
     """

@@ -37,7 +37,7 @@ class Dimension(object):
         """
         return an Ordered Dictionary
         """
-        return OrderedDict({'Name': self.name, 'Value': self.value})
+        return OrderedDict({'name': self.name, 'value': self.value})
 
     def __str__(self):
-        return "{};{}".format(self.name, self.value)
+        return "{}-{}".format(self.name, self.value)

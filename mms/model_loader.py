@@ -17,9 +17,6 @@ from mms.log import get_logger
 
 logger = get_logger()
 
-URL_PREFIX = ('http://', 'https://', 's3://')
-MANIFEST_DIR = "manifest_schema"
-MANIFEST_SCHEMA_FILE = 'manifest-schema.json'
 MANIFEST_FILENAME = 'MANIFEST.json'
 
 
@@ -58,13 +55,13 @@ class ModelLoader(object):
                 parameter_file = model.get('parametersFile')
                 if not parameter_file:
                     raise Exception("parameterFile not defined in MANIFEST.json.")
-                if os.path.isfile(parameter_file):
+                if not os.path.isfile(parameter_file):
                     raise Exception("parameterFile not found: {}.".format(parameter_file))
 
                 symbol_file = model.get('symbolFile')
                 if not symbol_file:
                     raise Exception("symbolFile not defined in MANIFEST.json.")
-                if os.path.isfile(symbol_file):
+                if not os.path.isfile(symbol_file):
                     raise Exception("symbolFile not found: {}.".format(symbol_file))
 
         if handler is None:

@@ -20,6 +20,8 @@ public class ModelWorkerResponse {
     private String message;
     private List<Predictions> predictions;
 
+    public ModelWorkerResponse() {}
+
     public String getCode() {
         return code;
     }

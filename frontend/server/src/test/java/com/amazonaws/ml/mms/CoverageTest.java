@@ -10,25 +10,16 @@
  * OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package com.amazonaws.ml.mms.util.messages;
+package com.amazonaws.ml.mms;
 
-public class BaseModelRequest {
+import com.amazonaws.ml.mms.test.TestHelper;
+import java.io.IOException;
+import org.testng.annotations.Test;
 
-    private WorkerCommands command;
-    private String modelName;
+public class CoverageTest {
 
-    public BaseModelRequest() {}
-
-    public BaseModelRequest(WorkerCommands command, String modelName) {
-        this.command = command;
-        this.modelName = modelName;
-    }
-
-    public WorkerCommands getCommand() {
-        return command;
-    }
-
-    public String getModelName() {
-        return modelName;
+    @Test
+    public void test() throws IOException, ClassNotFoundException {
+        TestHelper.testGetterSetters(ModelServer.class);
     }
 }

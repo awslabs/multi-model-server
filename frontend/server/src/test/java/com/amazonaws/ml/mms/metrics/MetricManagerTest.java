@@ -11,7 +11,7 @@ import java.security.GeneralSecurityException;
 import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
+import java.util.ArrayList;
 public class MetricManagerTest {
     static {
         TestUtils.init();
@@ -20,20 +20,13 @@ public class MetricManagerTest {
     @Test
     public void test() throws GeneralSecurityException, IOException, JsonParseException {
         ConfigManager configManager = new ConfigManager();
-        Type metricType = new TypeToken<Map<String, Map<String, Metric>>>() {}.getType();
         MetricCollector collector = new MetricCollector(configManager);
-        MetricStore metricStore = new MetricStore();
+        Type listType = new TypeToken<ArrayList<Metric>>(){}.getType();
         Gson gson = new Gson();
         collector.collect();
         String metricJsonString = collector.getJsonString();
-        metricStore.setMap(gson.fromJson(metricJsonString, metricType));
-        Map localMap = metricStore.getMap();
-        Assert.assertTrue(localMap.containsKey("SYSTEM"));
-        Map metricsMap = (Map) localMap.get("SYSTEM");
-        Assert.assertTrue(metricsMap.containsKey("CPUUtilization"));
-        Assert.assertTrue(metricsMap.containsKey("MemoryUsed"));
-        Assert.assertTrue(metricsMap.containsKey("DiskUsage"));
-        Metric testMetric = (Metric) metricsMap.get("MemoryUsed");
-        Assert.assertTrue(testMetric.getUnit().equals("Megabytes"));
+        ArrayList<Metric> metrics;
+        metrics = gson.fromJson(metricJsonString, listType);
+        Assert.assertTrue(metrics.size() == 4);
     }
 }

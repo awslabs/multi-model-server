@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 public class MetricManager {
 
     private MetricStore metricStore = new MetricStore();
-    private Type metricType = new TypeToken<Map<String, Map<String, Metric>>>() {}.getType();
     private Logger logger = LoggerFactory.getLogger(MetricManager.class);
     private Logger metricsLogger = LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
 
@@ -46,7 +45,7 @@ public class MetricManager {
                         try {
                             collector.collect();
                             String metricJsonString = collector.getJsonString();
-                            metricStore.setMap(gson.fromJson(metricJsonString, metricType));
+                            metricStore = gson.fromJson(metricJsonString, MetricStore.class);
                             metricsLogger.info(metricJsonString);
                         } catch (IOException | JsonParseException e) {
                             logger.error(e.getMessage());

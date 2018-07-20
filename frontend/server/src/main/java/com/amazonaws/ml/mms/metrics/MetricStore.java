@@ -12,17 +12,17 @@
  */
 package com.amazonaws.ml.mms.metrics;
 
-import java.util.Map;
+import java.util.ArrayList;
 
 public class MetricStore {
 
-    private Map<String, Map<String, Metric>> map;
+    private ArrayList<Metric> metrics;
 
-    public Map<String, Map<String, Metric>> getMap() {
-        return map;
+    public ArrayList<Metric> getMetrics() {
+        return metrics;
     }
 
-    public void setMap(Map<String, Map<String, Metric>> map) {
-        this.map = map;
+    public void setMetrics(ArrayList<Metric> metrics) {
+        this.metrics = metrics;
     }
 }

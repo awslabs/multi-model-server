@@ -15,25 +15,35 @@ from mms.utils.model_server_error_codes import ModelServerErrorCodes
 
 
 def test_validate_load_message_missing_model_path():
-    invalid_object = {'command': 'some-command', 'modelName': 'some-model-name'}
+    invalid_object = {'command': 'some-command', 'modelName': 'some-model-name', 'handler': 'some handler string'}
     with pytest.raises(MMSError) as error:
         ModelWorkerMessageValidators.validate_load_message(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE, 'error codes don\'t match'
-    assert error.value.get_message() == 'Load command missing \"model-path\" key'
+    assert error.value.get_message() == "Load command missing \"modelPath\" key"
 
 
 def test_validate_load_message_missing_model_name():
-    invalid_object = {'command': 'load', 'modelPath': 'some-model-path'}
+    invalid_object = {'command': 'load', 'modelPath': 'some-model-path', 'handler': 'some handler string'}
     with pytest.raises(MMSError) as error:
         ModelWorkerMessageValidators.validate_load_message(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE, 'error codes don\'t match'
-    assert error.value.get_message() == 'Load command missing \"model-name\" key'
+    assert error.value.get_message() == "Load command missing \"modelName\" key"
+
+
+def test_validate_load_messages_missing_handler():
+    invalid_object = {'command': 'load', 'modelPath': 'some-model-path', 'modelName': 'some model name'}
+    with pytest.raises(MMSError) as error:
+        ModelWorkerMessageValidators.validate_load_message(invalid_object)
+
+    assert error.value.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE, 'error codes don\'t match'
+    assert error.value.get_message() == "Load command missing \"handler\" key"
 
 
 def test_valudate_load_message_with_valid_msg():
-    valid_object = {'command': 'load', 'modelPath': 'some-model-path', 'modelName': 'some-model-name'}
+    valid_object = {'command': 'load', 'modelPath': 'some-model-path', 'modelName': 'some-model-name',
+                    'handler': 'some handler string'}
     ModelWorkerMessageValidators.validate_load_message(valid_object)
 
 
@@ -44,7 +54,7 @@ def test_validate_predict_data_with_missing_request_id():
         ModelWorkerMessageValidators.validate_predict_data(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_INPUT
-    assert error.value.get_message() == 'Predict command input missing \"request-id\" field'
+    assert error.value.get_message() == "Predict command input missing \"request-id\" field"
 
     valid_msg = '{ \"requestId\" : \"111-222-3333\"}'
     ModelWorkerMessageValidators.validate_predict_data(valid_msg)
@@ -62,7 +72,7 @@ def test_validate_predict_inputs_missing_value():
         ModelWorkerMessageValidators.validate_predict_inputs(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_INPUT
-    assert error.value.get_message() == 'Predict command input data missing \"value\" field'
+    assert error.value.get_message() == "Predict command input data missing \"value\" field"
 
 
 def test_validate_predict_inputs_missing_name():
@@ -87,7 +97,7 @@ def test_validate_predict_msg_missing_model_name():
         ModelWorkerMessageValidators.validate_predict_msg(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_MESSAGE
-    assert error.value.get_message() == 'Predict command input missing \"modelName\" field.'
+    assert error.value.get_message() == "Predict command input missing \"modelName\" field."
 
 
 def test_validate_predict_msg_missing_request_batch():
@@ -97,7 +107,7 @@ def test_validate_predict_msg_missing_request_batch():
         ModelWorkerMessageValidators.validate_predict_msg(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_MESSAGE
-    assert error.value.get_message() == 'Predict command input missing \"requestBatch\" field.'
+    assert error.value.get_message() == "Predict command input missing \"requestBatch\" field."
 
 
 def test_validate_predict_msg_missing_model_inputs():
@@ -108,7 +118,7 @@ def test_validate_predict_msg_missing_model_inputs():
         ModelWorkerMessageValidators.validate_predict_msg(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_PREDICT_MESSAGE
-    assert error.value.get_message() == 'Predict command input\'s requestBatch missing \"modelInputs\" field.'
+    assert error.value.get_message() == "Predict command input\'s requestBatch missing \"modelInputs\" field."
 
 
 def test_validate_predict_msg_valid_input():
@@ -125,7 +135,7 @@ def test_validate_unload_msg_with_invalid_msg():
         ModelWorkerMessageValidators.validate_unload_msg(invalid_object)
 
     assert error.value.get_code() == ModelServerErrorCodes.INVALID_UNLOAD_MESSAGE
-    assert error.value.get_message() == 'Unload command input missing \"model-name\" field'
+    assert error.value.get_message() == "Unload command input missing \"model-name\" field"
 
 
 def test_validate_unload_msg_with_valid_msg():

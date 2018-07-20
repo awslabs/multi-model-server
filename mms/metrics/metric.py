@@ -13,7 +13,7 @@ Metric class for model server
 """
 from collections import OrderedDict
 import datetime
-from mms.unit import Units
+from mms.metrics.unit import Units
 
 MetricUnit = Units()
 

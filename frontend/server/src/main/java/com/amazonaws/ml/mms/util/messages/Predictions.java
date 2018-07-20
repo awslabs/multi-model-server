@@ -18,6 +18,8 @@ public class Predictions {
     private String contentType;
     private String value; // base64 encoded
 
+    public Predictions() {}
+
     public String getRequestId() {
         return requestId;
     }

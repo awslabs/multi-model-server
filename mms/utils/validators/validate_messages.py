@@ -35,10 +35,13 @@ class ModelWorkerMessageValidators(object):
         :return:
         """
         if u'modelPath' not in msg:
-            raise MMSError(err.INVALID_LOAD_MESSAGE, "Load command missing \"model-path\" key")
+            raise MMSError(err.INVALID_LOAD_MESSAGE, "Load command missing \"modelPath\" key")
 
         if u'modelName' not in msg:
-            raise MMSError(err.INVALID_LOAD_MESSAGE, "Load command missing \"model-name\" key")
+            raise MMSError(err.INVALID_LOAD_MESSAGE, "Load command missing \"modelName\" key")
+
+        if u'handler' not in msg:
+            raise MMSError(err.INVALID_LOAD_MESSAGE, "Load command missing \"handler\" key")
 
     @staticmethod
     def validate_predict_data(msg):

@@ -1,7 +1,7 @@
 from mms.metrics.metrics_store import MetricsStore
 from mms.metrics.dimension import Dimension
 from mms.model_service_worker import emit_metrics
-
+import pytest
 
 def get_model_key(name, unit, req_id, model_name):
     dimensions = list()
@@ -57,10 +57,9 @@ def test_metrics(capsys):
 
     # Adding other types of metrics
     # Check for time metric
-    try:
+    with pytest.raises(Exception) as e_info:
         metrics.add_time('WrongTime', 20, 1, 'ns')
-    except Exception as e:
-        assert "the unit for a timed metric should be" in str(e)
+        assert "the unit for a timed metric should be" in str(e_info)
 
     metrics.add_time('CorrectTime', 20, 2, 's')
     metrics.add_time('CorrectTime', 20, 0)
@@ -71,10 +70,9 @@ def test_metrics(capsys):
     assert test_metric.value == 20
     assert test_metric.unit == 'Seconds'
     # Size based metrics
-    try:
-        metrics.add_size('WrongSize', 20, 1, 'TB')
-    except Exception as e:
-        assert "The unit for size based metric is one of" in str(e)
+    with pytest.raises(Exception) as e_info:
+        metrics.add_time('WrongSize', 20, 1, 'TB')
+        assert "The unit for size based metric is one of" in str(e_info)
 
     metrics.add_size('CorrectSize', 200, 0, 'GB')
     metrics.add_size('CorrectSize', 10, 2)

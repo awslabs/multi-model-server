@@ -35,6 +35,9 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -75,7 +78,10 @@ public class ModelServer {
             initModelStore();
 
             ChannelFuture f = start();
+            // Create and schedule metrics manager
             metricManager = new MetricManager(configManager);
+            ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+            scheduler.scheduleAtFixedRate(metricManager, 2, 60, TimeUnit.SECONDS);
             System.out.println("Model server started.");
             f.sync();
         } finally {

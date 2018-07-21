@@ -15,41 +15,18 @@ package com.amazonaws.ml.mms.metrics;
 import java.util.ArrayList;
 
 public class Metric {
-    private String name;
+    private String metricName;
     private String value;
     private String unit;
     private ArrayList<Dimension> dimensions;
     private String timestamp;
 
-    public void setName(String name) {
-        this.name = name;
+    public String getMetricName() {
+        return metricName;
     }
 
-    public void setDimensions(ArrayList<Dimension> dimensions) {
-        this.dimensions = dimensions;
-    }
-
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getName() {
-
-        return name;
-    }
-
-    public ArrayList<Dimension> getDimensions() {
-        return dimensions;
-    }
-
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public Metric() {}
-
-    public String getUnit() {
-        return unit;
+    public void setMetricName(String metricName) {
+        this.metricName = metricName;
     }
 
     public String getValue() {
@@ -60,7 +37,27 @@ public class Metric {
         this.value = value;
     }
 
+    public String getUnit() {
+        return unit;
+    }
+
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    public ArrayList<Dimension> getDimensions() {
+        return dimensions;
+    }
+
+    public void setDimensions(ArrayList<Dimension> dimensions) {
+        this.dimensions = dimensions;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
 }

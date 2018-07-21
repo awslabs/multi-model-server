@@ -14,55 +14,42 @@ package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MetricManager {
+public class MetricManager implements Runnable {
 
-    private MetricStore metricStore = new MetricStore();
-    private Logger logger = LoggerFactory.getLogger(MetricManager.class);
-    private Logger metricsLogger = LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+    private static final Logger logger = LoggerFactory.getLogger(MetricManager.class);
+    private static final Logger loggerMetrics =
+            LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+    private MetricCollector collector;
+    private ArrayList<Metric> metrics;
 
-    @SuppressWarnings("PMD.AccessorMethodGeneration")
-    public MetricManager(ConfigManager configManager, int timeInterval) {
-        Timer t;
-        TimerTask timerTask;
-        timerTask =
-                new TimerTask() {
-
-                    @Override
-                    public void run() {
-                        // Read and convert
-                        MetricCollector collector = new MetricCollector(configManager);
-                        Gson gson = new Gson();
-                        try {
-                            collector.collect();
-                            String metricJsonString = collector.getJsonString();
-                            metricStore = gson.fromJson(metricJsonString, MetricStore.class);
-                            metricsLogger.info(metricJsonString);
-                        } catch (IOException | JsonParseException e) {
-                            logger.error(e.getMessage());
-                        }
-                    }
-                };
-        t = new Timer("Metrics Timer");
-        // Every 60 seconds emit system level metrics
-        //TODO: Replace time with value in config manager
-        t.scheduleAtFixedRate(timerTask, 0, timeInterval);
-    }
-
-    public MetricStore getMetricStore() {
-        return metricStore;
+    @Override
+    public void run() {
+        Gson gson = new Gson();
+        try {
+            String metricJsonString = collector.collect();
+            Type listType = new TypeToken<ArrayList<Metric>>() {}.getType();
+            setMetrics(gson.fromJson(metricJsonString, listType));
+            loggerMetrics.info(metricJsonString);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
     }
 
     public MetricManager(ConfigManager configManager) {
-        this(configManager, 60000);
+        collector = new MetricCollector(configManager);
+    }
+
+    public ArrayList<Metric> getMetrics() {
+        return metrics;
+    }
+
+    public void setMetrics(ArrayList<Metric> metrics) {
+        this.metrics = metrics;
     }
 }

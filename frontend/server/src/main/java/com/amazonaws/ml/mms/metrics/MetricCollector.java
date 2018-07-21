@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 public class MetricCollector {
 
-    static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
+    private static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
     private String jsonString;
     private ConfigManager configManager;
 
@@ -31,7 +31,7 @@ public class MetricCollector {
         this.configManager = configManager;
     }
 
-    public void collect() throws IOException {
+    public String collect() throws IOException {
 
         StringBuilder stringBuilder = new StringBuilder();
         String[] args = new String[2];
@@ -46,7 +46,7 @@ public class MetricCollector {
             workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
         } catch (IOException e) {
             logger.error("Failed to run system metrics script", e);
-            return;
+            return "{}";
         }
 
         String pythonPath = System.getenv("PYTHONPATH");
@@ -59,12 +59,16 @@ public class MetricCollector {
         }
         // sbin added for macs for python sysctl pythonpath
         String path = System.getenv("PATH");
-        StringBuilder pathBuilder = new StringBuilder();
-        pathBuilder.append("PATH=");
-        pathBuilder.append(path);
-        pathBuilder.append(File.pathSeparator);
-        pathBuilder.append("/sbin/");
-        path = pathBuilder.toString();
+        String osName = System.getProperty("os.name").toLowerCase();
+        boolean isMacOs = osName.startsWith("mac os x");
+        if (isMacOs) {
+            StringBuilder pathBuilder = new StringBuilder();
+            pathBuilder.append("PATH=");
+            pathBuilder.append(path);
+            pathBuilder.append(File.pathSeparator);
+            pathBuilder.append("/sbin/");
+            path = pathBuilder.toString();
+        }
         String[] env = new String[] {pythonEnv, path};
         Process p = Runtime.getRuntime().exec(args, env, workingDir);
         InputStream stdOut = p.getInputStream();
@@ -88,6 +92,7 @@ public class MetricCollector {
             }
             throw new IOException(error.toString());
         }
+        return jsonString;
     }
 
     public String getJsonString() {

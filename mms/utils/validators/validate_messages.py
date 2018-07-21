@@ -23,6 +23,14 @@ class ModelWorkerMessageValidators(object):
     def validate_load_message(msg):
         """
         Validate the load messages
+        {
+            "command" : "load", string
+            "modelPath" : "/path/to/model/file", string
+            "modelName" : "name", string
+            "gpu" : None if CPU else gpu_id, int
+            "handler" : service handler entry point if provided, string
+            "batchSize" : batch size, int
+        }
         :param msg:
         :return:
         """
@@ -35,10 +43,16 @@ class ModelWorkerMessageValidators(object):
     @staticmethod
     def validate_predict_data(msg):
         """
-        {
-                "request-id" : "111-222-3333",
-                "input1" : {}
-                "input2" : {}
+       REQUESTS = [ {
+            "requestId" : "111-222-3333",
+            "encoding" : "None | base64 | utf-8",
+            "modelInputs" : [ MODEL_INPUTS ]
+        } ]
+
+        MODEL_INPUTS = {
+                "encoding": "base64/utf-8", (This is how the value is encoded)
+                "value": "val1"
+                "name" : model_input_name (This is defined in the symbol file and the signature file)
         }
 
         :param msg:
@@ -50,10 +64,11 @@ class ModelWorkerMessageValidators(object):
     @staticmethod
     def validate_predict_inputs(msg):
         """
-        "input1" : {
-            "encoding": "base64",
-            "value": "val1"
-        }...
+        MODEL_INPUTS = [{
+                "encoding": "base64", (This is how the value is encoded)
+                "value": "val1"
+                "name" : model_input_name (This is defined in the symbol file and the signature file)
+        }]
 
         :param msg:
         :return:
@@ -68,17 +83,35 @@ class ModelWorkerMessageValidators(object):
     @staticmethod
     def validate_predict_msg(msg):
         """
-        {
-           "command" : "predict",
-           "model-name" : "name",
-           "data": [ {}, {} ]
+       PREDICT COMMAND = {
+            "command": "predict",
+            "modelName": "model-to-run-inference-against",
+            "contentType": "http-content-types",
+            "requestBatch": [ REQUESTS ]
+        }
+        REQUESTS = {
+            "requestId" : "111-222-3333",
+            "encoding" : "None|base64|utf-8",
+            "modelInputs" : [ MODEL_INPUTS ]
+        }
+        MODEL_INPUTS = {
+                "encoding": "base64/utf-8", (# This is how the value is encoded)
+                "value": "val1"
+                "name" : model_input_name (# This is defined in the symbol file and the signature file)
         }
         """
+
         if u'modelName' not in msg:
             raise MMSError(err.INVALID_PREDICT_MESSAGE, "Predict command input missing \"modelName\" field.")
 
         if u'requestBatch' not in msg:
             raise MMSError(err.INVALID_PREDICT_MESSAGE, "Predict command input missing \"requestBatch\" field.")
+
+        req_batch = msg[u'requestBatch']
+        for req in req_batch:
+            if u'modelInputs' not in req:
+                raise MMSError(err.INVALID_PREDICT_MESSAGE, "Predict command input's requestBatch missing "
+                                                            "\"modelInputs\" field.")
 
     @staticmethod
     def validate_unload_msg(msg):

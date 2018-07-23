@@ -8,6 +8,7 @@ phases:
       - apt-get update
       - apt-get install -y curl
       - apt-get install -y libgfortran3
+      - pip install future
       - pip install pip -U
       - pip install flask
       #- pip install -U mxnet

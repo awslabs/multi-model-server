@@ -8,8 +8,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""
-ModelService defines an API for base model service.
+"""`ModelService` defines an API for base model service.
 """
 # pylint: disable=W0223
 
@@ -21,9 +20,11 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from mms.log import get_logger
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
-
+from mms.metrics.metrics_store import MetricsStore
 logger = get_logger()
-
+PREPROCESS_METRIC = 'MMSWorkerPreprocessTimeBatch'
+INFERENCE_METRIC = 'MMSWorkerInferenceTimeBatch'
+POSTPROCESS_METRIC = 'MMSWorkerPostprocessTimeBatch'
 
 class ModelService(object):
     """
@@ -40,6 +41,7 @@ class ModelService(object):
         self.gpu = gpu
         self.ctx = None
         self._signature = None
+        self.metrics_store = None
 
     def _init_internal(self, model_name, model_dir, manifest, gpu=None, batch_size=None):
         """
@@ -99,6 +101,9 @@ class ModelService(object):
         """
         pass
 
+    def metrics_init(self, model_name, req_id_map=None):
+        self.metrics_store = MetricsStore(req_id_map, model_name)
+
 
 class SingleNodeService(ModelService):
     """
@@ -135,8 +140,10 @@ class SingleNodeService(ModelService):
 
             post_time_in_ms = (post_end_ms - post_start_ms) * 1000
 
-            # TODO: Redo this metrics
-            print("Metrics are {}, {}, {}".format(pre_time_in_ms, infer_time_in_ms, post_time_in_ms))
+            self.metrics_store.add_time(PREPROCESS_METRIC, pre_time_in_ms)
+            self.metrics_store.add_time(INFERENCE_METRIC, infer_time_in_ms)
+            self.metrics_store.add_time(POSTPROCESS_METRIC, post_time_in_ms)
+
         except MMSError as m:
             m.set_code(err.CUSTOM_SERVICE_ERROR)
             raise m

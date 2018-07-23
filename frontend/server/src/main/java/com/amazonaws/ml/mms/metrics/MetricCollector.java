@@ -13,6 +13,8 @@
 package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,18 +22,16 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Scanner;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MetricCollector implements Runnable{
+public class MetricCollector implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
     private ConfigManager configManager;
     private static final Logger loggerMetrics =
             LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+
     public MetricCollector(ConfigManager configManager) {
         this.configManager = configManager;
     }
@@ -98,6 +98,7 @@ public class MetricCollector implements Runnable{
         }
         return jsonString;
     }
+
     @Override
     public void run() {
         Gson gson = new Gson();

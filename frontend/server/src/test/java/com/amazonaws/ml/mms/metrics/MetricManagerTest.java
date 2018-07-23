@@ -2,11 +2,7 @@ package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.TestUtils;
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
-import java.io.IOException;
-import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +19,7 @@ public class MetricManagerTest {
         ConfigManager configManager = new ConfigManager();
         MetricManager.scheduleMetrics(configManager);
         MetricManager metricManager = MetricManager.getInstance();
-        List<Metric> metrics=null;
+        List<Metric> metrics = null;
         // Wait till first value is read in
         while (metrics == null) {
             metrics = metricManager.getMetrics();

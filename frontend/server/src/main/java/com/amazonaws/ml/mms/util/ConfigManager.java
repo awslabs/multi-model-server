@@ -120,7 +120,9 @@ public final class ConfigManager {
         return getIntProperty(NUMBER_OF_GPU, 0);
     }
 
-    public int getMetricTimeInterval() { return getIntProperty(METRIC_TIME_INTERVAL, 60); }
+    public int getMetricTimeInterval() {
+        return getIntProperty(METRIC_TIME_INTERVAL, 60);
+    }
 
     public String getModelServerHome() {
         String mmsHome = System.getenv("MODEL_SERVER_HOME");

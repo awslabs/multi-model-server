@@ -143,7 +143,7 @@ public class WorkerLifeCycle {
                         } else {
                             if ("[/METRICS]".equals(result)) {
                                 loggerModelMetrics.info(jsonString.toString());
-                                jsonString = new StringBuilder();
+                                jsonString.setLength(0);
                                 metricFound = false;
                             } else {
                                 jsonString.append(result);

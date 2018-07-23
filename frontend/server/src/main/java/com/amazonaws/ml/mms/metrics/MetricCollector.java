@@ -16,23 +16,28 @@ import com.amazonaws.ml.mms.util.ConfigManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Scanner;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MetricCollector {
+public class MetricCollector implements Runnable{
 
     private static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
-    private String jsonString;
     private ConfigManager configManager;
-
+    private static final Logger loggerMetrics =
+            LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
     public MetricCollector(ConfigManager configManager) {
         this.configManager = configManager;
     }
 
     public String collect() throws IOException {
-
+        String jsonString;
         StringBuilder stringBuilder = new StringBuilder();
         String[] args = new String[2];
         args[0] = "python";
@@ -59,9 +64,8 @@ public class MetricCollector {
         }
         // sbin added for macs for python sysctl pythonpath
         String path = System.getenv("PATH");
-        String osName = System.getProperty("os.name").toLowerCase();
-        boolean isMacOs = osName.startsWith("mac os x");
-        if (isMacOs) {
+        String osName = System.getProperty("os.name");
+        if (osName.startsWith("Mac OS X")) {
             StringBuilder pathBuilder = new StringBuilder();
             pathBuilder.append("PATH=");
             pathBuilder.append(path);
@@ -80,7 +84,7 @@ public class MetricCollector {
         while (scanner.hasNext()) {
             stringBuilder.append(scanner.nextLine());
         }
-        setJsonString(stringBuilder.toString());
+        jsonString = stringBuilder.toString();
         // read any errors from the attempted command
 
         scanner = new Scanner(stdErr, StandardCharsets.UTF_8.name());
@@ -94,12 +98,17 @@ public class MetricCollector {
         }
         return jsonString;
     }
-
-    public String getJsonString() {
-        return jsonString;
-    }
-
-    public void setJsonString(String jsonString) {
-        this.jsonString = jsonString;
+    @Override
+    public void run() {
+        Gson gson = new Gson();
+        try {
+            String metricJsonString = collect();
+            Type listType = new TypeToken<ArrayList<Metric>>() {}.getType();
+            MetricManager metricManager = MetricManager.getInstance();
+            metricManager.setMetrics(gson.fromJson(metricJsonString, listType));
+            loggerMetrics.info(metricJsonString);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
     }
 }

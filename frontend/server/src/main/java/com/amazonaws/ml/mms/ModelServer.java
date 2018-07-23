@@ -35,15 +35,11 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
 public class ModelServer {
 
     private Logger logger = LoggerFactory.getLogger(ModelServer.class);
@@ -53,7 +49,6 @@ public class ModelServer {
     private AtomicBoolean stopped = new AtomicBoolean(false);
 
     private ConfigManager configManager;
-    private MetricManager metricManager;
 
     /** Creates a new {@code ModelServer} instance. */
     public ModelServer(ConfigManager configManager) {
@@ -79,9 +74,7 @@ public class ModelServer {
 
             ChannelFuture f = start();
             // Create and schedule metrics manager
-            metricManager = new MetricManager(configManager);
-            ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-            scheduler.scheduleAtFixedRate(metricManager, 2, 60, TimeUnit.SECONDS);
+            MetricManager.scheduleMetrics(configManager);
             System.out.println("Model server started.");
             f.sync();
         } finally {

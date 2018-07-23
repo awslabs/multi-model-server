@@ -13,43 +13,41 @@
 package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class MetricManager implements Runnable {
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-    private static final Logger logger = LoggerFactory.getLogger(MetricManager.class);
-    private static final Logger loggerMetrics =
-            LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
-    private MetricCollector collector;
-    private ArrayList<Metric> metrics;
 
-    @Override
-    public void run() {
-        Gson gson = new Gson();
-        try {
-            String metricJsonString = collector.collect();
-            Type listType = new TypeToken<ArrayList<Metric>>() {}.getType();
-            setMetrics(gson.fromJson(metricJsonString, listType));
-            loggerMetrics.info(metricJsonString);
-        } catch (Exception e) {
-            logger.error(e.getMessage());
+public class MetricManager {
+
+
+    private static MetricManager metricManager;
+    private List<Metric> metrics;
+
+    private  MetricManager(){
+
+    }
+    public static MetricManager getInstance() {
+        if (metricManager == null) {
+            metricManager = new MetricManager();
+
         }
+        return metricManager;
     }
 
-    public MetricManager(ConfigManager configManager) {
-        collector = new MetricCollector(configManager);
+    public static void scheduleMetrics(ConfigManager configManager) {
+        MetricCollector metricCollector = new MetricCollector(configManager);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(metricCollector, 0, configManager.getMetricTimeInterval() , TimeUnit.SECONDS);
     }
 
-    public ArrayList<Metric> getMetrics() {
+    public synchronized List<Metric> getMetrics() {
         return metrics;
     }
 
-    public void setMetrics(ArrayList<Metric> metrics) {
+    public synchronized void setMetrics(List<Metric> metrics) {
         this.metrics = metrics;
     }
 }

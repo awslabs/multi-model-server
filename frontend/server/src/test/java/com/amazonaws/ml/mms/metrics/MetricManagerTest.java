@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -18,15 +19,15 @@ public class MetricManagerTest {
     }
 
     @Test
-    public void test() throws GeneralSecurityException, IOException, JsonParseException {
+    public void test() throws GeneralSecurityException, JsonParseException {
         ConfigManager configManager = new ConfigManager();
-        MetricCollector collector = new MetricCollector(configManager);
-        Type listType = new TypeToken<ArrayList<Metric>>() {}.getType();
-        Gson gson = new Gson();
-        collector.collect();
-        String metricJsonString = collector.getJsonString();
-        ArrayList<Metric> metrics;
-        metrics = gson.fromJson(metricJsonString, listType);
+        MetricManager.scheduleMetrics(configManager);
+        MetricManager metricManager = MetricManager.getInstance();
+        List<Metric> metrics=null;
+        // Wait till first value is read in
+        while (metrics == null) {
+            metrics = metricManager.getMetrics();
+        }
         for (Metric metric : metrics) {
             if (metric.getMetricName().equals("CPUUtilization")) {
                 Assert.assertEquals(metric.getUnit(), "Percent");

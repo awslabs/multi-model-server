@@ -97,6 +97,7 @@ public final class NettyUtils {
             ChannelHandlerContext ctx, HttpResponseStatus status, String errorMessage) {
         FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
         resp.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+
         ErrorResponse error = new ErrorResponse(status.code(), status.toString(), errorMessage);
         ByteBuf content = resp.content();
         content.writeCharSequence(JsonUtils.GSON_PRETTY.toJson(error), CharsetUtil.UTF_8);

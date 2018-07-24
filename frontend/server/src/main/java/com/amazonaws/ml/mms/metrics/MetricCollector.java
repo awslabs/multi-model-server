@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 public class MetricCollector implements Runnable {
 
-    private static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
+    static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
     private ConfigManager configManager;
     private static final Logger loggerMetrics =
             LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
@@ -36,7 +36,7 @@ public class MetricCollector implements Runnable {
         this.configManager = configManager;
     }
 
-    public String collect() throws IOException {
+    public String collect() throws IOException, InterruptedException {
         String jsonString;
         StringBuilder stringBuilder = new StringBuilder();
         String[] args = new String[2];
@@ -79,23 +79,12 @@ public class MetricCollector implements Runnable {
 
         InputStream stdErr = p.getErrorStream();
         Scanner scanner = new Scanner(stdOut, StandardCharsets.UTF_8.name());
-
-        // read the output from the command
         while (scanner.hasNext()) {
             stringBuilder.append(scanner.nextLine());
         }
         jsonString = stringBuilder.toString();
-        // read any errors from the attempted command
+        new ReaderThread("MetricCollectorError", stdErr).start();
 
-        scanner = new Scanner(stdErr, StandardCharsets.UTF_8.name());
-        if (scanner.hasNext()) {
-            StringBuilder error = new StringBuilder();
-            error.append("Error while running system metrics script:\n");
-            while (scanner.hasNext()) {
-                error.append(scanner.nextLine());
-            }
-            throw new IOException(error.toString());
-        }
         return jsonString;
     }
 
@@ -109,7 +98,33 @@ public class MetricCollector implements Runnable {
             metricManager.setMetrics(gson.fromJson(metricJsonString, listType));
             loggerMetrics.info(metricJsonString);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
+        }
+    }
+
+    private static final class ReaderThread extends Thread {
+
+        private InputStream is;
+
+        public ReaderThread(String name, InputStream is) {
+            super(name + "-stderr");
+            this.is = is;
+        }
+
+        @Override
+        public void run() {
+            Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name());
+            StringBuilder stringBuilder = new StringBuilder();
+            while (scanner.hasNext()) {
+                String result = scanner.nextLine();
+                if (result == null) {
+                    break;
+                }
+                stringBuilder.append(result);
+            }
+            if (!stringBuilder.toString().isEmpty()) {
+                logger.error(stringBuilder.toString());
+            }
         }
     }
 }

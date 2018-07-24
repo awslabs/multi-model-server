@@ -19,7 +19,8 @@ public class MetricManagerTest {
         ConfigManager configManager = new ConfigManager();
         MetricManager.scheduleMetrics(configManager);
         MetricManager metricManager = MetricManager.getInstance();
-        List<Metric> metrics = null;
+        List<Metric> metrics;
+        metrics = metricManager.getMetrics();
         // Wait till first value is read in
         while (metrics == null) {
             metrics = metricManager.getMetrics();

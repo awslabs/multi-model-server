@@ -20,15 +20,12 @@ import java.util.concurrent.TimeUnit;
 
 public final class MetricManager {
 
-    private static MetricManager metricManager;
+    private static MetricManager metricManager = new MetricManager();
     private List<Metric> metrics;
 
     private MetricManager() {}
 
-    public static synchronized MetricManager getInstance() {
-        if (metricManager == null) {
-            metricManager = new MetricManager();
-        }
+    public static MetricManager getInstance() {
         return metricManager;
     }
 

@@ -13,15 +13,14 @@
 package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.google.gson.Gson;
+import com.amazonaws.ml.mms.util.JsonUtils;
 import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Scanner;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,7 @@ public class MetricCollector implements Runnable {
     static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
     private static final Logger loggerMetrics =
             LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
-    private static Type listType = new TypeToken<ArrayList<Metric>>() {}.getType();
+    private static final Type LIST_TYPE = new TypeToken<ArrayList<Metric>>() {}.getType();
 
     private ConfigManager configManager;
 
@@ -38,8 +37,7 @@ public class MetricCollector implements Runnable {
         this.configManager = configManager;
     }
 
-    public String collect() throws IOException, InterruptedException {
-        StringBuilder stringBuilder = new StringBuilder();
+    public String collect() throws IOException {
         String[] args = new String[2];
         args[0] = "python";
         args[1] = "mms/metrics/system_metrics.py";
@@ -69,55 +67,31 @@ public class MetricCollector implements Runnable {
             path.append(File.pathSeparatorChar).append("/sbin/");
         }
         String[] env = new String[] {pythonEnv, path.toString()};
-        Process p = Runtime.getRuntime().exec(args, env, workingDir);
-        InputStream stdOut = p.getInputStream();
+        final Process p = Runtime.getRuntime().exec(args, env, workingDir);
+        new Thread(
+                        () -> {
+                            try {
+                                logger.error(
+                                        IOUtils.toString(
+                                                p.getErrorStream(), StandardCharsets.UTF_8));
+                            } catch (IOException e) {
+                                logger.error(null, e);
+                            }
+                        })
+                .start();
 
-        InputStream stdErr = p.getErrorStream();
-        Scanner scanner = new Scanner(stdOut, StandardCharsets.UTF_8.name());
-        while (scanner.hasNext()) {
-            stringBuilder.append(scanner.nextLine());
-        }
-        new ReaderThread("MetricCollectorError", stdErr).start();
-
-        return stringBuilder.toString();
+        return IOUtils.toString(p.getInputStream(), StandardCharsets.UTF_8);
     }
 
     @Override
     public void run() {
-        Gson gson = new Gson();
         try {
             String metricJsonString = collect();
             MetricManager metricManager = MetricManager.getInstance();
-            metricManager.setMetrics(gson.fromJson(metricJsonString, listType));
+            metricManager.setMetrics(JsonUtils.GSON.fromJson(metricJsonString, LIST_TYPE));
             loggerMetrics.info(metricJsonString);
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error(e.getMessage(), e);
-        }
-    }
-
-    private static final class ReaderThread extends Thread {
-
-        private InputStream is;
-
-        public ReaderThread(String name, InputStream is) {
-            super(name + "-stderr");
-            this.is = is;
-        }
-
-        @Override
-        public void run() {
-            Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name());
-            StringBuilder stringBuilder = new StringBuilder();
-            while (scanner.hasNext()) {
-                String result = scanner.nextLine();
-                if (result == null) {
-                    break;
-                }
-                stringBuilder.append(result);
-            }
-            if (!stringBuilder.toString().isEmpty()) {
-                logger.error(stringBuilder.toString());
-            }
         }
     }
 }

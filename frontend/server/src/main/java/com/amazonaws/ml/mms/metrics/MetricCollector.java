@@ -48,12 +48,7 @@ public class MetricCollector implements Runnable {
 
         File workingDir;
 
-        try {
-            workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
-        } catch (IOException e) {
-            logger.error("Failed to run system metrics script", e);
-            return "{}";
-        }
+        workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
 
         String pythonPath = System.getenv("PYTHONPATH");
         String pythonEnv;

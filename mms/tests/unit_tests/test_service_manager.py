@@ -179,7 +179,6 @@ class TestRegisterAndLoadModules():
         with pytest.raises(Exception) as error:
             service_manager.register_and_load_modules(*self.args)
 
-        print self.module_file_path
         assert error.value.args[0] == "Invalid service file found mms/tests/unit_tests/test_utils/dummy_model_service" \
                                       ".py. Service file should contain only one service class. Found 0"
         spy_fixtures.register_module.assert_called_with(self.module_file_path)

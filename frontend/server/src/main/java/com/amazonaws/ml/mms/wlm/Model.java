@@ -16,17 +16,23 @@ import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.Signature;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Model {
-
+    public static final String DEFAULT_DATA_QUEUE = "DATA_QUEUE";
     private ModelArchive modelArchive;
     private int minWorkers;
     private int maxWorkers;
     private int batchSize;
     private int maxBatchDelay;
-    private LinkedBlockingDeque<Job> jobs;
+    // Total number of subsequent inference request failures
+    private AtomicInteger failedInfReqs;
+    // Per workerthread job queue. This separates out the control queue from data queue
+    private ConcurrentMap<String, LinkedBlockingDeque<Job>> jobsDb;
 
     public Model(ModelArchive modelArchive, int queueSize) {
         this.modelArchive = modelArchive;
@@ -34,7 +40,10 @@ public class Model {
         maxWorkers = 1;
         batchSize = 1;
         maxBatchDelay = 100;
-        jobs = new LinkedBlockingDeque<>(queueSize);
+        jobsDb = new ConcurrentHashMap<>();
+        // Always have a queue for data
+        jobsDb.putIfAbsent(DEFAULT_DATA_QUEUE, new LinkedBlockingDeque<>(queueSize));
+        failedInfReqs = new AtomicInteger(0);
     }
 
     public String getModelName() {
@@ -109,19 +118,50 @@ public class Model {
         this.maxBatchDelay = maxBatchDelay;
     }
 
+    public boolean addJob(String threadId, Job job) {
+        jobsDb.putIfAbsent(threadId, new LinkedBlockingDeque<>());
+        return jobsDb.get(threadId).offer(job);
+    }
+
+    public void removeJobQueue(String threadId) {
+        if (!threadId.equals(DEFAULT_DATA_QUEUE)) {
+            jobsDb.remove(threadId);
+        }
+    }
+
     public boolean addJob(Job job) {
-        return jobs.offer(job);
+        return addJob(DEFAULT_DATA_QUEUE, job);
+    }
+
+    public void addFirst(String threadId, Job job) {
+        jobsDb.putIfAbsent(threadId, new LinkedBlockingDeque<>());
+        jobsDb.get(threadId).addFirst(job);
     }
 
     public void addFirst(Job j) {
-        jobs.addFirst(j);
+        addFirst(DEFAULT_DATA_QUEUE, j);
     }
 
-    public Job nextJob() throws InterruptedException {
-        return jobs.take();
+    public Job nextJob(String threadId) throws InterruptedException {
+        return nextJob(threadId, Long.MAX_VALUE);
     }
 
-    public Job nextJob(long timeout) throws InterruptedException {
-        return jobs.poll(timeout, TimeUnit.MILLISECONDS);
+    public Job nextJob(String threadId, long timeout) throws InterruptedException {
+        LinkedBlockingDeque<Job> jobs = jobsDb.get(threadId);
+        if (jobs != null && !jobs.isEmpty()) {
+            Job j = jobs.poll();
+            if (j != null) {
+                return j;
+            }
+        }
+        return jobsDb.get(DEFAULT_DATA_QUEUE).poll(timeout, TimeUnit.MILLISECONDS);
+    }
+
+    public int incrFailedInfReqs() {
+        return failedInfReqs.incrementAndGet();
+    }
+
+    public void resetFailedInfReqs() {
+        failedInfReqs.set(0);
     }
 }

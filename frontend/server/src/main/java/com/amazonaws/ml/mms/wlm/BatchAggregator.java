@@ -19,10 +19,8 @@ import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
-import java.util.ListIterator;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,11 +37,11 @@ public class BatchAggregator {
         jobs = new LinkedHashMap<>();
     }
 
-    public BaseModelRequest getRequest() throws InterruptedException {
+    public BaseModelRequest getRequest(String threadName) throws InterruptedException {
         jobs.clear();
 
         // first job is a blocking call;
-        Job job = model.nextJob();
+        Job job = model.nextJob(threadName);
         if (job.isControlCmd()) {
             RequestBatch input = job.getPayload();
             String gpu = input.getStringParameter("gpu");
@@ -58,21 +56,7 @@ public class BatchAggregator {
         int size = model.getBatchSize() - 1;
         long begin = System.currentTimeMillis();
         for (int i = 0; i < size; ++i) {
-            if (job.isControlCmd()) {
-                jobs.remove(job.getJobId());
-
-                ListIterator<Job> iterator =
-                        new ArrayList<>(jobs.values()).listIterator(jobs.size());
-                while (iterator.hasNext()) {
-                    Job j = iterator.next();
-                    model.addFirst(j);
-                }
-                RequestBatch input = job.getPayload();
-                String gpu = input.getStringParameter("gpu");
-                return new ModelLoadModelRequest(model, gpu);
-            }
-
-            job = model.nextJob(maxBatchDelay);
+            job = model.nextJob(threadName, maxBatchDelay);
             if (job == null) {
                 break;
             }
@@ -141,18 +125,34 @@ public class BatchAggregator {
             return;
         }
 
-        ModelInferenceRequest msg = (ModelInferenceRequest) message;
-        for (RequestBatch req : msg.getRequestBatch()) {
-            String requestId = req.getRequestId();
-            Job job = jobs.remove(requestId);
-            if (job == null) {
-                throw new IllegalStateException("Unexpected job: " + requestId);
+        if (message != null) {
+            ModelInferenceRequest msg = (ModelInferenceRequest) message;
+            for (RequestBatch req : msg.getRequestBatch()) {
+                String requestId = req.getRequestId();
+                Job job = jobs.remove(requestId);
+                if (job == null) {
+                    throw new IllegalStateException("Unexpected job: " + requestId);
+                }
+                job.sendError(error);
             }
-            job.sendError(error);
-        }
+            if (!jobs.isEmpty()) {
+                jobs.clear();
+                throw new IllegalStateException("Not all jobs get response.");
+            }
+        } else {
+            // Send the error message to all the jobs
+            for (Map.Entry<String, Job> j : jobs.entrySet()) {
+                String jobsId = j.getValue().getJobId();
+                Job job = jobs.remove(jobsId);
 
-        if (!jobs.isEmpty()) {
-            throw new IllegalStateException("Not all jobs get response.");
+                if (job.isControlCmd()) {
+                    job.sendError(error);
+                } else {
+                    // Data message can be handled by other workers.
+                    // If batch has gone past its batch max delay timer?
+                    model.addFirst(job);
+                }
+            }
         }
     }
 }

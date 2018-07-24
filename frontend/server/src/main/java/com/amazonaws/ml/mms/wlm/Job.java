@@ -14,6 +14,7 @@ package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import com.amazonaws.ml.mms.util.messages.WorkerCommands;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -30,11 +31,12 @@ public class Job {
     private ChannelHandlerContext ctx;
 
     private String modelName;
-    private String cmd; // Else its data msg or inf requests
+    private WorkerCommands cmd; // Else its data msg or inf requests
     private RequestBatch input;
     private long begin;
 
-    public Job(ChannelHandlerContext ctx, String modelName, String cmd, RequestBatch input) {
+    public Job(
+            ChannelHandlerContext ctx, String modelName, WorkerCommands cmd, RequestBatch input) {
         this.ctx = ctx;
         this.modelName = modelName;
         this.cmd = cmd;
@@ -51,12 +53,12 @@ public class Job {
         return modelName;
     }
 
-    public String getCmd() {
+    public WorkerCommands getCmd() {
         return cmd;
     }
 
     public boolean isControlCmd() {
-        return !"predict".equals(cmd);
+        return !WorkerCommands.PREDICT.equals(cmd);
     }
 
     public RequestBatch getPayload() {

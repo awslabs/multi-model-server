@@ -25,7 +25,7 @@ public class ModelInferenceRequest extends BaseModelRequest {
     }
 
     public ModelInferenceRequest(String modelName) {
-        super("predict", modelName);
+        super(WorkerCommands.PREDICT, modelName);
         requestBatch = new ArrayList<>();
     }
 

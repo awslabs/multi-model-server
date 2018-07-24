@@ -18,6 +18,7 @@ import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.ModelInputs;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import com.amazonaws.ml.mms.util.messages.WorkerCommands;
 import com.amazonaws.ml.mms.wlm.Job;
 import com.amazonaws.ml.mms.wlm.Model;
 import com.amazonaws.ml.mms.wlm.ModelManager;
@@ -174,7 +175,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        Job job = new Job(ctx, modelName, "predict", input);
+        Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
             NettyUtils.sendError(ctx, status);
@@ -202,7 +203,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        Job job = new Job(ctx, modelName, "predict", input);
+        Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
             NettyUtils.sendError(ctx, status);

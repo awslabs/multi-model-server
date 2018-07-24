@@ -20,6 +20,7 @@ import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelInputs;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import com.amazonaws.ml.mms.util.messages.WorkerCommands;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -37,6 +38,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +46,7 @@ import org.slf4j.LoggerFactory;
 public class WorkerThread extends Thread {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
-
+    static final long WORKER_TIMEOUT = 2L;
     static final StringDecoder STRING_DECODER = new StringDecoder();
     static final MessageDecoder MSG_DECODER = new MessageDecoder();
     static final MessageEncoder MSG_ENCODER = new MessageEncoder();
@@ -74,7 +76,7 @@ public class WorkerThread extends Thread {
             int gpuId,
             Model model,
             BatchAggregator aggregator) {
-        super("BackendWorker-" + port);
+        super("BackendWorker-" + port); // ** IMPORTANT NOTE**: THIS NAME SHOULD BE UNIQUE..
         this.parentThreads = parentThreads;
         this.configManager = configManager;
         this.backendEventGroup = backendEventGroup;
@@ -94,16 +96,30 @@ public class WorkerThread extends Thread {
         BaseModelRequest req = null;
         try {
             while (running.get()) {
-                req = aggregator.getRequest();
+                req = aggregator.getRequest(getName());
                 backendChannel.write(req);
                 backendChannel.flush();
 
-                ModelWorkerResponse reply = replies.take();
-                aggregator.sendResponse(reply);
+                // TODO: Change this to configurable param
+                ModelWorkerResponse reply = replies.poll(WORKER_TIMEOUT, TimeUnit.MINUTES);
+
+                if (reply != null) {
+                    aggregator.sendResponse(reply);
+                } else {
+                    throw new WorkerInitializationException(
+                            "Backend worker did not respond in given time");
+                }
+
+                if (req.getCommand().equals(WorkerCommands.PREDICT)) {
+                    model.resetFailedInfReqs();
+                }
+
                 req = null;
             }
         } catch (InterruptedException e) {
             logger.warn("Backend worker thread interrupted.", e);
+        } catch (WorkerInitializationException wi) {
+            logger.error("Backend worker error", wi);
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);
         } finally {
@@ -169,9 +185,20 @@ public class WorkerThread extends Thread {
                                         }
 
                                         Job job =
-                                                new Job(null, model.getModelName(), "load", input);
-                                        model.addFirst(job);
+                                                new Job(
+                                                        null,
+                                                        model.getModelName(),
+                                                        WorkerCommands.LOAD,
+                                                        input);
+                                        model.addJob(getName(), job);
+                                        latch.countDown();
                                     });
+
+            if (!latch.await(WORKER_TIMEOUT, TimeUnit.MINUTES)) {
+                throw new WorkerInitializationException(
+                        "Worker failed to initialize within {} mins" + WORKER_TIMEOUT);
+            }
+
         } catch (InterruptedException e) {
             lifeCycle.exit();
             throw new WorkerInitializationException(e);
@@ -201,8 +228,26 @@ public class WorkerThread extends Thread {
     public void shutdown() {
         running.set(false);
         backendChannel.close();
+        ModelManager manager = ModelManager.getInstance();
         if (currentThread != null) {
             currentThread.interrupt();
+            try {
+                if (parentThreads.size() < model.getMinWorkers()) {
+                    // minWorkers is the numWorkers configured for this model. If parent thread group
+                    // has less threads than expected minWorkers, we should restart the workers.
+                    manager.updateModel(
+                            model.getModelName(), model.getMinWorkers(), model.getMinWorkers());
+                }
+                aggregator.sendError(null, "Internal Failure");
+            } catch (WorkerInitializationException wie) {
+                logger.error(
+                        "Error restarting the backend worker for model name {}",
+                        model.getModelName());
+            }
+
+            model.removeJobQueue(getName());
+            int val = model.incrFailedInfReqs();
+            logger.error("Number or consecutive unsuccessful inference {}", val);
         }
         // TODO: push current message back to queue, if no more worker,
         // drain the queue and send error back

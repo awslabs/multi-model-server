@@ -12,26 +12,26 @@ import pytest
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes
 
-
-def test_get_code():
-    error = MMSError(ModelServerErrorCodes.INVALID_LOAD_MESSAGE, "invalid load")
-    assert error.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE
-
-
-def test_get_message():
-    error = MMSError(ModelServerErrorCodes.INVALID_LOAD_MESSAGE, "invalid load")
-    assert error.get_message() == "invalid load"
+@pytest.fixture()
+def mms_error():
+    return MMSError(ModelServerErrorCodes.INVALID_LOAD_MESSAGE, "invalid load")
 
 
-def test_set_code():
-    error = MMSError(ModelServerErrorCodes.INVALID_LOAD_MESSAGE, "invalid load")
-    error.set_code(ModelServerErrorCodes.INVALID_PREDICT_MESSAGE)
-
-    assert error.get_code() == ModelServerErrorCodes.INVALID_PREDICT_MESSAGE
+def test_get_code(mms_error):
+    assert mms_error.get_code() == ModelServerErrorCodes.INVALID_LOAD_MESSAGE
 
 
-def test_set_message():
-    error = MMSError(ModelServerErrorCodes.INVALID_LOAD_MESSAGE, "invalid load")
-    error.set_message("invalid_load_message")
+def test_get_message(mms_error):
+    assert mms_error.get_message() == "invalid load"
 
-    assert error.get_message() == "invalid_load_message"
+
+def test_set_code(mms_error):
+    mms_error.set_code(ModelServerErrorCodes.INVALID_PREDICT_MESSAGE)
+
+    assert mms_error.get_code() == ModelServerErrorCodes.INVALID_PREDICT_MESSAGE
+
+
+def test_set_message(mms_error):
+    mms_error.set_message("invalid_load_message")
+
+    assert mms_error.get_message() == "invalid_load_message"

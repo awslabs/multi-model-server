@@ -27,11 +27,11 @@ public class ModelLoadModelRequest extends BaseModelRequest {
     private String gpu;
 
     public ModelLoadModelRequest() {
-        super("load", null);
+        super(WorkerCommands.LOAD, null);
     }
 
     public ModelLoadModelRequest(Model model, String gpu) {
-        super("load", model.getModelName());
+        super(WorkerCommands.LOAD, model.getModelName());
         this.handler = model.getModelArchive().getManifest().getModel().getHandler();
         this.batchSize = model.getBatchSize();
         this.gpu = gpu;

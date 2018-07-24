@@ -13,6 +13,7 @@
 package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,13 +21,15 @@ import java.util.concurrent.TimeUnit;
 
 public final class MetricManager {
 
-    private static MetricManager metricManager = new MetricManager();
+    private static final MetricManager METRIC_MANAGER = new MetricManager();
     private List<Metric> metrics;
 
-    private MetricManager() {}
+    private MetricManager() {
+        metrics = Collections.emptyList();
+    }
 
     public static MetricManager getInstance() {
-        return metricManager;
+        return METRIC_MANAGER;
     }
 
     public static void scheduleMetrics(ConfigManager configManager) {

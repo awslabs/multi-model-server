@@ -13,7 +13,7 @@
 package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.google.gson.Gson;
+import com.amazonaws.ml.mms.util.JsonUtils;
 import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,7 @@ public class MetricCollector implements Runnable {
     static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
     private static final Logger loggerMetrics =
             LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
-    private static Type listType = new TypeToken<ArrayList<Metric>>() {}.getType();
+    private static final Type LIST_TYPE = new TypeToken<ArrayList<Metric>>() {}.getType();
 
     private ConfigManager configManager;
 
@@ -85,13 +85,12 @@ public class MetricCollector implements Runnable {
 
     @Override
     public void run() {
-        Gson gson = new Gson();
         try {
             String metricJsonString = collect();
             MetricManager metricManager = MetricManager.getInstance();
-            metricManager.setMetrics(gson.fromJson(metricJsonString, listType));
+            metricManager.setMetrics(JsonUtils.GSON.fromJson(metricJsonString, LIST_TYPE));
             loggerMetrics.info(metricJsonString);
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error(e.getMessage(), e);
         }
     }

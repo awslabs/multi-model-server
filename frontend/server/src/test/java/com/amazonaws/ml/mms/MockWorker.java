@@ -20,6 +20,7 @@ import com.amazonaws.ml.mms.util.messages.ModelLoadModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import com.amazonaws.ml.mms.util.messages.WorkerCommands;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.netty.bootstrap.ServerBootstrap;
@@ -115,7 +116,9 @@ public class MockWorker {
                                         JsonParser parser = new JsonParser();
                                         JsonObject json = (JsonObject) parser.parse(msg);
                                         String cmd = json.get("command").getAsString();
-                                        if ("load".equalsIgnoreCase(cmd)) {
+                                        if (WorkerCommands.LOAD
+                                                .getCommand()
+                                                .equalsIgnoreCase(cmd)) {
                                             out.add(
                                                     JsonUtils.GSON.fromJson(
                                                             json, ModelLoadModelRequest.class));

@@ -40,9 +40,9 @@ import org.apache.commons.io.IOUtils;
 
 public final class ConfigManager {
 
-    public static final String MODEL_METRICS_LOGGER = "MODEL_METRICS_LOGGER";
-    public static final String MODEL_LOGGER = "MODEL_LOGGER";
-    public static final String MMS_METRICS_LOGGER = "MMS_METRICS_LOGGER";
+    public static final String MODEL_METRICS_LOGGER = "MODEL_METRICS";
+    public static final String MODEL_LOGGER = "MODEL_LOG";
+    public static final String MMS_METRICS_LOGGER = "MMS_METRICS";
 
     private static final String DEBUG = "debug";
     private static final String PORT = "port";
@@ -53,6 +53,7 @@ public final class ConfigManager {
     private static final String MAX_WORKERS = "max_workers";
     private static final String JOB_QUEUE_SIZE = "job_queue_size";
     private static final String NUMBER_OF_GPU = "number_of_gpu";
+    private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
 
     private static final String USE_SSL = "use_ssl";
     private static final String KEYSTORE = "keystore";
@@ -117,6 +118,10 @@ public final class ConfigManager {
 
     public int getNumberOfGpu() {
         return getIntProperty(NUMBER_OF_GPU, 0);
+    }
+
+    public int getMetricTimeInterval() {
+        return getIntProperty(METRIC_TIME_INTERVAL, 60);
     }
 
     public String getModelServerHome() {

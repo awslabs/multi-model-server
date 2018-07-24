@@ -37,7 +37,7 @@ public class ConfigManagerTest {
         logger.debug("test mms_metrics");
         Assert.assertTrue(new File("build/logs/mms_metrics.log").exists());
 
-        logger = LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+        logger = LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
         logger.debug("test model_metrics");
         Assert.assertTrue(new File("build/logs/model_metrics.log").exists());
 

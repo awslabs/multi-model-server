@@ -187,13 +187,16 @@ public class ModelServerTest {
         latch = new CountDownLatch(1);
         HttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/models?url=noop-v0.1");
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=noop-v0.1&model_name=noop_v0.1");
         channel.writeAndFlush(req);
         latch.await();
 
         Assert.assertEquals(
                 result,
-                JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Model registered")) + "\n");
+                JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Model \"noop_v0.1\" registered"))
+                        + "\n");
     }
 
     private void testScaleModel(Channel channel) throws InterruptedException {
@@ -220,7 +223,8 @@ public class ModelServerTest {
 
         Assert.assertEquals(
                 result,
-                JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Model unregistered")) + "\n");
+                JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Model \"noop_v0.1\" unregistered"))
+                        + "\n");
     }
 
     private void testPredictions(Channel channel) throws InterruptedException {

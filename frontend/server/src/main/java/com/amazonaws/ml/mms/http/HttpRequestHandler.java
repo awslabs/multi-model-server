@@ -14,6 +14,8 @@ package com.amazonaws.ml.mms.http;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.Manifest;
+import com.amazonaws.ml.mms.archive.ModelArchive;
+import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.ModelInputs;
@@ -56,7 +58,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest req) {
         if (!req.decoderResult().isSuccess()) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(
+                    ctx, HttpResponseStatus.BAD_REQUEST, ErrorCodes.MESSAGE_DECODE_FAILURE);
             return;
         }
 
@@ -64,7 +67,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             handleRequest(ctx, req);
         } catch (Throwable t) {
             logger.error("", t);
-            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            NettyUtils.sendError(
+                    ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, ErrorCodes.UNKNOWN_ERROR);
         }
     }
 
@@ -101,7 +105,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 handleModelsApi(ctx, req, segments, decoder);
                 break;
             default:
-                NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+                NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND, ErrorCodes.INVALID_URI);
                 break;
         }
     }
@@ -111,7 +115,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listApis());
             return;
         }
-        NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+        NettyUtils.sendError(
+                ctx, HttpResponseStatus.NOT_FOUND, ErrorCodes.LIST_MODELS_INVALID_REQUEST_HEADER);
     }
 
     private void handlePing(ChannelHandlerContext ctx) {
@@ -132,7 +137,10 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 handleRegisterModel(ctx, decoder);
                 return;
             }
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(
+                    ctx,
+                    HttpResponseStatus.BAD_REQUEST,
+                    ErrorCodes.MODELS_API_INVALID_MODELS_REQUEST);
         }
 
         if (HttpMethod.GET.equals(method)) {
@@ -142,14 +150,20 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         } else if (HttpMethod.DELETE.equals(method)) {
             handleUnregisterModel(ctx, segments[2]);
         } else {
-            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+            NettyUtils.sendError(
+                    ctx,
+                    HttpResponseStatus.BAD_REQUEST,
+                    ErrorCodes.MODELS_API_INVALID_MODELS_REQUEST);
         }
     }
 
     private void handlePredictions(
             ChannelHandlerContext ctx, FullHttpRequest req, String[] segments) {
         if (segments.length < 3) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(
+                    ctx,
+                    HttpResponseStatus.BAD_REQUEST,
+                    ErrorCodes.PREDICTIONS_API_INVALID_REQUEST);
             return;
         }
         String modelName = segments[2];
@@ -157,7 +171,10 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         ModelManager modelManager = ModelManager.getInstance();
         Model model = modelManager.getModels().get(modelName);
         if (model == null) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+            NettyUtils.sendError(
+                    ctx,
+                    HttpResponseStatus.NOT_FOUND,
+                    ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED);
             return;
         }
 
@@ -171,14 +188,23 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         try {
             input = parseRequest(req);
         } catch (IllegalArgumentException e) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(
+                    ctx,
+                    HttpResponseStatus.BAD_REQUEST,
+                    ErrorCodes.PREDICTIONS_API_INVALID_PARAMETERS);
             return;
         }
 
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
-            NettyUtils.sendError(ctx, status);
+            String code = null;
+            if (status == HttpResponseStatus.NOT_FOUND) {
+                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED;
+            } else {
+                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_SCALED;
+            }
+            NettyUtils.sendError(ctx, status, code);
         }
     }
 
@@ -188,7 +214,10 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
         HttpMethod method = req.method();
         if (!HttpMethod.POST.equals(method)) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(
+                    ctx,
+                    HttpResponseStatus.BAD_REQUEST,
+                    ErrorCodes.PREDICTIONS_API_INVALID_REQUEST);
             return;
         }
 
@@ -199,14 +228,23 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 modelName = input.getStringParameter("model_name");
             }
         } catch (IllegalArgumentException e) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(
+                    ctx,
+                    HttpResponseStatus.BAD_REQUEST,
+                    ErrorCodes.PREDICTIONS_API_INVALID_PARAMETERS);
             return;
         }
 
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
-            NettyUtils.sendError(ctx, status);
+            String code = null;
+            if (status == HttpResponseStatus.NOT_FOUND) {
+                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED;
+            } else {
+                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_SCALED;
+            }
+            NettyUtils.sendError(ctx, status, code);
         }
     }
 
@@ -246,7 +284,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     private void handleRegisterModel(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
         String modelUrl = NettyUtils.getParameter(decoder, "url", null);
         if (modelUrl == null) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(
+                    ctx, HttpResponseStatus.BAD_REQUEST, ErrorCodes.MODELS_POST_INVALID_REQUEST);
             return;
         }
 
@@ -261,22 +300,30 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             try {
                 runtimeType = Manifest.RuntimeType.fromValue(runtime);
             } catch (IllegalArgumentException e) {
-                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
+                String msg = e.getMessage();
+                NettyUtils.sendError(
+                        ctx,
+                        HttpResponseStatus.BAD_REQUEST,
+                        ErrorCodes.MODELS_POST_MODEL_MANIFEST_RUNTIME_INVALID
+                                + " Invalid model runtime given. "
+                                + msg);
                 return;
             }
         }
 
         ModelManager modelManager = ModelManager.getInstance();
+        ModelArchive archive;
         try {
-            modelManager.registerModel(
-                    modelUrl, modelName, runtimeType, handler, batchSize, maxBatchDelay);
+            archive =
+                    modelManager.registerModel(
+                            modelUrl, modelName, runtimeType, handler, batchSize, maxBatchDelay);
         } catch (InvalidModelException e) {
             logger.warn("Failed to load model", e);
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getErrorCode());
             return;
         }
-
-        NettyUtils.sendJsonResponse(ctx, new StatusResponse("Model registered"));
+        String msg = "Model \"" + archive.getManifest().getModel().getModelName() + "\" registered";
+        NettyUtils.sendJsonResponse(ctx, new StatusResponse(msg));
     }
 
     private void handleUnregisterModel(ChannelHandlerContext ctx, String modelName) {
@@ -287,11 +334,11 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             }
         } catch (WorkerInitializationException e) {
             logger.warn("Failed to load model", e);
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getErrorCode());
             return;
         }
-
-        NettyUtils.sendJsonResponse(ctx, new StatusResponse("Model unregistered"));
+        String msg = "Model \"" + modelName + "\" unregistered";
+        NettyUtils.sendJsonResponse(ctx, new StatusResponse(msg));
     }
 
     private void handleScaleModel(
@@ -302,12 +349,13 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         ModelManager modelManager = ModelManager.getInstance();
         try {
             if (!modelManager.updateModel(modelName, minWorkers, maxWorkers)) {
-                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+                NettyUtils.sendError(
+                        ctx, HttpResponseStatus.BAD_REQUEST, ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
                 return;
             }
         } catch (WorkerInitializationException e) {
             logger.error("Failed update model.", e);
-            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getErrorCode());
             return;
         }
 
@@ -319,7 +367,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         ModelManager modelManager = ModelManager.getInstance();
         Model model = modelManager.getModels().get(modelName);
         if (model == null) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+            NettyUtils.sendError(
+                    ctx, HttpResponseStatus.NOT_FOUND, ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
             return;
         }
 

@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
 public class WorkerLifeCycle {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerLifeCycle.class);
-
     private ConfigManager configManager;
+
     private Process process;
     private CountDownLatch latch;
     private boolean success;
@@ -108,6 +108,8 @@ public class WorkerLifeCycle {
         private InputStream is;
         private boolean error;
         private WorkerLifeCycle lifeCycle;
+        static final Logger loggerModelMetrics =
+                LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
 
         public ReaderThread(String name, InputStream is, boolean error, WorkerLifeCycle lifeCycle) {
             super(name + (error ? "-stderr" : "-stdout"));
@@ -119,6 +121,8 @@ public class WorkerLifeCycle {
         @Override
         public void run() {
             try (Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
+                boolean metricFound = false;
+                StringBuilder jsonString = new StringBuilder();
                 while (scanner.hasNext()) {
                     String result = scanner.nextLine();
                     if (result == null) {
@@ -127,10 +131,24 @@ public class WorkerLifeCycle {
                     if ("MxNet worker started.".equals(result)) {
                         lifeCycle.setSuccess(true);
                     }
+                    if ("[METRICS]".equals(result) && !metricFound) {
+                        metricFound = true;
+                        continue;
+                    }
                     if (error) {
                         logger.error(result);
                     } else {
-                        logger.info(result);
+                        if (!metricFound) {
+                            logger.info(result);
+                        } else {
+                            if ("[/METRICS]".equals(result)) {
+                                loggerModelMetrics.info(jsonString.toString());
+                                jsonString.setLength(0);
+                                metricFound = false;
+                            } else {
+                                jsonString.append(result);
+                            }
+                        }
                     }
                 }
             } finally {

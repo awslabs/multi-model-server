@@ -28,16 +28,17 @@ import org.slf4j.LoggerFactory;
 public class MetricCollector implements Runnable {
 
     static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
-    private ConfigManager configManager;
     private static final Logger loggerMetrics =
             LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+    private static Type listType = new TypeToken<ArrayList<Metric>>() {}.getType();
+
+    private ConfigManager configManager;
 
     public MetricCollector(ConfigManager configManager) {
         this.configManager = configManager;
     }
 
     public String collect() throws IOException, InterruptedException {
-        String jsonString;
         StringBuilder stringBuilder = new StringBuilder();
         String[] args = new String[2];
         args[0] = "python";
@@ -60,20 +61,19 @@ public class MetricCollector implements Runnable {
             pythonEnv = "PYTHONPATH=" + workingDir.getAbsolutePath();
         } else {
             pythonEnv =
-                    "PYTHONPATH=" + pythonPath + File.pathSeparator + workingDir.getAbsolutePath();
+                    "PYTHONPATH="
+                            + pythonPath
+                            + File.pathSeparatorChar
+                            + workingDir.getAbsolutePath();
         }
         // sbin added for macs for python sysctl pythonpath
-        String path = System.getenv("PATH");
+        StringBuilder path = new StringBuilder();
+        path.append("PATH=").append(System.getenv("PATH"));
         String osName = System.getProperty("os.name");
         if (osName.startsWith("Mac OS X")) {
-            StringBuilder pathBuilder = new StringBuilder();
-            pathBuilder.append("PATH=");
-            pathBuilder.append(path);
-            pathBuilder.append(File.pathSeparator);
-            pathBuilder.append("/sbin/");
-            path = pathBuilder.toString();
+            path.append(File.pathSeparatorChar).append("/sbin/");
         }
-        String[] env = new String[] {pythonEnv, path};
+        String[] env = new String[] {pythonEnv, path.toString()};
         Process p = Runtime.getRuntime().exec(args, env, workingDir);
         InputStream stdOut = p.getInputStream();
 
@@ -82,10 +82,9 @@ public class MetricCollector implements Runnable {
         while (scanner.hasNext()) {
             stringBuilder.append(scanner.nextLine());
         }
-        jsonString = stringBuilder.toString();
         new ReaderThread("MetricCollectorError", stdErr).start();
 
-        return jsonString;
+        return stringBuilder.toString();
     }
 
     @Override
@@ -93,7 +92,6 @@ public class MetricCollector implements Runnable {
         Gson gson = new Gson();
         try {
             String metricJsonString = collect();
-            Type listType = new TypeToken<ArrayList<Metric>>() {}.getType();
             MetricManager metricManager = MetricManager.getInstance();
             metricManager.setMetrics(gson.fromJson(metricJsonString, listType));
             loggerMetrics.info(metricJsonString);

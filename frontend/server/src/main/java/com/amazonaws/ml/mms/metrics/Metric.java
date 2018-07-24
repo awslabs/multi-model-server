@@ -12,13 +12,13 @@
  */
 package com.amazonaws.ml.mms.metrics;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class Metric {
     private String metricName;
     private String value;
     private String unit;
-    private ArrayList<Dimension> dimensions;
+    private List<Dimension> dimensions;
     private String timestamp;
 
     public String getMetricName() {
@@ -45,11 +45,11 @@ public class Metric {
         this.unit = unit;
     }
 
-    public ArrayList<Dimension> getDimensions() {
+    public List<Dimension> getDimensions() {
         return dimensions;
     }
 
-    public void setDimensions(ArrayList<Dimension> dimensions) {
+    public void setDimensions(List<Dimension> dimensions) {
         this.dimensions = dimensions;
     }
 

@@ -14,6 +14,7 @@ package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.ModelArchive;
+import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.ServerGroups;
@@ -72,6 +73,8 @@ public class ModelServer {
             initModelStore();
 
             ChannelFuture f = start();
+            // Create and schedule metrics manager
+            MetricManager.scheduleMetrics(configManager);
             System.out.println("Model server started.");
             f.sync();
         } finally {

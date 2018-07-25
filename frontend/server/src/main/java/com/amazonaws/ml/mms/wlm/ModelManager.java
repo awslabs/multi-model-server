@@ -16,7 +16,10 @@ import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.common.ErrorCodes;
+import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.util.NettyUtils;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.List;
 import java.util.Map;
@@ -146,5 +149,34 @@ public final class ModelManager {
             return HttpResponseStatus.OK;
         }
         return HttpResponseStatus.SERVICE_UNAVAILABLE;
+    }
+
+    public void workerStatus(final ChannelHandlerContext ctx) {
+        Runnable r =
+                () -> {
+                    // numWorkers - Number of backend workers actually running for a particular model.
+                    // numScaled - Number of backend workers asked.
+                    // Return 200 "numWorkers == numScaled"
+                    // Return 206 "numWorkers > 0 && numWorkers < numScaled"
+
+                    HttpResponseStatus status = HttpResponseStatus.OK;
+                    String response = "Healthy";
+                    int numWorking = 0;
+                    int numScaled = 0;
+                    for (Map.Entry<String, Model> m : models.entrySet()) {
+                        numScaled += m.getValue().getMinWorkers();
+                        numWorking += wlm.getWorkers(m.getValue().getModelName()).size();
+                    }
+
+                    if ((numWorking > 0) && (numWorking < numScaled)) {
+                        // TODO: Check if this status can be set to HttpResponseStatus.PARTIAL_CONTENT
+                        response = "Partial Healthy";
+                    } else if ((numWorking == 0) && (numScaled > 0)) {
+                        // TODO: Check if this can be set to HttpResponseStatus.NOT_FOUND;
+                        response = "Unhealthy";
+                    }
+                    NettyUtils.sendJsonResponse(ctx, new StatusResponse(response), status);
+                };
+        wlm.scheduleAsyc(r);
     }
 }

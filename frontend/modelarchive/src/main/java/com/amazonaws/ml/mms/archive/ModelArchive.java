@@ -86,7 +86,7 @@ public class ModelArchive {
         if (!modelLocation.exists()) {
             throw new InvalidModelException("Model not found: " + url);
         }
-        if (url.endsWith(".model")) {
+        if (url.endsWith(".model") || url.endsWith(".mar")) {
             try (InputStream is = new FileInputStream(modelLocation)) {
                 File unzipDir = unzip(is, null);
                 return load(url, unzipDir, false);

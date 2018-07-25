@@ -120,7 +120,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     }
 
     private void handlePing(ChannelHandlerContext ctx) {
-        NettyUtils.sendJsonResponse(ctx, new StatusResponse("healthy"));
+        ModelManager.getInstance().workerStatus(ctx);
     }
 
     private void handleModelsApi(

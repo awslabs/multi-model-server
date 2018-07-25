@@ -257,7 +257,7 @@ class MXNetModelServiceWorker(object):
                 model_service.metrics_init(model_name, req_id_map)
                 retval.append(model_service.inference(input_batch[0][i] for i in input_batch[0]))
                 # Dump metrics
-                emit_metrics(model_service.metrics.store)
+                emit_metrics(model_service.metrics_store.store)
 
             else:
                 raise MMSError(err.UNSUPPORTED_PREDICT_OPERATION, "Invalid batch size {}".format(batch_size))

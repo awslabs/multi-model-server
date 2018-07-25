@@ -140,7 +140,7 @@ class MXNetModelServiceWorker(object):
         except (IOError, OSError) as sock_err:
             raise MMSError(err.RECEIVE_ERROR, "{}".format(sock_err.message))
         except ValueError as v:
-            raise MMSError(err.INVALID_MESSAGE, "JSON message format error: {}".format(v))
+            raise MMSError(err.INVALID_REQUEST, "JSON message format error: {}".format(v))
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(e))
 
@@ -255,7 +255,7 @@ class MXNetModelServiceWorker(object):
             if batch_size == 1:
                 # Initialize metrics at service level
                 model_service.metrics_init(model_name, req_id_map)
-                retval.append(model_service.inference(input_batch[0][i] for i in input_batch[0]))
+                retval.append(model_service.inference([input_batch[0][i] for i in input_batch[0]]))
                 # Dump metrics
                 emit_metrics(model_service.metrics_store.store)
 

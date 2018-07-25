@@ -12,6 +12,7 @@
  */
 package com.amazonaws.ml.mms.wlm;
 
+import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.codec.MessageDecoder;
@@ -124,7 +125,8 @@ public class WorkerThread extends Thread {
             logger.warn("Backend worker thread exception.", t);
         } finally {
             if (req != null) {
-                aggregator.sendError(req, "Worker execution error.");
+                aggregator.sendError(
+                        req, ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
             }
             lifeCycle.exit();
         }
@@ -132,7 +134,8 @@ public class WorkerThread extends Thread {
 
     public void connect() throws WorkerInitializationException {
         if (!configManager.isDebug() && !lifeCycle.startWorker(port)) {
-            throw new WorkerInitializationException("Failed start worker process.");
+            throw new WorkerInitializationException(
+                    ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
         }
         final CountDownLatch latch = new CountDownLatch(1);
 
@@ -168,7 +171,7 @@ public class WorkerThread extends Thread {
                                         latch.countDown();
                                         parentThreads.remove(WorkerThread.this); // NOPMD
                                         shutdown();
-                                        logger.info("Worker disconnected.");
+                                        logger.info("{} Worker disconnected.", getName());
                                     });
 
             backendChannel
@@ -196,18 +199,20 @@ public class WorkerThread extends Thread {
 
             if (!latch.await(WORKER_TIMEOUT, TimeUnit.MINUTES)) {
                 throw new WorkerInitializationException(
+                        ErrorCodes.INTERNAL_SERVER_ERROR_WORKER_HEALTH_CHECK_TIMEOUT,
                         "Worker failed to initialize within {} mins" + WORKER_TIMEOUT);
             }
 
         } catch (InterruptedException e) {
             lifeCycle.exit();
-            throw new WorkerInitializationException(e);
+            throw new WorkerInitializationException(ErrorCodes.WORKER_INSTANTIATION_ERROR, e);
         } catch (Throwable t) {
             lifeCycle.exit();
 
             // https://github.com/netty/netty/issues/2597
             if (t instanceof IOException) {
-                throw new WorkerInitializationException(t);
+                throw new WorkerInitializationException(
+                        ErrorCodes.INTERNAL_SERVER_ERROR_WORKER_LISTEN_FAILURE, t);
             }
             throw t;
         }

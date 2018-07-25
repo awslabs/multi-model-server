@@ -58,8 +58,6 @@ public class WorkLoadManager {
         int minWorker = model.getMinWorkers();
         List<WorkerThread> threads;
         if (minWorker == 0) {
-            ModelManager modelManager = ModelManager.getInstance();
-            modelManager.getModels().remove(model.getModelName());
             threads = workers.remove(model.getModelName());
             if (threads == null) {
                 return;

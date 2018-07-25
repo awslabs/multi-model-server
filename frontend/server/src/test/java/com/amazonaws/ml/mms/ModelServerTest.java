@@ -155,7 +155,7 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(
-                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("healthy")) + "\n");
+                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Healthy")) + "\n");
     }
 
     private void testApiDescription(Channel channel) throws InterruptedException {

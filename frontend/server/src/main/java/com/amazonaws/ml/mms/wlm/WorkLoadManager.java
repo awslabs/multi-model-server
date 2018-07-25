@@ -100,4 +100,8 @@ public class WorkLoadManager {
             }
         }
     }
+
+    public void scheduleAsyc(Runnable r) {
+        threadPool.execute(r);
+    }
 }

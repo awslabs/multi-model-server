@@ -115,12 +115,16 @@ public class ModelServer {
                 String[] models = loadModels.split(",");
                 for (String model : models) {
                     File modelFile = new File(modelStore, model);
-                    if (!modelFile.exists() && !model.endsWith(".model")) {
-                        modelFile = new File(modelStore, model + ".model");
+                    if (!modelFile.exists()) {
+                        if (!model.endsWith(".model")) {
+                            modelFile = new File(modelStore, model + ".model");
+                        }
+
+                        if (!model.endsWith(".mar")) {
+                            modelFile = new File(modelStore, model + ".mar");
+                        }
                     }
-                    if (!modelFile.exists() && !model.endsWith(".mar")) {
-                        modelFile = new File(modelStore, model + ".mar");
-                    }
+
                     if (modelFile.exists()) {
                         ModelArchive archive = modelManager.registerModel(modelFile.getName());
                         modelManager.updateModel(archive.getModelName(), 1, 1);

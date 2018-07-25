@@ -17,6 +17,7 @@ phases:
       - pip install flask-cors
       - pip install fasteners
       - pip install jsonschema
+      - pip install pytest-mock -U
       # - pip install onnx -U
       # - pip install onnx-mxnet -U
       - pip install -U -e .

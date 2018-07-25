@@ -18,8 +18,7 @@ public class ErrorResponse {
     private String type;
     private String message;
 
-    public ErrorResponse() {
-    }
+    public ErrorResponse() {}
 
     public ErrorResponse(int code, String message) {
         this.code = code;

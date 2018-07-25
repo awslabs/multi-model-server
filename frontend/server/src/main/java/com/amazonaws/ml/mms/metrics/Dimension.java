@@ -10,23 +10,28 @@
  * OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package com.amazonaws.ml.mms.util.messages;
+package com.amazonaws.ml.mms.metrics;
 
-public class BaseModelRequest {
+public class Dimension {
 
-    private WorkerCommands command;
-    private String modelName;
+    private String name;
+    private String value;
 
-    public BaseModelRequest(WorkerCommands command, String modelName) {
-        this.command = command;
-        this.modelName = modelName;
+    public Dimension() {}
+
+    public String getName() {
+        return name;
     }
 
-    public WorkerCommands getCommand() {
-        return command;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getModelName() {
-        return modelName;
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 }

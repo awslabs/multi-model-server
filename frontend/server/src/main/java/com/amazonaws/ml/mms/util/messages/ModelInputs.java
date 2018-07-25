@@ -22,6 +22,8 @@ public class ModelInputs {
     private String encoding;
     private String contentType;
 
+    public ModelInputs() {}
+
     public ModelInputs(String name, String value) {
         this.name = name;
         this.value = value;

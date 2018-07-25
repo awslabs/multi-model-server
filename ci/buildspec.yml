@@ -17,11 +17,13 @@ phases:
       - pip install flask-cors
       - pip install fasteners
       - pip install jsonschema
+      - pip install pytest-mock -U
       # - pip install onnx -U
       # - pip install onnx-mxnet -U
       - pip install -U -e .
   build:
     commands:
+      - frontend/gradlew -p frontend build
       - python -m pytest mms/tests/unit_tests
       # integration test is broken: https://github.com/awslabs/mxnet-model-server/issues/437
       #- python -m pytest mms/tests/integration_tests

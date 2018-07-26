@@ -594,6 +594,15 @@
               "type": "integer",
               "default": "-1"
             }
+          },
+          {
+            "in": "query",
+            "name": "synchronous",
+            "description": "decides whether the call to scale is synchronous or asynchronous.",
+            "required": false,
+            "schema": {
+              "type": "String"
+            }
           }
         ],
         "responses": {
@@ -602,6 +611,9 @@
           },
           "404": {
             "description": "Model not found."
+          },
+          "200": {
+            "description": "OK"
           }
         }
       },

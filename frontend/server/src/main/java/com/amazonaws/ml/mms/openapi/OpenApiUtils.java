@@ -449,9 +449,16 @@ public final class OpenApiUtils {
                         "Waiting up to the specified wait time if necessary for"
                                 + " a worker to complete all pending requests. Use 0 to terminate backend"
                                 + " worker process immediately. Use -1 for wait infinitely."));
+        operation.addParameter(
+                new QueryParameter(
+                        "synchronous",
+                        "String",
+                        null,
+                        "decides whether the call to scale is synchronous or asynchronous."));
 
         operation.addResponse(new Response("202", "Accepted."));
         operation.addResponse(new Response("404", "Model not found."));
+        operation.addResponse(new Response("200", "OK"));
 
         return operation;
     }

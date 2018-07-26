@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -345,22 +346,45 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             ChannelHandlerContext ctx, QueryStringDecoder decoder, String modelName) {
         int minWorkers = NettyUtils.getIntParameter(decoder, "min_worker", 1);
         int maxWorkers = NettyUtils.getIntParameter(decoder, "max_worker", 1);
+        String synchronous = NettyUtils.getParameter(decoder, "synchronous", null);
+        boolean async = !Boolean.parseBoolean(synchronous);
 
         ModelManager modelManager = ModelManager.getInstance();
         try {
-            if (!modelManager.updateModel(modelName, minWorkers, maxWorkers)) {
-                NettyUtils.sendError(
-                        ctx, HttpResponseStatus.BAD_REQUEST, ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
+            CompletableFuture<Boolean> future =
+                    modelManager.updateModel(modelName, minWorkers, maxWorkers);
+            if (async) {
+                NettyUtils.sendJsonResponse(
+                        ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
                 return;
             }
+            future.thenApply(
+                            v -> {
+                                if (!v) {
+                                    NettyUtils.sendError(
+                                            ctx,
+                                            HttpResponseStatus.BAD_REQUEST,
+                                            ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
+                                } else {
+                                    NettyUtils.sendJsonResponse(
+                                            ctx,
+                                            new StatusResponse("Worker scaled"),
+                                            HttpResponseStatus.OK);
+                                }
+                                return v;
+                            })
+                    .exceptionally(
+                            (e) -> {
+                                NettyUtils.sendError(
+                                        ctx,
+                                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                        e.getMessage());
+                                return null;
+                            });
         } catch (WorkerInitializationException e) {
             logger.error("Failed update model.", e);
             NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getErrorCode());
-            return;
         }
-
-        NettyUtils.sendJsonResponse(
-                ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
     }
 
     private void handleDescribeModel(ChannelHandlerContext ctx, String modelName) {

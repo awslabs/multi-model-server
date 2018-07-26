@@ -23,6 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,17 +105,16 @@ public final class ModelManager {
         return true;
     }
 
-    public boolean updateModel(String modelName, int minWorkers, int maxWorkers)
+    public CompletableFuture<Boolean> updateModel(String modelName, int minWorkers, int maxWorkers)
             throws WorkerInitializationException {
         Model model = models.get(modelName);
         if (model == null) {
-            logger.warn("Model not found: " + modelName);
-            return false;
+            throw new WorkerInitializationException(
+                    ErrorCodes.WORKER_INSTANTIATION_ERROR, "Model not found: " + modelName);
         }
         model.setMinWorkers(minWorkers);
         model.setMaxWorkers(maxWorkers);
-        wlm.modelChanged(model);
-        return true;
+        return wlm.modelChanged(model);
     }
 
     public Map<String, Model> getModels() {
@@ -177,6 +177,6 @@ public final class ModelManager {
                     }
                     NettyUtils.sendJsonResponse(ctx, new StatusResponse(response), status);
                 };
-        wlm.scheduleAsyc(r);
+        wlm.scheduleAsync(r);
     }
 }

@@ -17,6 +17,7 @@ import io.netty.channel.EventLoopGroup;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,13 +55,16 @@ public class WorkLoadManager {
         return worker.isEmpty();
     }
 
-    public void modelChanged(Model model) throws WorkerInitializationException {
+    public CompletableFuture<Boolean> modelChanged(Model model)
+            throws WorkerInitializationException {
         int minWorker = model.getMinWorkers();
         List<WorkerThread> threads;
         if (minWorker == 0) {
             threads = workers.remove(model.getModelName());
             if (threads == null) {
-                return;
+                CompletableFuture<Boolean> future = new CompletableFuture<>();
+                future.complete(Boolean.TRUE);
+                return future;
             }
         } else {
             threads = workers.computeIfAbsent(model.getModelName(), k -> new ArrayList<>());
@@ -68,17 +72,23 @@ public class WorkLoadManager {
 
         int currentWorkers = threads.size();
         if (currentWorkers < minWorker) {
-            addThreads(threads, model, minWorker - currentWorkers);
+            return addThreads(threads, model, minWorker - currentWorkers);
         } else {
             for (int i = currentWorkers - 1; i >= minWorker; --i) {
                 WorkerThread thread = threads.remove(i);
                 thread.shutdown();
             }
+            CompletableFuture<Boolean> future = new CompletableFuture<>();
+            future.complete(Boolean.TRUE);
+            return future;
         }
     }
 
-    private void addThreads(List<WorkerThread> threads, Model model, int count)
+    private CompletableFuture<Boolean> addThreads(
+            List<WorkerThread> threads, Model model, int count)
             throws WorkerInitializationException {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        WorkerStateListener listener = new WorkerStateListener(future, count);
         int maxGpu = configManager.getNumberOfGpu();
         for (int i = 0; i < count; ++i) {
             int gpuId = -1;
@@ -91,7 +101,14 @@ public class WorkLoadManager {
             BatchAggregator aggregator = new BatchAggregator(model);
             WorkerThread thread =
                     new WorkerThread(
-                            configManager, threads, backendGroup, port, gpuId, model, aggregator);
+                            configManager,
+                            threads,
+                            backendGroup,
+                            port,
+                            gpuId,
+                            model,
+                            aggregator,
+                            listener);
             thread.connect();
             threads.add(thread);
             threadPool.submit(thread);
@@ -99,9 +116,10 @@ public class WorkLoadManager {
                 port++;
             }
         }
+        return future;
     }
 
-    public void scheduleAsyc(Runnable r) {
+    public void scheduleAsync(Runnable r) {
         threadPool.execute(r);
     }
 }

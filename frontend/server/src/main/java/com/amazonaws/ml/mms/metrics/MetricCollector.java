@@ -71,9 +71,12 @@ public class MetricCollector implements Runnable {
         new Thread(
                         () -> {
                             try {
-                                logger.error(
+                                String error =
                                         IOUtils.toString(
-                                                p.getErrorStream(), StandardCharsets.UTF_8));
+                                                p.getErrorStream(), StandardCharsets.UTF_8);
+                                if (!error.isEmpty()) {
+                                    logger.error(error);
+                                }
                             } catch (IOException e) {
                                 logger.error(null, e);
                             }

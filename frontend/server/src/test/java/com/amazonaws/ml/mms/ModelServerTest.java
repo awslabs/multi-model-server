@@ -131,6 +131,7 @@ public class ModelServerTest {
         testUnregisterModel(channel);
         testLoadModel(channel);
         testScaleModel(channel);
+        testSyncScaleModel(channel);
         testPredictions(channel);
         testPredictionsBinary(channel);
         testPredictionsJson(channel);
@@ -212,6 +213,21 @@ public class ModelServerTest {
 
         Assert.assertEquals(
                 result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Worker updated")) + "\n");
+    }
+
+    private void testSyncScaleModel(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.PUT,
+                        "/models/noop_v0.1?synchronous=true&min_worker=1");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        Assert.assertEquals(
+                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Worker scaled")) + "\n");
     }
 
     private void testUnregisterModel(Channel channel) throws InterruptedException {

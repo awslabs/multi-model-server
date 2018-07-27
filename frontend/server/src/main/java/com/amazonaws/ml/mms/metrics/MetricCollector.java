@@ -41,7 +41,7 @@ public class MetricCollector implements Runnable {
         String[] args = new String[2];
         args[0] = "python";
         args[1] = "mms/metrics/system_metrics.py";
-        // run the Unix "python script to collect metrics" command
+        // run the "python script to collect metrics" command
         // using the Runtime exec method:
 
         File workingDir;

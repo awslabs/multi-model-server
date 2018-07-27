@@ -26,7 +26,6 @@ public class ErrorResponse {
     }
 
     public ErrorResponse(int code, String type, String message) {
-
         this.code = code;
         this.type = type;
         this.message = message;

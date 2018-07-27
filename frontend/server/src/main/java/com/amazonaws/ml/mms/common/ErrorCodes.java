@@ -1,6 +1,7 @@
 package com.amazonaws.ml.mms.common;
 
 public interface ErrorCodes {
+
     String UNKNOWN_ERROR = "UnknownError";
     String INVALID_URI = "InvalidURI";
     String MESSAGE_DECODE_FAILURE = "MessageDecodeFailure";

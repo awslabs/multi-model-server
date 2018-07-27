@@ -24,6 +24,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -45,6 +46,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.util.CharsetUtil;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
@@ -328,6 +330,7 @@ public class ModelServerTest {
                             .build();
             b.group(new NioEventLoopGroup(1))
                     .channel(NioSocketChannel.class)
+                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                     .handler(
                             new ChannelInitializer<Channel>() {
                                 @Override
@@ -336,6 +339,7 @@ public class ModelServerTest {
                                     if (configManager.isUseSsl()) {
                                         p.addLast(sslCtx.newHandler(ch.alloc()));
                                     }
+                                    p.addLast(new ReadTimeoutHandler(30));
                                     p.addLast(new HttpClientCodec());
                                     p.addLast(new HttpContentDecompressor());
                                     p.addLast(new ChunkedWriteHandler());

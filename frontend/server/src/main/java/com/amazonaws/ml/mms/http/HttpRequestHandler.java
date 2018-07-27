@@ -404,9 +404,12 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         resp.setMaxWorkers(model.getMaxWorkers());
         resp.setMinWorkers(model.getMinWorkers());
         Manifest manifest = model.getModelArchive().getManifest();
-        resp.setEngine(manifest.getEngine().getEngineName().getValue());
+        Manifest.Engine engine = manifest.getEngine();
+        if (engine != null) {
+            resp.setEngine(engine.getEngineName().getValue());
+            resp.setRuntime(engine.getRuntime().getValue());
+        }
         resp.setModelVersion(manifest.getModel().getModelVersion());
-        resp.setRuntime(manifest.getEngine().getRuntime().getValue());
 
         List<WorkerThread> workers = modelManager.getWorkers(modelName);
         for (WorkerThread worker : workers) {

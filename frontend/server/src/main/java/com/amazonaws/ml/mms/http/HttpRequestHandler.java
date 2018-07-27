@@ -198,7 +198,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
-            String code = null;
+            String code;
             if (status == HttpResponseStatus.NOT_FOUND) {
                 code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED;
             } else {
@@ -238,7 +238,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
-            String code = null;
+            String code;
             if (status == HttpResponseStatus.NOT_FOUND) {
                 code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED;
             } else {

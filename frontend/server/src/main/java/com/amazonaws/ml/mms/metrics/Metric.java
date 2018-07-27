@@ -15,6 +15,7 @@ package com.amazonaws.ml.mms.metrics;
 import java.util.List;
 
 public class Metric {
+
     private String metricName;
     private String value;
     private String unit;

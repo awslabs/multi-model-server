@@ -18,10 +18,6 @@ public class WorkerInitializationException extends Exception {
 
     private final String errorCode;
 
-    public String getErrorCode() {
-        return errorCode;
-    }
-
     /** Creates a new {@code WorkerInitializationException} instance. */
     public WorkerInitializationException(String code) {
         this.errorCode = code;
@@ -65,5 +61,9 @@ public class WorkerInitializationException extends Exception {
     public WorkerInitializationException(String code, Throwable cause) {
         super(cause);
         this.errorCode = code;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
     }
 }

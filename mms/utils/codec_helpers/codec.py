@@ -29,7 +29,7 @@ class ModelWorkerCodecHelper(object):
 
             return msg
         except (binascii.Error, TypeError) as e:
-            raise MMSError(err.DECODE_FAILED, "base64 decode error {}".format(e))
+            raise MMSError(err.DECODE_FAILED, "base64 decode error {}".format(repr(e)))
 
     @staticmethod
     def encode_msg(encoding, msg):

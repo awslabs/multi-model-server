@@ -22,6 +22,12 @@ You can run the unit tests with the following:
 ```bash
 python -m pytest mms/tests/unit_tests/
 ```
+
+To get the coverage report of unit tests, you can run :
+
+```bash
+python -m pytest --cov-report  term-missing --cov=mms/ --ignore mms/tests/integration_tests/
+```
 ## CI Tests
 
 You can run the integration tests with the following:

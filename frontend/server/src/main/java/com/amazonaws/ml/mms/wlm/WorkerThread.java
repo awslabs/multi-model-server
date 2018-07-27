@@ -110,6 +110,8 @@ public class WorkerThread extends Thread {
                 if (reply != null) {
                     aggregator.sendResponse(reply);
                 } else {
+                    int val = model.incrFailedInfReqs();
+                    logger.error("Number or consecutive unsuccessful inference {}", val);
                     throw new WorkerInitializationException(
                             "Backend worker did not respond in given time");
                 }
@@ -267,8 +269,6 @@ public class WorkerThread extends Thread {
             }
 
             model.removeJobQueue(getName());
-            int val = model.incrFailedInfReqs();
-            logger.error("Number or consecutive unsuccessful inference {}", val);
         }
         // TODO: push current message back to queue, if no more worker,
         // drain the queue and send error back

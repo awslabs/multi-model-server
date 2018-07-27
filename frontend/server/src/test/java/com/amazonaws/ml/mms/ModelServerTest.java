@@ -387,6 +387,7 @@ public class ModelServerTest {
             Logger logger = LoggerFactory.getLogger(TestHandler.class);
             logger.error("Unknown exception", cause);
             ctx.close();
+            latch.countDown();
         }
     }
 }

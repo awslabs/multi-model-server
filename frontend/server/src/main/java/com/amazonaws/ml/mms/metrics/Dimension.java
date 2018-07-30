@@ -12,9 +12,13 @@
  */
 package com.amazonaws.ml.mms.metrics;
 
-public class Dimension {
+import com.google.gson.annotations.SerializedName;
 
+public class Dimension {
+    @SerializedName("Name")
     private String name;
+
+    @SerializedName("Value")
     private String value;
 
     public Dimension() {}

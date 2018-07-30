@@ -12,14 +12,24 @@
  */
 package com.amazonaws.ml.mms.metrics;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class Metric {
 
+    @SerializedName("MetricName")
     private String metricName;
+
+    @SerializedName("Value")
     private String value;
+
+    @SerializedName("Unit")
     private String unit;
+
+    @SerializedName("Dimensions")
     private List<Dimension> dimensions;
+
+    @SerializedName("Timestamp")
     private String timestamp;
 
     public String getMetricName() {

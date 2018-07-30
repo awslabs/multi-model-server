@@ -47,18 +47,8 @@ def push_cloudwatch(metric_json, client):
     for metric in metrics:
         cloud_metric = {}
         for key in metric.keys():
-            if key != 'requestId':
-                if key == 'dimensions':
-                    for dim in metric[key]:
-                        dim['Name'] = dim['name']
-                        dim['Value'] = dim['value']
-                        del dim['name']
-                        del dim['value']
-                    cloud_metric[key.capitalize()] = metric[key]
-                elif key == 'metricName':
-                    cloud_metric['MetricName'] = metric[key]
-                else:
-                    cloud_metric[key.capitalize()] = metric[key]
+            if key != 'RequestId':
+                cloud_metric[key] = metric[key]
         cloud_metrics.append(cloud_metric)
     client.put_metric_data(
         Namespace='MXNetModelServer',

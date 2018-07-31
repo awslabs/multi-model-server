@@ -40,7 +40,6 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 | [VGG19](#vgg19_onnx) | Image Classification | ImageNet | ONNX | 548 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg19.mar) |
 | [VGG19_bn](#vgg19_bn_onnx) | Image Classification | ImageNet | ONNX | 548 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg19_bn.mar) |
 
-
 ## Details on Each Model
 Each model below comes with a basic description, and where available, a link to a scholarly article about the model.
 
@@ -144,6 +143,7 @@ curl -O https://s3.amazonaws.com/mxnet-model-server/onnx-duc/city1.jpg
 * **Download inference script**:
 
 The script makes an inference call to the server using the test image, displays the colorized segmentation map and prints the confidence score.
+
 ```bash
 curl -O https://s3.amazonaws.com/mxnet-model-server/onnx-duc/duc-inference.py
 ```

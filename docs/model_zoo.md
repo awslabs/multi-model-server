@@ -11,6 +11,7 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 | [AlexNet](#alexnet) | Image Classification | ImageNet | ONNX | 233 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-alexnet/alexnet.model) |
 | [ArcFace-ResNet100](#arcface-resnet100_onnx) | Face Recognition | Refined MS-Celeb1M | ONNX | 236.4 MB | [.model](https://s3.amazonaws.com/mxnet-model-server/onnx-arcface/arcface-resnet100.model) |
 | [CaffeNet](#caffenet) | Image Classification | ImageNet | MXNet | 216 MB | [.model](https://s3.amazonaws.com/model-server/models/caffenet/caffenet.model) |
+| [DUC-ResNet101](#duc-resnet101_onnx) | Semantic Segmentation | Cityscapes | ONNX | 230.2 MB | [.model](https://s3.amazonaws.com/mxnet-model-server/onnx-duc/ResNet_DUC_HDC.model) |
 | [FERPlus](#ferplus_onnx) | Emotion Detection | FER2013 | ONNX | 35MB | [.model](https://s3.amazonaws.com/model-server/models/FERPlus/FERPlus.model) |
 | [Inception v1](#inception_v1) | Image Classification | ImageNet | ONNX | 27 MB | [.model](https://s3.amazonaws.com/model-server/models/onnx-inception_v1/inception_v1.model) |
 | [Inception v3 w/BatchNorm](#inception_v3) | Image Classification | ImageNet | MXNet | 45 MB |  [.model](https://s3.amazonaws.com/model-server/models/inception-bn/Inception-BN.model) |
@@ -125,6 +126,42 @@ mxnet-model-server --models caffenet=https://s3.amazonaws.com/model-server/model
 * **Run Prediction**:
 ```bash
 curl -X POST http://127.0.0.1:8080/caffenet/predict -F "data=@kitten.jpeg"
+```
+
+## <a name="duc-resnet101_onnx"></a>DUC-ResNet101 (from ONNX model zoo)
+* **Type**: Semantic Segmentation model trained on the Cityscapes dataset (model imported from ONNX)
+
+* **Reference**: [Wang et al.](https://arxiv.org/abs/1702.08502)
+
+* **Model Service**: [duc_service.py](https://s3.amazonaws.com/mxnet-model-server/onnx-duc/duc_service.py)
+
+* **Install dependencies**:
+```bash
+pip install opencv-python
+pip install pillow
+```
+
+* **Start Server**:
+```bash
+mxnet-model-server --models duc=https://s3.amazonaws.com/mxnet-model-server/onnx-duc/ResNet_DUC_HDC.model
+```
+
+* **Get the test image**:
+```bash
+curl -O https://s3.amazonaws.com/mxnet-model-server/onnx-duc/city1.jpg
+```
+
+* **Download inference script**:
+
+The script makes an inference call to the server using the test image, displays the colorized segmentation map and prints the confidence score.
+
+```bash
+curl -O https://s3.amazonaws.com/mxnet-model-server/onnx-duc/duc-inference.py
+```
+
+* **Run Prediction**:
+```bash
+python duc-inference.py city1.jpg
 ```
 
 ## <a name="ferplus_onnx"></a>FERPlus

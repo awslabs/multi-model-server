@@ -62,6 +62,7 @@ public class WorkerThread extends Thread {
     private AtomicBoolean running = new AtomicBoolean(true);
 
     private BatchAggregator aggregator;
+    private WorkerStateListener listener;
     ArrayBlockingQueue<ModelWorkerResponse> replies;
     private int gpuId;
     private long startTime;
@@ -76,7 +77,8 @@ public class WorkerThread extends Thread {
             int port,
             int gpuId,
             Model model,
-            BatchAggregator aggregator) {
+            BatchAggregator aggregator,
+            WorkerStateListener listener) {
         super("BackendWorker-" + port); // ** IMPORTANT NOTE**: THIS NAME SHOULD BE UNIQUE..
         this.parentThreads = parentThreads;
         this.configManager = configManager;
@@ -85,6 +87,7 @@ public class WorkerThread extends Thread {
         this.model = model;
         this.aggregator = aggregator;
         this.gpuId = gpuId;
+        this.listener = listener;
         startTime = System.currentTimeMillis();
         lifeCycle = new WorkerLifeCycle(configManager);
         replies = new ArrayBlockingQueue<>(1);
@@ -107,14 +110,27 @@ public class WorkerThread extends Thread {
                 if (reply != null) {
                     aggregator.sendResponse(reply);
                 } else {
+                    int val = model.incrFailedInfReqs();
+                    logger.error("Number or consecutive unsuccessful inference {}", val);
                     throw new WorkerInitializationException(
                             "Backend worker did not respond in given time");
                 }
-
-                if (req.getCommand().equals(WorkerCommands.PREDICT)) {
-                    model.resetFailedInfReqs();
+                switch (req.getCommand()) {
+                    case PREDICT:
+                        model.resetFailedInfReqs();
+                        break;
+                    case LOAD:
+                        if ("200".equals(reply.getCode())) {
+                            listener.notifyChangeState(WorkerStateListener.WORKER_MODEL_LOADED);
+                        } else {
+                            listener.notifyChangeState(WorkerStateListener.WORKER_ERROR);
+                        }
+                        break;
+                    case UNLOAD:
+                    case STATS:
+                    default:
+                        break;
                 }
-
                 req = null;
             }
         } catch (InterruptedException e) {
@@ -128,6 +144,7 @@ public class WorkerThread extends Thread {
                 aggregator.sendError(
                         req, ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
             }
+            listener.notifyChangeState(WorkerStateListener.WORKER_STOPPED);
             lifeCycle.exit();
         }
     }
@@ -137,6 +154,7 @@ public class WorkerThread extends Thread {
             throw new WorkerInitializationException(
                     ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
         }
+        listener.notifyChangeState(WorkerStateListener.WORKER_STARTED);
         final CountDownLatch latch = new CountDownLatch(1);
 
         try {
@@ -251,8 +269,6 @@ public class WorkerThread extends Thread {
             }
 
             model.removeJobQueue(getName());
-            int val = model.incrFailedInfReqs();
-            logger.error("Number or consecutive unsuccessful inference {}", val);
         }
         // TODO: push current message back to queue, if no more worker,
         // drain the queue and send error back

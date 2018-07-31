@@ -51,8 +51,8 @@ def test_metrics(capsys):
     # Check what is emitted is correct
     emit_metrics(metrics.store)
     out, err = capsys.readouterr()
-    assert '"dimensions":[' in out
-    assert '"value":"Model"' in out
+    assert '"Dimensions":[' in out
+    assert '"Value":"Model"' in out
 
 
     # Adding other types of metrics

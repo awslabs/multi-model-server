@@ -154,7 +154,6 @@ curl -O https://s3.amazonaws.com/mxnet-model-server/onnx-duc/city1.jpg
 * **Download inference script**:
 
 The script makes an inference call to the server using the test image, displays the colorized segmentation map and prints the confidence score.
-
 ```bash
 curl -O https://s3.amazonaws.com/mxnet-model-server/onnx-duc/duc-inference.py
 ```

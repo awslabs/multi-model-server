@@ -47,7 +47,7 @@ def push_cloudwatch(metric_json, client):
     for metric in metrics:
         cloud_metric = {}
         for key in metric.keys():
-            if key != 'RequestId':
+            if key != 'RequestId' or key != 'HostName':
                 cloud_metric[key] = metric[key]
         cloud_metrics.append(cloud_metric)
     client.put_metric_data(

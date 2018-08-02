@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
 public class MetricCollector implements Runnable {
 
     static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
-    private static final Logger loggerMetrics =
-            LoggerFactory.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+    private static final org.apache.log4j.Logger loggerMetrics =
+            org.apache.log4j.Logger.getLogger(ConfigManager.MMS_METRICS_LOGGER);
     private static final Type LIST_TYPE = new TypeToken<ArrayList<Metric>>() {}.getType();
 
     private ConfigManager configManager;
@@ -92,9 +92,9 @@ public class MetricCollector implements Runnable {
             String metricJsonString = collect();
             MetricManager metricManager = MetricManager.getInstance();
             metricManager.setMetrics(JsonUtils.GSON.fromJson(metricJsonString, LIST_TYPE));
-            loggerMetrics.info(metricJsonString);
+            loggerMetrics.info(metricManager.getMetrics());
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            logger.error("", e);
         }
     }
 }

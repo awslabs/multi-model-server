@@ -34,6 +34,7 @@ from mms.metrics.metric_encoder import MetricEncoder
 MAX_FAILURE_THRESHOLD = 5
 SOCKET_ACCEPT_TIMEOUT = 30.0
 debug = False
+BENCHMARK = False
 
 
 class MXNetModelServiceWorker(object):
@@ -136,7 +137,12 @@ class MXNetModelServiceWorker(object):
         data = b''
         try:
             while True:
+                if BENCHMARK:
+                    pr.disable()
+                    pr.dump_stats('/tmp/mmsPythonProfile.prof')
                 pkt = client_sock.recv(1024)
+                if BENCHMARK:
+                    pr.enable()
                 if not pkt:
                     exit(1)
 
@@ -454,9 +460,14 @@ class MXNetModelServiceWorker(object):
             try:
                 log_msg("Waiting for a connection")
 
+                if BENCHMARK:
+                    pr.disable()
+                    pr.dump_stats('/tmp/mmsPythonProfile.prof')
                 self.sock.settimeout(SOCKET_ACCEPT_TIMEOUT)
                 (cl_socket, _) = self.sock.accept()
                 self.sock.settimeout(socket.getdefaulttimeout())
+                if BENCHMARK:
+                    pr.enable()
                 self.handle_connection(cl_socket)
                 if debug is False:
                     exit(1)
@@ -493,8 +504,15 @@ if __name__ == "__main__":
     port = args.port
     worker = None
     try:
+        if BENCHMARK:
+            import cProfile
+            pr = cProfile.Profile()
+            pr.enable()
         worker = MXNetModelServiceWorker(sock_type, socket_name, host, port)
         worker.run_server()
+        if BENCHMARK:
+            pr.disable()
+            pr.dump_stats('/tmp/mmsPythonProfile.prof')
     except MMSError as m:
         log_error("{}".format(m.get_message()))
         exit(1)

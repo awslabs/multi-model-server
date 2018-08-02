@@ -12,12 +12,17 @@
  */
 package com.amazonaws.ml.mms.wlm;
 
+import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
+import com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -108,8 +113,9 @@ public class WorkerLifeCycle {
         private InputStream is;
         private boolean error;
         private WorkerLifeCycle lifeCycle;
-        static final Logger loggerModelMetrics =
-                LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
+        static final org.apache.log4j.Logger loggerModelMetrics =
+                org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
+        private static final Type LIST_TYPE = new TypeToken<ArrayList<Metric>>() {}.getType();
 
         public ReaderThread(String name, InputStream is, boolean error, WorkerLifeCycle lifeCycle) {
             super(name + (error ? "-stderr" : "-stdout"));
@@ -121,8 +127,6 @@ public class WorkerLifeCycle {
         @Override
         public void run() {
             try (Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
-                boolean metricFound = false;
-                StringBuilder jsonString = new StringBuilder();
                 while (scanner.hasNext()) {
                     String result = scanner.nextLine();
                     if (result == null) {
@@ -131,24 +135,15 @@ public class WorkerLifeCycle {
                     if ("MxNet worker started.".equals(result)) {
                         lifeCycle.setSuccess(true);
                     }
-                    if ("[METRICS]".equals(result) && !metricFound) {
-                        metricFound = true;
+                    if (result.startsWith("[METRIC]")) {
+                        loggerModelMetrics.info(
+                                JsonUtils.GSON.fromJson(result.split("[METRIC]")[1], LIST_TYPE));
                         continue;
                     }
                     if (error) {
                         logger.error(result);
                     } else {
-                        if (!metricFound) {
-                            logger.info(result);
-                        } else {
-                            if ("[/METRICS]".equals(result)) {
-                                loggerModelMetrics.info(jsonString.toString());
-                                jsonString.setLength(0);
-                                metricFound = false;
-                            } else {
-                                jsonString.append(result);
-                            }
-                        }
+                        logger.info(result);
                     }
                 }
             } finally {

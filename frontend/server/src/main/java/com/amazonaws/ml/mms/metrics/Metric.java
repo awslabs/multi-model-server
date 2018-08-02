@@ -32,6 +32,28 @@ public class Metric {
     @SerializedName("Timestamp")
     private String timestamp;
 
+    @SerializedName("RequestId")
+    private String requestId;
+
+    @SerializedName("HostName")
+    private String hostName;
+
+    public String getHostName() {
+        return hostName;
+    }
+
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
+    }
+
     public String getMetricName() {
         return metricName;
     }

@@ -13,7 +13,6 @@ Module to collect system metrics for front-end
 import sys
 import types
 import json
-import socket
 
 import psutil
 from mms.metrics.metric import Metric
@@ -21,7 +20,7 @@ from mms.metrics.metric_encoder import MetricEncoder
 from mms.metrics.dimension import Dimension
 
 system_metrics = []
-dimension = [Dimension('Level', 'Host'), Dimension('Host', socket.gethostname())]
+dimension = [Dimension('Level', 'Host')]
 
 
 

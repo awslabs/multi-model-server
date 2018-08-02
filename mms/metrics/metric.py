@@ -13,6 +13,7 @@ Metric class for model server
 """
 from collections import OrderedDict
 import datetime
+import socket
 from mms.metrics.unit import Units
 
 MetricUnit = Units()
@@ -77,5 +78,6 @@ class Metric(object):
         """
         return OrderedDict({'MetricName': self.name, 'Value': self.value, 'Unit': self.unit,
                             'Dimensions': self.dimensions,
-                            'Timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ'),
-                            'RequestId': self.req_id})
+                            'Timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                            'RequestId': self.req_id,
+                            'HostName': socket.gethostname()})

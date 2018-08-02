@@ -462,12 +462,9 @@ def emit_metrics(metrics):
     value is a metric object
     """
 
-    print('[METRICS]')
+    print('[METRICS]', json.dumps(metrics, separators=(',', ':'), cls=MetricEncoder))
     sys.stdout.flush()
-    print(json.dumps(metrics, indent=4, separators=(',', ':'), cls=MetricEncoder))
-    sys.stdout.flush()
-    print('[/METRICS]')
-    sys.stdout.flush()
+
 
 
 if __name__ == "__main__":

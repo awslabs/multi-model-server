@@ -22,6 +22,7 @@ import json
 from builtins import bytes
 from builtins import str
 
+from mms.model_loader import ModelLoader
 from mms.service_manager import ServiceManager
 from mms.log import log_msg, log_error
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
@@ -31,7 +32,7 @@ from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 from mms.metrics.metric_encoder import MetricEncoder
 
 MAX_FAILURE_THRESHOLD = 5
-
+debug = False
 
 class MXNetModelServiceWorker(object):
     """
@@ -91,10 +92,10 @@ class MXNetModelServiceWorker(object):
                 result.update({"requestId": req_id_map[idx]})
                 result.update({"code": 200})
 
-                if isinstance(val, bytes):
-                    value = ModelWorkerCodecHelper.encode_msg(encoding, val)
-                elif isinstance(val, str):
+                if isinstance(val, str):
                     value = ModelWorkerCodecHelper.encode_msg(encoding, val.encode('utf-8'))
+                elif isinstance(val, bytes):
+                    value = ModelWorkerCodecHelper.encode_msg(encoding, val)
                 else:
                     value = ModelWorkerCodecHelper.encode_msg(encoding, json.dumps(val).encode('utf-8'))
 
@@ -104,7 +105,8 @@ class MXNetModelServiceWorker(object):
             for req in invalid_reqs.keys():
                 result.update({"requestId": req})
                 result.update({"code": invalid_reqs.get(req)})
-                result.update({"value": "Invalid input provided".encode(encoding)})
+                result.update({"value": ModelWorkerCodecHelper.encode_msg(encoding,
+                                                                          "Invalid input provided".encode('utf-8'))})
                 result.update({"encoding": encoding})
 
             resp = [result]
@@ -138,9 +140,11 @@ class MXNetModelServiceWorker(object):
             if u'command' not in in_msg:
                 raise MMSError(err.INVALID_COMMAND, "Invalid message received")
         except (IOError, OSError) as sock_err:
-            raise MMSError(err.RECEIVE_ERROR, "{}".format(sock_err.message))
+            raise MMSError(err.RECEIVE_ERROR, "{}".format(repr(sock_err)))
         except ValueError as v:
             raise MMSError(err.INVALID_REQUEST, "JSON message format error: {}".format(v))
+        except MMSError as error:  # The error raise in #138 goes into the Exception block below and we lose the
+            raise error           # status code
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(e))
 
@@ -169,7 +173,7 @@ class MXNetModelServiceWorker(object):
 
         return model_in
 
-    def retrieve_data_for_inference(self, requests=None, model_service=None):
+    def retrieve_data_for_inference(self, requests=None):
         """
         REQUESTS = [ {
             "requestId" : "111-222-3333",
@@ -192,12 +196,6 @@ class MXNetModelServiceWorker(object):
 
         if requests is None:
             raise ValueError("Received invalid inputs")
-
-        if req_to_id_map is None:
-            raise ValueError("Request ID map is invalid")
-
-        if model_service is None:
-            raise ValueError("Model Service metadata is invalid")
 
         input_batch = []
         for batch_idx, request_batch in enumerate(requests):
@@ -251,7 +249,7 @@ class MXNetModelServiceWorker(object):
             model_service = loaded_services[model_name]
             req_batch = data[u'requestBatch']
             batch_size = len(req_batch)  # num-inputs gives the batch size
-            input_batch, req_id_map, invalid_reqs = self.retrieve_data_for_inference(req_batch, model_service)
+            input_batch, req_id_map, invalid_reqs = self.retrieve_data_for_inference(req_batch)
             if batch_size == 1:
                 # Initialize metrics at service level
                 model_service.metrics_init(model_name, req_id_map)
@@ -286,7 +284,6 @@ class MXNetModelServiceWorker(object):
         :return:
         """
         try:
-            from mms.model_loader import ModelLoader
             ModelWorkerMessageValidators.validate_load_message(data)
             model_dir = data['modelPath']
             model_name = data['modelName']
@@ -434,14 +431,14 @@ class MXNetModelServiceWorker(object):
 
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.SOCKET_BIND_ERROR,
-                           "Socket {} could not be bound to. {}: {}".format(self.sock_name, e.__module__, e.message))
+                           "Socket {} could not be bound to. {}".format(self.sock_name, repr(e)))
 
         while True:
             #  TODO: In the initial release we will only support single connections to a worker. If the
             # socket fails, the backend worker will quit
 
             try:
-                log_msg("Waiting for a connections")
+                log_msg("Waiting for a connection")
 
                 (cl_socket, _) = self.sock.accept()
                 self.handle_connection(cl_socket)
@@ -475,7 +472,6 @@ def emit_metrics(metrics):
 
 if __name__ == "__main__":
     # TODO: Use the argprocess
-    debug = False
     if len(sys.argv) != 2:
         assert 0, "Invalid parameters given"
     socket_name = sys.argv[1]

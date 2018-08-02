@@ -25,14 +25,14 @@ class ClientSDKGenerator(object):
     Class for client SDK Generator
     """
     @staticmethod
-    def generate(openapi_endpoints, sdk_lanugage):
+    def generate(openapi_endpoints, sdk_language):
         """Generate client sdk by given OpenAPI specification and target language.
 
         Parameters
         ----------
         openapi_endpoints : dict
             OpenAPI format api definition
-        sdk_lanugage : string
+        sdk_language : string
             Target language for client sdk
         """
 
@@ -40,9 +40,8 @@ class ClientSDKGenerator(object):
         try:
             if not os.path.exists('build'):
                 os.makedirs('build')
-            f = open('build/openapi.json', 'w')
-            json.dump(openapi_endpoints, f, indent=4)
-            f.flush()
+            with open('build/openapi.json', 'w') as f:
+                json.dump(openapi_endpoints, f, indent=4)
 
             # Use Swagger codegen tool to generate client sdk in target language
             with open(os.devnull, 'wb') as devnull:
@@ -50,9 +49,9 @@ class ClientSDKGenerator(object):
                                 '/../tools/swagger-codegen-cli-2.2.1.jar generate \
                                 -i build/openapi.json \
                                 -o build \
-                                -l %s' % sdk_lanugage, shell=True, stdout=devnull)
+                                -l %s' % sdk_language, shell=True, stdout=devnull)
 
-            logger.info("Client SDK for %s is generated", sdk_lanugage)
+            logger.info("Client SDK for %s is generated", sdk_language)
 
         except Exception as e:  # pylint: disable=broad-except
             raise Exception('Failed to generate client sdk: ' + str(e))

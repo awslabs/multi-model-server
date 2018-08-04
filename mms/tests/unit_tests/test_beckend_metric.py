@@ -25,7 +25,7 @@ def test_metrics(capsys):
     """
     # Create a batch of request ids
     request_ids = {0 : 'abcd', 1 :"xyz", 2 : "qwerty", 3 : "hjshfj" }
-
+    all_req_ids = ','.join(request_ids.values())
     model_name = "dummy model"
 
     # Create a metrics objects
@@ -39,14 +39,14 @@ def test_metrics(capsys):
     metrics.add_counter('CorrectCounter', 1, 3)
     metrics.add_counter('CorrectCounter', 1)
     print(metrics.cache)
-    test_metric = metrics.cache[get_model_key('CorrectCounter', 'count', 'ALL', model_name)]
+    test_metric = metrics.cache[get_model_key('CorrectCounter', 'count', all_req_ids, model_name)]
     assert 'CorrectCounter' == test_metric.name
     metrics.add_counter('CorrectCounter', 3)
     test_metric = metrics.cache[get_model_key('CorrectCounter', 'count', 'xyz', model_name)]
     assert test_metric.value == 2
     test_metric = metrics.cache[get_model_key('CorrectCounter', 'count', 'hjshfj', model_name)]
     assert test_metric.value == 1
-    test_metric = metrics.cache[get_model_key('CorrectCounter', 'count', 'ALL', model_name)]
+    test_metric = metrics.cache[get_model_key('CorrectCounter', 'count', all_req_ids, model_name)]
     assert  test_metric.value == 4
     # Check what is emitted is correct
     emit_metrics(metrics.store)

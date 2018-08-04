@@ -32,8 +32,10 @@ public class QLogLayout extends PatternLayout {
             for (Object o : metrics) {
                 if (o instanceof Metric) {
                     Metric metric = (Metric) o;
-                    stringBuilder.append("RequestId=").append(metric.getRequestId());
                     stringBuilder.append("HostName=").append(metric.getHostName());
+                    if (metric.getRequestId() != null) {
+                        stringBuilder.append("\nRequestId=").append(metric.getRequestId());
+                    }
                     stringBuilder.append("\nTimeStamp=").append(metric.getTimestamp());
                     stringBuilder
                             .append("\nMetrics=")

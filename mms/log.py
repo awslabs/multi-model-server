@@ -88,10 +88,12 @@ def get_logger(name=None, level="NOTSET"):
 def log_msg(*args):
     msg = " ".join(a for a in args)
     sys.stdout.write(msg)
+    sys.stdout.write('\n')
     sys.stdout.flush()
 
 
 def log_error(*args):
     msg = " ".join(a for a in args)
     sys.stderr.write(msg)
+    sys.stderr.write('\n')
     sys.stderr.flush()

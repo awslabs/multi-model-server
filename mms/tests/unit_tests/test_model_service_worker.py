@@ -608,12 +608,11 @@ class TestMXNetModelServiceWorker:
             sock.close.assert_called()
 
 
-def test_emit_metrics(mocker):
+def test_emit_metrics(mocker, socket_patches):
     metrics = {'test_emit_metrics': True}
-    printer = mocker.patch('mms.model_service_worker.print')
     dumps = mocker.patch('json.dumps')
-    flush = mocker.patch('sys.stdout')
     emit_metrics(metrics)
+    socket_patches.log_msg.assert_called()
 
     for k in metrics.keys():
         assert k in dumps.call_args_list[0][0][0]

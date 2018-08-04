@@ -78,8 +78,10 @@ class MetricsStore(object):
         idx : int
             request_id index in batch
         """
-        # check if request id for the metric is given, if so use it else have 'ALL'
-        req_id = 'ALL'
+        # check if request id for the metric is given, if so use it else have a list of all.
+        req_id = self.request_ids
+        if isinstance(req_id, dict):
+            req_id = ','.join(self.request_ids.values())
         if idx is not None and self.request_ids is not None and idx in self.request_ids:
             req_id = self.request_ids[idx]
         return req_id

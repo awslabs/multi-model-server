@@ -23,8 +23,9 @@ class Metric(object):
     """
     Class for generating metrics and printing it to stdout of the worker
     """
+
     def __init__(self, name, value,
-                 unit, dimensions, req_id='None', metric_method=None):
+                 unit, dimensions, req_id=None, metric_method=None):
         """
         Constructor for Metric class
 
@@ -79,5 +80,5 @@ class Metric(object):
         return OrderedDict({'MetricName': self.name, 'Value': self.value, 'Unit': self.unit,
                             'Dimensions': self.dimensions,
                             'Timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                            'RequestId': self.req_id,
-                            'HostName': socket.gethostname()})
+                            'HostName': socket.gethostname(),
+                            'RequestId': self.req_id})

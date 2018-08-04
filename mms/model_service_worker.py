@@ -462,8 +462,7 @@ def emit_metrics(metrics):
     value is a metric object
     """
 
-    print('[METRICS]', json.dumps(metrics, separators=(',', ':'), cls=MetricEncoder))
-    sys.stdout.flush()
+    log_msg("[METRICS]", json.dumps(metrics, separators=(',', ':'), cls=MetricEncoder))
 
 
 

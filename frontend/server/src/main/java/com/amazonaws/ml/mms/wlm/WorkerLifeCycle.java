@@ -135,9 +135,10 @@ public class WorkerLifeCycle {
                     if ("MxNet worker started.".equals(result)) {
                         lifeCycle.setSuccess(true);
                     }
-                    if (result.startsWith("[METRIC]")) {
+                    if (result.startsWith("[METRICS]")) {
                         loggerModelMetrics.info(
-                                JsonUtils.GSON.fromJson(result.split("[METRIC]")[1], LIST_TYPE));
+                                JsonUtils.GSON.fromJson(
+                                        result.substring("[METRICS]".length()), LIST_TYPE));
                         continue;
                     }
                     if (error) {

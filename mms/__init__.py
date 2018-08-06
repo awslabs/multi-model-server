@@ -19,5 +19,7 @@ from . import log
 from . import model_service
 from . import version
 from . import utils
+from . import metrics
+from . import arg_parser
 
 __version__ = version.__version__

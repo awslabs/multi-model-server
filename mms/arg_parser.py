@@ -126,21 +126,31 @@ class ArgParser(object):
         Argparser for backend worker. Takes the socket name and socket type.
         :return:
         """
-        parser = argparse.ArgumentParser(prog='mxnet-model-server', description='MXNet Model Server')
+        parser = argparse.ArgumentParser(prog='model-server-worker', description='Model Server Worker')
         parser.add_argument('--sock-type',
                             required=True,
+                            dest="sock_type",
                             type=str,
                             choices=["unix", "tcp"],
                             help='Socket type the model service worker would use. The options are\n'
                                  'unix: The model worker expects to unix domain-socket\n'
                                  'tcp: The model worker expects a host-name and port-number')
+
         parser.add_argument('--sock-name',
-                            required=True,
+                            required=False,
+                            dest="sock_name",
                             type=str,
                             help='If \'sock-type\' is \'unix\', sock-name is expected to be a string. '
-                                 'Eg: --sock-name \"test_sock\"'
-                                 'If \'sock-type\' is \'host\' sock-name is expected to be a \':\' host-name and port.'
-                                 'Eg: --sock-name \"127.0.0.1:8000\"')
+                                 'Eg: --sock-name \"test_sock\"')
+
+        parser.add_argument('--host',
+                            type=str,
+                            help='If \'sock-type\' is \'tcp\' this is expected to have a host IP address')
+
+        parser.add_argument('--port',
+                            type=str,
+                            help='If \'sock-type\' is \'tcp\' this is expected to have the host port to bind on')
+
         return parser
 
     @staticmethod

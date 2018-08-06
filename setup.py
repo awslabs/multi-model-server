@@ -8,20 +8,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import platform
-import os
-import ctypes
-from setuptools import setup, find_packages
-
-def PyPiDescription():
-    """Imports the long description for the project page"""
-    with open('PyPiDescription.rst') as f:
-        return f.read()
-
-
-pkgs = find_packages()
-pkgs.append('tools')
-
 # To build and upload a new version, follow the steps below.
 # Notes:
 # - this is a "Universal Wheels" package that is pure Python and supports both Python2 and Python3
@@ -30,44 +16,147 @@ pkgs.append('tools')
 # $ pip install twine
 # $ pip install wheel
 # $ python setup.py bdist_wheel --universal
+
+# *** TEST YOUR PACKAGE WITH TEST PI ******
+# twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+# If this is successful then push it to actual pypi
+
 # $ twine upload dist/*
 
-with open(os.path.join("mms", "version.py")) as f:
-    exec(f.read())
+"""
+Setup.py for the model server package
+"""
 
-requirements = ['Flask', 'Pillow', 'requests', 'flask-cors',
-                'psutil', 'jsonschema', 'onnx==1.1.1', 'boto3', 'importlib2',
-                'fasteners']
-# Enable Cu90 only when using linux with cuda enabled
-gpu_platform = False
-if platform.system().lower() == 'linux':
-    try:
-        # Check if CUDA is installed
-        cuda = ctypes.cdll.LoadLibrary('libcudart.so')
-        deviceCount = ctypes.c_int()
-        # get the number of supported GpUs
-        cuda.cudaGetDeviceCount(ctypes.byref(deviceCount))
-        if deviceCount.value > 0:
-            gpu_platform = True
-    except Exception as e:
-        gpu_platform = False
-if gpu_platform:
-    requirements = ['mxnet-cu90mkl>=1.2'] + requirements
-else:
-    requirements = ['mxnet-mkl>=1.2'] + requirements
-setup(
-    name='mxnet-model-server',
-    version=__version__.strip(),
-    description='Model Server for Apache MXNet is a tool for serving neural net models for inference',
-    long_description=PyPiDescription(),
-    url='https://github.com/awslabs/mxnet-model-server',
-    keywords='MXNet Model Server Serving Deep Learning Inference AI',
-    packages=pkgs,
-    install_requires=requirements,
-    entry_points={
-        'console_scripts': ['mxnet-model-server=mms.mxnet_model_server:start_serving',
-                            'mxnet-model-export=mms.export_model:export']
-    },
-    include_package_data=True,
-    license='Apache License Version 2.0'
-)
+import platform
+import os
+import ctypes
+import errno
+import time
+import sys
+from shutil import copyfile
+import subprocess
+from setuptools import setup, find_packages, Command
+import setuptools.command.build_py
+
+pkgs = find_packages()
+source_server_file = os.path.abspath('frontend/server/build/libs/server-1.0.jar')
+dest_file_name = os.path.abspath('mms/frontend/model-server.jar')
+
+
+def pypi_description():
+    """Imports the long description for the project page"""
+    with open('PyPiDescription.rst') as df:
+        return df.read()
+
+
+def detect_model_server_version():
+    with open(os.path.abspath(os.path.join("mms", "version.py")), 'r') as vf:
+        exec(vf.read(), None, globals())
+        # TODO: Look to remove this exec and version coming from file
+    return __version__
+
+
+def select_mxnet():
+    """
+
+    :return:
+    """
+    gpu_platform = False
+    if platform.system().lower() == 'linux':
+        try:
+            # Check if CUDA is installed
+            cuda = ctypes.cdll.LoadLibrary('libcudart.so')
+            device_count = ctypes.c_int()
+            # get the number of supported GpUs
+            cuda.cudaGetDeviceCount(ctypes.byref(device_count))
+            if device_count.value > 0:
+                gpu_platform = True
+        except Exception:  # pylint: disable=broad-except
+            gpu_platform = False
+    if gpu_platform:
+        req = ['mxnet-cu90mkl>=1.2'] + requirements
+    else:
+        req = ['mxnet-mkl>=1.2'] + requirements
+
+    return req
+
+
+class BuildFrontEnd(Command):
+    """
+    Class defined to run custom commands. In this class we build the frontend if it hasn't been built in the last
+    5 mins. This is to avoid the accidentally publishing old binaries.
+    """
+    description = 'Build Model Server Frontend'
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        """
+        Actual method called to run the build command
+        :return:
+        """
+        front_end_bin_dir = os.path.abspath('.') + '/mms/frontend'
+        try:
+            os.mkdir(front_end_bin_dir)
+        except OSError as exc:
+            if exc.errno == errno.EEXIST and os.path.isdir(front_end_bin_dir):
+                pass
+            else:
+                raise
+
+        if os.path.exists(source_server_file):
+            os.remove(source_server_file)
+
+        cwd = os.getcwd()
+        os.chdir(os.path.abspath('./frontend/'))
+        try:
+            subprocess.check_call('./gradlew build', shell=True)
+        except OSError:
+            assert 0, "build failed"
+        os.chdir(cwd)
+        copyfile(source_server_file, dest_file_name)
+
+
+class BuildPy(setuptools.command.build_py.build_py):
+    """
+    Class to invoke the custom command defined above.
+    """
+
+    def run(self):
+        sys.stderr.flush()
+        self.run_command('build_frontend')
+        setuptools.command.build_py.build_py.run(self)
+
+
+if __name__ == '__main__':
+    opt_set = set(sys.argv)
+    version = detect_model_server_version()
+
+    requirements = ['Pillow', 'psutil', 'importlib2', 'fasteners', 'future; python_version < "3.*"']
+    requirements = select_mxnet()
+
+    setup(
+        name='mxnet-model-server',
+        version=version.strip()+'a3',
+        description='Model Server for Apache MXNet is a tool for serving neural net models for inference',
+        long_description=pypi_description(),
+        url='https://github.com/awslabs/mxnet-model-server',
+        keywords='MXNet Model Server Serving Deep Learning Inference AI',
+        packages=pkgs,
+        cmdclass={
+            'build_frontend': BuildFrontEnd,
+            'build_py': BuildPy,
+        },
+        install_requires=requirements,
+        entry_points={
+            'console_scripts': ['mxnet-model-server=mms.model_server:start']
+        },
+        include_package_data=True,
+        license='Apache License Version 2.0'
+    )

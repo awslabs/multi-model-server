@@ -1,3 +1,4 @@
-include tools/swagger-codegen-cli-2.2.1.jar
-include mms/manifest_schema/manifest-schema.json
+include mms/frontend/model-server.jar
 include PyPiDescription.rst
+exclude client_sdk_gen.py
+exclude export_model.py

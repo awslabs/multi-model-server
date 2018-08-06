@@ -37,7 +37,7 @@ def transform_shape(img_arr, dim_order='NCHW'):
     output : NDArray
         Image in NDArray format with dim_order shape
     """
-    assert dim_order == 'NCHW' or dim_order == 'NHWC', "dim_order must be 'NCHW' or 'NHWC'."
+    assert dim_order in 'NCHW' or dim_order in 'NHWC', "dim_order must be 'NCHW' or 'NHWC'."
     if dim_order == 'NCHW':
         img_arr = mx.nd.transpose(img_arr, (2, 0, 1))
     output = mx.nd.expand_dims(img_arr, axis=0)
@@ -98,7 +98,7 @@ def write(img_arr, flag=1, format='jpeg', dim_order='CHW'):  # pylint: disable=r
     str
         Image in base64 string format
     """
-    assert dim_order == 'CHW' or dim_order == 'HWC', "dim_order must be 'CHW' or 'HWC'."
+    assert dim_order in 'CHW' or dim_order in 'HWC', "dim_order must be 'CHW' or 'HWC'."
     if dim_order == 'CHW':
         img_arr = mx.nd.transpose(img_arr, (1, 2, 0))
     if flag == 1:

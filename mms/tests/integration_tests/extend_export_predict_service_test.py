@@ -12,7 +12,7 @@ try:
 except:
     from urllib.request import urlopen, URLError, HTTPError
 
-from mms import mxnet_model_server
+from mms import model_server
 
 
 def _download_file(download_dir, url):
@@ -42,7 +42,7 @@ def start_ssd_server(tmpdir):
     sys.argv.append("SSD={}/resnet50_ssd_model.model".format(tmpdir))
     # sys.argv.append("--service")
     # sys.argv.append("{}/ssd_service.py".format(tmpdir))
-    mxnet_model_server.start_serving()
+    model_server.start_serving()
 
 
 def cleanup(tmpdir):

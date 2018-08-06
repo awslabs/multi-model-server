@@ -37,54 +37,13 @@ class ArgParser(object):
         """
         parser = argparse.ArgumentParser(prog='mxnet-model-server', description='MXNet Model Server')
 
-        parser.add_argument('--models',
-                            required=True,
-                            action=StoreDictKeyPair,
-                            metavar='KEY1=VAL1 KEY2=VAL2...',
-                            nargs='+',
-                            help='Models to be deployed using name=model_location format. '
-                                 'Location can be a URL, a local path to a .model file '
-                                 'or a folder which contains all files needed for serving.'
-                                 'Name is arbitrary and used as the API endpoint\'s base name. ')
+        sub_parse = parser.add_mutually_exclusive_group(required=True)
+        sub_parse.add_argument('--start', action='store_true', help='Start the model-server')
+        sub_parse.add_argument('--stop', action='store_true', help='Stop the model-server')
 
-        parser.add_argument('--service', help='Path to a user defined model service.')
-
-        parser.add_argument('--gen-api', help='Generates API client for the supplied language. '
-                                              'Options include Java, C#, JavaScript and Go. '
-                                              'For complete list check out '
-                                              'https://github.com/swagger-api/swagger-codegen.')
-
-        parser.add_argument('--port', help='Port number. By default it is 8080.')
-
-        parser.add_argument('--host', help='Host. By default it is localhost.')
-
-        parser.add_argument('--gpu', help='ID of GPU device to use for inference. '
-                                          'If your machine has N GPUs, this number can be 0 to N - 1. '
-                                          'If it is not set, CPU will be used.')
-
-        parser.add_argument('--log-file', help='Log file name. By default it is "mms_app.log" in the current folder.')
-
-        parser.add_argument('--log-rotation-time',
-                            help='Log rotation time. By default it is "1 H", which means one Hour. '
-                                 'Valid format is "interval when", where _when_ can be "S", "M", "H", or "D". '
-                                 'For a particular weekday use only "W0" - "W6". '
-                                 'For midnight use only "midnight". '
-                                 'Check https://docs.python.org/2/library/logging.handlers.html#logging.handlers.\
-                                 TimedRotatingFileHandler '
-                                 'for detailed information on values.')
-
-        parser.add_argument('--log-level', help='Log level. By default it is INFO. '
-                                                'Possible values are NOTEST, DEBUG, INFO, ERROR AND CRITICAL. '
-                                                'Check https://docs.python.org/2/library/logging.html#logging-levels'
-                                                'for detailed information on values.')
-
-        parser.add_argument('--metrics-write-to',
-                            default='log',
-                            choices=['log', 'csv', 'cloudwatch'],
-                            help='By default writes to the Log file specified in `--log-file`.'
-                                 'If you pass "csv", various metric files in "csv" format are created in '
-                                 'the current directory. '
-                                 'If you pass "cloudwatch", metrics will be pushed to AWS CloudWatch Service.')
+        parser.add_argument('--mms-config',
+                            dest='mms_config',
+                            help='Configuration file for model server')
 
         return parser
 

@@ -17,12 +17,12 @@ Communication message format: JSON message
 
 import socket
 import os
-import sys
 import json
 from builtins import bytes
 from builtins import str
 
 from mms.model_loader import ModelLoader
+from mms.arg_parser import ArgParser
 from mms.service_manager import ServiceManager
 from mms.log import log_msg, log_error
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
@@ -34,30 +34,40 @@ from mms.metrics.metric_encoder import MetricEncoder
 MAX_FAILURE_THRESHOLD = 5
 debug = False
 
+
 class MXNetModelServiceWorker(object):
     """
     Backend worker to handle Model Server's python service code
     """
-    def __init__(self, s_name=None):
-        if s_name is None:
-            raise ValueError("Incomplete data provided: Model worker expects \"socket name\"")
-        self.sock_name = s_name
+    def __init__(self, s_type=None, s_name=None, host_addr=None, port_num=None):
+        self.sock_type = s_type
+        if s_type == 'unix':
+            if s_name is None:
+                raise MMSError(err.INVALID_ARGUMENTS, "Wrong arguments passed. No socket name given.")
+            self.sock_name, self.port = s_name, -1
+            try:
+                os.unlink(s_name)
+            except OSError:
+                if os.path.exists(s_name):
+                    raise MMSError(err.SOCKET_ERROR, "socket already in use: {}.".format(s_name))
+        elif s_type == 'tcp':
+            self.sock_name = host_addr if host_addr is not None else "127.0.0.1"
+            if port_num is None:
+                raise MMSError(err.INVALID_ARGUMENTS, "Wrong arguments passed. No socket port given.")
+            self.port = port_num
+        else:
+            raise ValueError("Incomplete data provided")
+
         self.model_services = {}
         self.service_manager = ServiceManager()
         self.send_failures = 0
 
         try:
-            os.unlink(s_name)
-        except OSError:
-            if os.path.exists(s_name):
-                raise MMSError(err.SOCKET_ERROR, "socket already in use: {}.".format(s_name))
-
-        try:
             msg = "Listening on port: {}\n".format(s_name)
             log_msg(msg)
+            socket_family = socket.AF_INET if s_type == 'tcp' else socket.AF_UNIX
+            self.sock = socket.socket(socket_family, socket.SOCK_STREAM)
 
-            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            # self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except (IOError, OSError) as e:
             raise MMSError(err.SOCKET_ERROR, "Socket error in init {}. {}".format(self.sock_name, repr(e)))
         except Exception as e:  # pylint: disable=broad-except
@@ -425,7 +435,10 @@ class MXNetModelServiceWorker(object):
         :return:
         """
         try:
-            self.sock.bind(self.sock_name)
+            if self.sock_type == 'unix':
+                self.sock.bind(self.sock_name)
+            else:
+                self.sock.bind((self.sock_name, int(self.port)))
             self.sock.listen(1)
             log_msg("MxNet worker started.\n")
 
@@ -465,15 +478,16 @@ def emit_metrics(metrics):
     log_msg("[METRICS]", json.dumps(metrics, separators=(',', ':'), cls=MetricEncoder))
 
 
-
 if __name__ == "__main__":
-    # TODO: Use the argprocess
-    if len(sys.argv) != 2:
-        assert 0, "Invalid parameters given"
-    socket_name = sys.argv[1]
+    args = ArgParser.model_service_worker_args().parse_args()
+    debug = False
+    socket_name = args.sock_name
+    sock_type = args.sock_type
+    host = args.host
+    port = args.port
     worker = None
     try:
-        worker = MXNetModelServiceWorker(socket_name)
+        worker = MXNetModelServiceWorker(sock_type, socket_name, host, port)
         worker.run_server()
     except MMSError as m:
         log_error("{}".format(m.get_message()))

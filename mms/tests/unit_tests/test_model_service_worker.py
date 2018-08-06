@@ -38,7 +38,7 @@ def socket_patches(mocker):
 
 @pytest.fixture()
 def model_service_worker(socket_patches):
-    model_service_worker = MXNetModelServiceWorker('my-socket')
+    model_service_worker = MXNetModelServiceWorker('unix', 'my-socket', None, None)
     model_service_worker.sock = socket_patches.socket
 
     return model_service_worker
@@ -278,7 +278,7 @@ class TestMXNetModelServiceWorker:
         def test_missing_socket_name(self):
             with pytest.raises(ValueError) as excinfo:
                 MXNetModelServiceWorker()
-            assert excinfo.value.args[0] == 'Incomplete data provided: Model worker expects "socket name"'
+            assert excinfo.value.args[0] == 'Incomplete data provided'
 
         def test_socket_in_use(self, mocker):
             unlink = mocker.patch('os.unlink')
@@ -287,7 +287,7 @@ class TestMXNetModelServiceWorker:
             pathexists.return_value = True
 
             with pytest.raises(MMSError) as excinfo:
-                MXNetModelServiceWorker(self.socket_name)
+                MXNetModelServiceWorker('unix', self.socket_name)
             assert self.socket_name in excinfo.value.message
             assert excinfo.value.code == err.SOCKET_ERROR
             assert excinfo.value.message == 'socket already in use: sampleSocketName.'
@@ -306,19 +306,19 @@ class TestMXNetModelServiceWorker:
         def test_socket_init_exception(self, patches, exception):
             patches.socket.side_effect = exception
             with pytest.raises(MMSError) as excinfo:
-                MXNetModelServiceWorker(self.socket_name)
+                MXNetModelServiceWorker('unix', self.socket_name)
             assert excinfo.value.code == err.SOCKET_ERROR
             assert excinfo.value.message == 'Socket error in init sampleSocketName. {}'.format(repr(exception))
 
         def test_socket_unknown_exception(self, patches):
             patches.socket.side_effect = Exception('unknownException')
             with pytest.raises(MMSError) as excinfo:
-                MXNetModelServiceWorker(self.socket_name)
+                MXNetModelServiceWorker('unix', self.socket_name)
             assert excinfo.value.code == err.UNKNOWN_EXCEPTION
             assert excinfo.value.message == "Exception('unknownException',)"
 
         def test_success(self, patches):
-            MXNetModelServiceWorker(self.socket_name)
+            MXNetModelServiceWorker('unix', self.socket_name)
             patches.unlink.assert_called_once_with(self.socket_name)
             patches.log.assert_called_once_with('Listening on port: sampleSocketName\n')
             patches.socket.assert_called_once_with(socket.AF_UNIX, socket.SOCK_STREAM)

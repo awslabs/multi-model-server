@@ -17,10 +17,12 @@ import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.google.gson.reflect.TypeToken;
+import io.netty.channel.unix.DomainSocketAddress;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -43,10 +45,21 @@ public class WorkerLifeCycle {
     }
 
     public boolean startWorker(int port) {
-        String[] args = new String[3];
+        SocketAddress address = NettyUtils.getSocketAddress(port);
+        String[] args = new String[6];
         args[0] = "python";
         args[1] = "mms/model_service_worker.py";
-        args[2] = NettyUtils.getSocketAddress(port).toString();
+        args[4] = "--sock-type";
+
+        if (address instanceof DomainSocketAddress) {
+            args[5] = "unix";
+            args[2] = "--sock-name";
+            args[3] = ((DomainSocketAddress) address).path();
+        } else {
+            args[5] = "tcp";
+            args[2] = "--port";
+            args[3] = String.valueOf(port);
+        }
 
         File workingDir;
 

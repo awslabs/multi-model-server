@@ -125,7 +125,7 @@ The healthcheck portion of your container configuration should look like the ima
 After configuring the health-checks, you can go onto configuring the environment, with the entry point that we have discussed earlier:
 
 ```bash
-mxnet-model-server, --mms-config, /mxnet_model_server/mms_app_cpu.conf
+mxnet-model-server, start, --mms-config, /mxnet_model_server/mms_app_cpu.conf
 ```
 
 ![](https://s3.amazonaws.com/mxnet-model-server/mms-github-docs/MMS+with+Fargate+Article/add+container+entry+point.png)

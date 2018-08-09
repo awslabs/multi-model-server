@@ -131,7 +131,6 @@ After configuring the health-checks, you can go onto configuring the environment
 
 ![](https://s3.amazonaws.com/mxnet-model-server/mms-github-docs/MMS+with+Fargate+Article/environtment.png)
 
-
 Everything else can be left as default. So feel free to click `Create` to create your very first AWS Fargate-task. 
 If everything is ok, you should now be able to see your task in the list of task definitions.
 

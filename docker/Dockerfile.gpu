@@ -1,12 +1,25 @@
-FROM awsdeeplearningteam/mms_gpu_base:latest
+FROM nvidia/cuda:9.0-cudnn7-devel
 
-RUN pip install mxnet-model-server \
-    && pip uninstall --yes mxnet \
-    && pip install --no-cache-dir mxnet-cu90mkl \
-    && mkdir /mxnet_model_server
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    build-essential \
+    libatlas-base-dev \
+    libopencv-dev \
+    graphviz \
+    python-dev \
+    python3-dev \
+    openjdk-8-jdk-headless \
+    curl \
+    vim \
+    && rm -rf /var/lib/apt/lists/* \
+    && cd /tmp \
+    && curl -O https://bootstrap.pypa.io/get-pip.py \
+    && python get-pip.py
 
-COPY mms_app_gpu.conf wsgi.py setup_mms.py mxnet-model-server /mxnet_model_server/
+RUN pip install mxnet-model-server
 
-ENV PATH="/mxnet_model_server:${PATH}" MXNET_MODEL_SERVER_GPU_IMAGE=1 gpu_id=0
+RUN useradd -m model-server
+USER model-server
+WORKDIR /home/model-server
 
-LABEL maintainer="dantu@amazon.com, esterhaz@amazon.com, hag@amazon.com"
+LABEL maintainer="dantu@amazon.com, rakvas@amazon.com, lufen@amazon.com, dden@amazon.com"

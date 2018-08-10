@@ -57,29 +57,36 @@ def detect_model_server_version():
     return __version__
 
 
+def add_requirements_to_2_x(pkg_name):
+    import sys
+    if sys.version_info[0] < 3:
+        requirements.append(pkg_name)
+
+
 def select_mxnet():
     """
-
+    Select an MXNet version if one is not already installed
     :return:
     """
-    gpu_platform = False
-    if platform.system().lower() == 'linux':
-        try:
-            # Check if CUDA is installed
-            cuda = ctypes.cdll.LoadLibrary('libcudart.so')
-            device_count = ctypes.c_int()
-            # get the number of supported GpUs
-            cuda.cudaGetDeviceCount(ctypes.byref(device_count))
-            if device_count.value > 0:
-                gpu_platform = True
-        except Exception:  # pylint: disable=broad-except
-            gpu_platform = False
-    if gpu_platform:
-        req = ['mxnet-cu90mkl>=1.2'] + requirements
-    else:
-        req = ['mxnet-mkl>=1.2'] + requirements
-
-    return req
+    try:
+        import mxnet
+    except ImportError:
+        gpu_platform = False
+        if platform.system().lower() == 'linux':
+            try:
+                # Check if CUDA is installed
+                cuda = ctypes.cdll.LoadLibrary('libcudart.so')
+                device_count = ctypes.c_int()
+                # get the number of supported GpUs
+                cuda.cudaGetDeviceCount(ctypes.byref(device_count))
+                if device_count.value > 0:
+                    gpu_platform = True
+            except Exception:  # pylint: disable=broad-except
+                gpu_platform = False
+        if gpu_platform:
+            requirements.append('mxnet-cu90mkl>=1.2')
+        else:
+            requirements.append('mxnet-mkl>=1.2')
 
 
 class BuildFrontEnd(Command):
@@ -138,12 +145,13 @@ if __name__ == '__main__':
     opt_set = set(sys.argv)
     version = detect_model_server_version()
 
-    requirements = ['Pillow', 'psutil', 'importlib2', 'fasteners', 'future; python_version < "3.*"']
-    requirements = select_mxnet()
+    requirements = ['Pillow', 'psutil', 'fasteners']
+    add_requirements_to_2_x(['future', 'importlib2'])
+    select_mxnet()
 
     setup(
         name='mxnet-model-server',
-        version=version.strip()+'a3',
+        version=version.strip()+'a5',
         description='Model Server for Apache MXNet is a tool for serving neural net models for inference',
         long_description=pypi_description(),
         url='https://github.com/awslabs/mxnet-model-server',

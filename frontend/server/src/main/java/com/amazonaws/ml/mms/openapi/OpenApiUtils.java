@@ -312,10 +312,26 @@ public final class OpenApiUtils {
                         "Runtime for the model custom service code. This value will override runtime in MANIFEST.json if present.");
         operation.addParameter(runtime);
         operation.addParameter(
-                new QueryParameter("batch_size", "Inference batch size, default: 1."));
+                new QueryParameter(
+                        "batch_size", "integer", "1", "Inference batch size, default: 1."));
         operation.addParameter(
                 new QueryParameter(
-                        "max_batch_delay", "Maximum delay for batch aggregation, default: 100."));
+                        "max_batch_delay",
+                        "integer",
+                        "100",
+                        "Maximum delay for batch aggregation, default: 100."));
+        operation.addParameter(
+                new QueryParameter(
+                        "initial_worker",
+                        "integer",
+                        "0",
+                        "Number of initial workers, default: 0."));
+        operation.addParameter(
+                new QueryParameter(
+                        "synchronous",
+                        "boolean",
+                        "false",
+                        "Decides whether creation of worker synchronous or not, default: false."));
 
         Manifest.RuntimeType[] types = Manifest.RuntimeType.values();
         List<String> runtimeTypes = new ArrayList<>(types.length);
@@ -324,7 +340,8 @@ public final class OpenApiUtils {
         }
         runtime.getSchema().setEnumeration(runtimeTypes);
 
-        operation.addResponse(new Response("200", "Register success"));
+        operation.addResponse(new Response("200", "Model registered."));
+        operation.addResponse(new Response("202", "Accepted."));
         operation.addResponse(new Response("400", "Invalid model URL."));
         operation.addResponse(new Response("400", "Missing modelName parameter."));
         operation.addResponse(new Response("400", "Missing handler parameter."));
@@ -335,6 +352,7 @@ public final class OpenApiUtils {
         operation.addResponse(
                 new Response("400", "Unable to open dependent files specified in manifest file."));
         operation.addResponse(new Response("404", "Unable to download model archive"));
+        operation.addResponse(new Response("503", "Model register failed."));
 
         return operation;
     }
@@ -343,10 +361,16 @@ public final class OpenApiUtils {
         Operation operation =
                 new Operation(
                         "unregisterModel",
-                        "Unregister a model from Model Server. This is an asynchronized call."
-                                + " Caller need to call listModels to confirm if all the works has be terminated.");
+                        "Unregister a model from Model Server. This is an asynchronous call by default."
+                                + " Caller can call listModels to confirm if all the works has be terminated.");
 
         operation.addParameter(new PathParameter("model_name", "Name of model to unregister."));
+        operation.addParameter(
+                new QueryParameter(
+                        "synchronous",
+                        "boolean",
+                        "false",
+                        "Decides whether the call is synchronous or not, default: false."));
         operation.addParameter(
                 new QueryParameter(
                         "timeout",
@@ -356,6 +380,7 @@ public final class OpenApiUtils {
                                 + " a worker to complete all pending requests. Use 0 to terminate backend"
                                 + " worker process immediately. Use -1 for wait infinitely."));
 
+        operation.addResponse(new Response("200", "Model unregistered."));
         operation.addResponse(new Response("202", "Accepted."));
         operation.addResponse(new Response("404", "Model not found."));
 
@@ -429,18 +454,24 @@ public final class OpenApiUtils {
         Operation operation =
                 new Operation(
                         "setAutoScale",
-                        "Configure number of workers for a model, This is a asynchronized call."
+                        "Configure number of workers for a model, This is a asynchronous call by default."
                                 + " Caller need to call describeModel check if the model workers has been changed.");
         operation.addParameter(new PathParameter("model_name", "Name of model to describe."));
         operation.addParameter(
                 new QueryParameter(
-                        "minWorker", "integer", "1", "Minimum number of worker processes."));
+                        "min_worker", "integer", "1", "Minimum number of worker processes."));
         operation.addParameter(
                 new QueryParameter(
-                        "maxWorker", "integer", "1", "Maximum number of worker processes."));
+                        "max_worker", "integer", "1", "Maximum number of worker processes."));
         operation.addParameter(
                 new QueryParameter(
-                        "numberGpu", "integer", "0", "Number of GPU worker processes to create."));
+                        "number_gpu", "integer", "0", "Number of GPU worker processes to create."));
+        operation.addParameter(
+                new QueryParameter(
+                        "synchronous",
+                        "boolean",
+                        "false",
+                        "Decides whether the call is synchronous or not, default: false."));
         operation.addParameter(
                 new QueryParameter(
                         "timeout",
@@ -449,16 +480,11 @@ public final class OpenApiUtils {
                         "Waiting up to the specified wait time if necessary for"
                                 + " a worker to complete all pending requests. Use 0 to terminate backend"
                                 + " worker process immediately. Use -1 for wait infinitely."));
-        operation.addParameter(
-                new QueryParameter(
-                        "synchronous",
-                        "String",
-                        null,
-                        "decides whether the call to scale is synchronous or asynchronous."));
 
+        operation.addResponse(new Response("200", "Model workers updated."));
         operation.addResponse(new Response("202", "Accepted."));
         operation.addResponse(new Response("404", "Model not found."));
-        operation.addResponse(new Response("200", "OK"));
+        operation.addResponse(new Response("503", "Model workers scale failed."));
 
         return operation;
     }

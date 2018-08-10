@@ -387,7 +387,8 @@
             "description": "Inference batch size, default: 1.",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "default": "1"
             }
           },
           {
@@ -396,19 +397,46 @@
             "description": "Maximum delay for batch aggregation, default: 100.",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "default": "100"
+            }
+          },
+          {
+            "in": "query",
+            "name": "initial_worker",
+            "description": "Number of initial workers, default: 0.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": "0"
+            }
+          },
+          {
+            "in": "query",
+            "name": "synchronous",
+            "description": "Decides whether creation of worker synchronous or not, default: false.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": "false"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Register success"
+            "description": "Model registered."
+          },
+          "202": {
+            "description": "Accepted."
           },
           "400": {
             "description": "Unable to open dependent files specified in manifest file."
           },
           "404": {
             "description": "Unable to download model archive"
+          },
+          "503": {
+            "description": "Model register failed."
           }
         }
       }
@@ -543,7 +571,7 @@
         }
       },
       "put": {
-        "description": "Configure number of workers for a model, This is a asynchronized call. Caller need to call describeModel check if the model workers has been changed.",
+        "description": "Configure number of workers for a model, This is a asynchronous call by default. Caller need to call describeModel check if the model workers has been changed.",
         "operationId": "setAutoScale",
         "parameters": [
           {
@@ -557,7 +585,7 @@
           },
           {
             "in": "query",
-            "name": "minWorker",
+            "name": "min_worker",
             "description": "Minimum number of worker processes.",
             "required": false,
             "schema": {
@@ -567,7 +595,7 @@
           },
           {
             "in": "query",
-            "name": "maxWorker",
+            "name": "max_worker",
             "description": "Maximum number of worker processes.",
             "required": false,
             "schema": {
@@ -577,12 +605,22 @@
           },
           {
             "in": "query",
-            "name": "numberGpu",
+            "name": "number_gpu",
             "description": "Number of GPU worker processes to create.",
             "required": false,
             "schema": {
               "type": "integer",
               "default": "0"
+            }
+          },
+          {
+            "in": "query",
+            "name": "synchronous",
+            "description": "Decides whether the call is synchronous or not, default: false.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": "false"
             }
           },
           {
@@ -594,31 +632,25 @@
               "type": "integer",
               "default": "-1"
             }
-          },
-          {
-            "in": "query",
-            "name": "synchronous",
-            "description": "decides whether the call to scale is synchronous or asynchronous.",
-            "required": false,
-            "schema": {
-              "type": "String"
-            }
           }
         ],
         "responses": {
+          "200": {
+            "description": "Model workers updated."
+          },
           "202": {
             "description": "Accepted."
           },
           "404": {
             "description": "Model not found."
           },
-          "200": {
-            "description": "OK"
+          "503": {
+            "description": "Model workers scale failed."
           }
         }
       },
       "delete": {
-        "description": "Unregister a model from Model Server. This is an asynchronized call. Caller need to call listModels to confirm if all the works has be terminated.",
+        "description": "Unregister a model from Model Server. This is an asynchronous call by default. Caller can call listModels to confirm if all the works has be terminated.",
         "operationId": "unregisterModel",
         "parameters": [
           {
@@ -632,6 +664,16 @@
           },
           {
             "in": "query",
+            "name": "synchronous",
+            "description": "Decides whether the call is synchronous or not, default: false.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": "false"
+            }
+          },
+          {
+            "in": "query",
             "name": "timeout",
             "description": "Waiting up to the specified wait time if necessary for a worker to complete all pending requests. Use 0 to terminate backend worker process immediately. Use -1 for wait infinitely.",
             "required": false,
@@ -642,6 +684,9 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "Model unregistered."
+          },
           "202": {
             "description": "Accepted."
           },

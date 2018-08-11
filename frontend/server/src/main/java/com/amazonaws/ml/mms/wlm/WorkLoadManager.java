@@ -16,7 +16,9 @@ import com.amazonaws.ml.mms.util.ConfigManager;
 import io.netty.channel.EventLoopGroup;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -45,6 +47,16 @@ public class WorkLoadManager {
             return Collections.emptyList();
         }
         return new ArrayList<>(list);
+    }
+
+    public Map<Integer, WorkerThread> getWorkers() {
+        Map<Integer, WorkerThread> map = new HashMap<>();
+        for (List<WorkerThread> workerThreads : workers.values()) {
+            for (WorkerThread worker : workerThreads) {
+                map.put(worker.getPid(), worker);
+            }
+        }
+        return map;
     }
 
     public boolean hasNoWorker(String modelName) {

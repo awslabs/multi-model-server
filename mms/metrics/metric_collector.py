@@ -7,23 +7,17 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
-"""
-Module to define Unit mappings
-"""
-class Units(object):
-    """
-    Define a unit of elements
-    """
 
-    def __init__(self):
-        self.units = {
-            'ms': "Milliseconds",
-            's': 'Seconds',
-            'percent': 'Percent',
-            'count': 'Count',
-            'MB': 'Megabytes',
-            'GB': 'Gigabytes',
-            'kB': 'Kilobytes',
-            'B': 'Bytes',
-            None: 'unit',
-        }
+"""
+Single start point for system metrics and process metrics script
+
+"""
+
+import sys
+
+from mms.metrics import system_metrics
+from mms.metrics.process_memory_metric import check_process_mem_usage
+
+if __name__ == '__main__':
+    system_metrics.collect_all(sys.modules['mms.metrics.system_metrics'])
+    check_process_mem_usage(sys.stdin)

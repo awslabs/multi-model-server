@@ -417,7 +417,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             long startTime = worker.getStartTime();
             boolean isRunning = worker.isRunning();
             int gpuId = worker.getGpuId();
-            resp.addWorker(workerId, startTime, isRunning, gpuId);
+            long memory = worker.getMemory();
+            resp.addWorker(workerId, startTime, isRunning, gpuId, memory);
         }
 
         NettyUtils.sendJsonResponse(ctx, resp);

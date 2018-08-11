@@ -35,7 +35,7 @@ public class WorkerLifeCycle {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerLifeCycle.class);
     private ConfigManager configManager;
-
+    private int pid = -1;
     private Process process;
     private CountDownLatch latch;
     private boolean success;
@@ -121,6 +121,14 @@ public class WorkerLifeCycle {
         latch.countDown();
     }
 
+    public synchronized int getPid() {
+        return pid;
+    }
+
+    public synchronized void setPid(int pid) {
+        this.pid = pid;
+    }
+
     private static final class ReaderThread extends Thread {
 
         private InputStream is;
@@ -145,14 +153,17 @@ public class WorkerLifeCycle {
                     if (result == null) {
                         break;
                     }
-                    if ("MxNet worker started.".equals(result)) {
-                        lifeCycle.setSuccess(true);
-                    }
                     if (result.startsWith("[METRICS]")) {
                         loggerModelMetrics.info(
                                 JsonUtils.GSON.fromJson(
                                         result.substring("[METRICS]".length()), LIST_TYPE));
                         continue;
+                    }
+
+                    if ("MxNet worker started.".equals(result)) {
+                        lifeCycle.setSuccess(true);
+                    } else if (result.startsWith("[PID]")) {
+                        lifeCycle.setPid(Integer.parseInt(result.substring("[PID]".length())));
                     }
                     if (error) {
                         logger.error(result);

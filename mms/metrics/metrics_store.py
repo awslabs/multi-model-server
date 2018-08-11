@@ -140,8 +140,8 @@ class MetricsStore(object):
         unit: str
             unit of metric, default here is 'MB', 'kB', 'GB' also supported
         """
-        if unit not in ['MB', 'kB', 'GB']:
-            raise ValueError("The unit for size based metric is one of ['MB','kB', 'GB']")
+        if unit not in ['MB', 'kB', 'GB', 'B']:
+            raise ValueError("The unit for size based metric is one of ['MB','kB', 'GB', 'B']")
         req_id = self._get_req(idx)
         self._add_or_update(name, value, req_id, unit, dimensions)
 

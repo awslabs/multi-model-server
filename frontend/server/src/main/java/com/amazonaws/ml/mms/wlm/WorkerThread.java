@@ -65,6 +65,7 @@ public class WorkerThread extends Thread {
     private WorkerStateListener listener;
     ArrayBlockingQueue<ModelWorkerResponse> replies;
     private int gpuId;
+    private long memory;
     private long startTime;
     private Thread currentThread;
 
@@ -147,6 +148,14 @@ public class WorkerThread extends Thread {
             listener.notifyChangeState(WorkerStateListener.WORKER_STOPPED);
             lifeCycle.exit();
         }
+    }
+
+    public long getMemory() {
+        return memory;
+    }
+
+    public void setMemory(long memory) {
+        this.memory = memory;
     }
 
     public void connect() throws WorkerInitializationException {
@@ -246,6 +255,10 @@ public class WorkerThread extends Thread {
 
     public long getStartTime() {
         return startTime;
+    }
+
+    public int getPid() {
+        return lifeCycle.getPid();
     }
 
     public void shutdown() {

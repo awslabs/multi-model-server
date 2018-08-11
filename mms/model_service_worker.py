@@ -440,8 +440,8 @@ class MXNetModelServiceWorker(object):
             else:
                 self.sock.bind((self.sock_name, int(self.port)))
             self.sock.listen(1)
-            log_msg("MxNet worker started.\n")
-
+            log_msg("[PID]{}".format(os.getpid()))
+            log_msg("MxNet worker started.")
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.SOCKET_BIND_ERROR,
                            "Socket {} could not be bound to. {}".format(self.sock_name, repr(e)))

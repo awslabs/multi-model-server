@@ -14,10 +14,14 @@ package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.http.StatusResponse;
+import com.amazonaws.ml.mms.metrics.Dimension;
+import com.amazonaws.ml.mms.metrics.Metric;
+import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.codec.MessageEncoder;
 import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
+import com.google.gson.JsonParseException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -57,6 +61,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -137,6 +142,7 @@ public class ModelServerTest {
         testPredictionsJson(channel);
         testInvocationsJson(channel);
         testInvocationsMultipart(channel);
+        testMetricManager();
         channel.close();
     }
 
@@ -334,6 +340,36 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(result, "OK");
+    }
+
+    private void testMetricManager() throws JsonParseException, InterruptedException {
+        MetricManager.scheduleMetrics(configManager);
+        MetricManager metricManager = MetricManager.getInstance();
+        List<Metric> metrics = metricManager.getMetrics();
+
+        // Wait till first value is read in
+        int count = 0;
+        while (metrics.isEmpty()) {
+            Thread.sleep(500);
+            metrics = metricManager.getMetrics();
+            Assert.assertTrue(++count < 5);
+        }
+        for (Metric metric : metrics) {
+            if (metric.getMetricName().equals("CPUUtilization")) {
+                Assert.assertEquals(metric.getUnit(), "Percent");
+            }
+            if (metric.getMetricName().equals("MemoryUsed")) {
+                Assert.assertEquals(metric.getUnit(), "Megabytes");
+            }
+            if (metric.getMetricName().equals("DiskUsed")) {
+                List<Dimension> dimensions = metric.getDimensions();
+                for (Dimension dimension : dimensions) {
+                    if (dimension.getName().equals("Level")) {
+                        Assert.assertEquals(dimension.getValue(), "Host");
+                    }
+                }
+            }
+        }
     }
 
     private Channel connect() {

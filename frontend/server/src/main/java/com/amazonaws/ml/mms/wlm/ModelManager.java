@@ -125,6 +125,10 @@ public final class ModelManager {
         return wlm.getWorkers(modelName);
     }
 
+    public Map<Integer, WorkerThread> getWorkers() {
+        return wlm.getWorkers();
+    }
+
     public HttpResponseStatus addJob(Job job) {
         String modelName = job.getModelName();
         Model model;

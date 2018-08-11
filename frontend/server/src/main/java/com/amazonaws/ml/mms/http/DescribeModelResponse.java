@@ -123,12 +123,14 @@ public class DescribeModelResponse {
         this.workers = workers;
     }
 
-    public void addWorker(String id, long startTime, boolean isRunning, int gpuId) {
+    public void addWorker(
+            String id, long startTime, boolean isRunning, int gpuId, long memoryUsage) {
         Worker worker = new Worker();
         worker.setId(id);
         worker.setStartTime(new Date(startTime));
         worker.setStatus(isRunning ? "READY" : "UNLOADING");
         worker.setGpu(gpuId >= 0);
+        worker.setMemoryUsage(memoryUsage);
         workers.add(worker);
     }
 
@@ -146,6 +148,7 @@ public class DescribeModelResponse {
         private Date startTime;
         private String status;
         private boolean gpu;
+        private long memoryUsage;
 
         public Worker() {}
 
@@ -179,6 +182,14 @@ public class DescribeModelResponse {
 
         public void setGpu(boolean gpu) {
             this.gpu = gpu;
+        }
+
+        public long getMemoryUsage() {
+            return memoryUsage;
+        }
+
+        public void setMemoryUsage(long memoryUsage) {
+            this.memoryUsage = memoryUsage;
         }
     }
 

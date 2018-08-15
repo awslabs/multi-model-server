@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -298,6 +299,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         String handler = NettyUtils.getParameter(decoder, "handler", null);
         int batchSize = NettyUtils.getIntParameter(decoder, "batch_size", 1);
         int maxBatchDelay = NettyUtils.getIntParameter(decoder, "max_batch_delay", 100);
+        int initialWorkers = NettyUtils.getIntParameter(decoder, "initial_workers", 0);
+        boolean synchronous =
+                Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
 
         Manifest.RuntimeType runtimeType = null;
         if (runtime != null) {
@@ -326,19 +330,39 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getErrorCode());
             return;
         }
-        String msg = "Model \"" + archive.getManifest().getModel().getModelName() + "\" registered";
-        NettyUtils.sendJsonResponse(ctx, new StatusResponse(msg));
+
+        final String msg = "Model \"" + modelName + "\" registered";
+        if (initialWorkers <= 0) {
+            NettyUtils.sendJsonResponse(ctx, new StatusResponse(msg));
+            return;
+        }
+
+        updateModelWorkers(
+                ctx,
+                modelName,
+                initialWorkers,
+                initialWorkers,
+                synchronous,
+                f -> {
+                    try {
+                        modelManager.unregisterModel(modelName);
+                    } catch (WorkerInitializationException ignore) {
+                        // ignore
+                    }
+                    archive.clean();
+                    return null;
+                });
     }
 
     private void handleUnregisterModel(ChannelHandlerContext ctx, String modelName) {
         ModelManager modelManager = ModelManager.getInstance();
         try {
             if (!modelManager.unregisterModel(modelName)) {
-                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, "Model not found");
             }
         } catch (WorkerInitializationException e) {
-            logger.warn("Failed to load model", e);
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getErrorCode());
+            logger.warn("Failed to unregister model.", e);
+            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getErrorCode());
             return;
         }
         String msg = "Model \"" + modelName + "\" unregistered";
@@ -349,45 +373,10 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             ChannelHandlerContext ctx, QueryStringDecoder decoder, String modelName) {
         int minWorkers = NettyUtils.getIntParameter(decoder, "min_worker", 1);
         int maxWorkers = NettyUtils.getIntParameter(decoder, "max_worker", 1);
-        String synchronous = NettyUtils.getParameter(decoder, "synchronous", null);
-        boolean async = !Boolean.parseBoolean(synchronous);
+        boolean synchronous =
+                Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
 
-        ModelManager modelManager = ModelManager.getInstance();
-        try {
-            CompletableFuture<Boolean> future =
-                    modelManager.updateModel(modelName, minWorkers, maxWorkers);
-            if (async) {
-                NettyUtils.sendJsonResponse(
-                        ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
-                return;
-            }
-            future.thenApply(
-                            v -> {
-                                if (!v) {
-                                    NettyUtils.sendError(
-                                            ctx,
-                                            HttpResponseStatus.BAD_REQUEST,
-                                            ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
-                                } else {
-                                    NettyUtils.sendJsonResponse(
-                                            ctx,
-                                            new StatusResponse("Worker scaled"),
-                                            HttpResponseStatus.OK);
-                                }
-                                return v;
-                            })
-                    .exceptionally(
-                            (e) -> {
-                                NettyUtils.sendError(
-                                        ctx,
-                                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                        e.getMessage());
-                                return null;
-                            });
-        } catch (WorkerInitializationException e) {
-            logger.error("Failed update model.", e);
-            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getErrorCode());
-        }
+        updateModelWorkers(ctx, modelName, minWorkers, maxWorkers, synchronous, null);
     }
 
     private void handleDescribeModel(ChannelHandlerContext ctx, String modelName) {
@@ -452,5 +441,59 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             inputData.addModelInput(new ModelInputs("body", NettyUtils.getBytes(req.content())));
         }
         return inputData;
+    }
+
+    private void updateModelWorkers(
+            final ChannelHandlerContext ctx,
+            String modelName,
+            int minWorkers,
+            int maxWorkers,
+            boolean synchronous,
+            final Function<Void, Void> onError) {
+        ModelManager modelManager = ModelManager.getInstance();
+        try {
+            CompletableFuture<Boolean> future =
+                    modelManager.updateModel(modelName, minWorkers, maxWorkers);
+            if (!synchronous) {
+                NettyUtils.sendJsonResponse(
+                        ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
+                return;
+            }
+            future.thenApply(
+                            v -> {
+                                if (!v) {
+                                    if (onError != null) {
+                                        onError.apply(null);
+                                    }
+                                    NettyUtils.sendError(
+                                            ctx,
+                                            HttpResponseStatus.BAD_REQUEST,
+                                            ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
+                                } else {
+                                    NettyUtils.sendJsonResponse(
+                                            ctx,
+                                            new StatusResponse("Worker scaled"),
+                                            HttpResponseStatus.OK);
+                                }
+                                return v;
+                            })
+                    .exceptionally(
+                            (e) -> {
+                                if (onError != null) {
+                                    onError.apply(null);
+                                }
+                                NettyUtils.sendError(
+                                        ctx,
+                                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                        e.getMessage());
+                                return null;
+                            });
+        } catch (WorkerInitializationException e) {
+            logger.error("Failed update model workers.", e);
+            if (onError != null) {
+                onError.apply(null);
+            }
+            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 }

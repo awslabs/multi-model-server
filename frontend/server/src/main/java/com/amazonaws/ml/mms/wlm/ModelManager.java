@@ -109,8 +109,7 @@ public final class ModelManager {
             throws WorkerInitializationException {
         Model model = models.get(modelName);
         if (model == null) {
-            throw new WorkerInitializationException(
-                    ErrorCodes.WORKER_INSTANTIATION_ERROR, "Model not found: " + modelName);
+            throw new AssertionError("Model not found: " + modelName);
         }
         model.setMinWorkers(minWorkers);
         model.setMaxWorkers(maxWorkers);

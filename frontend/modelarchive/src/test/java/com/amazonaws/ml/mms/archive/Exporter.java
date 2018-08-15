@@ -14,14 +14,10 @@ package com.amazonaws.ml.mms.archive;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -81,12 +77,13 @@ public final class Exporter {
             String output = config.getOutputFile();
             File outputFile;
             if (output == null) {
-                outputFile = new File(modelPath.getParentFile(), modelName + ".model");
+                outputFile = new File(modelPath.getParentFile(), modelName + ".mar");
             } else {
                 outputFile = new File(output);
             }
 
-            if (modelPath.getName().endsWith(".model") && modelPath.isFile()) {
+            final String fileName = modelPath.getName();
+            if (modelPath.isFile() && fileName.endsWith(".model") || fileName.endsWith(".mar")) {
                 ModelArchive.migrate(modelPath, outputFile);
                 return;
             }
@@ -94,19 +91,6 @@ public final class Exporter {
             if (!modelPath.isDirectory()) {
                 System.err.println("model-path should be a directory or model archive file.");
                 return;
-            }
-
-            File signatureFile = new File(modelPath, "signature.json");
-            Signature signature = null;
-            if (signatureFile.exists()) {
-                try (Reader reader =
-                        new InputStreamReader(
-                                new FileInputStream(signatureFile), StandardCharsets.UTF_8)) {
-                    signature = GSON.fromJson(reader, Signature.class);
-                } catch (JsonSyntaxException e) {
-                    System.err.println("signature.json is not a valid json file.");
-                    return;
-                }
             }
 
             File[] files = modelPath.listFiles();
@@ -157,10 +141,6 @@ public final class Exporter {
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(outputFile))) {
                 zos.putNextEntry(new ZipEntry("MANIFEST.json"));
                 zos.write(GSON.toJson(manifest).getBytes(StandardCharsets.UTF_8));
-                if (signature != null) {
-                    zos.putNextEntry(new ZipEntry("signature.json"));
-                    zos.write(GSON.toJson(signature).getBytes(StandardCharsets.UTF_8));
-                }
 
                 int prefix = modelPath.getCanonicalPath().length();
 
@@ -169,9 +149,8 @@ public final class Exporter {
                             if (pathname.isHidden()) {
                                 return false;
                             }
-                            String fileName = pathname.getName();
-                            return !"MANIFEST.json".equalsIgnoreCase(fileName)
-                                    && !"signature.json".equalsIgnoreCase(fileName);
+                            String name = pathname.getName();
+                            return !"MANIFEST.json".equalsIgnoreCase(name);
                         };
 
                 for (File file : files) {

@@ -275,10 +275,8 @@ public class WorkerThread extends Thread {
                             model.getModelName(), model.getMinWorkers(), model.getMinWorkers());
                 }
                 aggregator.sendError(null, "Internal Failure");
-            } catch (WorkerInitializationException wie) {
-                logger.error(
-                        "Error restarting the backend worker for model name {}",
-                        model.getModelName());
+            } catch (WorkerInitializationException e) {
+                logger.error("", e);
             }
 
             model.removeJobQueue(getName());

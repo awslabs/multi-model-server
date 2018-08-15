@@ -25,10 +25,10 @@ public class ModelArchiveTest {
 
     @BeforeTest
     public void afterTest() {
-        output = new File("build/tmp/test/noop.model");
+        output = new File("build/tmp/test/noop.mar");
         FileUtils.deleteQuietly(output);
         FileUtils.deleteQuietly(new File("build/tmp/test/noop"));
-        FileUtils.deleteQuietly(new File("build/tmp/test/noop-v0.1.model"));
+        FileUtils.deleteQuietly(new File("build/tmp/test/noop-v0.1.mar"));
         File tmp = FileUtils.getTempDirectory();
         FileUtils.deleteQuietly(new File(tmp, "models"));
     }
@@ -43,9 +43,9 @@ public class ModelArchiveTest {
 
         // load 0.1 model from model archive
         File src = new File(modelStore, "noop-v0.1");
-        File target = new File("build/tmp/test", "noop-v0.1.model");
+        File target = new File("build/tmp/test", "noop-v0.1.mar");
         ZipUtils.zip(src, target, false);
-        archive = ModelArchive.downloadModel("build/tmp/test", "noop-v0.1.model");
+        archive = ModelArchive.downloadModel("build/tmp/test", "noop-v0.1.mar");
         Assert.assertEquals(archive.getModelName(), "noop_v0.1");
 
         // load model for s3

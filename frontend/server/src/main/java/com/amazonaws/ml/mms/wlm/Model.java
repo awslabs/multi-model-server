@@ -13,9 +13,6 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.archive.ModelArchive;
-import com.amazonaws.ml.mms.archive.Signature;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -23,7 +20,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Model {
+
     public static final String DEFAULT_DATA_QUEUE = "DATA_QUEUE";
+
     private ModelArchive modelArchive;
     private int minWorkers;
     private int maxWorkers;
@@ -63,27 +62,11 @@ public class Model {
     }
 
     public String getRequestContentType() {
-        Signature signature = modelArchive.getSignature();
-        if (signature == null) {
-            return null;
-        }
-        Map<String, List<Signature.Parameter>> request = signature.getRequest();
-        if (request.isEmpty()) {
-            return null;
-        }
-        return request.keySet().iterator().next();
+        return null;
     }
 
     public String getResponseContentType() {
-        Signature signature = modelArchive.getSignature();
-        if (signature == null) {
-            return null;
-        }
-        Map<String, List<Signature.Parameter>> resp = signature.getResponse();
-        if (resp.isEmpty()) {
-            return null;
-        }
-        return resp.keySet().iterator().next();
+        return null;
     }
 
     public int getMinWorkers() {

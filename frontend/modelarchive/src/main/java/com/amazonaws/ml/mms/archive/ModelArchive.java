@@ -53,16 +53,13 @@ public class ModelArchive {
             Pattern.compile("http(s)://.*", Pattern.CASE_INSENSITIVE);
 
     private static final String MANIFEST_FILE = "MANIFEST.json";
-    private static final String SIGNATURE_FILE = "signature.json";
 
     private Manifest manifest;
-    private Signature signature;
     private String url;
     private File modelDir;
 
-    public ModelArchive(Manifest manifest, Signature signature, String url, File modelDir) {
+    public ModelArchive(Manifest manifest, String url, File modelDir) {
         this.manifest = manifest;
-        this.signature = signature;
         this.url = url;
         this.modelDir = modelDir;
     }
@@ -127,16 +124,6 @@ public class ModelArchive {
             }
 
             LegacyManifest legacyManifest = GSON.fromJson(json, LegacyManifest.class);
-            ZipEntry signatureEntry = zip.getEntry(SIGNATURE_FILE);
-            if (signatureEntry == null) {
-                throw new InvalidModelException(
-                        ErrorCodes.MISSING_ARTIFACT_SIGNATURE,
-                        "Missing signature file in model archive.");
-            }
-            is = zip.getInputStream(signatureEntry);
-            reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-            LegacySignature legacySignature = GSON.fromJson(reader, LegacySignature.class);
-            Signature signature = legacySignature.migrate();
             manifest = legacyManifest.migrate();
             if (manifest.getModel() == null) {
                 throw new InvalidModelException(
@@ -147,16 +134,11 @@ public class ModelArchive {
             zos.putNextEntry(new ZipEntry(MANIFEST_FILE));
             zos.write(GSON.toJson(manifest).getBytes(StandardCharsets.UTF_8));
 
-            zos.putNextEntry(new ZipEntry(SIGNATURE_FILE));
-            zos.write(GSON.toJson(signature).getBytes(StandardCharsets.UTF_8));
-
             Enumeration<? extends ZipEntry> en = zip.entries();
             while (en.hasMoreElements()) {
                 ZipEntry entry = en.nextElement();
                 String name = entry.getName();
-                if (SIGNATURE_FILE.equalsIgnoreCase(name)
-                        || MANIFEST_FILE.equalsIgnoreCase(name)
-                        || name.startsWith(".")) {
+                if (MANIFEST_FILE.equalsIgnoreCase(name) || name.startsWith(".")) {
                     continue;
                 }
                 zos.putNextEntry(new ZipEntry(name));
@@ -205,10 +187,8 @@ public class ModelArchive {
         } else {
             modelDir = manifestFile.getParentFile();
         }
-        File signatureFile = new File(modelDir, SIGNATURE_FILE);
 
         Manifest manifest = null;
-        Signature signature;
         if (manifestFile != null && manifestFile.exists()) {
             JsonObject json;
             try (Reader reader =
@@ -226,11 +206,10 @@ public class ModelArchive {
             JsonPrimitive version = json.getAsJsonPrimitive("specificationVersion");
             if (version == null) {
                 // MMS 0.4
-                return migrateOnLoad(url, modelDir, json, signatureFile, copyOnMigrate);
+                return migrateOnLoad(url, modelDir, json, copyOnMigrate);
             }
 
             manifest = GSON.fromJson(json, Manifest.class);
-            signature = readFile(signatureFile, Signature.class);
         } else {
             // Must be MMS 1.0 or later
             if (manifestFile != null) {
@@ -243,28 +222,18 @@ public class ModelArchive {
                 model.setModelName(dir.getName());
                 manifest.setModel(model);
             }
-            signature = readFile(signatureFile, Signature.class);
-            if (signature == null) {
-                signature = new Signature();
-            }
         }
 
-        ModelArchive archive = new ModelArchive(manifest, signature, url, modelDir);
+        ModelArchive archive = new ModelArchive(manifest, url, modelDir);
         archive.validate();
         return archive;
     }
 
     private static ModelArchive migrateOnLoad(
-            String url, File modelDir, JsonObject json, File signatureFile, boolean copyOnMigrate)
+            String url, File modelDir, JsonObject json, boolean copyOnMigrate)
             throws InvalidModelException {
         LegacyManifest legacyManifest = GSON.fromJson(json, LegacyManifest.class);
         Manifest manifest = legacyManifest.migrate();
-        LegacySignature legacySignature = readFile(signatureFile, LegacySignature.class);
-        if (legacySignature == null) {
-            throw new InvalidModelException(
-                    ErrorCodes.INCORRECT_ARTIFACT_SIGNATURE, "Missing signature file.");
-        }
-        Signature signature = legacySignature.migrate();
 
         try {
             if (copyOnMigrate) {
@@ -283,14 +252,6 @@ public class ModelArchive {
                     new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.UTF_8)) {
                 writer.write(GSON.toJson(manifest));
             }
-
-            output = new File(modelDir, SIGNATURE_FILE);
-            bak = new File(modelDir, "signature.legacy");
-            FileUtils.copyFile(output, bak);
-            try (Writer writer =
-                    new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.UTF_8)) {
-                writer.write(GSON.toJson(signature));
-            }
         } catch (IOException e) {
             // TODO: Should migration be supported?
             throw new InvalidModelException(
@@ -299,7 +260,7 @@ public class ModelArchive {
                     e);
         }
 
-        ModelArchive archive = new ModelArchive(manifest, signature, url, modelDir);
+        ModelArchive archive = new ModelArchive(manifest, url, modelDir);
         archive.validate();
         return archive;
     }
@@ -311,7 +272,7 @@ public class ModelArchive {
                 return GSON.fromJson(r, type);
             } catch (IOException | JsonParseException e) {
                 throw new InvalidModelException(
-                        ErrorCodes.INCORRECT_ARTIFACT_SIGNATURE,
+                        ErrorCodes.INCORRECT_ARTIFACT_MANIFEST,
                         "Failed to parse signature.json.",
                         e);
             }
@@ -381,27 +342,11 @@ public class ModelArchive {
                     ErrorCodes.INCORRECT_ARTIFACT_MANIFEST, "Missing Model name in manifest file.");
         }
 
-        if (signature.getRequest() == null) {
-            throw new InvalidModelException(
-                    ErrorCodes.INCORRECT_ARTIFACT_SIGNATURE,
-                    "Missing <Request> in signature.json.");
-        }
-
-        if (signature.getResponse() == null) {
-            throw new InvalidModelException(
-                    ErrorCodes.INCORRECT_ARTIFACT_SIGNATURE,
-                    "Missing <Response> in signature.json.");
-        }
-
         // TODO: Add more validation
     }
 
     public Manifest getManifest() {
         return manifest;
-    }
-
-    public Signature getSignature() {
-        return signature;
     }
 
     public String getUrl() {

@@ -141,6 +141,7 @@ public class ModelServerTest {
         testSyncScaleModel(channel);
         testListModels(channel);
         testDescribeModel(channel);
+        testLoadModelWithInitialWorkers(channel);
         testPredictions(channel);
         testPredictionsBinary(channel);
         testPredictionsJson(channel);
@@ -210,6 +211,23 @@ public class ModelServerTest {
         Assert.assertEquals(resp.getStatus(), "Model \"noop_v0.1\" registered");
     }
 
+    private void testLoadModelWithInitialWorkers(Channel channel) throws InterruptedException {
+        testUnregisterModel(channel);
+
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=noop-v0.1&model_name=noop_v0.1&initial_workers=1&synchronous=true");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        Assert.assertEquals(
+                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Worker scaled")) + "\n");
+    }
+
     private void testScaleModel(Channel channel) throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
@@ -230,7 +248,7 @@ public class ModelServerTest {
                 new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         HttpMethod.PUT,
-                        "/models/noop_v0.1?synchronous=true&min_worker=1");
+                        "/models/noop_v0.1?synchronous=true&min_worker=2");
         channel.writeAndFlush(req);
         latch.await();
 
@@ -274,7 +292,7 @@ public class ModelServerTest {
         latch.await();
 
         DescribeModelResponse resp = JsonUtils.GSON.fromJson(result, DescribeModelResponse.class);
-        Assert.assertTrue(resp.getWorkers().size() > 0);
+        Assert.assertTrue(resp.getWorkers().size() > 1);
     }
 
     private void testPredictions(Channel channel) throws InterruptedException {

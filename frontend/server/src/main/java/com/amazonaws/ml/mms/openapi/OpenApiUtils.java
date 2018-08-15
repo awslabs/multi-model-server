@@ -13,14 +13,11 @@
 package com.amazonaws.ml.mms.openapi;
 
 import com.amazonaws.ml.mms.archive.Manifest;
-import com.amazonaws.ml.mms.archive.Signature;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.wlm.Model;
 import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpUtil;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public final class OpenApiUtils {
 
@@ -55,8 +52,7 @@ public final class OpenApiUtils {
         info.setVersion("1.0.0");
         openApi.setInfo(info);
 
-        Signature signature = model.getModelArchive().getSignature();
-        openApi.addPath("/prediction/" + modelName, getModelPath(modelName, signature));
+        openApi.addPath("/prediction/" + modelName, getModelPath(modelName));
 
         return JsonUtils.GSON_PRETTY.toJson(openApi);
     }
@@ -489,84 +485,13 @@ public final class OpenApiUtils {
         return operation;
     }
 
-    private static Path getModelPath(String modelName, Signature signature) {
+    private static Path getModelPath(String modelName) {
         Operation operation =
                 new Operation(modelName, "A predict entry point for model: " + modelName + '.');
-        if (signature == null) {
-            Response resp = new Response("200", "OK");
-            operation.addResponse(resp);
-            Path path = new Path();
-            path.setPost(operation);
-            return path;
-        }
-
-        Map<String, List<Signature.Parameter>> requests = signature.getRequest();
-        if (!requests.isEmpty()) {
-            RequestBody body = new RequestBody();
-            for (Map.Entry<String, List<Signature.Parameter>> entry : requests.entrySet()) {
-                String contentType = entry.getKey();
-                List<Signature.Parameter> parameters = entry.getValue();
-                MediaType mediaType = getMediaType(contentType, parameters);
-                body.addContent(mediaType);
-            }
-            operation.setRequestBody(body);
-        }
-
-        Response response = new Response("200", "OK");
-
-        Map<String, List<Signature.Parameter>> responses = signature.getResponse();
-        for (Map.Entry<String, List<Signature.Parameter>> entry : responses.entrySet()) {
-            String contentType = entry.getKey();
-            List<Signature.Parameter> parameters = entry.getValue();
-            MediaType mediaType = getMediaType(contentType, parameters);
-            response.addContent(mediaType);
-        }
-
-        operation.addResponse(response);
-
+        Response resp = new Response("200", "OK");
+        operation.addResponse(resp);
         Path path = new Path();
         path.setPost(operation);
         return path;
-    }
-
-    private static MediaType getMediaType(
-            String contentType, List<Signature.Parameter> parameters) {
-        CharSequence mimeType;
-        if (contentType != null) {
-            mimeType = HttpUtil.getMimeType(contentType);
-        } else {
-            mimeType = HttpHeaderValues.APPLICATION_OCTET_STREAM;
-        }
-
-        Schema schema = new Schema();
-        MediaType mediaType = new MediaType(mimeType.toString(), schema);
-
-        if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(mimeType)
-                || HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.contentEqualsIgnoreCase(
-                        mimeType)) {
-            schema.setType("object");
-            for (Signature.Parameter parameter : parameters) {
-                schema.addProperty(
-                        parameter.getName(),
-                        new Schema("string", parameter.getDescription()),
-                        parameter.isRequired());
-            }
-        } else if (HttpHeaderValues.MULTIPART_FORM_DATA.contentEqualsIgnoreCase(mimeType)) {
-            schema.setType("object");
-            for (Signature.Parameter parameter : parameters) {
-                String paramType = parameter.getContentType();
-                Schema paramSchema = new Schema(parameter.getType(), parameter.getDescription());
-                schema.addProperty(parameter.getName(), paramSchema, parameter.isRequired());
-                if (paramType != null && !paramType.startsWith("text/")) {
-                    paramSchema.setFormat("binary");
-                    mediaType.addEncoding(parameter.getName(), new Encoding(paramType));
-                }
-            }
-        } else {
-            schema.setType("string");
-            schema.setFormat("binary");
-        }
-
-        return mediaType;
     }
 }

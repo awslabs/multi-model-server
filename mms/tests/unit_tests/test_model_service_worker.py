@@ -475,7 +475,7 @@ class TestMXNetModelServiceWorker:
                 mocker.patch('mms.model_service_worker.ModelWorkerMessageValidators.validate_load_message'),
                 mocker.patch('mms.model_service_worker.ModelLoader.load')
             )
-            patches.loader.return_value = 'testmanifest', 'test_service_file_path'
+            patches.loader.return_value = 'testmanifest', 'testmanifestlegacy', 'test_service_file_path'
             return patches
 
         @pytest.fixture()
@@ -513,7 +513,7 @@ class TestMXNetModelServiceWorker:
             if gpu[0]:
                 data[u'gpu'] = gpu[0]
             worker.load_model(data)
-            worker.service_manager.register_and_load_modules.assert_called_once_with('name', 'mpath', 'testmanifest', 'test_service_file_path', gpu[1], batch_size[1])
+            worker.service_manager.register_and_load_modules.assert_called_once_with('name', 'mpath', 'testmanifest', 'test_service_file_path', gpu[1], batch_size[1], 'testmanifestlegacy')
 
         def test_success(self, patches, worker):
             msg, code = worker.load_model(self.data)

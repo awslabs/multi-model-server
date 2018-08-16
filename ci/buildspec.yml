@@ -7,20 +7,17 @@ phases:
     commands:
       - apt-get update
       - apt-get install -y curl
-      - apt-get install -y libgfortran3
-      - pip install future
       - pip install pip -U
-      - pip install flask
-      #- pip install -U mxnet
+      - pip install future
       - pip install Pillow
-      - pip install requests
-      - pip install flask-cors
-      - pip install fasteners
-      - pip install jsonschema
+      - pip install pytest
       - pip install pytest-mock -U
-      # - pip install onnx -U
-      # - pip install onnx-mxnet -U
-      - pip install -U -e .
+      - pip install -U -e .[mxnet]
+
+  pre_build:
+    commands:
+        - $NIGHTLYBRANCH
+            
   build:
     commands:
       - frontend/gradlew -p frontend build
@@ -28,8 +25,10 @@ phases:
       # integration test is broken: https://github.com/awslabs/mxnet-model-server/issues/437
       #- python -m pytest mms/tests/integration_tests
       - pylint -rn --rcfile=./mms/tests/pylintrc mms/.
+      - $NIGHTLYBUILD
+      - $NIGHTLYUPLOAD
 
 # local build will hang without artifacts section
 artifacts:
   files:
-    - README.md
+    - dist/*.whl

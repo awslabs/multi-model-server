@@ -269,7 +269,7 @@ public class ModelArchive {
         try {
             if (copyOnMigrate) {
                 File tmpDir = FileUtils.getTempDirectory();
-                File copyDir = new File(tmpDir, "models/" + manifest.getModel().getModelName());
+                File copyDir = new File(tmpDir, "models/" + modelDir.getName());
                 FileUtils.deleteDirectory(copyDir);
                 FileUtils.forceMkdir(copyDir);
                 FileUtils.copyDirectory(modelDir, copyDir, f -> !f.isHidden());

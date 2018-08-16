@@ -98,6 +98,7 @@ public class WorkerThread extends Thread {
     @Override
     public void run() {
         currentThread = Thread.currentThread();
+        String modelName = model.getModelName();
         BaseModelRequest req = null;
         try {
             while (running.get()) {
@@ -122,9 +123,10 @@ public class WorkerThread extends Thread {
                         break;
                     case LOAD:
                         if ("200".equals(reply.getCode())) {
-                            listener.notifyChangeState(WorkerStateListener.WORKER_MODEL_LOADED);
+                            listener.notifyChangeState(
+                                    modelName, WorkerStateListener.WORKER_MODEL_LOADED);
                         } else {
-                            listener.notifyChangeState(WorkerStateListener.WORKER_ERROR);
+                            listener.notifyChangeState(modelName, WorkerStateListener.WORKER_ERROR);
                         }
                         break;
                     case UNLOAD:
@@ -145,7 +147,7 @@ public class WorkerThread extends Thread {
                 aggregator.sendError(
                         req, ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
             }
-            listener.notifyChangeState(WorkerStateListener.WORKER_STOPPED);
+            listener.notifyChangeState(modelName, WorkerStateListener.WORKER_STOPPED);
             lifeCycle.exit();
         }
     }
@@ -163,7 +165,8 @@ public class WorkerThread extends Thread {
             throw new WorkerInitializationException(
                     ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
         }
-        listener.notifyChangeState(WorkerStateListener.WORKER_STARTED);
+        String modelName = model.getModelName();
+        listener.notifyChangeState(modelName, WorkerStateListener.WORKER_STARTED);
         final CountDownLatch latch = new CountDownLatch(1);
 
         try {
@@ -217,7 +220,7 @@ public class WorkerThread extends Thread {
                                         Job job =
                                                 new Job(
                                                         null,
-                                                        model.getModelName(),
+                                                        modelName,
                                                         WorkerCommands.LOAD,
                                                         input);
                                         model.addJob(getName(), job);

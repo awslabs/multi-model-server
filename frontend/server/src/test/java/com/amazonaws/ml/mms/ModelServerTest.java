@@ -137,8 +137,8 @@ public class ModelServerTest {
         testDescribeApi(channel);
         testUnregisterModel(channel);
         testLoadModel(channel);
-        testScaleModel(channel);
         testSyncScaleModel(channel);
+        testScaleModel(channel);
         testListModels(channel);
         testDescribeModel(channel);
         testLoadModelWithInitialWorkers(channel);
@@ -233,7 +233,7 @@ public class ModelServerTest {
         latch = new CountDownLatch(1);
         HttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.PUT, "/models/noop_v0.1?min_worker=1");
+                        HttpVersion.HTTP_1_1, HttpMethod.PUT, "/models/noop_v0.1?min_worker=2");
         channel.writeAndFlush(req);
         latch.await();
 
@@ -248,7 +248,7 @@ public class ModelServerTest {
                 new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         HttpMethod.PUT,
-                        "/models/noop_v0.1?synchronous=true&min_worker=2");
+                        "/models/noop_v0.1?synchronous=true&min_worker=1");
         channel.writeAndFlush(req);
         latch.await();
 

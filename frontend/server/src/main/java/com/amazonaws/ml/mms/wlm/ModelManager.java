@@ -113,6 +113,7 @@ public final class ModelManager {
         }
         model.setMinWorkers(minWorkers);
         model.setMaxWorkers(maxWorkers);
+        logger.debug("updateModel: {}, count: {}", modelName, minWorkers);
         return wlm.modelChanged(model);
     }
 

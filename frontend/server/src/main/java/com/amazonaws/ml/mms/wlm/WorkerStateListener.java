@@ -32,8 +32,8 @@ public class WorkerStateListener {
         this.count = new AtomicInteger(count);
     }
 
-    public void notifyChangeState(int state) {
-        logger.debug("Current state is", state);
+    public void notifyChangeState(String modelName, int state) {
+        logger.debug("{} worker state is: {}", modelName, toState(state));
         // Update success and fail counts
         if (state == WORKER_MODEL_LOADED) {
             if (count.decrementAndGet() == 0) {
@@ -42,6 +42,20 @@ public class WorkerStateListener {
         }
         if (state == WORKER_ERROR || state == WORKER_STOPPED) {
             future.complete(Boolean.FALSE);
+        }
+    }
+
+    private static String toState(int state) {
+        switch (state) {
+            case WORKER_STARTED:
+                return "STARTED";
+            case WORKER_MODEL_LOADED:
+                return "MODEL_LOADED";
+            case WORKER_STOPPED:
+                return "STOPPED";
+            case WORKER_ERROR:
+            default:
+                return "ERROR";
         }
     }
 }

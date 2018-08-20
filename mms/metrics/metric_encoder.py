@@ -12,6 +12,7 @@
 Metric Encoder class for json dumps
 """
 
+import json
 from json import JSONEncoder
 
 from mms.metrics.metric import Metric

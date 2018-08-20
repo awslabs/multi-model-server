@@ -98,8 +98,7 @@ class ServiceManager(object):
             for model_name in model_names
         }
 
-    def load_model(self, model_name, model_dir, manifest, model_service_class_def, gpu=None, batch_size=None,
-                   manifest_legacy=None):
+    def load_model(self, model_name, model_dir, manifest, model_service_class_def, gpu=None, batch_size=None):
         """
         Load a single model into a model service by using
         user passed Model Service Class Definitions.
@@ -119,12 +118,7 @@ class ServiceManager(object):
             If it is not set, cpu will be used.
         batch_size : int
             batch size
-        manifest_legacy: string
-            The legacy manifest string
         """
-        # Check which manifest to pass down
-        manifest = manifest if manifest_legacy is None else manifest_legacy
-
         model_service = model_service_class_def(model_name, model_dir, manifest, gpu)
         model_service._init_internal(model_name, model_dir, manifest, gpu, batch_size)
         self.loaded_modelservices[model_name] = model_service
@@ -206,8 +200,7 @@ class ServiceManager(object):
 
         return self.get_modelservices_registry(modelservice_names)
 
-    def register_and_load_modules(self, model_name, model_dir, manifest, module_file_path, gpu, batch_size,
-                                  manifest_legacy=None):
+    def register_and_load_modules(self, model_name, model_dir, manifest, module_file_path, gpu, batch_size):
         """
         Register all the modules and load them. This is a wrapper method around register_module and load_models.
         :param model_name
@@ -215,8 +208,7 @@ class ServiceManager(object):
         :param manifest
         :param module_file_path:
         :param gpu:
-        :param batch_size:
-        :param manifest_legacy
+        :param batch_size
         :return:
         """
 
@@ -237,4 +229,4 @@ class ServiceManager(object):
         registered_models = self.get_registered_modelservices()
         model_class_defn = registered_models[model_class_name]
 
-        self.load_model(model_name, model_dir, manifest, model_class_defn, gpu, batch_size, manifest_legacy)
+        self.load_model(model_name, model_dir, manifest, model_class_defn, gpu, batch_size)

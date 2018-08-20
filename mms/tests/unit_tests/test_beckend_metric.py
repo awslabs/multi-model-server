@@ -1,7 +1,8 @@
-from mms.metrics.metrics_store import MetricsStore
-from mms.metrics.dimension import Dimension
-from mms.model_service_worker import emit_metrics
 import pytest
+from mms.metrics.dimension import Dimension
+from mms.metrics.metrics_store import MetricsStore
+from mms.model_service_worker import emit_metrics
+
 
 def get_model_key(name, unit, req_id, model_name):
     dimensions = list()
@@ -12,7 +13,7 @@ def get_model_key(name, unit, req_id, model_name):
 
 
 def get_error_key(name, unit):
-    dimensions=list()
+    dimensions = list()
     dimensions.append(Dimension("Level", "Error"))
     dim_str = [name, unit, 'None'] + [str(d) for d in dimensions]
     return '-'.join(dim_str)
@@ -24,7 +25,7 @@ def test_metrics(capsys):
     Also checks global metric service methods
     """
     # Create a batch of request ids
-    request_ids = {0 : 'abcd', 1 :"xyz", 2 : "qwerty", 3 : "hjshfj" }
+    request_ids = {0: 'abcd', 1: "xyz", 2: "qwerty", 3: "hjshfj"}
     all_req_ids = ','.join(request_ids.values())
     model_name = "dummy model"
 
@@ -47,13 +48,12 @@ def test_metrics(capsys):
     test_metric = metrics.cache[get_model_key('CorrectCounter', 'count', 'hjshfj', model_name)]
     assert test_metric.value == 1
     test_metric = metrics.cache[get_model_key('CorrectCounter', 'count', all_req_ids, model_name)]
-    assert  test_metric.value == 4
+    assert test_metric.value == 4
     # Check what is emitted is correct
     emit_metrics(metrics.store)
     out, err = capsys.readouterr()
     assert '"Dimensions":[' in out
     assert '"Value":"Model"' in out
-
 
     # Adding other types of metrics
     # Check for time metric

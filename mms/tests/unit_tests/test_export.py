@@ -14,9 +14,8 @@ import zipfile
 
 import mxnet as mx
 import pytest
-from mock import patch, MagicMock
-
 from mms.export_model import export_model, generate_manifest
+from mock import patch, MagicMock
 
 
 def list_zip(path):
@@ -25,6 +24,7 @@ def list_zip(path):
 
 def empty_file(path):
     open(path, 'a').close()
+
 
 @pytest.fixture()
 def onnx_mxnet():
@@ -52,7 +52,7 @@ def nested_module_dir(tmpdir):
     empty_file('{}/nested-0000.params'.format(nested_path))
     empty_file('{}/nested-dummy'.format(nested_path))
     with open('{}/signature.json'.format(path), 'w') as sig:
-            signature = {
+        signature = {
             "input_type": "image/jpeg",
             "inputs": [
                 {
@@ -71,10 +71,12 @@ def nested_module_dir(tmpdir):
                     'data_shape': [1, 10]
                 }
             ]
-            }
-            json.dump(signature, sig)
+        }
+        json.dump(signature, sig)
 
     return path
+
+
 @pytest.fixture()
 def module_dir(tmpdir):
     path = '{}/test'.format(tmpdir)
@@ -172,7 +174,7 @@ def test_generate_manifest_imperative_without_params():
     }
 
 
-def test_temp_files_cleanup_no_export_path(tmpdir, module_dir):
+def test_temp_files_cleanup_no_export_path(module_dir):
     if module_dir.startswith('~'):
         model_path = os.path.expanduser(module_dir)
     else:
@@ -190,7 +192,7 @@ def test_temp_files_cleanup_no_export_path(tmpdir, module_dir):
     assert len(user_files_created) == 0, 'temporary files not deleted'
     assert len(user_files_deleted) == 0, 'user files deleted'
 
-    export_files_created= final_export_files- initial_export_files
+    export_files_created = final_export_files - initial_export_files
     assert len(export_files_created) == 1 and list(export_files_created)[0].endswith('.model'), \
         'something other than the model file got generated'
     export_files_deleted = initial_export_files - final_export_files
@@ -227,14 +229,15 @@ def test_export_module(tmpdir, module_dir):
     assert [f for f in zip_contents if f.endswith('.py')], 'missing service file'
     os.remove(export_path)
 
+
 def test_export_nested_module(tmpdir, nested_module_dir):
     export_path = '{}/test.model'.format(tmpdir)
     export_model('test', nested_module_dir, None, export_path)
 
     assert os.path.exists(export_path), 'no model created - export failed'
     zip_contents = list_zip(export_path)
-    for f in ['signature.json', 'test-0000.params', 'test-symbol.json', 'synset.txt', 'MANIFEST.json','nested/',\
-            'nested/nested-0000.params', 'nested/nested-dummy']:
+    for f in ['signature.json', 'test-0000.params', 'test-symbol.json', 'synset.txt', 'MANIFEST.json', 'nested/',
+              'nested/nested-0000.params', 'nested/nested-dummy']:
         assert f in zip_contents
 
     assert [f for f in zip_contents if f.endswith('.py')], 'missing service file'

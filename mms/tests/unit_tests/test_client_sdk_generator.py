@@ -8,19 +8,22 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import pytest
-from mock import patch, mock_open
 from collections import namedtuple
 
 import mms.client_sdk_generator
+import pytest
 from mms.client_sdk_generator import ClientSDKGenerator
+from mock import patch, mock_open
 
 sample_openapi_endpoints = dict()
 sample_sdk_language = 'python'
 
+
 @pytest.fixture()
 def patches(mocker):
-    Patches = namedtuple('Patches', ['path_exists', 'dirname', 'abspath', 'makedirs', 'json_dump', 'subprocess_call', 'open', 'logger_info'])
+    Patches = namedtuple('Patches',
+                         ['path_exists', 'dirname', 'abspath', 'makedirs', 'json_dump', 'subprocess_call', 'open',
+                          'logger_info'])
     patches = Patches(
         mocker.patch('os.path.exists'),
         mocker.patch('os.path.dirname'),
@@ -35,6 +38,7 @@ def patches(mocker):
     patches.dirname.return_value = "testdirname"
     return patches
 
+
 def test_handles_exception(patches):
     test_exception = Exception("test")
     patches.path_exists.side_effect = test_exception
@@ -45,10 +49,12 @@ def test_handles_exception(patches):
     assert excinfo.value != test_exception
     assert excinfo.value.args[0] == 'Failed to generate client sdk: test'
 
+
 def test_makes_build_directory(patches):
     patches.path_exists.return_value = False
     ClientSDKGenerator.generate(sample_openapi_endpoints, sample_sdk_language)
     patches.makedirs.assert_called_once()
+
 
 def test_runs_successfully(patches):
     ClientSDKGenerator.generate(sample_openapi_endpoints, sample_sdk_language)

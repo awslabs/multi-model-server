@@ -8,15 +8,18 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import os
-import sys
 import json
-import PIL
+import os
+import pytest
+import shutil
+import sys
+import tempfile
 import unittest
-import numpy as np
-import mxnet as mx
-import shutil, tempfile, pytest
 from io import BytesIO
+
+import PIL
+import mxnet as mx
+import numpy as np
 from helper.pixel2pixel_service import UnetGenerator
 from mms.model_service.mxnet_model_service import MXNetBaseService, GluonImperativeBaseService
 
@@ -86,7 +89,7 @@ def create_symbolic_manifest(path):
 
 def create_imperative_manifest(path):
     with open('{}/MANIFEST.json'.format(path), 'w') as man:
-        manifest = manifest = {
+        manifest = {
             "Engine": {
                 "MXNet": 0.12
             },
@@ -127,8 +130,8 @@ class TestService(unittest.TestCase):
         pooling2 = mx.sym.Pooling(data=conv2, kernel=(2, 2), stride=(1, 1), pool_type="max")
         flatten1 = mx.sym.flatten(data=pooling1)
         flatten2 = mx.sym.flatten(data=pooling2)
-        sum = mx.sym.sum(data=flatten1, axis=1) + mx.sym.sum(data=flatten2, axis=1)
-        fc = mx.sym.FullyConnected(data=sum, num_hidden=num_class)
+        summary = mx.sym.sum(data=flatten1, axis=1) + mx.sym.sum(data=flatten2, axis=1)
+        fc = mx.sym.FullyConnected(data=summary, num_hidden=num_class)
         sym = mx.sym.SoftmaxOutput(data=fc, name='softmax')
 
         dshape1 = (10, 3, 64, 64)
@@ -148,12 +151,9 @@ class TestService(unittest.TestCase):
         mod.forward(data_batch)
         mod.backward()
         mod.update()
-        signature = {'input_type': 'image/jpeg', 'output_type': 'application/json'}
-        with open('%s/synset.txt' % (model_path), 'w') as synset:
+        with open('%s/synset.txt' % model_path, 'w') as synset:
             for i in range(10):
-                synset.write('test label %d\n' % (i))
-#         export_serving(mod, 'test', signature, export_path=model_path,
-#                        aux_files=['%s/synset.txt' % (model_path)])
+                synset.write('test label %d\n' % i)
 
     def _write_image(self, img_arr):
         img_arr = mx.nd.transpose(img_arr, (1, 2, 0)).astype(np.uint8).asnumpy()
@@ -167,34 +167,13 @@ class TestService(unittest.TestCase):
         path = 'test'
         self._train_and_export(path)
         model_path = curr_path + '/' + path
-        manifest = {
-            "Model": {
-                "Parameters": 'test-0000.params',
-                "Signature": "signature.json",
-                "Model-Format": "MXNet-symoblic"
-            },
-            "Assets": {
-                "Synset": "synset.txt"
-            }
-        }
-        os.system('rm -rf %s' % (model_path))
+        os.system('rm -rf %s' % model_path)
 
     def test_vision_inference(self):
         path = 'test'
         self._train_and_export(path)
-        model_path = curr_path + '/' + path
-        manifest = {
-            "Model": {
-                "Parameters": 'test-0000.params',
-                "Signature": "signature.json",
-                "Model-Format": "MXNet-symoblic"
-            },
-            "Assets": {
-                "Synset": "synset.txt"
-            }
-        }
 
-        os.system('rm -rf %s/test' % (curr_path))
+        os.system('rm -rf %s/test' % curr_path)
 
     def test_gluon_inference(self):
         path = 'gluon'
@@ -202,12 +181,12 @@ class TestService(unittest.TestCase):
         model_path = curr_path + '/' + path
         os.mkdir(model_path)
         ctx = mx.cpu()
-        netG = UnetGenerator(in_channels=3, num_downs=8)
+        net_g = UnetGenerator(in_channels=3, num_downs=8)
         data = mx.nd.random_uniform(0, 255, shape=(1, 3, 256, 256))
-        netG.initialize(mx.init.Normal(0.02), ctx=ctx)
-        netG(data)
-        netG.save_params('%s/%s.params' % (model_path, model_name))
-        with open('%s/signature.json' % (model_path), 'w') as sig:
+        net_g.initialize(mx.init.Normal(0.02), ctx=ctx)
+        net_g(data)
+        net_g.save_params('%s/%s.params' % (model_path, model_name))
+        with open('%s/signature.json' % model_path, 'w') as sig:
             signature = {
                 "input_type": "image/jpeg",
                 "inputs": [
@@ -242,8 +221,8 @@ class TestService(unittest.TestCase):
         create_symbolic_manifest(model_path)
         manifest = json.load(open(os.path.join(model_path, 'MANIFEST.json')))
         with pytest.raises(Exception):
-            MxnetBaseServiceClass = MXNetBaseService('test', model_path, manifest)
-        os.system('rm -rf %s' % (model_path))
+            MXNetBaseService('test', model_path, manifest)
+        os.system('rm -rf %s' % model_path)
 
     def test_gluon_model_service(self):
         mod_dir = module_dir(self.test_dir)
@@ -253,15 +232,15 @@ class TestService(unittest.TestCase):
             model_path = mod_dir
         create_imperative_manifest(model_path)
         manifest = json.load(open(os.path.join(model_path, 'MANIFEST.json')))
-        MxnetBaseServiceClass = GluonImperativeBaseService('test', model_path, manifest,
-                                                      mx.gluon.model_zoo.vision.alexnet(pretrained=True))
-        os.system('rm -rf %s' % (model_path))
+        GluonImperativeBaseService('test', model_path, manifest,
+                                   mx.gluon.model_zoo.vision.alexnet(pretrained=True))
+        os.system('rm -rf %s' % model_path)
 
     def test_incorrect_service(self):
         from mms.model_service.model_service import load_service
         path = os.getcwd()
         try:
-            load_service(os.path.join(path,'mms/tests/unit_tests/helper/incorrect_service.py'))
+            load_service(os.path.join(path, 'mms/tests/unit_tests/helper/incorrect_service.py'))
         except Exception as e:
             assert "No module" in str(e)
             print(e)

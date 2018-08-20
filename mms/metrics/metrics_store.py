@@ -11,8 +11,8 @@
 """
 Metrics collection module
 """
-from mms.metrics.metric import Metric
 from mms.metrics.dimension import Dimension
+from mms.metrics.metric import Metric
 
 
 class MetricsStore(object):
@@ -53,11 +53,12 @@ class MetricsStore(object):
             dimensions = list()
         elif not isinstance(dimensions, list):
             raise ValueError("Please provide a list of dimensions")
-        if req_id is not None:
-            dimensions.append(Dimension("ModelName", self.model_name))
-            dimensions.append(Dimension("Level", "Model"))
         if req_id is None:
             dimensions.append(Dimension("Level", "Error"))
+        else:
+            dimensions.append(Dimension("ModelName", self.model_name))
+            dimensions.append(Dimension("Level", "Model"))
+
         # Cache the metric with an unique key for update
         dim_str = [name, unit, str(req_id)] + [str(d) for d in dimensions]
         dim_str = '-'.join(dim_str)
@@ -119,6 +120,8 @@ class MetricsStore(object):
             request_id index in batch
         unit: str
             unit of metric,  default here is ms, s is also accepted
+        dimensions: list
+            list of dimensions for the metric
         """
         if unit not in ['ms', 's']:
             raise ValueError("the unit for a timed metric should be one of ['ms', 's']")
@@ -139,6 +142,8 @@ class MetricsStore(object):
             request_id index in batch
         unit: str
             unit of metric, default here is 'MB', 'kB', 'GB' also supported
+        dimensions: list
+            list of dimensions for the metric
         """
         if unit not in ['MB', 'kB', 'GB', 'B']:
             raise ValueError("The unit for size based metric is one of ['MB','kB', 'GB', 'B']")
@@ -157,6 +162,8 @@ class MetricsStore(object):
             value of metric
         idx: int
             request_id index in batch
+        dimensions: list
+            list of dimensions for the metric
         """
         unit = 'percent'
         req_id = self._get_req(idx)
@@ -171,8 +178,12 @@ class MetricsStore(object):
             metric name
         value: str
             value of metric, in this case a str
+        dimensions: list
+            list of dimensions for the metric
         """
         unit = ''
+
+        # noinspection PyTypeChecker
         self._add_or_update(name, value, None, unit, dimensions)
 
     def add_metric(self, name, value, idx=None, unit=None, dimensions=None):
@@ -189,6 +200,8 @@ class MetricsStore(object):
             request_id index in batch
         unit: str
             unit of metric
+        dimensions: list
+            list of dimensions for the metric
         """
         req_id = self._get_req(idx)
         self._add_or_update(name, value, req_id, unit, dimensions)

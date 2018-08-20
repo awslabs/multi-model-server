@@ -59,7 +59,7 @@ def test_metrics(capsys):
     # Check for time metric
     with pytest.raises(Exception) as e_info:
         metrics.add_time('WrongTime', 20, 1, 'ns')
-        assert "the unit for a timed metric should be" in str(e_info)
+    assert "the unit for a timed metric should be one of ['ms', 's']" == e_info.value.args[0]
 
     metrics.add_time('CorrectTime', 20, 2, 's')
     metrics.add_time('CorrectTime', 20, 0)
@@ -71,8 +71,8 @@ def test_metrics(capsys):
     assert test_metric.unit == 'Seconds'
     # Size based metrics
     with pytest.raises(Exception) as e_info:
-        metrics.add_time('WrongSize', 20, 1, 'TB')
-        assert "The unit for size based metric is one of" in str(e_info)
+        metrics.add_size('WrongSize', 20, 1, 'TB')
+    assert "The unit for size based metric is one of ['MB','kB', 'GB', 'B']" == e_info.value.args[0]
 
     metrics.add_size('CorrectSize', 200, 0, 'GB')
     metrics.add_size('CorrectSize', 10, 2)

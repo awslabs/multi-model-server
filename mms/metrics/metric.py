@@ -11,9 +11,10 @@
 """
 Metric class for model server
 """
-from collections import OrderedDict
 import datetime
 import socket
+from collections import OrderedDict
+
 from mms.metrics.unit import Units
 
 MetricUnit = Units()

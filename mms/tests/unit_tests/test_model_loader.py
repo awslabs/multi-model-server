@@ -8,10 +8,11 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import pytest
+import json
 import os
 import shutil
-import json
+
+import pytest
 from mms.model_loader import MANIFEST_FILENAME
 from mms.model_loader import ModelLoader
 
@@ -19,11 +20,12 @@ model_dir_path = 'my-model'
 handler_file = 'handler'
 
 manifest_invalid_data_missing_extensions = {"model": {}, "engine": {"engineName": "MxNet"}}
-manifest_invalid_data_missing_paramsFile = {"model": {"extensions" : {}}, "engine": {"engineName": "MxNet"}}
+manifest_invalid_data_missing_paramsFile = {"model": {"extensions": {}}, "engine": {"engineName": "MxNet"}}
 manifest_invalid_data_missing_symbolFile = {"model": {"extensions:": {"parametersFile": "my-model/params1"}},
                                             "engine": {"engineName": "MxNet"}}
-manifest_valid_data = {"model": {"extensions": {"parametersFile": "my-model/params1", "symbolFile": 'my-model/symbol.json'}},
-                       "engine": {"engineName": "MxNet"}}
+manifest_valid_data = {
+    "model": {"extensions": {"parametersFile": "my-model/params1", "symbolFile": 'my-model/symbol.json'}},
+    "engine": {"engineName": "MxNet"}}
 
 
 def empty_file(filepath):
@@ -37,12 +39,13 @@ def empty_file(filepath):
 
 
 @pytest.mark.skip(reason="Disabling it currently until the PR #467 gets merged")
-class TestModelLoad():
+class TestModelLoad:
 
     @pytest.fixture(scope='session')
     def create_empty_manifest_file(self):
         """
-        By setting the scope of create_empty_manifest_file as session we are ensuring that this piece of code runs once for all of the tests combined in this file
+        By setting the scope of create_empty_manifest_file as session we are ensuring
+        that this piece of code runs once for all of the tests combined in this file.
         """
         # Setup
         path = '{}/'.format(model_dir_path)
@@ -88,7 +91,8 @@ class TestModelLoad():
         with pytest.raises(Exception) as error:
             ModelLoader.load(model_dir_path, handler_file)
 
-        assert error.value.args[0] == "parameterFile not found: {}.".format(manifest_valid_data['model']['parametersFile'])
+        assert error.value.args[0] == "parameterFile not found: {}.".format(
+            manifest_valid_data['model']['parametersFile'])
 
     def test_symbol_file_defined_in_manifest(self, create_empty_manifest_file):
         with open(os.path.join(model_dir_path, MANIFEST_FILENAME), 'w') as f:

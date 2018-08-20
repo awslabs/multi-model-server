@@ -8,10 +8,11 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+import os
+from collections import namedtuple
+
 import pytest
 from mms.service_manager import ServiceManager
-from collections import namedtuple
-import os
 
 model_names = ['DummyNodeService', 'vqa2', 'rnn3']
 
@@ -27,11 +28,15 @@ def spy_fixtures(service_manager, mocker):
                                      'get_registered_modelservices', 'load_model', 'add_modelservice_to_registry'])
 
     patches = Patches(mocker.patch.object(service_manager, 'register_module', wraps=service_manager.register_module),
-                      mocker.patch.object(service_manager, 'get_modelservices_registry', wraps=service_manager.get_modelservices_registry),
-                      mocker.patch.object(service_manager, 'parse_modelservices_from_module', wraps=service_manager.parse_modelservices_from_module),
-                      mocker.patch.object(service_manager, 'get_registered_modelservices', wraps=service_manager.get_registered_modelservices),
+                      mocker.patch.object(service_manager, 'get_modelservices_registry',
+                                          wraps=service_manager.get_modelservices_registry),
+                      mocker.patch.object(service_manager, 'parse_modelservices_from_module',
+                                          wraps=service_manager.parse_modelservices_from_module),
+                      mocker.patch.object(service_manager, 'get_registered_modelservices',
+                                          wraps=service_manager.get_registered_modelservices),
                       mocker.patch.object(service_manager, 'load_model', wraps=service_manager.load_model),
-                      mocker.patch.object(service_manager, 'add_modelservice_to_registry', wraps=service_manager.add_modelservice_to_registry))
+                      mocker.patch.object(service_manager, 'add_modelservice_to_registry',
+                                          wraps=service_manager.add_modelservice_to_registry))
 
     return patches
 
@@ -57,7 +62,7 @@ def test_unload_models(service_manager):
     assert expected_response == response
 
 
-class TestGetModelServicesRegistry():
+class TestGetModelServicesRegistry:
 
     def test_with_null_model_names(self, service_manager):
         response = service_manager.get_modelservices_registry()
@@ -76,7 +81,7 @@ class TestGetModelServicesRegistry():
         assert expected_response == response
 
 
-class TestGetLoadedModelServices():
+class TestGetLoadedModelServices:
 
     def test_with_nil_model_names(self, service_manager):
         response = service_manager.get_loaded_modelservices()
@@ -94,7 +99,8 @@ class TestGetLoadedModelServices():
         assert expected_response == response
 
 
-class TestParseModelServicesFromModule():
+class TestParseModelServicesFromModule:
+
     def test_with_nil_service_file(self, service_manager):
         with pytest.raises(Exception) as error:
             service_manager.parse_modelservices_from_module(service_file=None)
@@ -121,14 +127,14 @@ class TestParseModelServicesFromModule():
         assert "DummyNodeService" in class_list
 
 
-class TestGetRegisteredModelServices():
+class TestGetRegisteredModelServices:
+
     def test_with_nil_modelservice_names(self, service_manager, spy_fixtures):
         service_manager.get_registered_modelservices(modelservice_names=None)
         spy_fixtures.get_modelservices_registry.assert_called_with(None)
 
     def test_with_some_modelservice_name(self, service_manager, spy_fixtures):
-
-        spy_fixtures.get_modelservices_registry.return_value = { model_names[0]: ''.join([model_names[0], '.py'])}
+        spy_fixtures.get_modelservices_registry.return_value = {model_names[0]: ''.join([model_names[0], '.py'])}
 
         response = service_manager.get_registered_modelservices(modelservice_names=model_names[0])
 
@@ -138,7 +144,7 @@ class TestGetRegisteredModelServices():
         assert response[model_names[0]] == ''.join([model_names[0], '.py'])
 
 
-class TestRegisterMoule():
+class TestRegisterMoule:
 
     service_file_path = 'mms/tests/unit_tests/test_utils/dummy_model_service.py'
 
@@ -163,7 +169,8 @@ class TestRegisterMoule():
         spy_fixtures.add_modelservice_to_registry.assert_called()
 
 
-class TestRegisterAndLoadModules():
+class TestRegisterAndLoadModules:
+
     model_name = model_names[0]
     model_dir = "mms/tests/unit_tests/test_utils"
     manifest = {}
@@ -183,9 +190,7 @@ class TestRegisterAndLoadModules():
                                       ".py. Service file should contain only one service class. Found 0"
         spy_fixtures.register_module.assert_called_with(self.module_file_path)
 
-
     def test_with_no_error(self, service_manager, spy_fixtures):
-
         # spy.start()
         spy_fixtures.get_registered_modelservices.return_value = {model_names[0]: ''.join([model_names[0], '.py'])}
 

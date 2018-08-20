@@ -12,6 +12,7 @@ import pytest
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes
 
+
 @pytest.fixture()
 def mms_error():
     return MMSError(ModelServerErrorCodes.INVALID_LOAD_MESSAGE, "invalid load")

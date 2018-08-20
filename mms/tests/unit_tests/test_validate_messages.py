@@ -10,8 +10,8 @@
 
 import pytest
 from mms.mxnet_model_service_error import MMSError
-from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.utils.model_server_error_codes import ModelServerErrorCodes
+from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 
 
 def test_validate_load_message_missing_model_path():

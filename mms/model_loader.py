@@ -18,7 +18,6 @@ from mms.log import get_logger
 logger = get_logger()
 
 MANIFEST_FILENAME = 'MANIFEST.json'
-MANIFEST_LEGACY_FILE = 'MANIFEST.legacy'
 
 
 class ModelLoader(object):
@@ -44,21 +43,10 @@ class ModelLoader(object):
         """
         manifest = None
         manifest_file = os.path.join(model_dir, MANIFEST_FILENAME)
-
-        # Legacy manifest handling
-        manifest_legacy = None
-        manifest_legacy_file = os.path.join(model_dir, MANIFEST_LEGACY_FILE)
-
-        if os.path.isfile(manifest_legacy_file):
-            try:
-                manifest_legacy = json.load(open(manifest_legacy_file))
-            except ValueError as e:
-                raise Exception('Failed to open legacy manifest file. Stacktrace : ' + repr(e))
-
         if os.path.isfile(manifest_file):
             try:
                 manifest = json.load(open(manifest_file))
-            except ValueError as e:
+            except Exception as e:
                 raise Exception('Failed to open manifest file. Stacktrace: ' + str(e))
             model = manifest['model']
             engine = manifest['engine']
@@ -84,4 +72,4 @@ class ModelLoader(object):
             # TODO: search PYTHONPATH and MODELPATH for handler file
             raise Exception("handler file not not found: {}.".format(handler_file))
 
-        return manifest, manifest_legacy, handler_file
+        return manifest, handler_file

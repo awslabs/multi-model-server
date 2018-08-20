@@ -146,7 +146,6 @@ class TestModelLoad():
         empty_file(manifest_valid_data['model']['symbolFile'])
         empty_file(os.path.join(model_dir_path, handler_file))
 
-        manifest_return, manifest_legacy_file, handler_file_return = ModelLoader.load(model_dir_path, handler_file)
+        manifest_return, handler_file_return = ModelLoader.load(model_dir_path, handler_file)
         assert manifest_return == manifest_valid_data
         assert str(handler_file_return) == str(os.path.join(model_dir_path, handler_file))
-        assert manifest_legacy_file is None

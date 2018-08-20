@@ -306,10 +306,10 @@ class MXNetModelServiceWorker(object):
             if u'gpu' in data:
                 gpu = int(data[u'gpu'])
 
-            manifest, manifest_legacy, service_file_path = ModelLoader.load(model_dir, handler)
+            manifest, service_file_path = ModelLoader.load(model_dir, handler)
 
             self.service_manager.register_and_load_modules(model_name, model_dir, manifest,
-                                                           service_file_path, gpu, batch_size, manifest_legacy)
+                                                           service_file_path, gpu, batch_size)
         except ValueError as v:
             raise MMSError(err.VALUE_ERROR_WHILE_LOADING, "{}".format(v))
         except MMSError as m:

@@ -11,6 +11,8 @@ phases:
       - pip install future
       - pip install Pillow
       - pip install pytest
+      - pip install wheel
+      - pip install twine
       - pip install pytest-mock -U
       - pip install -U -e .[mxnet]
 

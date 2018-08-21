@@ -90,7 +90,8 @@ class BuildFrontEnd(Command):
 
         cwd = os.getcwd()
         # Remove build/lib directory.
-        rmtree(os.path.abspath('./build/lib/'))
+        if os.path.exists(os.path.abspath('./build/lib/')):
+            rmtree(os.path.abspath('./build/lib/'))
         os.chdir(os.path.abspath('./frontend/'))
         try:
             subprocess.check_call('./gradlew build', shell=True)

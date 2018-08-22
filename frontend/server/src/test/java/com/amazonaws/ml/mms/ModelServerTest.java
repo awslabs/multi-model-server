@@ -13,6 +13,8 @@
 package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.archive.InvalidModelException;
+import com.amazonaws.ml.mms.http.DescribeModelResponse;
+import com.amazonaws.ml.mms.http.ListModelsResponse;
 import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.metrics.Dimension;
 import com.amazonaws.ml.mms.metrics.Metric;
@@ -137,6 +139,8 @@ public class ModelServerTest {
         testLoadModel(channel);
         testScaleModel(channel);
         testSyncScaleModel(channel);
+        testListModels(channel);
+        testDescribeModel(channel);
         testPredictions(channel);
         testPredictionsBinary(channel);
         testPredictionsJson(channel);
@@ -163,8 +167,8 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(
-                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Healthy")) + "\n");
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Healthy");
     }
 
     private void testApiDescription(Channel channel) throws InterruptedException {
@@ -202,10 +206,8 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(
-                result,
-                JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Model \"noop_v0.1\" registered"))
-                        + "\n");
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Model \"noop_v0.1\" registered");
     }
 
     private void testScaleModel(Channel channel) throws InterruptedException {
@@ -217,8 +219,8 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(
-                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Worker updated")) + "\n");
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Worker updated");
     }
 
     private void testSyncScaleModel(Channel channel) throws InterruptedException {
@@ -232,8 +234,8 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(
-                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Worker scaled")) + "\n");
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Worker scaled");
     }
 
     private void testUnregisterModel(Channel channel) throws InterruptedException {
@@ -245,10 +247,34 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(
-                result,
-                JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Model \"noop_v0.1\" unregistered"))
-                        + "\n");
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Model \"noop_v0.1\" unregistered");
+    }
+
+    private void testListModels(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/models?limit=200&nextPageToken=X");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        ListModelsResponse resp = JsonUtils.GSON.fromJson(result, ListModelsResponse.class);
+        Assert.assertEquals(resp.getModels().size(), 2);
+    }
+
+    private void testDescribeModel(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/models/noop_v0.1");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        DescribeModelResponse resp = JsonUtils.GSON.fromJson(result, DescribeModelResponse.class);
+        Assert.assertTrue(resp.getWorkers().size() > 0);
     }
 
     private void testPredictions(Channel channel) throws InterruptedException {

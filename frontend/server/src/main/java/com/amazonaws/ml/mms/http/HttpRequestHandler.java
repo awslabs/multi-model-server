@@ -66,6 +66,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
         try {
             handleRequest(ctx, req);
+        } catch (IllegalArgumentException e) {
+            logger.debug("", e);
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (Throwable t) {
             logger.error("", t);
             NettyUtils.sendError(

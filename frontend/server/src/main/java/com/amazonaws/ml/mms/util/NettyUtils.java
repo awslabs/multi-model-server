@@ -203,7 +203,11 @@ public final class NettyUtils {
         if (value == null) {
             return def;
         }
-        return Integer.parseInt(value);
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return def;
+        }
     }
 
     public static ModelInputs getFormData(InterfaceHttpData data) {

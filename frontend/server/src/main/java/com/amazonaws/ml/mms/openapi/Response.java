@@ -28,6 +28,13 @@ public class Response {
         this.description = description;
     }
 
+    public Response(String code, String description, MediaType mediaType) {
+        this.code = code;
+        this.description = description;
+        content = new LinkedHashMap<>();
+        content.put(mediaType.getContentType(), mediaType);
+    }
+
     public String getCode() {
         return code;
     }

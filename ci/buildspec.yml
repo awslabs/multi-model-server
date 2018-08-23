@@ -28,7 +28,7 @@ phases:
       #- python -m pytest mms/tests/integration_tests
       - pylint -rn --rcfile=./mms/tests/pylintrc mms/.
       - $NIGHTLYBUILD
-      - $NIGHTLYUPLOAD
+      - eval $NIGHTLYUPLOAD
 
 # local build will hang without artifacts section
 artifacts:

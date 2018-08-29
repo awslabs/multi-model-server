@@ -41,32 +41,12 @@ class ModelLoader(object):
         map
             Model manifest
         """
-        manifest = None
-        manifest_file = os.path.join(model_dir, MANIFEST_FILENAME)
+        manifest_file = os.path.join(model_dir, "MANIFEST.legacy")
         if os.path.isfile(manifest_file):
-            try:
-                manifest = json.load(open(manifest_file))
-            except Exception as e:
-                raise Exception('Failed to open manifest file. Stacktrace: ' + str(e))
-            model = manifest['model']
-            engine = manifest.get('engine')
-            if engine is not None and engine['engineName'] == 'MxNet':
-                # symbol, parameters are required for MxNet
-                extensions = model.get('extensions')
-                if extensions is None:
-                    raise Exception("extensions is required for MxNet in MANIFEST.json.")
-
-                parameter_file = extensions.get('parametersFile')
-                if not parameter_file:
-                    raise Exception("parameterFile not defined in MANIFEST.json.")
-                if not os.path.isfile(os.path.join(model_dir, parameter_file)):
-                    raise Exception("parameterFile not found: {}.".format(parameter_file))
-
-                symbol_file = extensions.get('symbolFile')
-                if not symbol_file:
-                    raise Exception("symbolFile not defined in MANIFEST.json.")
-                if not os.path.isfile(os.path.join(model_dir, symbol_file)):
-                    raise Exception("symbolFile not found: {}.".format(symbol_file))
+            manifest = json.load(open(manifest_file))
+        else:
+            manifest_file = os.path.join(model_dir, MANIFEST_FILENAME)
+            manifest = json.load(open(manifest_file))
 
         if handler is None:
             raise Exception('No handler is provided.')

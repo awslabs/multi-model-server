@@ -320,7 +320,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         }
 
         ModelManager modelManager = ModelManager.getInstance();
-        ModelArchive archive;
+        final ModelArchive archive;
         try {
             archive =
                     modelManager.registerModel(
@@ -330,6 +330,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getErrorCode());
             return;
         }
+
+        modelName = archive.getModelName();
 
         final String msg = "Model \"" + modelName + "\" registered";
         if (initialWorkers <= 0) {
@@ -345,7 +347,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 synchronous,
                 f -> {
                     try {
-                        modelManager.unregisterModel(modelName);
+                        modelManager.unregisterModel(archive.getModelName());
                     } catch (WorkerInitializationException ignore) {
                         // ignore
                     }

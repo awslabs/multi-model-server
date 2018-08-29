@@ -67,66 +67,45 @@ class MXNetBaseService(SingleNodeService):
     def __init__(self, model_name, model_dir, manifest, gpu=None):
         super(MXNetBaseService, self).__init__(model_name, model_dir, manifest, gpu)
 
+        self.param_filename = None
+        self.model_name = model_name
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
 
         data_names = []
         data_shapes = []
         epoch = 0
 
-        signature_file_path = os.path.join(model_dir, 'signature.legacy')
-        if os.path.isfile(signature_file_path):
-            try:
-                signature_file = open(signature_file_path)
-                self._signature = json.load(signature_file)
-            except Exception:
-                raise Exception('Failed to open model signature file: %s' % signature_file_path)
+        signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
+        if not os.path.isfile(signature_file_path):
+            raise RuntimeError('Signature file is not found. Please put signature.json '
+                               'into the model file directory...' + signature_file_path)
+        try:
+            signature_file = open(signature_file_path)
+            self._signature = json.load(signature_file)
+        except Exception:
+            raise Exception('Failed to open model signature file: %s' % signature_file_path)
 
-            for input in self._signature['inputs']:
-                data_names.append(input['data_name'])
-                # Replace 0 entry in data shape with 1 for binding executor.
-                # Set batch size as 1
-                data_shape = input['data_shape']
-                data_shape[0] = 1
-                # pylint: disable=consider-using-enumerate
-                for idx in range(len(data_shape)):
-                    if data_shape[idx] == 0:
-                        data_shape[idx] = 1
-                data_shapes.append((input['data_name'], tuple(data_shape)))
-        else:
-            signature_file_path = os.path.join(model_dir, 'signature.json')
-            if os.path.isfile(signature_file_path):
-                try:
-                    self._signature = json.load(open(signature_file_path))
-                except Exception:
-                    raise Exception('Failed to open model signature file: %s' % signature_file_path)
-
-                request = self._signature['request']
-                for content_type in request.keys():
-                    for parameter in request[content_type]:
-                        data_names.append(parameter['name'])
-                        data_shape = parameter.get('shape')
-                        if data_shape is None:
-                            data_shape = [1]
-
-                        # Replace 0 entry in data shape with data_shape for binding executor.
-                        # First element in data_shape is batch size
-                        data_shape[0] = batch_size
-                        # pylint: disable=consider-using-enumerate
-                        for idx in range(len(data_shape)):
-                            if data_shape[idx] == 0:
-                                data_shape[idx] = 1
-                        data_shapes.append((parameter['name'], tuple(data_shape)))
+        for input in self._signature['inputs']:
+            data_names.append(input['data_name'])
+            # Replace 0 entry in data shape with 1 for binding executor.
+            # Set batch size as 1
+            data_shape = input['data_shape']
+            data_shape[0] = 1
+            # pylint: disable=consider-using-enumerate
+            for idx in range(len(data_shape)):
+                if data_shape[idx] == 0:
+                    data_shape[idx] = 1
+            data_shapes.append((input['data_name'], tuple(data_shape)))
 
         # Load MXNet module
         try:
-            param_filename = manifest['model']['parametersFile']
-            index = param_filename.rfind('-')
-            epoch = int(param_filename[index + 1: - len('.params')])
+            self.param_filename = manifest['Model']['Parameters']
+            epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
         except Exception:  # pylint: disable=broad-except
             logger.info("Failed to parse epoch from param file, setting epoch to 0")
 
         sym, arg_params, aux_params = mx.model.load_checkpoint(
-            '%s/%s' % (model_dir, manifest['model']['symbolFile'][:-12]), epoch)
+            '%s/%s' % (model_dir, manifest['Model']['Symbol'][:-12]), epoch)
         self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
                                       data_names=data_names, label_names=None)
         self.mx_model.bind(for_training=False, data_shapes=data_shapes)
@@ -226,7 +205,7 @@ class GluonImperativeBaseService(SingleNodeService):
 
         # Load MXNet module
         try:
-            self.param_filename = manifest['model']['parametersFile']
+            self.param_filename = manifest['Model']['Parameters']
             if self.param_filename or self.net is not None:
                 self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
             else:

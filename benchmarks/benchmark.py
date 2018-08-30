@@ -102,8 +102,8 @@ JMETER_VERSION = os.listdir(CELLAR)[0]
 CMDRUNNER = '{}/{}/libexec/lib/ext/CMDRunner.jar'.format(CELLAR, JMETER_VERSION)
 JMETER = '{}/{}/libexec/bin/jmeter'.format(CELLAR, JMETER_VERSION)
 MMS_BASE = reduce(lambda val,func: func(val), (os.path.abspath(__file__),) + (os.path.dirname,) * 2)
-CONFIG_PROP = os.path.join(MMS_BASE, 'benchmarks', 'config.properties')
 JMX_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jmx')
+CONFIG_PROP = os.path.join(MMS_BASE, 'benchmarks', 'config.properties')
 CONFIG_PROP_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config_template.properties')
 
 # Commenting our NOOPs for now since there's a bug on MMS model loading for .mar files
@@ -190,15 +190,20 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
             container = 'mms_benchmark_{}'.format(pargs.docker[0].split('/')[1])
             docker_path = pargs.docker[0]
         run_process("{} rm -f {}".format(docker, container))
-        docker_run_call = "{} run --name {} -p 8080:8080 -v {}:/mxnet-model-server -itd {}".format(docker, container, MMS_BASE, docker_path)
+        docker_run_call = "{} run --name {} -p 8080:8080 -p 8081:8081 -v {}:/mxnet-model-server -itd {}".format(docker, container, MMS_BASE, docker_path)
         run_process(docker_run_call)
-        run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && python setup.py bdist_wheel --universal && pip install -U -e .'".format(docker, container), shell=True)
+        with ChDir(MMS_BASE):
+            run_process("python setup.py bdist_wheel --universal")
+        run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && pip install -U -e .'".format(docker, container), shell=True)
         run_process("{} start {}".format(docker, container))
 
         docker_start_call = "{} exec {} mxnet-model-server --start --mms-config {}".format(docker, container, CONFIG_PROP)
         docker_start = run_process(docker_start_call, wait=False)
         time.sleep(3)
         docker_start.kill()
+
+
+    management_port = int(pargs.management[0]) if pargs.management else port + 1
 
     try:
         # temp files
@@ -213,6 +218,7 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         run_jmeter_args = {
             'hostname': hostname,
             'port': port,
+            'management_port': management_port,
             'protocol': protocol,
             'min_workers': workers,
             'rampup': 5,
@@ -451,6 +457,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--workers', nargs=1, type=int, default=None, help='Number of MMS backend workers to use')
 
     parser.add_argument('--mms', nargs=1, type=str, help='Target an already running instance of MMS instead of spinning up a docker container of MMS.  Specify the target with the format address:port (for http) or protocol://address:port')
+    parser.add_argument('--management-port', dest='management', nargs=1, type=str, help='When targeting a running MMS instance, specify the management port')
     parser.add_argument('-v', '--verbose', action='store_true', help='Display all output')
     parser.add_argument('--options', nargs='*', default=[], help='Additional jmeter arguments.  It should follow the format of --options argname1 argval1 argname2 argval2 ...')
     pargs = parser.parse_args()

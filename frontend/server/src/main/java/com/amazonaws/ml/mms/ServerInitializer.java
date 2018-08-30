@@ -12,7 +12,8 @@
  */
 package com.amazonaws.ml.mms;
 
-import com.amazonaws.ml.mms.http.HttpRequestHandler;
+import com.amazonaws.ml.mms.http.InferenceRequestHandler;
+import com.amazonaws.ml.mms.http.ManagementRequestHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -27,15 +28,18 @@ import io.netty.handler.ssl.SslContext;
  */
 public class ServerInitializer extends ChannelInitializer<SocketChannel> {
 
+    private final boolean managementServer;
     private SslContext sslCtx;
 
     /**
      * Creates a new {@code HttpRequestHandler} instance.
      *
      * @param sslCtx null if SSL is not enabled
+     * @param managementServer true to initialize a management server instead of an API Server
      */
-    public ServerInitializer(SslContext sslCtx) {
+    public ServerInitializer(SslContext sslCtx, boolean managementServer) {
         this.sslCtx = sslCtx;
+        this.managementServer = managementServer;
     }
 
     /** {@inheritDoc} */
@@ -47,6 +51,10 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
         }
         pipeline.addLast("http", new HttpServerCodec());
         pipeline.addLast("aggregator", new HttpObjectAggregator(6553600));
-        pipeline.addLast("handler", new HttpRequestHandler());
+        if (managementServer) {
+            pipeline.addLast("handler", new ManagementRequestHandler());
+        } else {
+            pipeline.addLast("handler", new InferenceRequestHandler());
+        }
     }
 }

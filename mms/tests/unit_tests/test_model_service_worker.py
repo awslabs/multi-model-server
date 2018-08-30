@@ -223,6 +223,17 @@ class TestRunServer:
         socket_patches.socket.listen.assert_not_called()
         assert excinfo.value.get_code() == err.SOCKET_BIND_ERROR
 
+    def test_with_timeout(self, socket_patches, model_service_worker):
+        exception = socket.timeout("Some Exception")
+        socket_patches.socket.accept.side_effect = exception
+
+        with pytest.raises(SystemExit):
+            model_service_worker.run_server()
+        socket_patches.socket.bind.assert_called()
+        socket_patches.socket.listen.assert_called()
+        socket_patches.socket.accept.assert_called()
+        socket_patches.log_error.assert_called_with("Backend worker did not receive connection from frontend")
+
     def test_with_exception(self, socket_patches, model_service_worker):
         exception = Exception("Some Exception")
         socket_patches.socket.accept.side_effect = exception

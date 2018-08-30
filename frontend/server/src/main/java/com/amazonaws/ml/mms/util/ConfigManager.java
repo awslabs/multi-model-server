@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyException;
@@ -48,7 +50,8 @@ public final class ConfigManager {
     public static final String MMS_METRICS_LOGGER = "MMS_METRICS";
 
     private static final String DEBUG = "debug";
-    private static final String PORT = "port";
+    private static final String INFERENCE_ADDRESS = "inference_address";
+    private static final String MANAGEMENT_ADDRESS = "management_address";
     private static final String MODEL_SERVER_HOME = "model_server_home";
     private static final String MODEL_STORE = "model_store";
     private static final String LOAD_MODELS = "load_models";
@@ -58,7 +61,6 @@ public final class ConfigManager {
     private static final String NUMBER_OF_GPU = "number_of_gpu";
     private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
 
-    private static final String USE_SSL = "use_ssl";
     private static final String KEYSTORE = "keystore";
     private static final String KEYSTORE_PASS = "keystore_pass";
     private static final String KEYSTORE_TYPE = "keystore_type";
@@ -112,8 +114,33 @@ public final class ConfigManager {
                 || Boolean.parseBoolean(prop.getProperty(DEBUG, "false"));
     }
 
-    public int getPort() {
-        return getIntProperty(PORT, isUseSsl() ? 8443 : 8080);
+    public URI getAddressProperty(String key, String defaultValue) {
+        String address = getProperty(key, defaultValue);
+        try {
+            URI uri = new URI(address);
+            String scheme = uri.getScheme() != null ? uri.getScheme() : "http";
+            String host = uri.getHost() != null ? uri.getHost() : "127.0.0.1";
+            int port;
+            if (uri.getPort() == -1) {
+                port = "https".equalsIgnoreCase(scheme) ? 443 : 80;
+            } else {
+                port = uri.getPort();
+            }
+            if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+                throw new IllegalArgumentException("Unsupported protocol in address: " + address);
+            }
+            return new URI(scheme + "://" + host + ":" + port);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(String.format("Invalid address: %s", address), e);
+        }
+    }
+
+    public URI getInferenceAddress() {
+        return getAddressProperty(INFERENCE_ADDRESS, "http://127.0.0.1:8080");
+    }
+
+    public URI getManagementAddress() {
+        return getAddressProperty(MANAGEMENT_ADDRESS, "http://127.0.0.1:8081");
     }
 
     public int getNettyThreads() {
@@ -175,15 +202,7 @@ public final class ConfigManager {
         return prop.getProperty(LOAD_MODELS);
     }
 
-    public boolean isUseSsl() {
-        return Boolean.parseBoolean(prop.getProperty(USE_SSL, "false"));
-    }
-
     public SslContext getSslContext() throws IOException, GeneralSecurityException {
-        if (!isUseSsl()) {
-            return null;
-        }
-
         List<String> supportedCiphers =
                 Arrays.asList(
                         "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",

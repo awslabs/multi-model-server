@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "Model Serving APIs",
-    "description": "Model Server is a flexible and easy to use tool for serving deep learning models",
+    "title": "Model Management APIs",
+    "description": "The Model Management server makes it easy to manage your live Model Server instance",
     "version": "1.0.0"
   },
   "paths": {
@@ -33,49 +33,6 @@
                       "type": "object"
                     }
                   }
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      }
-    },
-    "/{model_name}/predict": {
-      "post": {
-        "description": "A legacy predict entry point for each model.",
-        "operationId": "predict",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "model_name",
-            "description": "Name of model to unregister.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Input data format is defined by each model.",
-          "content": {
-            "*/*": {
-              "schema": {
-                "type": "string",
-                "format": "binary"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Output data format is defined by each model.",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
                 }
               }
             }
@@ -138,121 +95,6 @@
                       "description": "Overall status of the Model Server."
                     }
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/invocations": {
-      "post": {
-        "description": "A generic invocation entry point for all models.",
-        "operationId": "invocations",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "model_name",
-            "description": "Name of model",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "required": [
-                  "data"
-                ],
-                "properties": {
-                  "model_name": {
-                    "type": "string",
-                    "description": "Name of model"
-                  },
-                  "data": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Inference input data"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "deprecated": true
-      }
-    },
-    "/predictions/{model_name}": {
-      "post": {
-        "description": "Predictions entry point for each model. Use OPTIONS method to get detailed model API input and output description.",
-        "operationId": "predictions",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "model_name",
-            "description": "Name of model.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Input data format is defined by each model. Use OPTIONS method to get details for model input format.",
-          "content": {
-            "*/*": {
-              "schema": {
-                "type": "string",
-                "format": "binary"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Output data format is defined by each model. Use OPTIONS method to get details for model output and output format.",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          }
-        }
-      },
-      "options": {
-        "description": "Display details of per model input and output.",
-        "operationId": "predictionsApi",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "model_name",
-            "description": "Name of model.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
                 }
               }
             }

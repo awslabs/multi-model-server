@@ -33,8 +33,11 @@ import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.net.URI;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.cli.CommandLine;
@@ -52,7 +55,7 @@ public class ModelServer {
     private Logger logger = LoggerFactory.getLogger(ModelServer.class);
 
     private ServerGroups serverGroups;
-    private ChannelFuture future;
+    private List<ChannelFuture> futures;
     private AtomicBoolean stopped = new AtomicBoolean(false);
 
     private ConfigManager configManager;
@@ -91,11 +94,11 @@ public class ModelServer {
             throws InterruptedException, InvalidModelException, WorkerInitializationException,
                     IOException, GeneralSecurityException {
         try {
-            ChannelFuture f = start();
+            List<ChannelFuture> channelFutures = start();
             // Create and schedule metrics manager
             MetricManager.scheduleMetrics(configManager);
             System.out.println("Model server started."); // NOPMD
-            f.sync();
+            channelFutures.get(0).sync();
         } finally {
             serverGroups.shutdown(true);
             logger.info("Model server stopped.");
@@ -152,30 +155,14 @@ public class ModelServer {
         }
     }
 
-    /**
-     * Main Method that prepares the future for the channel and sets up the ServerBootstrap.
-     *
-     * @return A ChannelFuture object
-     * @throws InterruptedException if interrupted
-     */
-    public ChannelFuture start()
-            throws InterruptedException, IOException, GeneralSecurityException,
-                    InvalidModelException, WorkerInitializationException {
-        stopped.set(false);
-
-        String mmsHome = configManager.getModelServerHome();
-        logger.info("Start MMS from: {}", mmsHome);
-
-        initModelStore();
-
-        SslContext sslCtx = configManager.getSslContext();
-        int port = configManager.getPort();
-
-        EventLoopGroup serverGroup = serverGroups.getServerGroup();
-        EventLoopGroup workerGroup = serverGroups.getChildGroup();
-
-        Class<? extends ServerChannel> channelClass = NettyUtils.getServerChannel();
-
+    public ChannelFuture initializeServer(
+            URI address,
+            boolean management,
+            EventLoopGroup serverGroup,
+            EventLoopGroup workerGroup,
+            Class<? extends ServerChannel> channelClass)
+            throws InterruptedException, IOException, GeneralSecurityException {
+        final String purpose = management ? "Management" : "Inference";
         ServerBootstrap b = new ServerBootstrap();
         b.option(ChannelOption.SO_BACKLOG, 1024)
                 .channel(channelClass)
@@ -183,8 +170,14 @@ public class ModelServer {
                 .childOption(ChannelOption.SO_REUSEADDR, true)
                 .childOption(ChannelOption.SO_KEEPALIVE, true);
         b.group(serverGroup, workerGroup);
-        b.childHandler(new ServerInitializer(sslCtx));
-        future = b.bind(port).sync();
+
+        SslContext sslCtx = null;
+        if ("https".equalsIgnoreCase(address.getScheme())) {
+            sslCtx = configManager.getSslContext();
+        }
+        b.childHandler(new ServerInitializer(sslCtx, management));
+
+        ChannelFuture future = b.bind(address.getHost(), address.getPort()).sync();
         future.addListener(
                 (ChannelFutureListener)
                         f -> {
@@ -199,15 +192,54 @@ public class ModelServer {
                             serverGroups.registerChannel(f.channel());
                         });
 
-        logger.info("Initialize server with: {}.", channelClass.getSimpleName());
-
         future.sync();
 
         ChannelFuture f = future.channel().closeFuture();
-        f.addListener((ChannelFutureListener) future -> logger.info("Model server stopped."));
+        f.addListener(
+                (ChannelFutureListener)
+                        listener -> logger.info("{} model server stopped.", purpose));
 
-        logger.info("Listening on port: {}", port);
+        logger.info("{} API listening on port: {}", purpose, address.getPort());
         return f;
+    }
+
+    /**
+     * Main Method that prepares the future for the channel and sets up the ServerBootstrap.
+     *
+     * @return A ChannelFuture object
+     * @throws InterruptedException if interrupted
+     */
+    public List<ChannelFuture> start()
+            throws InterruptedException, IOException, GeneralSecurityException,
+                    InvalidModelException, WorkerInitializationException {
+        stopped.set(false);
+
+        String mmsHome = configManager.getModelServerHome();
+        logger.info("Start MMS from: {}", mmsHome);
+
+        initModelStore();
+
+        URI inferenceAddress = configManager.getInferenceAddress();
+        URI managementAddress = configManager.getManagementAddress();
+        if (inferenceAddress.getPort() == managementAddress.getPort()) {
+            throw new IllegalArgumentException(
+                    "Inference port must differ from the management port");
+        }
+
+        EventLoopGroup serverGroup = serverGroups.getServerGroup();
+        EventLoopGroup workerGroup = serverGroups.getChildGroup();
+
+        Class<? extends ServerChannel> channelClass = NettyUtils.getServerChannel();
+        logger.info("Initialize servers with: {}.", channelClass.getSimpleName());
+
+        futures =
+                Arrays.asList(
+                        initializeServer(
+                                inferenceAddress, false, serverGroup, workerGroup, channelClass),
+                        initializeServer(
+                                managementAddress, true, serverGroup, workerGroup, channelClass));
+
+        return futures;
     }
 
     public boolean isRunning() {
@@ -220,7 +252,9 @@ public class ModelServer {
         }
 
         stopped.set(true);
-        future.channel().close();
+        for (ChannelFuture future : futures) {
+            future.channel().close();
+        }
         serverGroups.shutdown(true);
         serverGroups.init();
     }

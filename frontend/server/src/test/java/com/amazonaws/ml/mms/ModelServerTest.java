@@ -61,8 +61,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.IOUtils;
@@ -80,7 +82,8 @@ public class ModelServerTest {
     CountDownLatch latch;
     String result;
     HttpHeaders headers;
-    private String listApisResult;
+    private String listInferenceApisResult;
+    private String listManagementApisResult;
     private String noopApiResult;
 
     static {
@@ -98,8 +101,12 @@ public class ModelServerTest {
         server = new ModelServer(configManager);
         server.start();
 
-        try (InputStream is = new FileInputStream("src/test/resources/open_api.txt")) {
-            listApisResult = IOUtils.toString(is, StandardCharsets.UTF_8.name());
+        try (InputStream is = new FileInputStream("src/test/resources/inference_open_api.json")) {
+            listInferenceApisResult = IOUtils.toString(is, StandardCharsets.UTF_8.name());
+        }
+
+        try (InputStream is = new FileInputStream("src/test/resources/management_open_api.json")) {
+            listManagementApisResult = IOUtils.toString(is, StandardCharsets.UTF_8.name());
         }
 
         try (InputStream is = new FileInputStream("src/test/resources/describe_api.txt")) {
@@ -117,26 +124,39 @@ public class ModelServerTest {
             throws InterruptedException, HttpPostRequestEncoder.ErrorDataEncoderException,
                     IOException {
         Channel channel = null;
+        Channel managementChannel = null;
         for (int i = 0; i < 5; ++i) {
-            channel = connect();
+            channel = connect(configManager.getInferenceAddress());
             if (channel != null) {
                 break;
             }
             Thread.sleep(100);
         }
-        Assert.assertNotNull(channel, "Model Server should have started.");
+        for (int i = 0; i < 5; ++i) {
+            managementChannel = connect(configManager.getManagementAddress());
+            if (managementChannel != null) {
+                break;
+            }
+            Thread.sleep(100);
+        }
 
-        testRoot(channel);
-        testPing(channel);
-        testApiDescription(channel);
+        Assert.assertNotNull(channel, "Model Server should have started.");
+        List<Channel> channels = Arrays.asList(channel, managementChannel);
+
+        for (Channel c : channels) {
+            testPing(c);
+        }
+        testRoot(managementChannel);
+        testApiDescription(channel, listInferenceApisResult);
+        testApiDescription(managementChannel, listManagementApisResult);
         testDescribeApi(channel);
-        testUnregisterModel(channel);
-        testLoadModel(channel);
-        testSyncScaleModel(channel);
-        testScaleModel(channel);
-        testListModels(channel);
-        testDescribeModel(channel);
-        testLoadModelWithInitialWorkers(channel);
+        testUnregisterModel(managementChannel);
+        testLoadModel(managementChannel);
+        testSyncScaleModel(managementChannel);
+        testScaleModel(managementChannel);
+        testListModels(managementChannel);
+        testDescribeModel(managementChannel);
+        testLoadModelWithInitialWorkers(managementChannel);
         testPredictions(channel);
         testPredictionsBinary(channel);
         testPredictionsJson(channel);
@@ -144,6 +164,7 @@ public class ModelServerTest {
         testInvocationsMultipart(channel);
         testMetricManager();
         channel.close();
+        managementChannel.close();
     }
 
     private void testRoot(Channel channel) throws InterruptedException {
@@ -153,7 +174,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, listApisResult);
+        Assert.assertEquals(result, listManagementApisResult);
     }
 
     private void testPing(Channel channel) throws InterruptedException {
@@ -168,7 +189,7 @@ public class ModelServerTest {
         Assert.assertTrue(headers.contains("x-request-id"));
     }
 
-    private void testApiDescription(Channel channel) throws InterruptedException {
+    private void testApiDescription(Channel channel, String expected) throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
         HttpRequest req =
@@ -177,7 +198,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, listApisResult);
+        Assert.assertEquals(result, expected);
     }
 
     private void testDescribeApi(Channel channel) throws InterruptedException {
@@ -410,7 +431,7 @@ public class ModelServerTest {
         }
     }
 
-    private Channel connect() {
+    private Channel connect(URI uri) {
         Logger logger = LoggerFactory.getLogger(ModelServerTest.class);
         try {
             Bootstrap b = new Bootstrap();
@@ -426,7 +447,7 @@ public class ModelServerTest {
                                 @Override
                                 public void initChannel(Channel ch) {
                                     ChannelPipeline p = ch.pipeline();
-                                    if (configManager.isUseSsl()) {
+                                    if (uri.getScheme().equalsIgnoreCase("https")) {
                                         p.addLast(sslCtx.newHandler(ch.alloc()));
                                     }
                                     p.addLast(new ReadTimeoutHandler(30));
@@ -438,7 +459,7 @@ public class ModelServerTest {
                                 }
                             });
 
-            SocketAddress address = new InetSocketAddress("127.0.0.1", configManager.getPort());
+            SocketAddress address = new InetSocketAddress("127.0.0.1", uri.getPort());
             return b.connect(address).sync().channel();
         } catch (Throwable t) {
             logger.warn("Connect error.", t);

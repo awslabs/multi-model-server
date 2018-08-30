@@ -23,7 +23,7 @@ public final class OpenApiUtils {
 
     private OpenApiUtils() {}
 
-    public static String listApis() {
+    public static String listInferenceApis() {
         OpenApi openApi = new OpenApi();
         Info info = new Info();
         info.setTitle("Model Serving APIs");
@@ -34,10 +34,25 @@ public final class OpenApiUtils {
 
         openApi.addPath("/api-description", getApiDescriptionPath());
         openApi.addPath("/{model_name}/predict", getLegacyPredictPath());
-        openApi.addPath("/", getListApisPath());
         openApi.addPath("/ping", getPingPath());
         openApi.addPath("/invocations", getInvocationsPath());
         openApi.addPath("/predictions/{model_name}", getPredictionsPath());
+
+        return JsonUtils.GSON_PRETTY.toJson(openApi);
+    }
+
+    public static String listManagementApis() {
+        OpenApi openApi = new OpenApi();
+        Info info = new Info();
+        info.setTitle("Model Management APIs");
+        info.setDescription(
+                "The Model Management server makes it easy to manage your live Model Server instance");
+        info.setVersion("1.0.0");
+        openApi.setInfo(info);
+
+        openApi.addPath("/api-description", getApiDescriptionPath());
+        openApi.addPath("/", getListApisPath());
+        openApi.addPath("/ping", getPingPath());
         openApi.addPath("/models", getModelsPath());
         openApi.addPath("/models/{model_name}", getModelManagerPath());
 

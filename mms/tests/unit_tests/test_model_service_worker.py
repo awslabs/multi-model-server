@@ -426,8 +426,10 @@ class TestMXNetModelServiceWorker:
             mocker.patch.object(MXNetModelServiceWorker, 'create_predict_response'),
             worker = object.__new__(MXNetModelServiceWorker)
             worker.service_manager.get_loaded_modelservices.return_value = {'modelName': patches.model_service}
+            worker.entry_point = 'inference'
             worker.retrieve_data_for_inference.return_value = [{0: 'inputBatch1'}], 'req_id_map', 'invalid_reqs'
             return worker
+
 
         def test_value_error(self, patches, worker):
             patches.validate.side_effect = ValueError('testerr')
@@ -449,13 +451,6 @@ class TestMXNetModelServiceWorker:
                 worker.predict(self.data)
             assert excinfo.value.code == err.MODEL_SERVICE_NOT_LOADED
             assert excinfo.value.message == "Model modelName is currently not loaded"
-
-        def test_invalid_batch_size(self, patches, worker):
-            data = {u'modelName': 'modelName', u'requestBatch': ['data1', 'data2']}
-            with pytest.raises(MMSError) as excinfo:
-                worker.predict(data)
-            assert excinfo.value.code == err.UNSUPPORTED_PREDICT_OPERATION
-            assert excinfo.value.message == "Invalid batch size 2"
 
         def test_success(self, patches, worker):
             response, msg, code = worker.predict(self.data)
@@ -520,7 +515,7 @@ class TestMXNetModelServiceWorker:
             worker.load_model(data)
             worker.service_manager.register_and_load_modules.assert_called_once_with('name', 'mpath', 'testmanifest',
                                                                                      'test_service_file_path', gpu[1],
-                                                                                     batch_size[1])
+                                                                                     batch_size[1], 'handler')
 
         def test_success(self, patches, worker):
             msg, code = worker.load_model(self.data)

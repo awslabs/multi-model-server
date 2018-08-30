@@ -12,11 +12,10 @@
 This module manages model-services
 """
 import inspect
-
+import types
 from mms.storage import KVStorage
 from mms.model_service.model_service import load_service
 from mms.model_service.mxnet_model_service import SingleNodeService
-
 
 class ServiceManager(object):
     """ServiceManager is responsible for storing information and managing
@@ -36,6 +35,31 @@ class ServiceManager(object):
 
         # loaded model services
         self.loaded_modelservices = KVStorage('loaded_modelservices')
+
+    def get_func_registry(self, model_names=None):
+        """
+        Get all registered Model Service function definitions in a dictionary
+        from internal registry according to name or list of names.
+        If nothing is passed, all registered model services will be returned.
+
+        Parameters
+        ----------
+        model_names : List, optional
+            Names to retrieve registered model services.
+
+        Returns
+        ----------
+        Dict of name, model service function pairs
+            Registered model services according to given names.
+        """
+        if model_names is None:
+            return self.func_registry
+
+        return {
+            model_name: self.func_registry[model_name]
+            for model_name in model_names
+        }
+
 
     def get_modelservices_registry(self, model_names=None):
         """
@@ -60,6 +84,19 @@ class ServiceManager(object):
             model_name: self.modelservice_registry[model_name]
             for model_name in model_names
         }
+
+    def add_func_to_registry(self, model_name, func):
+        """
+        Add a model service to internal registry.
+
+        Parameters
+        ----------
+        model_name : string
+            Model name to be added.
+        func: python func
+            Model Service function Definition which can initialize a model service.
+        """
+        self.func_registry[model_name] = func
 
     def add_modelservice_to_registry(self, model_name, model_service_class_def):
         """
@@ -98,7 +135,7 @@ class ServiceManager(object):
             for model_name in model_names
         }
 
-    def load_model(self, model_name, model_dir, manifest, model_service_class_def, gpu=None, batch_size=None):
+    def load_model(self, model_name, model_dir, manifest, entry_object, gpu=None, batch_size=None, entry_point=None):
         """
         Load a single model into a model service by using
         user passed Model Service Class Definitions.
@@ -111,23 +148,39 @@ class ServiceManager(object):
             Model path which can be url or local file path.
         manifest: string
             Model manifest
-        model_service_class_def: python class
+        entry_object: python class
             Model Service Class Definition which can initialize a model service.
         gpu : int
             Id of gpu device. If machine has two gpus, this number can be 0 or 1.
             If it is not set, cpu will be used.
         batch_size : int
             batch size
+        entry_point : Entry point method
+
         """
-        model_service = model_service_class_def(model_name, model_dir, manifest, gpu)
-        model_service._init_internal(model_name, model_dir, manifest, gpu, batch_size)
-        self.loaded_modelservices[model_name] = model_service
+        # Pass context to initilaization of custom model class
+        context = {'model_name': model_name, 'model_dir': model_dir, 'manifest': manifest, 'gpu': gpu,
+                   'batch_size': batch_size}
+
+        # Legacy model service
+        if entry_point == 'inference':
+            model_service = entry_object(model_name, model_dir, manifest, gpu)
+            model_service._init_internal(model_name, model_dir, manifest, gpu, batch_size)
+            self.loaded_modelservices[model_name] = model_service
+        # Entry point provided is a class
+        elif entry_point == 'handler':
+            model_service = entry_object(context)
+            self.loaded_modelservices[model_name] = model_service
+
+        # If entry point provided is a function
+        elif isinstance(entry_point, types.FunctionType):
+            self.loaded_modelservices[model_name] = entry_object
 
     def unload_models(self, model_name):
         del(self.loaded_modelservices[model_name])
         return self.loaded_modelservices
 
-    def parse_modelservices_from_module(self, service_file):
+    def parse_modelservices_from_module(self, service_file, entry_point):
         """
         Parse user defined module to get all model service classe in it.
 
@@ -135,6 +188,7 @@ class ServiceManager(object):
         ----------
         service_file : User defined module file path
             A python module which will be parsed by given name.
+        entry_point : Entry point method
 
         Returns
         ----------
@@ -150,9 +204,13 @@ class ServiceManager(object):
         classes = [cls[1] for cls in inspect.getmembers(module, inspect.isclass)]
         # Check if class is subclass of base ModelService class
         # pylint: disable=deprecated-lambda
-        return list(filter(lambda c: issubclass(c, SingleNodeService), classes))
+        if entry_point == 'inference':
+            return list(filter(lambda c: issubclass(c, SingleNodeService), classes))
+        elif entry_point == 'handler' and len(classes) == 1:
+            return classes
+        return list()
 
-    def register_module(self, user_defined_module_file_path):
+    def register_module(self, user_defined_module_file_path, entry_point=None):
         """
         Register a python module according to user_defined_module_name
         This module should contain a valid Model Service Class whose
@@ -162,22 +220,32 @@ class ServiceManager(object):
         ----------
         user_defined_module_file_path : Python module file path
             A python module will be loaded according to this file path.
-
+        entry_point : Entry point method
 
         Returns
         ----------
-        List of model service class definitions.
+                List of model service class definitions.
             Those python class can be used to initialize model service.
         """
-        model_class_definations = self.parse_modelservices_from_module(user_defined_module_file_path)
-        assert len(model_class_definations) >= 1, \
-            'No valid python class derived from Base Model Service is in module file: %s' % \
-            user_defined_module_file_path
+        if entry_point == 'inference' or entry_point == 'handler':
+            model_class_definations = self.parse_modelservices_from_module(user_defined_module_file_path, entry_point)
+            assert len(model_class_definations) >= 1, \
+                'No valid python class derived from Base Model Service is in module file: %s' % \
+                user_defined_module_file_path
 
-        for ModelServiceClassDef in model_class_definations:
-            self.add_modelservice_to_registry(ModelServiceClassDef.__name__, ModelServiceClassDef)
+            for ModelServiceClassDef in model_class_definations:
+                self.add_modelservice_to_registry(ModelServiceClassDef.__name__, ModelServiceClassDef)
 
-        return model_class_definations
+            return model_class_definations
+
+        elif entry_point is not None:
+            module = load_service(user_defined_module_file_path)
+            func = getattr(module, entry_point)
+            assert(callable(func)), \
+                "The entry point method is not callable"
+            self.add_func_to_registry(entry_point, func)
+            return [func]
+        return list()
 
     def get_registered_modelservices(self, modelservice_names=None):
         """
@@ -200,7 +268,8 @@ class ServiceManager(object):
 
         return self.get_modelservices_registry(modelservice_names)
 
-    def register_and_load_modules(self, model_name, model_dir, manifest, module_file_path, gpu, batch_size):
+    def register_and_load_modules(self, model_name, model_dir, manifest, module_file_path, gpu, batch_size,
+                                  entry_point=None):
         """
         Register all the modules and load them. This is a wrapper method around register_module and load_models.
         :param model_name
@@ -209,24 +278,28 @@ class ServiceManager(object):
         :param module_file_path:
         :param gpu:
         :param batch_size
+        :param entry_point
         :return:
         """
 
         # Retrieve all the classes defined in the custom service file
-        classes = self.register_module(module_file_path)
+        registered = self.register_module(module_file_path, entry_point)
+        if entry_point == 'handler' or entry_point == 'inference':
+            # Filter the outer most class defn. Exclude all the superclasses
+            # pylint: disable=deprecated-lambda
+            classes = list(filter(lambda c: len(c.__subclasses__()) == 0, registered))
 
-        # Filter the outer most class defn. Exclude all the superclasses
-        # pylint: disable=deprecated-lambda
-        classes = list(filter(lambda c: len(c.__subclasses__()) == 0, classes))
+            if len(classes) != 1:
+                raise Exception("Invalid service file found {}."
+                                " Service file should contain only one service class. "
+                                "Found {}".format(module_file_path, len(classes)))
 
-        if len(classes) != 1:
-            raise Exception("Invalid service file found {}."
-                            " Service file should contain only one service class. "
-                            "Found {}".format(module_file_path, len(classes)))
+            model_class_name = classes[0].__name__
 
-        model_class_name = classes[0].__name__
-
-        registered_models = self.get_registered_modelservices()
-        model_class_defn = registered_models[model_class_name]
-
-        self.load_model(model_name, model_dir, manifest, model_class_defn, gpu, batch_size)
+            registered_models = self.get_registered_modelservices()
+            model_class_defn = registered_models[model_class_name]
+            self.load_model(model_name, model_dir, manifest, model_class_defn, gpu, batch_size, entry_point)
+        else:
+            registered_functions = self.get_func_registry()
+            func = registered_functions[entry_point]
+            self.load_model(model_name, model_dir, manifest, func, gpu, batch_size, entry_point)

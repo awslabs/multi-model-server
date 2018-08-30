@@ -32,6 +32,7 @@ from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 from mms.metrics.metric_encoder import MetricEncoder
 
 MAX_FAILURE_THRESHOLD = 5
+SOCKET_ACCEPT_TIMEOUT = 30.0
 debug = False
 
 
@@ -453,11 +454,16 @@ class MXNetModelServiceWorker(object):
             try:
                 log_msg("Waiting for a connection")
 
+                self.sock.settimeout(SOCKET_ACCEPT_TIMEOUT)
                 (cl_socket, _) = self.sock.accept()
+                self.sock.settimeout(socket.getdefaulttimeout())
                 self.handle_connection(cl_socket)
                 if debug is False:
                     exit(1)
 
+            except socket.timeout:
+                log_error("Backend worker did not receive connection from frontend")
+                exit(1)
             except Exception as ex:  # pylint: disable=broad-except
                 if debug is False:
                     raise ex

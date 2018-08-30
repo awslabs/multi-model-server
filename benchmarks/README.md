@@ -82,7 +82,8 @@ Run with custom options\
 
 
 Run against an already running instance of MMS\
-```./benchmark.py latency --mms 127.0.0.1:8443``` (defaults to http)\
+```./benchmark.py latency --mms 127.0.0.1``` (defaults to http, port 80, management port = port + 1)\
+```./benchmark.py latency --mms 127.0.0.1:8080 --management-port 8081```\
 ```./benchmark.py latency --mms https://127.0.0.1:8443```
 
 

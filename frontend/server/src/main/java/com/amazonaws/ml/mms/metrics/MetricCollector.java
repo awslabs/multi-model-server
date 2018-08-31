@@ -107,7 +107,9 @@ public class MetricCollector implements Runnable {
 
                 List<Metric> metricsSystem = JsonUtils.GSON.fromJson(line, LIST_TYPE);
                 metricManager.setMetrics(metricsSystem);
-                loggerMetrics.info(metricsSystem);
+                for (Metric metric : metricsSystem) {
+                    loggerMetrics.info(metric);
+                }
 
                 // Collect process level metrics
                 while ((line = reader.readLine()) != null) {

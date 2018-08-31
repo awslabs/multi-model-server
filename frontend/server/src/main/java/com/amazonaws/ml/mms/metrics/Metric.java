@@ -93,4 +93,18 @@ public class Metric {
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(metricName).append('.').append(unit).append(':').append(getValue()).append("|#");
+        for (Dimension dimension : getDimensions()) {
+            sb.append(dimension.getName()).append(':').append(dimension.getValue()).append(',');
+        }
+        sb.append("hostname:").append(hostName).append(',');
+        if (requestId != null) {
+            sb.append("requestID:").append(requestId);
+        }
+        return sb.toString();
+    }
 }

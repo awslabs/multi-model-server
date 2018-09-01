@@ -30,7 +30,6 @@ from mms.utils.codec_helpers.codec import ModelWorkerCodecHelper
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 from mms.metrics.metric_encoder import MetricEncoder
-
 MAX_FAILURE_THRESHOLD = 5
 SOCKET_ACCEPT_TIMEOUT = 30.0
 debug = False
@@ -59,7 +58,7 @@ class MXNetModelServiceWorker(object):
             self.port = port_num
         else:
             raise ValueError("Incomplete data provided")
-
+        self.entry_point = None
         self.model_services = {}
         self.service_manager = ServiceManager()
         self.send_failures = 0
@@ -265,17 +264,18 @@ class MXNetModelServiceWorker(object):
                 raise MMSError(err.MODEL_SERVICE_NOT_LOADED, "Model {} is currently not loaded".format(model_name))
             model_service = loaded_services[model_name]
             req_batch = data[u'requestBatch']
-            batch_size = len(req_batch)  # num-inputs gives the batch size
             input_batch, req_id_map, invalid_reqs = self.retrieve_data_for_inference(req_batch)
-            if batch_size == 1:
+            context = {'input_batch': input_batch, 'req_id_map': req_id_map}
+            if self.entry_point == 'inference':
                 # Initialize metrics at service level
                 model_service.metrics_init(model_name, req_id_map)
                 retval.append(model_service.inference([input_batch[0][i] for i in input_batch[0]]))
                 # Dump metrics
                 emit_metrics(model_service.metrics_store.store)
-
-            else:
-                raise MMSError(err.UNSUPPORTED_PREDICT_OPERATION, "Invalid batch size {}".format(batch_size))
+            elif self.entry_point == 'handler':
+                retval.append(model_service.handler(context))
+            elif callable(model_service):
+                retval.append(model_service(context))
 
             response = self.create_predict_response(retval, req_id_map, invalid_reqs)
 
@@ -305,6 +305,13 @@ class MXNetModelServiceWorker(object):
             model_dir = data['modelPath']
             model_name = data['modelName']
             handler = data['handler']
+            entry_point = handler.split(':')
+            if len(entry_point) == 1:
+                entry_point = 'handler'
+                if os.path.exists(os.path.join(model_dir, 'MANIFEST.legacy')):
+                    entry_point = 'inference'
+            elif len(entry_point) == 2:
+                entry_point = entry_point[1]
             batch_size = None
             if 'batchSize' in data:
                 batch_size = int(data['batchSize'])
@@ -312,11 +319,11 @@ class MXNetModelServiceWorker(object):
             gpu = None
             if u'gpu' in data:
                 gpu = int(data[u'gpu'])
-
+            self.entry_point = entry_point
             manifest, service_file_path = ModelLoader.load(model_dir, handler)
 
             self.service_manager.register_and_load_modules(model_name, model_dir, manifest,
-                                                           service_file_path, gpu, batch_size)
+                                                           service_file_path, gpu, batch_size, entry_point)
         except ValueError as v:
             raise MMSError(err.VALUE_ERROR_WHILE_LOADING, "{}".format(v))
         except MMSError as m:

@@ -103,7 +103,7 @@ class TestParseModelServicesFromModule:
 
     def test_with_nil_service_file(self, service_manager):
         with pytest.raises(Exception) as error:
-            service_manager.parse_modelservices_from_module(service_file=None)
+            service_manager.parse_modelservices_from_module(None, None)
 
         assert error.value.args[0] == "Invalid service file given"
 
@@ -111,14 +111,14 @@ class TestParseModelServicesFromModule:
         service_file_path = 'mms/tests/unit_tests/test_utils/dummy_model_service.p'
 
         with pytest.raises(Exception) as error:
-            service_manager.parse_modelservices_from_module(service_file_path)
+            service_manager.parse_modelservices_from_module(service_file_path, 'inference')
 
         assert "Error when loading service file" in error.value.args[0]
 
     def test_with_correct_file(self, service_manager):
         service_file_path = 'mms/tests/unit_tests/test_utils/dummy_model_service.py'
 
-        result = service_manager.parse_modelservices_from_module(service_file_path)
+        result = service_manager.parse_modelservices_from_module(service_file_path, 'inference')
 
         class_list = set(x.__name__ for x in result)
 
@@ -149,23 +149,23 @@ class TestRegisterMoule:
     service_file_path = 'mms/tests/unit_tests/test_utils/dummy_model_service.py'
 
     def test_with_errors(self, service_manager, spy_fixtures):
-        service_manager.register_module(self.service_file_path)
-        spy_fixtures.parse_modelservices_from_module.assert_called_with(self.service_file_path)
+        service_manager.register_module(self.service_file_path, 'inference')
+        spy_fixtures.parse_modelservices_from_module.assert_called_with(self.service_file_path, 'inference')
 
         spy_fixtures.parse_modelservices_from_module.return_value = list()
 
         with pytest.raises(AssertionError) as error:
-            service_manager.register_module(self.service_file_path)
-            spy_fixtures.parse_modelservices_from_module.assert_called_with(self.service_file_path)
+            service_manager.register_module(self.service_file_path, 'inference')
+            spy_fixtures.parse_modelservices_from_module.assert_called_with(self.service_file_path, 'inference')
 
         assert error.value.args[0] == "No valid python class derived from Base Model Service is in module file: {}".\
             format(self.service_file_path)
 
     def test_with_no_errors(self, service_manager, spy_fixtures):
 
-        service_manager.register_module(self.service_file_path)
+        service_manager.register_module(self.service_file_path, 'inference')
 
-        spy_fixtures.parse_modelservices_from_module.assert_called_with(self.service_file_path)
+        spy_fixtures.parse_modelservices_from_module.assert_called_with(self.service_file_path, 'inference')
         spy_fixtures.add_modelservice_to_registry.assert_called()
 
 
@@ -177,8 +177,9 @@ class TestRegisterAndLoadModules:
     module_file_path = os.path.join(model_dir, 'dummy_model_service.py')
     gpu = 0
     batch_size = 128
+    entry_point = 'inference'
 
-    args = [model_name, model_dir, manifest, module_file_path, gpu, batch_size]
+    args = [model_name, model_dir, manifest, module_file_path, gpu, batch_size, entry_point]
 
     def test_with_assertion_error(self, service_manager, spy_fixtures):
 
@@ -188,7 +189,7 @@ class TestRegisterAndLoadModules:
 
         assert error.value.args[0] == "Invalid service file found mms/tests/unit_tests/test_utils/dummy_model_service" \
                                       ".py. Service file should contain only one service class. Found 0"
-        spy_fixtures.register_module.assert_called_with(self.module_file_path)
+        spy_fixtures.register_module.assert_called_with(self.module_file_path, 'inference')
 
     def test_with_no_error(self, service_manager, spy_fixtures):
         # spy.start()

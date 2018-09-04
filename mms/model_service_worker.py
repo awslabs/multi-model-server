@@ -18,12 +18,12 @@ Communication message format: JSON message
 import socket
 import ast
 import os
-from builtins import str
-from collections import OrderedDict
+import json
 
-from mms.model_loader import ModelLoader
+from builtins import str
+
+from mms.model_loader import ModelLoaderFactory
 from mms.arg_parser import ArgParser
-from mms.service_manager import ServiceManager
 from mms.log import log_msg, log_error
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.mxnet_model_service_error import MMSError
@@ -62,7 +62,6 @@ class MXNetModelServiceWorker(object):
             raise ValueError("Incomplete data provided")
 
         self.model_services = {}
-        self.service_manager = ServiceManager()
         self.send_failures = 0
         self.codec = OtfCodecHandler()
 
@@ -199,6 +198,47 @@ class MXNetModelServiceWorker(object):
             raise m
         return msg, "Prediction success", 200
 
+
+    @staticmethod
+    def recv_msg(client_sock):
+        """
+        Receive a message from a given socket file descriptor
+        :param client_sock:
+        :return:
+        """
+        data = b''
+        try:
+            while True:
+                if BENCHMARK:
+                    pr.disable()
+                    pr.dump_stats('/tmp/mmsPythonProfile.prof')
+                pkt = client_sock.recv(1024)
+                if BENCHMARK:
+                    pr.enable()
+                if not pkt:
+                    exit(1)
+
+                data += pkt
+                # Check if we received last segment. Assumption is we receive only one packet at a time.
+                # TODO:
+                # Modify this. If we receive multiple packets, the '\r\n' be in the middle of the pkt/data. We
+                # need to buffer the rest.
+                if data[-2:] == b'\r\n':
+                    break
+            in_msg = json.loads(data.decode('utf8'))
+            if u'command' not in in_msg:
+                raise MMSError(err.INVALID_COMMAND, "Invalid message received")
+        except (IOError, OSError) as sock_err:
+            raise MMSError(err.RECEIVE_ERROR, "{}".format(repr(sock_err)))
+        except ValueError as v:
+            raise MMSError(err.INVALID_REQUEST, "JSON message format error: {}".format(v))
+        except MMSError as error:  # The error raise in #138 goes into the Exception block below and we lose the
+            raise error           # status code
+        except Exception as e:  # pylint: disable=broad-except
+            raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(e))
+
+        return in_msg['command'], in_msg
+
     def load_model(self, data):
         """
         Expected command
@@ -227,10 +267,15 @@ class MXNetModelServiceWorker(object):
             if u'gpu' in data:
                 gpu = int(data[u'gpu'])
 
-            manifest, service_file_path = ModelLoader.load(model_dir, handler)
+            manifest_file = os.path.join(model_dir, 'MANIFEST.legacy')
+            model_type = "legacy_mms" if os.path.exists(manifest_file) else "mms"
 
-            self.service_manager.register_and_load_modules(model_name, model_dir, manifest,
-                                                           service_file_path, gpu, batch_size)
+            model_loader = ModelLoaderFactory.get_model_loader(model_type)
+            print("calling load")
+            service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
+            service.legacy = (model_type == "legacy_mms")
+            return service, "loaded model {}".format(model_name), 200
+
         except ValueError as v:
             raise MMSError(err.VALUE_ERROR_WHILE_LOADING, "{}".format(v))
         except MMSError as m:
@@ -238,7 +283,6 @@ class MXNetModelServiceWorker(object):
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION_WHILE_LOADING, "{}".format(repr(e)))
 
-        return "loaded model {}".format(service_file_path), 200
 
     def unload_model(self, request):
         """
@@ -298,14 +342,14 @@ class MXNetModelServiceWorker(object):
         """
         predictions = None
         cmd = None
-
+        service = None
         while True:
             try:
                 cmd, msg = self.codec.retrieve_msg(conn=cl_socket)
                 if cmd.lower() == u'predict':
-                    predictions, result, code = self.predict(msg)
+                    predictions, result, code = service.predict(data)
                 elif cmd.lower() == u'load':
-                    result, code = self.load_model(msg)
+                    service, result, code = self.load_model(data)
                 elif cmd.lower() == u'unload':
                     result, code = self.unload_model(msg)
                 else:
@@ -368,20 +412,6 @@ class MXNetModelServiceWorker(object):
                 if debug is False:
                     raise ex
                 log_error("Backend worker error {}".format(ex))
-
-
-def emit_metrics(metrics):
-    """
-    Emit the metrics in the provided Dictionary
-
-    Parameters
-    ----------
-    metrics: Dictionary
-    A dictionary of all metrics, when key is metric_name
-    value is a metric object
-    """
-    met_list = [str(met) for met in metrics]
-    log_msg("[METRICS] [", ",".join(met_list), "]")
 
 
 if __name__ == "__main__":

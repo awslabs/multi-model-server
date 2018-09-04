@@ -34,14 +34,17 @@ import org.slf4j.LoggerFactory;
 public class WorkerLifeCycle {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerLifeCycle.class);
+
     private ConfigManager configManager;
+    private Model model;
     private int pid = -1;
     private Process process;
     private CountDownLatch latch;
     private boolean success;
 
-    public WorkerLifeCycle(ConfigManager configManager) {
+    public WorkerLifeCycle(ConfigManager configManager, Model model) {
         this.configManager = configManager;
+        this.model = model;
     }
 
     public boolean startWorker(int port) {
@@ -73,10 +76,19 @@ public class WorkerLifeCycle {
         String pythonPath = System.getenv("PYTHONPATH");
         String pythonEnv;
         if (pythonPath == null || pythonPath.isEmpty()) {
-            pythonEnv = "PYTHONPATH=" + workingDir.getAbsolutePath();
+            pythonEnv =
+                    "PYTHONPATH="
+                            + workingDir.getAbsolutePath()
+                            + File.pathSeparatorChar
+                            + model.getModelDir();
         } else {
             pythonEnv =
-                    "PYTHONPATH=" + pythonPath + File.pathSeparator + workingDir.getAbsolutePath();
+                    "PYTHONPATH="
+                            + pythonPath
+                            + File.pathSeparatorChar
+                            + workingDir.getAbsolutePath()
+                            + File.pathSeparatorChar
+                            + model.getModelDir();
         }
         String[] envp = new String[] {pythonEnv};
 

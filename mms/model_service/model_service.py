@@ -12,8 +12,7 @@
 """
 # pylint: disable=W0223
 
-import os
-import sys
+
 import time
 from abc import ABCMeta, abstractmethod, abstractproperty
 
@@ -203,32 +202,3 @@ class SingleNodeService(ModelService):
             list of outputs to be sent back.
         """
         return data
-
-
-def load_service(path, name=None):
-    """
-    Load the model-service into memory and associate it with each flask app worker
-    :param path:
-    :param name:
-    :return:
-    """
-    try:
-        if not name:
-            name = os.path.splitext(os.path.basename(path))[0]
-
-        module = None
-        if sys.version_info[0] > 2:
-            import importlib
-            spec = importlib.util.spec_from_file_location(name, path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-
-        else:
-            import imp
-            module = imp.load_source(name, path)
-
-        return module
-    except Exception as e:
-        exc_tb = sys.exc_info()[2]
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        raise Exception('Error when loading service file: {} \n {}:{}:{}'.format(path, fname, exc_tb.tb_lineno, e))

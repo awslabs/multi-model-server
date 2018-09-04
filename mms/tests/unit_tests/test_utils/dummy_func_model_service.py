@@ -8,24 +8,13 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-from mms.model_service.model_service import SingleNodeService
+"""
+Dummy custom service which is function based
+"""
 
-'''
-This file is a dummy file for the purpose of unit-testing test_service_manager.py
-'''
-class DummyNodeService(SingleNodeService):
-    def _inference(self, data):
-        pass
+from mms.context import Context
 
-    def signature(self):
-        pass
 
-    def ping(self):
-        pass
+def infer(context):
 
-    def inference(self):
-        pass
-
-class SomeOtherClass:
-    def __init__(self):
-        pass
+    return isinstance(context, Context)

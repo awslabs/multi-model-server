@@ -237,7 +237,7 @@ class TestService(unittest.TestCase):
         os.system('rm -rf %s' % model_path)
 
     def test_incorrect_service(self):
-        from mms.model_service.model_service import load_service
+        from mms.module_loader import load_service
         path = os.getcwd()
         try:
             load_service(os.path.join(path, 'mms/tests/unit_tests/helper/incorrect_service.py'))

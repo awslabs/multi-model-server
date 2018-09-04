@@ -83,7 +83,7 @@ public class WorkerThread extends Thread {
         this.gpuId = gpuId;
         this.listener = listener;
         startTime = System.currentTimeMillis();
-        lifeCycle = new WorkerLifeCycle(configManager);
+        lifeCycle = new WorkerLifeCycle(configManager, model);
         replies = new ArrayBlockingQueue<>(1);
         this.setDaemon(true);
     }

@@ -1,7 +1,7 @@
 import pytest
 from mms.metrics.dimension import Dimension
 from mms.metrics.metrics_store import MetricsStore
-from mms.model_service_worker import emit_metrics
+from mms.service import emit_metrics
 
 
 def get_model_key(name, unit, req_id, model_name):

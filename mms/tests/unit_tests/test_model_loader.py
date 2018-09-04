@@ -8,148 +8,128 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import json
 import os
-import shutil
-
+import sys
 import pytest
-from mms.model_loader import MANIFEST_FILENAME
-from mms.model_loader import ModelLoader
+import importlib
+import mock
+import types
+from collections import namedtuple
+from mms.model_loader import MmsModelLoader
+from mms.model_loader import ModelLoaderFactory
+from mms.model_loader import LegacyModelLoader
+from mms.model_service.model_service import SingleNodeService
+from mms.mxnet_model_service_error import MMSError
 
-model_dir_path = 'my-model'
-handler_file = 'handler'
+# @pytest.mark.skip(reason="Disabling it currently until the PR #467 gets merged")
+class TestModelFactory:
 
-manifest_invalid_data_missing_extensions = {"model": {}, "engine": {"engineName": "MxNet"}}
-manifest_invalid_data_missing_paramsFile = {"model": {"extensions": {}}, "engine": {"engineName": "MxNet"}}
-manifest_invalid_data_missing_symbolFile = {"model": {"extensions:": {"parametersFile": "my-model/params1"}},
-                                            "engine": {"engineName": "MxNet"}}
-manifest_valid_data = {
-    "model": {"extensions": {"parametersFile": "my-model/params1", "symbolFile": 'my-model/symbol.json'}},
-    "engine": {"engineName": "MxNet"}}
+    def test_model_loader_factory_incorrect(self):
 
+        with pytest.raises(ValueError) as excinfo:
+            _ = ModelLoaderFactory.get_model_loader("wrong_loader")
 
-def empty_file(filepath):
-    """
-    Utility function for creating an empty file, which will be used throughout these unit tests
-    :param filepath:
-    :return:
-    """
+        assert str(excinfo.value) == "Unknown model loader type: wrong_loader"
 
-    open(filepath, 'a').close()
+    def test_model_loader_factory_legacy(self):
 
+        model_loader = ModelLoaderFactory.get_model_loader("legacy_mms")
 
-@pytest.mark.skip(reason="Disabling it currently until the PR #467 gets merged")
-class TestModelLoad:
+        assert isinstance(model_loader, LegacyModelLoader)
 
-    @pytest.fixture(scope='session')
-    def create_empty_manifest_file(self):
-        """
-        By setting the scope of create_empty_manifest_file as session we are ensuring
-        that this piece of code runs once for all of the tests combined in this file.
-        """
-        # Setup
-        path = '{}/'.format(model_dir_path)
-        if os.path.exists(path):
-            shutil.rmtree(path)
-        os.mkdir(path)
-        path = '{}/{}'.format(path, MANIFEST_FILENAME)
-        empty_file(path)
+    def test_model_loader_factory(self):
 
-        yield path
+        model_loader = ModelLoaderFactory.get_model_loader("mms")
 
-        # Teardown
-        if os.path.exists(path):
-            os.remove(path)
-            shutil.rmtree('{}/'.format(model_dir_path))
+        assert isinstance(model_loader, MmsModelLoader)
 
-    def test_manifest_file_open(self, create_empty_manifest_file):
-        with pytest.raises(Exception):
-            ModelLoader.load(model_dir_path, handler_file)
+class TestListModels:
 
-    def test_parameter_file_defined_in_manifest(self, create_empty_manifest_file):
-        with open(os.path.join(model_dir_path, MANIFEST_FILENAME), 'w') as f:
-            json.dump(manifest_invalid_data_missing_paramsFile, f)
+    def test_list_models_legacy(self):
 
-        with pytest.raises(Exception) as error:
-            ModelLoader.load(model_dir_path, handler_file)
+        model_loader = ModelLoaderFactory.get_model_loader("legacy_mms")
+        sys.path.append(os.path.abspath('mms/tests/unit_tests/model_service/dummy_model'))
+        module = importlib.import_module('dummy_model_service')
+        classes = model_loader.list_model_services(module, SingleNodeService)
+        assert len(classes) == 1
+        assert issubclass(classes[0], SingleNodeService)
 
-        assert error.value.args[0] == "parameterFile not defined in MANIFEST.json."
+    def test_list_models(self):
+        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        sys.path.append(os.path.abspath('mms/tests/unit_tests/test_utils/'))
+        module = importlib.import_module('dummy_class_model_service')
+        classes = model_loader.list_model_services(module)
+        assert len(classes) == 1
+        assert classes[0].__name__ == 'CustomService'
 
-    def test_extensions_defined_in_manifest(self, create_empty_manifest_file):
-        with open(os.path.join(model_dir_path, MANIFEST_FILENAME), 'w') as f:
-            json.dump(manifest_invalid_data_missing_extensions, f)
+class TestLoadModels:
+    model_name = 'testmodel'
+    model_dir = os.path.abspath('mms/tests/unit_tests/model_service/dummy_model')
+    @pytest.fixture()
+    def patches(self, mocker):
+        Patches = namedtuple('Patches', ['mock_open', 'json_load', 'os_path'])
+        patches = Patches(
+            mocker.patch('mms.model_loader.open'),
+            mocker.patch('json.load'),
+            mocker.patch('os.path.exists')
+        )
+        return patches
 
-        with pytest.raises(Exception) as error:
-            ModelLoader.load(model_dir_path, handler_file)
+    def test_load_model_legacy(self, patches):
+        patches.mock_open.side_effect = [
+            mock.mock_open(read_data='{"test" : "h"}').return_value]
 
-        assert error.value.args[0] == "extensions is required for MxNet in MANIFEST.json."
+        sys.path.append(os.path.abspath('mms/tests/unit_tests/model_service/dummy_model'))
+        handler = 'dummy_model_service'
+        model_loader = ModelLoaderFactory.get_model_loader("legacy_mms")
+        service = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
+        patches.json_load.assert_called()
+        isinstance(service._entry_point, SingleNodeService)
+        assert hasattr(service._entry_point, 'inference') and isinstance(getattr(service._entry_point, 'inference'),
+                                                                         types.MethodType)
 
-    def test_parameter_file_exists(self, create_empty_manifest_file):
-        with open(os.path.join(model_dir_path, MANIFEST_FILENAME), 'w') as f:
-            json.dump(manifest_valid_data, f)
+    def test_load_class_model(self, patches):
+        patches.mock_open.side_effect = [
+            mock.mock_open(read_data='{"test" : "h"}').return_value]
+        sys.path.append(os.path.abspath('mms/tests/unit_tests/test_utils/'))
+        patches.os_path.return_value = True
+        handler = 'dummy_class_model_service'
+        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        service = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
+        patches.json_load.assert_called()
+        isinstance(service._entry_point, types.FunctionType)
+        assert service._entry_point.__name__ == 'handle'
 
-        with pytest.raises(Exception) as error:
-            ModelLoader.load(model_dir_path, handler_file)
+    def test_load_func_model(self, patches):
+        patches.mock_open.side_effect = [
+            mock.mock_open(read_data='{"test" : "h"}').return_value]
+        sys.path.append(os.path.abspath('mms/tests/unit_tests/test_utils/'))
+        patches.os_path.return_value = True
+        handler = 'dummy_func_model_service:infer'
+        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        service = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
+        patches.json_load.assert_called()
+        isinstance(service._entry_point, types.FunctionType)
+        assert service._entry_point.__name__ == 'infer'
 
-        assert error.value.args[0] == "parameterFile not found: {}.".format(
-            manifest_valid_data['model']['parametersFile'])
+    def test_load_func_model_with_error(self, patches):
+        patches.mock_open.side_effect = [
+            mock.mock_open(read_data='{"test" : "h"}').return_value]
+        sys.path.append(os.path.abspath('mms/tests/unit_tests/test_utils/'))
+        patches.os_path.return_value = True
+        handler = 'dummy_func_model_service:wrong'
+        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        with pytest.raises(MMSError) as excinfo:
+            _ = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
+        assert str(excinfo.value.message) == "Expected only one class in custom service code or a function entry point"
 
-    def test_symbol_file_defined_in_manifest(self, create_empty_manifest_file):
-        with open(os.path.join(model_dir_path, MANIFEST_FILENAME), 'w') as f:
-            json.dump(manifest_invalid_data_missing_symbolFile, f)
-
-        empty_file(manifest_valid_data['model']['parametersFile'])
-
-        with pytest.raises(Exception) as error:
-            ModelLoader.load(model_dir_path, handler_file)
-
-        assert error.value.args[0] == "symbolFile not defined in MANIFEST.json."
-
-    def test_symbol_file_exists(self, create_empty_manifest_file):
-        with open(os.path.join(model_dir_path, MANIFEST_FILENAME), 'w') as f:
-            json.dump(manifest_valid_data, f)
-
-        empty_file(manifest_valid_data['model']['parametersFile'])
-
-        with pytest.raises(Exception) as error:
-            ModelLoader.load(model_dir_path, handler_file)
-
-        assert error.value.args[0] == "symbolFile not found: {}.".format(manifest_valid_data['model']['symbolFile'])
-
-    def test_handler_is_none(self, create_empty_manifest_file):
-        with open(os.path.join(model_dir_path, MANIFEST_FILENAME), 'w') as f:
-            json.dump(manifest_valid_data, f)
-
-        empty_file(manifest_valid_data['model']['parametersFile'])
-        empty_file(manifest_valid_data['model']['symbolFile'])
-
-        with pytest.raises(Exception) as error:
-            ModelLoader.load(model_dir_path, None)
-
-        assert error.value.args[0] == "No handler is provided."
-
-    def test_handler_file_not_exists(self, create_empty_manifest_file):
-        with open(os.path.join(model_dir_path, MANIFEST_FILENAME), 'w') as f:
-            json.dump(manifest_valid_data, f)
-
-        empty_file(manifest_valid_data['model']['parametersFile'])
-        empty_file(manifest_valid_data['model']['symbolFile'])
-
-        handler_file_path = os.path.join(model_dir_path, handler_file)
-
-        with pytest.raises(Exception) as error:
-            ModelLoader.load(model_dir_path, handler_file)
-
-        assert error.value.args[0] == "handler file not not found: {}.".format(handler_file_path)
-
-    def test_return_values_manifest_handler_file(self, create_empty_manifest_file):
-        with open(os.path.join(model_dir_path,  MANIFEST_FILENAME), 'w') as f:
-            json.dump(manifest_valid_data, f)
-
-        empty_file(manifest_valid_data['model']['parametersFile'])
-        empty_file(manifest_valid_data['model']['symbolFile'])
-        empty_file(os.path.join(model_dir_path, handler_file))
-
-        manifest_return, handler_file_return = ModelLoader.load(model_dir_path, handler_file)
-        assert manifest_return == manifest_valid_data
-        assert str(handler_file_return) == str(os.path.join(model_dir_path, handler_file))
+    def test_load_model_with_error(self, patches):
+        patches.mock_open.side_effect = [
+            mock.mock_open(read_data='{"test" : "h"}').return_value]
+        sys.path.append(os.path.abspath('mms/tests/unit_tests/test_utils/'))
+        patches.os_path.return_value = True
+        handler = 'dummy_func_model_service'
+        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        with pytest.raises(Exception) as excinfo:
+            _ = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
+        assert str(excinfo.value.message) == "Expected only one class in custom service code or a function entry point"

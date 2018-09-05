@@ -108,7 +108,7 @@ class TestParseModelServicesFromModule:
         assert error.value.args[0] == "Invalid service file given"
 
     def test_with_incorrect_file(self, service_manager):
-        service_file_path = 'mms/tests/unit_tests/test_utils/dummy_model_service.p'
+        service_file_path = 'mms/tests/unit_tests/test_utils//dummy_model/dummy_model_service.p'
 
         with pytest.raises(Exception) as error:
             service_manager.parse_modelservices_from_module(service_file_path)
@@ -116,7 +116,7 @@ class TestParseModelServicesFromModule:
         assert "Error when loading service file" in error.value.args[0]
 
     def test_with_correct_file(self, service_manager):
-        service_file_path = 'mms/tests/unit_tests/test_utils/dummy_model_service.py'
+        service_file_path = 'mms/tests/unit_tests/model_service/dummy_model/dummy_model_service.py'
 
         result = service_manager.parse_modelservices_from_module(service_file_path)
 
@@ -146,7 +146,7 @@ class TestGetRegisteredModelServices:
 
 class TestRegisterMoule:
 
-    service_file_path = 'mms/tests/unit_tests/test_utils/dummy_model_service.py'
+    service_file_path = 'mms/tests/unit_tests/model_service/dummy_model/dummy_model_service.py'
 
     def test_with_errors(self, service_manager, spy_fixtures):
         service_manager.register_module(self.service_file_path)
@@ -172,7 +172,7 @@ class TestRegisterMoule:
 class TestRegisterAndLoadModules:
 
     model_name = model_names[0]
-    model_dir = "mms/tests/unit_tests/test_utils"
+    model_dir = "mms/tests/unit_tests/model_service/dummy_model"
     manifest = {}
     module_file_path = os.path.join(model_dir, 'dummy_model_service.py')
     gpu = 0
@@ -186,7 +186,7 @@ class TestRegisterAndLoadModules:
         with pytest.raises(Exception) as error:
             service_manager.register_and_load_modules(*self.args)
 
-        assert error.value.args[0] == "Invalid service file found mms/tests/unit_tests/test_utils/dummy_model_service" \
+        assert error.value.args[0] == "Invalid service file found mms/tests/unit_tests/model_service/dummy_model/dummy_model_service" \
                                       ".py. Service file should contain only one service class. Found 0"
         spy_fixtures.register_module.assert_called_with(self.module_file_path)
 

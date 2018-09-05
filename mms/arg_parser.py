@@ -48,38 +48,6 @@ class ArgParser(object):
         return parser
 
     @staticmethod
-    def export_parser():
-        """ Argument parser for mxnet-model-export
-        """
-        parser_export = argparse.ArgumentParser(prog='mxnet-model-export', description='MXNet Model Export')
-
-        parser_export.add_argument('--model-name',
-                                   required=True,
-                                   type=str,
-                                   help='Exported model name. Exported file will be named as '
-                                        'model-name.model and saved in current working directory.')
-
-        parser_export.add_argument('--model-path',
-                                   required=True,
-                                   type=str,
-                                   help='Path to the folder containing model related files. '
-                                        'Signature file is required.')
-
-        parser_export.add_argument('--service-file-path',
-                                   required=False,
-                                   dest="service_file_path",
-                                   type=str,
-                                   default=None,
-                                   help='Service file path to handle custom MMS inference logic. '
-                                        'If path is not provided and the input defined in signature.json '
-                                        'is application/json, this tool will include the MXNetBaseService \
-                                        in the archive. '
-                                        'Alternatively, if the input defined in signature.json is image/jpeg '
-                                        'this tool will include the MXNetVisionService in the archive.')
-
-        return parser_export
-
-    @staticmethod
     def model_service_worker_args():
         """
         Argparser for backend worker. Takes the socket name and socket type.

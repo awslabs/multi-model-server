@@ -29,6 +29,8 @@ from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 from mms.protocol.otf_message_handler import OtfCodecHandler
+from mms.metrics.metric_encoder import MetricEncoder
+from mms.metrics.metrics_store import MetricsStore
 
 MAX_FAILURE_THRESHOLD = 5
 SOCKET_ACCEPT_TIMEOUT = 30.0
@@ -185,7 +187,8 @@ class MXNetModelServiceWorker(object):
             input_batch, req_id_map, invalid_reqs = self.retrieve_data_for_inference(req_batch)
             if batch_size == 1:
                 # Initialize metrics at service level
-                model_service.metrics_init(model_name, req_id_map)
+                metrics_store = MetricsStore(req_id_map, model_name)
+                model_service.metrics_init(metrics_store)
                 retval.append(model_service.inference([input_batch[0][i] for i in input_batch[0]]))
                 emit_metrics(model_service.metrics_store.store)
             else:

@@ -9,8 +9,27 @@
 # permissions and limitations under the License.
 
 """
-MXNet Utils.
-
-Ideally this package should have completely been removed from the mms/utils/mxnet folder, but the existing model service codes rely on importing these utils through mms/utils/mxnet package.
-Hence to maintain backwards compatibility, we need to keep them here. The elegant part is that, the files in these packages just import * from the corresponding file in the model_export/utils/mxnet package
+Class to trigger MMS Errors
 """
+
+
+class ModelExportToolError(Exception):
+    """
+    Class defining the MMS Error. This is used by backend worker and custom service code to throw errors.
+    """
+    def __init__(self, code, message):
+        super(ModelExportToolError, self).__init__(message)
+        self.code = code
+        self.message = message
+
+    def get_code(self):
+        return self.code
+
+    def get_message(self):
+        return self.message
+
+    def set_code(self, c):
+        self.code = c
+
+    def set_message(self, m):
+        self.message = m

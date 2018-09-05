@@ -57,6 +57,3 @@ class ModelServerErrorCodes(object):
     ENCODE_FAILED = 10000
     DECODE_FAILED = 10001
     CODEC_FAIL = 10002
-
-    # Custom service error code
-    CUSTOM_SERVICE_ERROR = 12000

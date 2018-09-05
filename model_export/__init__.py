@@ -8,9 +8,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-"""
-MXNet Utils.
+from . import version
 
-Ideally this package should have completely been removed from the mms/utils/mxnet folder, but the existing model service codes rely on importing these utils through mms/utils/mxnet package.
-Hence to maintain backwards compatibility, we need to keep them here. The elegant part is that, the files in these packages just import * from the corresponding file in the model_export/utils/mxnet package
-"""
+__version__ = version.__version__

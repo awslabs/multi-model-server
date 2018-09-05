@@ -116,7 +116,10 @@ if __name__ == '__main__':
     opt_set = set(sys.argv)
     version = detect_model_server_version()
 
-    requirements = ['Pillow', 'psutil', 'importlib2', 'future']
+    requirements = ['Pillow', 'psutil', 'future']
+
+    # TODO : Replace the requirements with the line below once model-export-tool gets separated
+    # requirements = ['Pillow', 'psutil', 'future', 'model-export-tool']
 
     setup(
         name='mxnet-model-server',
@@ -137,7 +140,8 @@ if __name__ == '__main__':
             'mxnet': ['mxnet==1.2'],
         },
         entry_points={
-            'console_scripts': ['mxnet-model-server=mms.model_server:start']
+            'console_scripts': ['mxnet-model-server=mms.model_server:start',
+                                'mxnet-model-export=mms.export_model:export']
         },
         include_package_data=True,
         license='Apache License Version 2.0'

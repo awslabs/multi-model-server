@@ -22,7 +22,7 @@ from collections import namedtuple
 import pytest
 from mms.model_service_worker import MXNetModelServiceWorker, MAX_FAILURE_THRESHOLD, emit_metrics
 from mms.mxnet_model_service_error import MMSError
-from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
+from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
 from mock import Mock
 
 
@@ -60,6 +60,7 @@ def test_retrieve_model_input(socket_patches, model_service_worker):
     assert expected_response == model_in
 
 
+# noinspection PyClassHasNoInit
 class TestCreateAndSendResponse:
 
     message = 'hello socket'
@@ -93,6 +94,7 @@ class TestCreateAndSendResponse:
         socket_patches.log_error.assert_called()
 
 
+# noinspection PyClassHasNoInit
 class TestRecvMsg:
 
     def test_with_nil_pkt(self, socket_patches):
@@ -109,7 +111,7 @@ class TestRecvMsg:
         with pytest.raises(MMSError) as ex:
             MXNetModelServiceWorker.recv_msg(socket_patches.socket)
 
-        assert ex.value.get_code() == err.RECEIVE_ERROR
+        assert ex.value.get_code() == Err.RECEIVE_ERROR
         assert ex.value.get_message() == "{}".format(repr(error))
 
     def test_with_exception(self, socket_patches):
@@ -118,7 +120,7 @@ class TestRecvMsg:
         with pytest.raises(MMSError) as ex:
             MXNetModelServiceWorker.recv_msg(socket_patches.socket)
 
-        assert ex.value.get_code() == err.UNKNOWN_EXCEPTION
+        assert ex.value.get_code() == Err.UNKNOWN_EXCEPTION
         assert ex.value.get_message() == "Some Exception"
 
     def test_with_json_value_error(self, socket_patches):
@@ -128,7 +130,7 @@ class TestRecvMsg:
         with pytest.raises(MMSError) as ex:
             MXNetModelServiceWorker.recv_msg(socket_patches.socket)
 
-        assert ex.value.get_code() == err.INVALID_REQUEST
+        assert ex.value.get_code() == Err.INVALID_REQUEST
         assert ex.value.get_message() == "JSON message format error: {}".format(err_msg)
 
     def test_with_missing_command(self, socket_patches):
@@ -137,7 +139,7 @@ class TestRecvMsg:
         with pytest.raises(MMSError) as excinfo:
             MXNetModelServiceWorker.recv_msg(socket_patches.socket)
 
-        assert excinfo.value.get_code() == err.INVALID_COMMAND
+        assert excinfo.value.get_code() == Err.INVALID_COMMAND
         assert excinfo.value.get_message() == "Invalid message received"
 
     def test_return_value(self, socket_patches):
@@ -164,6 +166,7 @@ class TestRecvMsg:
         assert data == recv_pkt
 
 
+# noinspection PyClassHasNoInit
 class TestSendResponse:
 
     def test_with_io_error(self, socket_patches, model_service_worker):
@@ -171,7 +174,7 @@ class TestSendResponse:
         socket_patches.socket.send.side_effect = io_error
         msg = 'hello socket'
 
-        log_call_param = "{}: Send failed. {}.\nMsg: {}".format(err.SEND_MSG_FAIL, repr(io_error),
+        log_call_param = "{}: Send failed. {}.\nMsg: {}".format(Err.SEND_MSG_FAIL, repr(io_error),
                                                                 ''.join([msg, '\r\n']))
 
         model_service_worker.send_failures = 0
@@ -185,14 +188,14 @@ class TestSendResponse:
                 socket_patches.log_error.assert_called_with(log_call_param)
 
         # The exit status is exit(SEND_FAILS_EXCEEDS_LIMITS)
-        assert ex.value.args[0] == err.SEND_FAILS_EXCEEDS_LIMITS
+        assert ex.value.args[0] == Err.SEND_FAILS_EXCEEDS_LIMITS
 
     def test_with_os_error(self, socket_patches, model_service_worker):
         os_error = OSError("OS Error")
         socket_patches.socket.send.side_effect = os_error
         msg = 'hello socket'
 
-        log_call_param = "{}: Send failed. {}.\nMsg: {}".format(err.SEND_MSG_FAIL, repr(os_error),
+        log_call_param = "{}: Send failed. {}.\nMsg: {}".format(Err.SEND_MSG_FAIL, repr(os_error),
                                                                 ''.join([msg, '\r\n']))
 
         model_service_worker.send_failures = 0
@@ -206,9 +209,10 @@ class TestSendResponse:
                 socket_patches.log_error.assert_called_with(log_call_param)
 
         # The exit status is exit(SEND_FAILS_EXCEEDS_LIMITS)
-        assert ex.value.args[0] == err.SEND_FAILS_EXCEEDS_LIMITS
+        assert ex.value.args[0] == Err.SEND_FAILS_EXCEEDS_LIMITS
 
 
+# noinspection PyClassHasNoInit
 class TestRunServer:
 
     accept_result = ('cl_sock', None)
@@ -221,7 +225,7 @@ class TestRunServer:
 
         socket_patches.socket.bind.assert_called()
         socket_patches.socket.listen.assert_not_called()
-        assert excinfo.value.get_code() == err.SOCKET_BIND_ERROR
+        assert excinfo.value.get_code() == Err.SOCKET_BIND_ERROR
 
     def test_with_timeout(self, socket_patches, model_service_worker):
         exception = socket.timeout("Some Exception")
@@ -272,6 +276,7 @@ class TestRunServer:
         assert model_service_worker.sock.accept.call_count == 2
         model_service_worker.handle_connection.assert_called_once()
 
+    # noinspection PyUnusedLocal
     def test_success(self, socket_patches, model_service_worker):
         model_service_worker.sock.accept.return_value = self.accept_result
         model_service_worker.handle_connection = Mock()
@@ -281,8 +286,10 @@ class TestRunServer:
         model_service_worker.handle_connection.assert_called_once()
 
 
+# noinspection PyClassHasNoInit
 class TestMXNetModelServiceWorker:
 
+    # noinspection PyClassHasNoInit
     class TestInit:
 
         socket_name = "sampleSocketName"
@@ -301,7 +308,7 @@ class TestMXNetModelServiceWorker:
             with pytest.raises(MMSError) as excinfo:
                 MXNetModelServiceWorker('unix', self.socket_name)
             assert self.socket_name in excinfo.value.message
-            assert excinfo.value.code == err.SOCKET_ERROR
+            assert excinfo.value.code == Err.SOCKET_ERROR
             assert excinfo.value.message == 'socket already in use: sampleSocketName.'
 
         @pytest.fixture()
@@ -319,14 +326,14 @@ class TestMXNetModelServiceWorker:
             patches.socket.side_effect = exception
             with pytest.raises(MMSError) as excinfo:
                 MXNetModelServiceWorker('unix', self.socket_name)
-            assert excinfo.value.code == err.SOCKET_ERROR
+            assert excinfo.value.code == Err.SOCKET_ERROR
             assert excinfo.value.message == 'Socket error in init sampleSocketName. {}'.format(repr(exception))
 
         def test_socket_unknown_exception(self, patches):
             patches.socket.side_effect = Exception('unknownException')
             with pytest.raises(MMSError) as excinfo:
                 MXNetModelServiceWorker('unix', self.socket_name)
-            assert excinfo.value.code == err.UNKNOWN_EXCEPTION
+            assert excinfo.value.code == Err.UNKNOWN_EXCEPTION
             assert excinfo.value.message == "Exception('unknownException',)"
 
         def test_success(self, patches):
@@ -335,6 +342,7 @@ class TestMXNetModelServiceWorker:
             patches.log.assert_called_once_with('Listening on port: sampleSocketName\n')
             patches.socket.assert_called_once_with(socket.AF_UNIX, socket.SOCK_STREAM)
 
+    # noinspection PyClassHasNoInit
     class TestCreatePredictResponse:
 
         sample_ret = ['val1']
@@ -350,6 +358,7 @@ class TestMXNetModelServiceWorker:
             )
             return patches
 
+        # noinspection PyUnusedLocal
         @pytest.fixture()
         def worker(self, mocker):
             return object.__new__(MXNetModelServiceWorker)
@@ -358,7 +367,7 @@ class TestMXNetModelServiceWorker:
             patches.encode.side_effect = Exception('testerr')
             with pytest.raises(MMSError) as excinfo:
                 worker.create_predict_response(self.sample_ret, self.req_id_map, self.empty_invalid_reqs)
-            assert excinfo.value.code == err.CODEC_FAIL
+            assert excinfo.value.code == Err.CODEC_FAIL
             assert excinfo.value.message == "codec failed Exception('testerr',)"
 
         @pytest.mark.parametrize('value', [(b'test', b'test'), ('test', b'test'), ({'test': True}, b'{"test": true}')])
@@ -377,6 +386,7 @@ class TestMXNetModelServiceWorker:
             resp = worker.create_predict_response(self.sample_ret, self.req_id_map, invalid_reqs)
             assert resp == [{'requestId': requestId, 'code': code, 'value': value, 'encoding': encoding}]
 
+    # noinspection PyClassHasNoInit
     class TestRetrieveDataForInference:
 
         valid_req = [{'requestId': '111-222-3333', 'encoding': 'None|base64|utf-8', 'modelInputs': '[{}]'}]
@@ -394,19 +404,21 @@ class TestMXNetModelServiceWorker:
             mocker.patch.object(MXNetModelServiceWorker, 'retrieve_model_input')
             return object.__new__(MXNetModelServiceWorker)
 
+        # noinspection PyUnusedLocal
         def test_with_nil_request(self, patches, worker):
             with pytest.raises(ValueError) as excinfo:
                 worker.retrieve_data_for_inference(requests=None)
 
             assert excinfo.value.args[0] == "Received invalid inputs"
 
+        # noinspection PyUnusedLocal
         def test_with_invalid_req(self, patches, worker):
-            worker.retrieve_model_input.side_effect = MMSError(err.INVALID_PREDICT_INPUT, 'Some message')
+            worker.retrieve_model_input.side_effect = MMSError(Err.INVALID_PREDICT_INPUT, 'Some message')
 
             input_batch, req_to_id_map, invalid_reqs = worker.retrieve_data_for_inference(requests=self.valid_req)
 
             worker.retrieve_model_input.assert_called_once()
-            assert invalid_reqs == {'111-222-3333': err.INVALID_PREDICT_INPUT}
+            assert invalid_reqs == {'111-222-3333': Err.INVALID_PREDICT_INPUT}
 
         def test_valid_req(self, patches, worker):
             worker.retrieve_model_input.return_value = 'some-return-val'
@@ -415,6 +427,7 @@ class TestMXNetModelServiceWorker:
             patches.validate.assert_called()
             worker.retrieve_model_input.assert_called()
 
+    # noinspection PyClassHasNoInit
     class TestPredict:
 
         data = {u'modelName': 'modelName', u'requestBatch': ['data']}
@@ -444,28 +457,31 @@ class TestMXNetModelServiceWorker:
             patches.validate.side_effect = ValueError('testerr')
             with pytest.raises(MMSError) as excinfo:
                 worker.predict(self.data)
-            assert excinfo.value.code == err.INVALID_PREDICT_MESSAGE
+            assert excinfo.value.code == Err.INVALID_PREDICT_MESSAGE
             assert excinfo.value.message == "ValueError('testerr',)"
 
+        # noinspection PyUnusedLocal
         def test_pass_mms_error(self, patches, worker):
-            error = MMSError(err.UNKNOWN_COMMAND, 'testerr')
+            error = MMSError(Err.UNKNOWN_COMMAND, 'testerr')
             worker.service_manager.get_loaded_modelservices.side_effect = error
             with pytest.raises(MMSError) as excinfo:
                 worker.predict(self.data)
             assert excinfo.value == error
 
+        # noinspection PyUnusedLocal
         def test_not_loaded(self, patches, worker):
             worker.service_manager.get_loaded_modelservices.return_value = []
             with pytest.raises(MMSError) as excinfo:
                 worker.predict(self.data)
-            assert excinfo.value.code == err.MODEL_SERVICE_NOT_LOADED
+            assert excinfo.value.code == Err.MODEL_SERVICE_NOT_LOADED
             assert excinfo.value.message == "Model modelName is currently not loaded"
 
+        # noinspection PyUnusedLocal
         def test_invalid_batch_size(self, patches, worker):
             data = {u'modelName': 'modelName', u'requestBatch': ['data1', 'data2']}
             with pytest.raises(MMSError) as excinfo:
                 worker.predict(data)
-            assert excinfo.value.code == err.UNSUPPORTED_PREDICT_OPERATION
+            assert excinfo.value.code == Err.UNSUPPORTED_PREDICT_OPERATION
             assert excinfo.value.message == "Invalid batch size 2"
 
         def test_success(self, patches, worker):
@@ -480,6 +496,7 @@ class TestMXNetModelServiceWorker:
             assert msg == "Prediction success"
             assert code == 200
 
+    # noinspection PyClassHasNoInit
     class TestLoadModel:
 
         data = {'modelPath': 'mpath', 'modelName': 'name', 'handler': 'handled'}
@@ -503,11 +520,11 @@ class TestMXNetModelServiceWorker:
             patches.loader.side_effect = ValueError('verror')
             with pytest.raises(MMSError) as excinfo:
                 worker.load_model(self.data)
-            assert excinfo.value.code == err.VALUE_ERROR_WHILE_LOADING
+            assert excinfo.value.code == Err.VALUE_ERROR_WHILE_LOADING
             assert excinfo.value.message == 'verror'
 
         def test_pass_mms_error(self, patches, worker):
-            error = MMSError(err.UNKNOWN_COMMAND, 'testerr')
+            error = MMSError(Err.UNKNOWN_COMMAND, 'testerr')
             patches.loader.side_effect = error
             with pytest.raises(MMSError) as excinfo:
                 worker.load_model(self.data)
@@ -517,9 +534,10 @@ class TestMXNetModelServiceWorker:
             patches.loader.side_effect = Exception('testerr')
             with pytest.raises(MMSError) as excinfo:
                 worker.load_model(self.data)
-            assert excinfo.value.code == err.UNKNOWN_EXCEPTION_WHILE_LOADING
+            assert excinfo.value.code == Err.UNKNOWN_EXCEPTION_WHILE_LOADING
             assert excinfo.value.args[0] == "Exception('testerr',)"
 
+        # noinspection PyUnusedLocal
         @pytest.mark.parametrize('batch_size', [(None, None), ('1', 1)])
         @pytest.mark.parametrize('gpu', [(None, None), ('2', 2)])
         def test_optional_args(self, patches, worker, batch_size, gpu):
@@ -540,6 +558,7 @@ class TestMXNetModelServiceWorker:
             assert msg == 'loaded model test_service_file_path'
             assert code == 200
 
+    # noinspection PyClassHasNoInit
     class TestUnloadModel:
 
         request = {u'model-name': 'mname'}
@@ -557,25 +576,28 @@ class TestMXNetModelServiceWorker:
             mocker.patch.object(MXNetModelServiceWorker, 'service_manager', create=True),
             return object.__new__(MXNetModelServiceWorker)
 
+        # noinspection PyUnusedLocal
         def test_not_loaded(self, patches, worker):
             worker.service_manager.unload_models.side_effect = KeyError()
             with pytest.raises(MMSError) as excinfo:
                 worker.unload_model(self.request)
-            assert excinfo.value.code == err.MODEL_CURRENTLY_NOT_LOADED
+            assert excinfo.value.code == Err.MODEL_CURRENTLY_NOT_LOADED
             assert excinfo.value.args[0] == 'Model is not being served on model server'
 
+        # noinspection PyUnusedLocal
         def test_pass_mms_error(self, patches, worker):
-            error = MMSError(err.UNKNOWN_COMMAND, 'testerr')
+            error = MMSError(Err.UNKNOWN_COMMAND, 'testerr')
             worker.service_manager.unload_models.side_effect = error
             with pytest.raises(MMSError) as excinfo:
                 worker.unload_model(self.request)
             assert excinfo.value == error
 
+        # noinspection PyUnusedLocal
         def test_unknown_error(self, patches, worker):
             worker.service_manager.unload_models.side_effect = Exception('testerr')
             with pytest.raises(MMSError) as excinfo:
                 worker.unload_model(self.request)
-            assert excinfo.value.code == err.UNKNOWN_EXCEPTION
+            assert excinfo.value.code == Err.UNKNOWN_EXCEPTION
             assert excinfo.value.args[0] == "Unknown error Exception('testerr',)"
 
         def test_success(self, patches, worker):
@@ -585,6 +607,7 @@ class TestMXNetModelServiceWorker:
             assert msg == "Unloaded model mname"
             assert code == 200
 
+    # noinspection PyClassHasNoInit
     class TestStopServer:
 
         @pytest.fixture()
@@ -637,6 +660,7 @@ def test_emit_metrics(mocker, socket_patches):
         assert k in dumps.call_args_list[0][0][0]
 
 
+# noinspection PyClassHasNoInit
 class TestHandleConnection:
 
     @pytest.fixture()
@@ -698,7 +722,7 @@ class TestHandleConnection:
 
     def test_with_unknown_cmd(self, model_service_worker, socket_patches, get_spies):
         result = "Received unknown command: {}".format('unk')
-        err_code = err.UNKNOWN_COMMAND
+        err_code = Err.UNKNOWN_COMMAND
 
         get_spies.recv_msg.side_effect = [('unk', 'somedata'), ('stop', 'somedata')]
 
@@ -710,7 +734,7 @@ class TestHandleConnection:
         get_spies.stop_server.assert_called()
 
     def test_with_mms_error(self, model_service_worker, socket_patches, get_spies):
-        error = MMSError(err.SEND_FAILS_EXCEEDS_LIMITS, "Unknown Error")
+        error = MMSError(Err.SEND_FAILS_EXCEEDS_LIMITS, "Unknown Error")
         get_spies.recv_msg.side_effect = error
 
         model_service_worker.handle_connection(socket_patches.socket)

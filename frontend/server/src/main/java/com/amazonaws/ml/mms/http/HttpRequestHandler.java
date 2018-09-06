@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -59,6 +60,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     /** {@inheritDoc} */
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest req) {
+        ctx.channel().attr(NettyUtils.REQUEST_ID_ATTR).set(UUID.randomUUID().toString());
+
         if (!req.decoderResult().isSuccess()) {
             NettyUtils.sendError(
                     ctx, HttpResponseStatus.BAD_REQUEST, ErrorCodes.MESSAGE_DECODE_FAILURE);
@@ -191,7 +194,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
         RequestBatch input;
         try {
-            input = parseRequest(req);
+            input = parseRequest(ctx, req);
         } catch (IllegalArgumentException e) {
             NettyUtils.sendError(
                     ctx,
@@ -228,7 +231,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
         RequestBatch input;
         try {
-            input = parseRequest(req);
+            input = parseRequest(ctx, req);
             if (modelName == null) {
                 modelName = input.getStringParameter("model_name");
             }
@@ -418,8 +421,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         NettyUtils.sendJsonResponse(ctx, resp);
     }
 
-    private static RequestBatch parseRequest(FullHttpRequest req) {
-        RequestBatch inputData = new RequestBatch();
+    private static RequestBatch parseRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
+        String requestId = NettyUtils.getRequestId(ctx);
+        RequestBatch inputData = new RequestBatch(requestId);
         CharSequence contentType = HttpUtil.getMimeType(req);
         if (contentType != null) {
             inputData.setContentType(contentType.toString());

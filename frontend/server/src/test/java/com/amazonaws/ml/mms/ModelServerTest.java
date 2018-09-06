@@ -21,6 +21,7 @@ import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
+import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.codec.MessageCodec;
 import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import com.google.gson.JsonParseException;
@@ -41,6 +42,7 @@ import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequest;
@@ -79,6 +81,7 @@ public class ModelServerTest {
     private ModelServer server;
     CountDownLatch latch;
     String result;
+    HttpHeaders headers;
     private String listApisResult;
     private String noopApiResult;
 
@@ -165,6 +168,7 @@ public class ModelServerTest {
 
         StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
         Assert.assertEquals(resp.getStatus(), "Healthy");
+        Assert.assertTrue(headers.contains(NettyUtils.REQUEST_ID));
     }
 
     private void testApiDescription(Channel channel) throws InterruptedException {
@@ -453,6 +457,7 @@ public class ModelServerTest {
         @Override
         public void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) {
             result = msg.content().toString(StandardCharsets.UTF_8);
+            headers = msg.headers();
             latch.countDown();
         }
 

@@ -1,4 +1,4 @@
-# Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -32,6 +32,7 @@ MMS_SERVICE_FILES = {k: os.path.splitext(v.__file__)[0] + '.py' for k, v in {
     'application/json': model_packaging.model_service.mxnet_model_service
 }.items()}
 
+MODEL_ARCHIVE_EXTENSION = '.mar'
 SIG_REQ_ENTRY = ['inputs', 'input_type', 'outputs', 'output_types']
 VALID_MIME_TYPE = ['image/jpeg', 'application/json']
 SIGNATURE_FILE = 'signature.json'
@@ -377,7 +378,7 @@ def export_model(model_name, model_path, service_file=None, export_file=None):
     temp_files = []
     try:
         if export_file is None:
-            export_file = '{}/{}.model'.format(os.getcwd(), model_name)
+            export_file = '{}/{}.{}'.format(os.getcwd(), model_name, MODEL_ARCHIVE_EXTENSION)
         assert not os.path.exists(export_file), "model file {} already exists.".format(export_file)
 
         if model_path.startswith('~'):

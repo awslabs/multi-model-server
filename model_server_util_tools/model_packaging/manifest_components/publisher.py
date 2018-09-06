@@ -8,10 +8,14 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+# pylint: disable=missing-docstring
 import json
 
 
 class Publisher(object):
+    """
+    Publisher object is a part of Manifest.json
+    """
 
     def __init__(self, author, email):
         self.author = author

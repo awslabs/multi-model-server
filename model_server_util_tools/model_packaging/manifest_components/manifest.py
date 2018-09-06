@@ -8,6 +8,8 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+# pylint: disable=redefined-builtin
+# pylint: disable=missing-docstring
 import json
 from enum import Enum
 from model_server_util_tools.model_packaging.model_packaging_error import ModelPackagingError
@@ -23,6 +25,9 @@ class RuntimeType(Enum):
 
 
 class Manifest(object):
+    """
+    The main manifest object which gets written into the model archive as MANIFEST.json
+    """
 
     def __init__(self, runtime, engine, model, publisher, specification_version, implementation_version,
                  model_server_version, license, description, user_data):

@@ -8,6 +8,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+# pylint: disable=missing-docstring
 import json
 from enum import Enum
 from model_server_util_tools.model_packaging.model_packaging_error import ModelPackagingError
@@ -21,6 +22,9 @@ class EngineType(Enum):
 
 
 class Engine(object):
+    """
+    Engine is a part of the final manifest.json. It defines which framework to run the inference on
+    """
 
     def __init__(self, engine_name, engine_version):
         try:

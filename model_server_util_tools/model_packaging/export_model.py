@@ -169,7 +169,7 @@ def create_manifest_file(model_path, manifest):
 
 
 def zip_dir(path, ziph):
-    for root, dirs, files in os.walk(path):
+    for root, _, files in os.walk(path):
         for f in files:
             ziph.write(os.path.join(root, f))
 
@@ -214,7 +214,7 @@ def export_model(model_name, model_path, manifest, export_file=None):
         log_msg.info("Successfully exported model %s to file %s", model_name, export_file)
 
     finally:
-        clean_temp_files(model_path, temp_files)
+        clean_temp_files(temp_files)
 
 
 def export():

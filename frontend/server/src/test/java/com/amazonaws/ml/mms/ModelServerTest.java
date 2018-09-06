@@ -77,7 +77,6 @@ public class ModelServerTest {
 
     private ConfigManager configManager;
     private ModelServer server;
-    private MockWorker worker;
     CountDownLatch latch;
     String result;
     private String listApisResult;
@@ -95,9 +94,6 @@ public class ModelServerTest {
 
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
 
-        worker = new MockWorker();
-        worker.start();
-
         server = new ModelServer(configManager);
         server.initModelStore();
         server.start();
@@ -114,7 +110,6 @@ public class ModelServerTest {
     @AfterSuite
     public void afterSuite() {
         server.stop();
-        worker.stop();
     }
 
     @Test
@@ -311,7 +306,7 @@ public class ModelServerTest {
 
         latch.await();
 
-        Assert.assertEquals(result, "OK");
+        Assert.assertEquals(result, "test");
     }
 
     private void testPredictionsJson(Channel channel) throws InterruptedException {
@@ -327,7 +322,7 @@ public class ModelServerTest {
 
         latch.await();
 
-        Assert.assertEquals(result, "OK");
+        Assert.assertEquals(result, "data=test");
     }
 
     private void testPredictionsBinary(Channel channel) throws InterruptedException {
@@ -343,7 +338,7 @@ public class ModelServerTest {
 
         latch.await();
 
-        Assert.assertEquals(result, "OK");
+        Assert.assertEquals(result, "test");
     }
 
     private void testInvocationsJson(Channel channel) throws InterruptedException {
@@ -358,7 +353,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "OK");
+        Assert.assertEquals(result, "{\"data\": \"test\"}");
     }
 
     private void testInvocationsMultipart(Channel channel)
@@ -383,7 +378,7 @@ public class ModelServerTest {
 
         latch.await();
 
-        Assert.assertEquals(result, "OK");
+        Assert.assertEquals(result, "test");
     }
 
     private void testMetricManager() throws JsonParseException, InterruptedException {

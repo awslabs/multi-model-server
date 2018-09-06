@@ -14,17 +14,6 @@ Command line interface to export model files to be used for inference by MXNet M
 
 import warnings
 from model_server_util_tools.model_packaging import export_model as export_tool
-from model_server_util_tools.model_packaging.arg_parser import ArgParser
-
-
-def export_model(model_name, model_path, service_file=None, export_file=None):
-    """
-    Internal helper for the exporting model command line interface.
-    """
-    # print ("Use model-export-tool instead of mxnet-model-export. mxnet-model-export is deprecated")
-    warnings.warn("Use model-export-tool instead of mxnet-model-export. mxnet-model-export is deprecated.",
-                  DeprecationWarning, stacklevel=2)
-    export_tool.export_model(model_name, model_path, service_file, export_file)
 
 
 def export():
@@ -32,8 +21,9 @@ def export():
     Export as MXNet model
     :return:
     """
-    args = ArgParser.export_model_args_parser().parse_args()
-    export_tool(model_name=args.model_name, model_path=args.model_path, service_file=args.service_file_path)
+    warnings.warn("Use model-export-tool instead of mxnet-model-export. mxnet-model-export is deprecated.",
+                  DeprecationWarning, stacklevel=2)
+    export_tool.export()
 
 
 if __name__ == '__main__':

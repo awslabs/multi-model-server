@@ -8,10 +8,15 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+# pylint: disable=missing-docstring
 import json
 
 
 class Model(object):
+    """
+    Model is a part of the manifest.json. It defines the properties of the model such as name, version as weill
+    as the entry point into the service code through the handler property
+    """
 
     def __init__(self, model_name, description, model_version, extensions, handler):
         self.model_name = model_name

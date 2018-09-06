@@ -8,6 +8,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+"""
+This module does the following:
+Exports the model folder to generate a Model Archive file out of it in .mar format
+"""
 from . import version
 
 __version__ = version.__version__

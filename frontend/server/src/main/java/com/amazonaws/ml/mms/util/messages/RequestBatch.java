@@ -24,7 +24,11 @@ public class RequestBatch {
     private List<ModelInputs> modelInputs;
 
     public RequestBatch() {
-        requestId = UUID.randomUUID().toString();
+        this(UUID.randomUUID().toString());
+    }
+
+    public RequestBatch(String requestId) {
+        this.requestId = requestId;
         modelInputs = new ArrayList<>();
     }
 

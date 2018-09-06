@@ -47,6 +47,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.FileUpload;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -56,9 +57,15 @@ import java.util.List;
 /** A utility class that handling Netty request and response. */
 public final class NettyUtils {
 
+    public static final String REQUEST_ID = "x-request-id";
+    public static final AttributeKey<String> REQUEST_ID_ATTR = AttributeKey.valueOf("requestId");
     private static final String UDS_PREFIX = "/tmp/.mms.worker.";
 
     private NettyUtils() {}
+
+    public static String getRequestId(ChannelHandlerContext ctx) {
+        return ctx.channel().attr(REQUEST_ID_ATTR).get();
+    }
 
     public static void sendJsonResponse(ChannelHandlerContext ctx, Object json) {
         sendJsonResponse(ctx, JsonUtils.GSON_PRETTY.toJson(json), HttpResponseStatus.OK);
@@ -115,6 +122,7 @@ public final class NettyUtils {
     public static void sendHttpResponse(
             ChannelHandlerContext ctx, FullHttpResponse resp, boolean keepAlive) {
         // Send the response and close the connection if necessary.
+        resp.headers().set(REQUEST_ID, getRequestId(ctx));
         HttpUtil.setContentLength(resp, resp.content().readableBytes());
         if (!keepAlive || resp.status().code() >= 400) {
             ChannelFuture f = ctx.channel().writeAndFlush(resp);

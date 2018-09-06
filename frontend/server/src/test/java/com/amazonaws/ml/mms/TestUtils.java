@@ -18,9 +18,6 @@ public final class TestUtils {
 
     public static void init() {
         // set up system properties for local IDE debug
-        if (System.getProperty("DEBUG") == null) {
-            System.setProperty("DEBUG", "true");
-        }
         if (System.getProperty("mmsConfigFile") == null) {
             System.setProperty("mmsConfigFile", "src/test/resources/config.properties");
         }

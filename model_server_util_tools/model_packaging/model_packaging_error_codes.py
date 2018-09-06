@@ -20,3 +20,6 @@ class ModelPackagingErrorCodes(object):
     # Invalid runtime
     INVALID_RUNTIME_TYPE = 14001
 
+    # Invalid model files
+    INVALID_MODEL_FILES = 14002
+

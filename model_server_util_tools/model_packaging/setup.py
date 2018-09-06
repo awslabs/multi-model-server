@@ -32,7 +32,6 @@ import os
 from datetime import date
 import sys
 from setuptools import setup, find_packages
-import setuptools.command.build_py
 
 pkgs = find_packages()
 
@@ -45,6 +44,7 @@ def pypi_description():
 
 def detect_packaging_tool_version():
     with open(os.path.abspath(os.path.join('version.py')), 'r') as vf:
+        # pylint: disable=exec-used
         exec(vf.read(), None, globals())
         # TODO: Look to remove this exec and version coming from file
     return __version__
@@ -59,7 +59,8 @@ if __name__ == '__main__':
     setup(
         name='model-export-tool',
         version=version.strip() + 'b' + str(date.today()).replace('-', '') + '2',
-        description='Model Export Tool is used for creating archives of trained neural net models that can be consumed by MXNet-Model-Server inference',
+        description='Model Export Tool is used for creating archives of trained neural net models that can be consumed '
+                    'by MXNet-Model-Server inference',
         long_description=pypi_description(),
         url='https://github.com/awslabs/mxnet-model-server/model_export/',
         keywords='MXNet Model Server Serving Deep Learning Inference AI',

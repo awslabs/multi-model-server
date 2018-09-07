@@ -26,3 +26,6 @@ class ModelPackagingErrorCodes(object):
 
     # Invalid model files
     INVALID_MODEL_FILES = 14002
+
+    # MAR already present
+    MODEL_ARCHIVE_ALREADY_PRESENT = 14003

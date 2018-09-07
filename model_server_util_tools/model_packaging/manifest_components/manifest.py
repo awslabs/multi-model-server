@@ -12,8 +12,6 @@
 # pylint: disable=missing-docstring
 import json
 from enum import Enum
-from model_server_util_tools.model_packaging.model_packaging_error import ModelPackagingError
-from model_server_util_tools.model_packaging.model_packaging_error_codes import ModelPackagingErrorCodes
 
 
 class RuntimeType(Enum):
@@ -29,12 +27,10 @@ class Manifest(object):
     The main manifest object which gets written into the model archive as MANIFEST.json
     """
 
-    def __init__(self, runtime, engine, model, publisher, specification_version, implementation_version,
-                 model_server_version, license, description, user_data):
-        try:
-            self.runtime = RuntimeType(runtime)
-        except ValueError as err:
-            raise ModelPackagingError(ModelPackagingErrorCodes.INVALID_RUNTIME_TYPE, repr(err))
+    def __init__(self, runtime, engine, model, specification_version=None, implementation_version=None,
+                 description=None, publisher=None, model_server_version=None, license=None, user_data=None):
+
+        self.runtime = RuntimeType(runtime)
         self.engine = engine
         self.model = model
         self.publisher = publisher
@@ -48,16 +44,34 @@ class Manifest(object):
 
     def __to_dict__(self):
         manifest_dict = dict()
+
         manifest_dict['runtime'] = self.runtime.value
+
         manifest_dict['engine'] = str(self.engine)
+
         manifest_dict['model'] = str(self.model)
-        manifest_dict['publisher'] = str(self.publisher)
-        manifest_dict['license'] = self.license
-        manifest_dict['modelServerVersion'] = self.model_server_version
-        manifest_dict['description'] = self.description
-        manifest_dict['implementationVersion'] = self.implementation_version
-        manifest_dict['specificationVersion'] = self.specification_version
-        manifest_dict['userData'] = self.user_data
+
+        if self.license is not None:
+            manifest_dict['license'] = self.license
+
+        if self.model_server_version is not None:
+            manifest_dict['modelServerVersion'] = self.model_server_version
+
+        if self.description is not None:
+            manifest_dict['description'] = self.description
+
+        if self.implementation_version is not None:
+            manifest_dict['implementationVersion'] = self.implementation_version
+
+        if self.specification_version is not None:
+            manifest_dict['specificationVersion'] = self.specification_version
+
+        if self.user_data is not None:
+            manifest_dict['userData'] = self.user_data
+
+        if self.publisher is not None:
+            manifest_dict['publisher'] = str(self.publisher)
+
         return manifest_dict
 
     def __str__(self):

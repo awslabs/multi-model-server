@@ -15,12 +15,12 @@ Helper utils for Model Export tool
 import os
 import json
 import zipfile
-from model_server_util_tools.model_packaging.model_packaging_error_codes import ModelPackagingErrorCodes
+import sys
+import logging
 from model_server_util_tools.model_packaging.manifest_components.publisher import Publisher
 from model_server_util_tools.model_packaging.manifest_components.manifest import Manifest
 from model_server_util_tools.model_packaging.manifest_components.engine import Engine
 from model_server_util_tools.model_packaging.manifest_components.model import Model
-from model_server_util_tools.model_packaging.model_packaging_error import ModelPackagingError
 from model_server_util_tools import model_packaging
 
 MODEL_ARCHIVE_EXTENSION = '.mar'
@@ -39,7 +39,7 @@ class ModelExportUtils(object):
     """
 
     @staticmethod
-    def check_mar_already_exists(model_name, export_file):
+    def check_mar_already_exists(model_name, export_file, overwrite):
         """
         Function to check if .mar already exists
         :param model_name:
@@ -51,8 +51,15 @@ class ModelExportUtils(object):
             export_file = os.path.join(os.getcwd(), '{}{}'.format(model_name, MODEL_ARCHIVE_EXTENSION))
 
         if os.path.exists(export_file):
-            raise ModelPackagingError(ModelPackagingErrorCodes.MODEL_ARCHIVE_ALREADY_PRESENT,
-                                      "model file {} already exists.".format(export_file))
+            if overwrite:
+                logging.warn("%s already exists. It will be overwritten since --force/-f was specified", export_file)
+
+            else:
+                logging.error("%s already exists. Since no --force/-f was specified, it will not be overwritten. "
+                              "Exiting the program here. Specify --force/-f flag to overwrite the %s file. "
+                              "See -h/--help for more details", export_file, export_file)
+
+                sys.exit(1)
 
         return export_file
 
@@ -101,10 +108,11 @@ class ModelExportUtils(object):
                 '.onnx': ('.onnx', 'ONNX model file'),
             }[suffix]
 
-            message = 'mxnet-model-export expects only one ' + params[0] + ' file. Please supply the single ' + \
-                      params[1] + ' file you wish to export.'
+            message = "model-export-tool expects only one %s file. Please supply the single %s file you wish to " \
+                      "export." % (params[0], params[1])
 
-            raise ModelPackagingError(ModelPackagingErrorCodes.INVALID_MODEL_FILES, message)
+            logging.error(message)
+            sys.exit(1)
 
     @staticmethod
     def convert_onnx_model(model_path, onnx_file):
@@ -114,9 +122,19 @@ class ModelExportUtils(object):
         :param onnx_file:
         :return:
         """
+        try:
+            import mxnet as mx
+        except ImportError:
+            logging.error("MXNet package is not installed. Run command : pip install mxnet to install it. ")
+            sys.exit(1)
+
+        try:
+            import onnx
+        except ImportError:
+            logging.error("Onnx package is not installed. Run command : pip install mxnet to install it. ")
+            sys.exit(1)
+
         from mxnet.contrib import onnx as onnx_mxnet
-        import onnx
-        import mxnet as mx
         model_name = os.path.splitext(os.path.basename(onnx_file))[0]
         symbol_file = '%s-symbol.json' % model_name
         params_file = '%s-0000.params' % model_name
@@ -155,17 +173,17 @@ class ModelExportUtils(object):
 
     @staticmethod
     def generate_publisher(publisherargs):
-        publisher = Publisher(publisherargs.author, publisherargs.email)
+        publisher = Publisher(author=publisherargs.author, email=publisherargs.email)
         return publisher
 
     @staticmethod
     def generate_engine(engineargs):
-        engine = Engine(engineargs.engine_name, engineargs.engine_version)
+        engine = Engine(engine_name=engineargs.engine)
         return engine
 
     @staticmethod
     def generate_model(modelargs):
-        model = Model(modelargs.model_name, modelargs.description, modelargs.model_version, dict(), modelargs.handler)
+        model = Model(model_name=modelargs.model_name, handler=modelargs.handler)
         return model
 
     @staticmethod
@@ -176,17 +194,13 @@ class ModelExportUtils(object):
         :return:
         """
 
-        publisher = ModelExportUtils.generate_publisher(args.publisher)
-        engine = ModelExportUtils.generate_engine(args.engine)
-        model = ModelExportUtils.generate_model(args.model)
+        publisher = ModelExportUtils.generate_publisher(args) if 'publisher' in args else None
 
-        try:
-            manifest = Manifest(args.runtime, engine, model, publisher, args.specification_version,
-                                args.implementation_version, args.model_server_version, args.license, args.description,
-                                args.user_data)
+        engine = ModelExportUtils.generate_engine(args)
 
-        except ModelPackagingError as err:
-            raise err
+        model = ModelExportUtils.generate_model(args)
+
+        manifest = Manifest(runtime=args.runtime, engine=engine, model=model, publisher=publisher)
 
         return str(manifest)
 

@@ -14,7 +14,7 @@ from mock import Mock, mock_open, patch
 import os
 import sys
 from collections import namedtuple
-from model_server_util_tools.model_packaging.export_model_utils import ModelExportUtils
+from model_server_tools.model_packaging.export_model_utils import ModelExportUtils
 
 
 # noinspection PyClassHasNoInit
@@ -68,7 +68,7 @@ class TestExportModelUtils:
         @pytest.fixture()
         def patches(self, mocker):
             Patches = namedtuple('Patches', ['utils', 'listdir'])
-            patch = Patches(mocker.patch('model_server_util_tools.model_packaging.export_model_utils.ModelExportUtils'),
+            patch = Patches(mocker.patch('model_server_tools.model_packaging.export_model_utils.ModelExportUtils'),
                             mocker.patch('os.listdir'))
 
             patch.listdir.return_value = set(['a', 'b', 'c'])

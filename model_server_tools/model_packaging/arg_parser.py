@@ -14,8 +14,8 @@ at runtime.
 """
 
 import argparse
-from model_server_util_tools.model_packaging.manifest_components.manifest import RuntimeType
-from model_server_util_tools.model_packaging.manifest_components.engine import EngineType
+from model_server_tools.model_packaging.manifest_components.manifest import RuntimeType
+from model_server_tools.model_packaging.manifest_components.engine import EngineType
 
 
 class StoreDictKeyPair(argparse.Action):

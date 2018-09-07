@@ -12,28 +12,20 @@
 Command line interface to export model files to be used for inference by MXNet Model Server
 """
 
-from model_server_util_tools import model_packaging
 from model_server_util_tools.model_packaging.arg_parser import ArgParser
 from model_server_util_tools.log import log_msg
 
 from model_server_util_tools.model_packaging.export_model_utils import ModelExportUtils
 
-MODEL_ARCHIVE_EXTENSION = '.mar'
-MODEL_SERVER_VERSION = '1.0'
-MODEL_ARCHIVE_VERSION = model_packaging.__version__
-MANIFEST_FILE_NAME = 'MANIFEST.json'
-MAR_INF = 'MAR-INF'
-ONNX_TYPE = '.onnx'
 
-
-def export_model(model_name, model_path, manifest, export_file=None):
+def export_model(model_name, model_path, manifest, export_file_path=None):
     """
     Internal helper for the exporting model command line interface.
     """
     temp_files = []
     try:
         # Step 1 : Check if .mar already exists with the given model name
-        ModelExportUtils.check_mar_already_exists(model_name, export_file)
+        export_file_path = ModelExportUtils.check_mar_already_exists(model_name, export_file_path)
 
         # Step 2 : Get the absolute model path :
         model_path = ModelExportUtils.get_absolute_model_path(model_path)
@@ -48,7 +40,7 @@ def export_model(model_name, model_path, manifest, export_file=None):
 
         # Step 5 : Zip 'em all up
         ModelExportUtils.zip(export_file, model_path, files_to_exclude)
-        log_msg("Successfully exported model %s to file %s", model_name, export_file)
+        log_msg("Successfully exported model %s to file %s", model_name, export_file_path)
 
     finally:
         ModelExportUtils.clean_temp_files(temp_files)

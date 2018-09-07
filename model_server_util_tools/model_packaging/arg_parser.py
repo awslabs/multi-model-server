@@ -14,6 +14,8 @@ at runtime.
 """
 
 import argparse
+from model_server_util_tools.model_packaging.manifest_components.manifest import RuntimeType
+from model_server_util_tools.model_packaging.manifest_components.engine import EngineType
 
 
 class StoreDictKeyPair(argparse.Action):
@@ -31,43 +33,73 @@ class StoreDictKeyPair(argparse.Action):
 
 class ArgParser(object):
 
-    """Argument parser for mxnet-model-export commands
+    """Argument parser for model-export-tool commands
     More detailed example is available at https://github.com/awslabs/mxnet-model-server/blob/master/README.md
     """
 
     @staticmethod
     def export_model_args_parser():
+
         """ Argument parser for mxnet-model-export
         """
+        # TODO Add more CLI args here later
+        runtime_types = ', '.join(s.value for s in RuntimeType)
+        engine_types = ', '.join(s.value for s in EngineType)
+
         parser_export = argparse.ArgumentParser(prog='mxnet-model-export', description='MXNet Model Export')
 
         parser_export.add_argument('--model-name',
                                    required=True,
                                    type=str,
+                                   default=None,
                                    help='Exported model name. Exported file will be named as '
-                                        'model-name.mar and saved in current working directory.')
+                                        'model-name.mar and saved in current working directory if no --export-path is '
+                                        'specified, else it will be saved under the export path')
 
         parser_export.add_argument('--model-path',
                                    required=True,
                                    type=str,
-                                   help='Path to the folder containing model related files. '
-                                        'Signature file is required.')
+                                   default=None,
+                                   help='Path to the folder containing model related files.')
 
-        parser_export.add_argument('--service-file-path',
-                                   required=False,
-                                   dest="service_file_path",
+        parser_export.add_argument('--handler',
+                                   required=True,
+                                   dest="handler",
                                    type=str,
                                    default=None,
-                                   help='Service file path to handle custom MMS inference logic. '
-                                        'If path is not provided and the input defined in signature.json '
-                                        'is application/json, this tool will include the MXNetBaseService \
-                                        in the archive. '
-                                        'Alternatively, if the input defined in signature.json is image/jpeg '
-                                        'this tool will include the MXNetVisionService in the archive.')
+                                   help='Handler path to handle custom MMS inference logic.')
+
+        parser_export.add_argument('--runtime',
+                                   required=False,
+                                   type=str,
+                                   default=RuntimeType.PYTHON2_7.value,
+                                   choices=[s.value for s in RuntimeType],
+                                   help='The runtime specifies which language to run your inference code on. '
+                                        'The default runtime is {}. At the present moment we support the '
+                                        'following runtimes \n {}'.format(RuntimeType.PYTHON2_7, runtime_types))
+
+        parser_export.add_argument('--engine',
+                                   required=False,
+                                   type=str,
+                                   default=EngineType.MXNET.value,
+                                   choices=[s.value for s in EngineType],
+                                   help='The engine specifies which deep learning framework is used as a backend to '
+                                        'run your inference code for the trained model files.'
+                                        'The default engine is {}. At the present moment we support the '
+                                        'following runtimes \n {}'.format(EngineType.MXNET.value, engine_types))
+
+        parser_export.add_argument('--export-path',
+                                   required=False,
+                                   type=str,
+                                   help='Path where the exported .mar file will be saved. This is an optional '
+                                        'parameter. If --export-path is not specified, the file will be saved in the '
+                                        'current working directory. ')
+
+        parser_export.add_argument('-f', '--force',
+                                   required=False,
+                                   action='store_true',
+                                   help='When the -f or --force flag is specified, an existing .mar file with same '
+                                        'name as that provided in --model-name in the path specified by --export-path '
+                                        'will overwritten')
 
         return parser_export
-
-    @staticmethod
-    def extract_args(args=None):
-        parser = ArgParser.mms_parser()
-        return parser.parse_args(args) if args else parser.parse_args()

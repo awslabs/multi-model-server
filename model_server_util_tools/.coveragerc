@@ -20,7 +20,5 @@ omit = */__init__.py
        model_server_util_tools/model_packaging/tests/*
        model_server_util_tools/model_packaging/manifest_components/*
        model_server_util_tools/model_packaging/arg_parser.py
-       model_server_util_tools/model_packaging/model_packaging_error.py
-       model_server_util_tools/model_packaging/model_packaging_error_codes.py
        model_server_util_tools/model_packaging/setup.py
 

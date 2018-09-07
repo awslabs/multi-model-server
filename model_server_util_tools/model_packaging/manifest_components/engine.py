@@ -11,8 +11,6 @@
 # pylint: disable=missing-docstring
 import json
 from enum import Enum
-from model_server_util_tools.model_packaging.model_packaging_error import ModelPackagingError
-from model_server_util_tools.model_packaging.model_packaging_error_codes import ModelPackagingErrorCodes
 
 
 class EngineType(Enum):
@@ -26,19 +24,19 @@ class Engine(object):
     Engine is a part of the final manifest.json. It defines which framework to run the inference on
     """
 
-    def __init__(self, engine_name, engine_version):
-        try:
-            self.engine_name = EngineType(engine_name)
-            self.engine_version = engine_version
-        except ValueError as err:
-            raise ModelPackagingError(ModelPackagingErrorCodes.INVALID_ENGINE_NAME, repr(err))
+    def __init__(self, engine_name, engine_version=None):
+        self.engine_name = EngineType(engine_name)
+        self.engine_version = engine_version
 
         self.engine_dict = self.__to_dict__()
 
     def __to_dict__(self):
         engine_dict = dict()
         engine_dict['engineName'] = self.engine_name.value
-        engine_dict['engineVersion'] = self.engine_version
+
+        if self.engine_version is not None:
+            engine_dict['engineVersion'] = self.engine_version
+
         return engine_dict
 
     def __str__(self):

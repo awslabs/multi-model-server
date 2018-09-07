@@ -10,13 +10,12 @@
 
 import json
 import pytest
-from mock import Mock
+from mock import Mock, mock_open, patch
 import os
 from collections import namedtuple
 from model_server_util_tools.model_packaging.export_model_utils import ModelExportUtils
 from model_server_util_tools.model_packaging.model_packaging_error import ModelPackagingError
 from model_server_util_tools.model_packaging.model_packaging_error_codes import ModelPackagingErrorCodes
-
 
 
 # noinspection PyClassHasNoInit
@@ -159,3 +158,42 @@ class TestExportModelUtils:
 
             patches.remove.assert_called()
             assert patches.remove.call_count == len(temp_files)
+
+    # noinspection PyClassHasNoInit
+    class TestCreateManifestFile:
+
+        model_path = '/Users/Piyush'
+        manifest = json.dumps({'some-key': 'somevalue'})
+
+        @pytest.fixture()
+        def patches(self, mocker):
+            Patches = namedtuple('Patches', ['os_path', 'os_mkdir'])
+            patches = Patches(mocker.patch('os.path'),
+                              mocker.patch('os.makedirs'))
+
+            patches.os_mkdir.return_value = True
+            return patches
+
+        def test_with_path_not_exists(self, patches):
+            patches.os_path.exists.return_value = False
+            patches.os_path.join.return_value = '/Users/ghaipiyu/'
+
+            with patch('__builtin__.open', new_callable=mock_open()):
+                with patch('json.dump'):
+                    ModelExportUtils.create_manifest_file(self.model_path, self.manifest)
+
+            patches.os_mkdir.assert_called()
+            patches.os_path.join.assert_called()
+
+        def test_with_path_exists(self, patches):
+            patches.os_path.exists.return_value = True
+            patches.os_path.join.return_value = '/Users/ghaipiyu/'
+
+            with patch('__builtin__.open', new_callable=mock_open()) as m:
+                with patch('json.dump') as m_json:
+                    ModelExportUtils.create_manifest_file(self.model_path, self.manifest)
+
+            patches.os_mkdir.assert_not_called()
+            patches.os_path.join.assert_called()
+            m_json.assert_called()
+            m.assert_called_with('/Users/ghaipiyu/', 'w')

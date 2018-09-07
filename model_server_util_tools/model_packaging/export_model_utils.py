@@ -212,10 +212,12 @@ class ModelExportUtils(object):
         :return:
         """
         mar_inf_path = os.path.join(model_path, MAR_INF)
+
         if not os.path.exists(mar_inf_path):
             os.makedirs(mar_inf_path)
 
         manifest_path = os.path.join(mar_inf_path, MANIFEST_FILE_NAME)
+
         with open(manifest_path, 'w') as m:
             json.dump(manifest, m, indent=4)
 

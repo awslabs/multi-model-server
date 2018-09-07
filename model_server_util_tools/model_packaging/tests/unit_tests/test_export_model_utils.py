@@ -12,6 +12,7 @@ import json
 import pytest
 from mock import Mock, mock_open, patch
 import os
+import sys
 from collections import namedtuple
 from model_server_util_tools.model_packaging.export_model_utils import ModelExportUtils
 
@@ -152,7 +153,10 @@ class TestExportModelUtils:
             patches.os_path.exists.return_value = False
             patches.os_path.join.return_value = '/Users/ghaipiyu/'
 
-            with patch('__builtin__.open', new_callable=mock_open()):
+            patch_open = patch('__builtin__.open', new_callable=mock_open()) if sys.version_info[0] < 3 else \
+                patch('builtins.open', new_callable=mock_open())
+
+            with patch_open:
                 with patch('json.dump'):
                     ModelExportUtils.create_manifest_file(self.model_path, self.manifest)
 
@@ -163,7 +167,10 @@ class TestExportModelUtils:
             patches.os_path.exists.return_value = True
             patches.os_path.join.return_value = '/Users/ghaipiyu/'
 
-            with patch('__builtin__.open', new_callable=mock_open()) as m:
+            patch_open = patch('__builtin__.open', new_callable=mock_open()) if sys.version_info[0] < 3 else \
+                patch('builtins.open', new_callable=mock_open())
+
+            with patch_open as m:
                 with patch('json.dump') as m_json:
                     ModelExportUtils.create_manifest_file(self.model_path, self.manifest)
 

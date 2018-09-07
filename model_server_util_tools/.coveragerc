@@ -23,4 +23,4 @@ omit = */__init__.py
        model_server_util_tools/model_packaging/model_packaging_error.py
        model_server_util_tools/model_packaging/model_packaging_error_codes.py
        model_server_util_tools/model_packaging/setup.py
-       model_server_util_tools/log.py
+

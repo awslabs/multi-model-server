@@ -17,4 +17,3 @@ def test_model_export_tool_version():
         exec(f.read(), globals())
 
     assert __version__ == str(model_server_util_tools.model_packaging.__version__), "Versions do not match"
-

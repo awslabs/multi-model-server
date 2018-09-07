@@ -25,8 +25,7 @@ class TestExportModelUtils:
         @pytest.fixture()
         def patches(self, mocker):
             Patches = namedtuple('Patches', ['getcwd', 'path_exists'])
-            patches = Patches(mocker.patch('os.getcwd'),
-                              mocker.patch('os.path.exists'))
+            patches = Patches(mocker.patch('os.getcwd'), mocker.patch('os.path.exists'))
 
             patches.getcwd.return_value = '/Users/Piyush'
 
@@ -34,26 +33,31 @@ class TestExportModelUtils:
 
         def test_export_file_is_none(self, patches):
             patches.path_exists.return_value = False
-            ret_val = ModelExportUtils.check_mar_already_exists('some-model', None)
+            ret_val = ModelExportUtils.check_mar_already_exists('some-model', None, False)
 
             patches.path_exists.assert_called_once_with("/Users/Piyush/some-model.mar")
             assert ret_val == "/Users/Piyush/some-model.mar"
 
         def test_export_file_is_not_none(self, patches):
             patches.path_exists.return_value = False
-            ModelExportUtils.check_mar_already_exists('some-model', '/Users/Piyush/some-model')
+            ModelExportUtils.check_mar_already_exists('some-model', '/Users/Piyush/some-model', False)
 
             patches.path_exists.assert_called_once_with('/Users/Piyush/some-model')
 
-        def test_export_file_already_exists(self, patches):
+        def test_export_file_already_exists_with_override(self, patches):
             patches.path_exists.return_value = True
 
-            with pytest.raises(ModelPackagingError) as err :
-                ModelExportUtils.check_mar_already_exists('some-model', None)
+            ModelExportUtils.check_mar_already_exists('some-model', None, True)
 
             patches.path_exists.assert_called_once_with('/Users/Piyush/some-model.mar')
-            assert err.value.code == ModelPackagingErrorCodes.MODEL_ARCHIVE_ALREADY_PRESENT
-            assert err.value.message == "model file {} already exists.".format('/Users/Piyush/some-model.mar')
+
+        def test_export_file_already_exists_with_override_false(self, patches):
+            patches.path_exists.return_value = True
+
+            with pytest.raises(SystemExit):
+                ModelExportUtils.check_mar_already_exists('some-model', None, False)
+
+            patches.path_exists.assert_called_once_with('/Users/Piyush/some-model.mar')
 
     # noinspection PyClassHasNoInit
     class TestCustomModelTypes:
@@ -105,13 +109,11 @@ class TestExportModelUtils:
             val = ModelExportUtils.find_unique(files, suffix)
             assert val == 'a.mxnet'
 
-        def test_with_exception(self):
+        def test_with_exit(self):
             files = ['a.onnx', 'b.onnx', 'c.txt']
             suffix = '.onnx'
-            with pytest.raises(ModelPackagingError) as err:
+            with pytest.raises(SystemExit):
                 ModelExportUtils.find_unique(files, suffix)
-
-            assert err.value.code == ModelPackagingErrorCodes.INVALID_MODEL_FILES
 
     # noinspection PyClassHasNoInit
     class TestCleanTempFiles:

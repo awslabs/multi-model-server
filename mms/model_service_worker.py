@@ -186,7 +186,7 @@ class MXNetModelServiceWorker(object):
             input_batch, req_id_map, invalid_reqs = self.retrieve_data_for_inference(req_batch)
             if batch_size == 1:
                 # Initialize metrics at service level
-                model_service.metrics_init(req_id_map, model_name)
+                model_service.metrics_init(model_name, req_id_map)
                 retval.append(model_service.inference([input_batch[0][i] for i in input_batch[0]]))
                 emit_metrics(model_service.metrics_store.store)
             else:

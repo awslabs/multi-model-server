@@ -17,8 +17,8 @@ exclude_lines =
 [run]
 branch = True
 omit = */__init__.py
-       model_server_util_tools/model_packaging/tests/*
-       model_server_util_tools/model_packaging/manifest_components/*
-       model_server_util_tools/model_packaging/arg_parser.py
-       model_server_util_tools/model_packaging/setup.py
+       model_server_tools/model_packaging/tests/*
+       model_server_tools/model_packaging/manifest_components/*
+       model_server_tools/model_packaging/arg_parser.py
+       model_server_tools/model_packaging/setup.py
 

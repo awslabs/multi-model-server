@@ -52,6 +52,7 @@ class ModelExportUtils(object):
 
         if os.path.exists(export_file):
             if overwrite:
+                # pylint: disable=deprecated-method
                 logging.warn("%s already exists. It will be overwritten since --force/-f was specified", export_file)
 
             else:

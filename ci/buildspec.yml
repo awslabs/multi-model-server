@@ -24,11 +24,11 @@ phases:
     commands:
       - frontend/gradlew -p frontend build
       - python -m pytest mms/tests/unit_tests
-      - python -m pytest model_server_util_tools/model_packaging/tests/unit_tests
+      - python -m pytest model_server_tools/model_packaging/tests/unit_tests
       # integration test is broken: https://github.com/awslabs/mxnet-model-server/issues/437
       #- python -m pytest mms/tests/integration_tests
       - pylint -rn --rcfile=./mms/tests/pylintrc mms/.
-      - pylint -rn --rcfile=./model_server_util_tools/model_packaging/tests/pylintrc model_server_util_tools/.
+      - pylint -rn --rcfile=./model_server_tools/model_packaging/tests/pylintrc model_server_tools/.
       - $NIGHTLYBUILD
       - eval $NIGHTLYUPLOAD
 

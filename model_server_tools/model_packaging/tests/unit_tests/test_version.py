@@ -9,11 +9,11 @@
 # permissions and limitations under the License.
 
 import os
-import model_server_util_tools.model_packaging
+import model_server_tools.model_packaging
 
 
 def test_model_export_tool_version():
-    with (open(os.path.join('model_server_util_tools', 'model_packaging', 'version.py'))) as f:
+    with (open(os.path.join('model_server_tools', 'model_packaging', 'version.py'))) as f:
         exec(f.read(), globals())
 
-    assert __version__ == str(model_server_util_tools.model_packaging.__version__), "Versions do not match"
+    assert __version__ == str(model_server_tools.model_packaging.__version__), "Versions do not match"

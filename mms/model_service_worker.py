@@ -20,6 +20,7 @@ import os
 import json
 from builtins import bytes
 from builtins import str
+from collections import OrderedDict
 
 from mms.model_loader import ModelLoader
 from mms.arg_parser import ArgParser
@@ -179,7 +180,7 @@ class MXNetModelServiceWorker(object):
         :return:
         """
 
-        model_in = dict()
+        model_in = OrderedDict()
         for _, ip in enumerate(model_inputs):
             ModelWorkerMessageValidators.validate_predict_inputs(ip)
             ip_name = ip.get(u'name')

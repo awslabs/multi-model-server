@@ -237,7 +237,52 @@ class ModelExportUtils(object):
 
     @staticmethod
     def zip_dir(path, ziph, files_to_exclude):
-        for root, _, files in os.walk(path):
+
+        """
+        This method zips the dir and filters out some files based on a expression
+        :param path:
+        :param ziph:
+        :param files_to_exclude:
+        :return:
+        """
+        unwanted_dirs = set(['__MACOSX', '__pycache__'])
+
+        for root, directories, files in os.walk(path):
+            # Filter directories
+            directories[:] = [d for d in directories if ModelExportUtils.directory_filter(d, unwanted_dirs)]
+            # Filter files
+            files[:] = [f for f in files if ModelExportUtils.file_filter(f, files_to_exclude)]
             for f in files:
-                if f not in files_to_exclude:
-                    ziph.write(os.path.join(root, f))
+                ziph.write(os.path.join(root, f))
+
+    @staticmethod
+    def directory_filter(d, unwanted_dirs):
+
+        """
+        This method weeds out unwanted directories
+        :param dir:
+        :param unwanted_dirs:
+        :return:
+        """
+        if d in unwanted_dirs:
+            return False
+
+        return True
+
+    @staticmethod
+    def file_filter(f, files_to_exclude):
+
+        """
+        This method weeds out unwanted files
+        :param f:
+        :param files_to_exclude:
+        :return:
+        """
+
+        if f in files_to_exclude:
+            return False
+
+        elif f.endswith(('.pyc', '.DS_Store')):
+            return False
+
+        return True

@@ -13,8 +13,7 @@ Command line interface to export model files to be used for inference by MXNet M
 """
 
 from model_server_util_tools.model_packaging.arg_parser import ArgParser
-from model_server_util_tools.log import log_msg
-
+import logging
 from model_server_util_tools.model_packaging.export_model_utils import ModelExportUtils
 
 
@@ -37,7 +36,7 @@ def export_model(model_name, model_path, manifest, export_file_path=None):
 
         # Step 4 : Zip 'em all up
         ModelExportUtils.zip(export_file_path, model_path, files_to_exclude)
-        log_msg("Successfully exported model %s to file %s", model_name, export_file_path)
+        logging.info("Successfully exported model %s to file %s", model_name, export_file_path)
 
     finally:
         ModelExportUtils.clean_temp_files(temp_files)

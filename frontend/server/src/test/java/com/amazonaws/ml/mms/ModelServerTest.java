@@ -378,7 +378,7 @@ public class ModelServerTest {
 
         latch.await();
 
-        Assert.assertEquals(result, "test");
+        Assert.assertEquals(result, "noop_v0.1");
     }
 
     private void testMetricManager() throws JsonParseException, InterruptedException {

@@ -17,11 +17,11 @@ import json
 import zipfile
 import sys
 import logging
-from model_server_util_tools.model_packaging.manifest_components.publisher import Publisher
-from model_server_util_tools.model_packaging.manifest_components.manifest import Manifest
-from model_server_util_tools.model_packaging.manifest_components.engine import Engine
-from model_server_util_tools.model_packaging.manifest_components.model import Model
-from model_server_util_tools import model_packaging
+from model_server_tools.model_packaging.manifest_components.publisher import Publisher
+from model_server_tools.model_packaging.manifest_components.manifest import Manifest
+from model_server_tools.model_packaging.manifest_components.engine import Engine
+from model_server_tools.model_packaging.manifest_components.model import Model
+from model_server_tools import model_packaging
 
 MODEL_ARCHIVE_EXTENSION = '.mar'
 MODEL_SERVER_VERSION = '1.0'

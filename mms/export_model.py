@@ -13,7 +13,7 @@ Command line interface to export model files to be used for inference by MXNet M
 """
 
 import warnings
-from model_server_util_tools.model_packaging import export_model as export_tool
+from model_server_tools.model_packaging import export_model as export_tool
 
 
 def export():

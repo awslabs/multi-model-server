@@ -14,8 +14,6 @@ from mock import Mock, mock_open, patch
 import os
 from collections import namedtuple
 from model_server_util_tools.model_packaging.export_model_utils import ModelExportUtils
-from model_server_util_tools.model_packaging.model_packaging_error import ModelPackagingError
-from model_server_util_tools.model_packaging.model_packaging_error_codes import ModelPackagingErrorCodes
 
 
 # noinspection PyClassHasNoInit

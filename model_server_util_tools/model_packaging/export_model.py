@@ -12,19 +12,21 @@
 Command line interface to export model files to be used for inference by MXNet Model Server
 """
 
-from model_server_util_tools.model_packaging.arg_parser import ArgParser
 import logging
+from model_server_util_tools.model_packaging.arg_parser import ArgParser
 from model_server_util_tools.model_packaging.export_model_utils import ModelExportUtils
 
 
-def export_model(model_name, model_path, manifest, export_file_path=None):
+def export_model(args, manifest, export_file_path=None):
     """
     Internal helper for the exporting model command line interface.
     """
+    model_path = args.model_path
+    model_name = args.model_name
     temp_files = []
     try:
         # Step 1 : Check if .mar already exists with the given model name
-        export_file_path = ModelExportUtils.check_mar_already_exists(model_name, export_file_path)
+        export_file_path = ModelExportUtils.check_mar_already_exists(model_name, export_file_path, args.force)
 
         # Step 2 : Check if any special handling is required for custom models like onnx models
         t, files_to_exclude = ModelExportUtils.check_custom_model_types(model_path)
@@ -48,9 +50,8 @@ def export():
     :return:
     """
     args = ArgParser.export_model_args_parser().parse_args()
-    # TODO : Add CLI args to the parser
     manifest = ModelExportUtils.generate_manifest_json(args)
-    export_model(model_name=args.model.model_name, model_path=args.model_path, manifest=manifest)
+    export_model(args, manifest=manifest)
 
 
 if __name__ == '__main__':

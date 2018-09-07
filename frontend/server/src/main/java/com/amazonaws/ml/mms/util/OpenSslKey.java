@@ -68,7 +68,7 @@ public final class OpenSslKey {
 
         byte[] bytes = new byte[len];
 
-        bytes[0] = 0x06; //ASN Object ID
+        bytes[0] = 0x06; // ASN Object ID
         int offset = writeLengthField(bytes, oLen);
 
         bytes[offset++] = (byte) (40 * oid[0] + oid[1]);
@@ -85,7 +85,7 @@ public final class OpenSslKey {
             return null;
         }
 
-        int oLen = bytes.length; //one byte for unused bits field
+        int oLen = bytes.length; // one byte for unused bits field
         int len = oLen + getLengthOfLengthField(oLen) + 1;
 
         byte[] newBytes = new byte[len];
@@ -118,7 +118,7 @@ public final class OpenSslKey {
         int len = oLen + getLengthOfLengthField(oLen) + 1;
 
         byte[] bytes = new byte[len];
-        bytes[0] = 0x10 | 0x20; //ASN sequence & constructed
+        bytes[0] = 0x10 | 0x20; // ASN sequence & constructed
         int offset = writeLengthField(bytes, oLen);
 
         if (len - oLen != offset) {
@@ -144,9 +144,9 @@ public final class OpenSslKey {
         }
 
         int lenOfLenField = getLengthOfLengthField(len);
-        bytes[1] = (byte) ((lenOfLenField - 1) | 0x80); //record length of the length field
+        bytes[1] = (byte) ((lenOfLenField - 1) | 0x80); // record length of the length field
 
-        for (int i = lenOfLenField; i >= 2; i--) { //write the length
+        for (int i = lenOfLenField; i >= 2; i--) { // write the length
             bytes[i] = (byte) (len >> ((lenOfLenField - i) * 8));
         }
 
@@ -154,15 +154,15 @@ public final class OpenSslKey {
     }
 
     private static int getLengthOfLengthField(int len) {
-        if (len <= 127) { //highest bit is zero, one byte is enough
+        if (len <= 127) { // highest bit is zero, one byte is enough
             return 1;
-        } else if (len <= 0xFF) { //highest bit is 1, two bytes in the form {0x81, 0xab}
+        } else if (len <= 0xFF) { // highest bit is 1, two bytes in the form {0x81, 0xab}
             return 2;
-        } else if (len <= 0xFFFF) { //three bytes in the form {0x82, 0xab, 0xcd}
+        } else if (len <= 0xFFFF) { // three bytes in the form {0x82, 0xab, 0xcd}
             return 3;
-        } else if (len <= 0xFFFFFF) { //four bytes in the form {0x83, 0xab, 0xcd, 0xef}
+        } else if (len <= 0xFFFFFF) { // four bytes in the form {0x83, 0xab, 0xcd, 0xef}
             return 4;
-        } else { //five bytes in the form {0x84, 0xab, 0xcd, 0xef, 0xgh}
+        } else { // five bytes in the form {0x84, 0xab, 0xcd, 0xef, 0xgh}
             return 5;
         }
     }

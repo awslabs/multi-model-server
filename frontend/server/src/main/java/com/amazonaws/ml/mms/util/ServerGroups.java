@@ -96,7 +96,8 @@ public class ServerGroups {
     private void closeAllChannels(boolean graceful) {
         ChannelGroupFuture future = allChannels.close();
 
-        // if this is a graceful shutdown, log any channel closing failures. if this isn't a graceful shutdown, ignore them.
+        // if this is a graceful shutdown, log any channel closing failures. if this isn't a
+        // graceful shutdown, ignore them.
         if (graceful) {
             try {
                 future.await(10, TimeUnit.SECONDS);

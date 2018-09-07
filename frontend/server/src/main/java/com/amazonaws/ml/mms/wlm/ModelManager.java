@@ -158,7 +158,8 @@ public final class ModelManager {
     public void workerStatus(final ChannelHandlerContext ctx) {
         Runnable r =
                 () -> {
-                    // numWorkers - Number of backend workers actually running for a particular model.
+                    // numWorkers - Number of backend workers actually running for a particular
+                    // model.
                     // numScaled - Number of backend workers asked.
                     // Return 200 "numWorkers == numScaled"
                     // Return 206 "numWorkers > 0 && numWorkers < numScaled"
@@ -173,7 +174,8 @@ public final class ModelManager {
                     }
 
                     if ((numWorking > 0) && (numWorking < numScaled)) {
-                        // TODO: Check if this status can be set to HttpResponseStatus.PARTIAL_CONTENT
+                        // TODO: Check if this status can be set to
+                        // HttpResponseStatus.PARTIAL_CONTENT
                         response = "Partial Healthy";
                     } else if ((numWorking == 0) && (numScaled > 0)) {
                         // TODO: Check if this can be set to HttpResponseStatus.NOT_FOUND;

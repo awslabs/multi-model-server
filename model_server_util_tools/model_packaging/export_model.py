@@ -27,19 +27,16 @@ def export_model(model_name, model_path, manifest, export_file_path=None):
         # Step 1 : Check if .mar already exists with the given model name
         export_file_path = ModelExportUtils.check_mar_already_exists(model_name, export_file_path)
 
-        # Step 2 : Get the absolute model path :
-        model_path = ModelExportUtils.get_absolute_model_path(model_path)
-
-        # Step 3 : Check if any special handling is required for custom models like onnx models
+        # Step 2 : Check if any special handling is required for custom models like onnx models
         t, files_to_exclude = ModelExportUtils.check_custom_model_types(model_path)
         temp_files.extend(t)
 
-        # Step 4 : write the manifest file
+        # Step 3 : write the manifest file
         manifest_file = ModelExportUtils.create_manifest_file(model_path, manifest)
         temp_files.append(manifest_file)
 
-        # Step 5 : Zip 'em all up
-        ModelExportUtils.zip(export_file, model_path, files_to_exclude)
+        # Step 4 : Zip 'em all up
+        ModelExportUtils.zip(export_file_path, model_path, files_to_exclude)
         log_msg("Successfully exported model %s to file %s", model_name, export_file_path)
 
     finally:

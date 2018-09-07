@@ -58,32 +58,6 @@ class TestExportModelUtils:
             assert err.value.message == "model file {} already exists.".format('/Users/Piyush/some-model.mar')
 
     # noinspection PyClassHasNoInit
-    class TestGetAbsoluteModelPath:
-
-        @pytest.fixture()
-        def patches(self, mocker):
-            Patches = namedtuple('Patches', ['path_expanduser'])
-            patches = Patches(mocker.patch('os.path.expanduser'))
-
-            patches.path_expanduser.return_value = '/Users/Piyush/my-model'
-
-            return patches
-
-        def test_path_with_tilda(self, patches):
-            path = '~/my-model/'
-            ret_val = ModelExportUtils.get_absolute_model_path(path)
-
-            patches.path_expanduser.assert_called_once_with(path)
-            assert ret_val == '/Users/Piyush/my-model'
-
-        def test_path_with_no_tilda(self, patches):
-            path = '/my-model'
-            ret_val = ModelExportUtils.get_absolute_model_path(path)
-
-            patches.path_expanduser.assert_not_called()
-            assert ret_val == path
-
-    # noinspection PyClassHasNoInit
     class TestCustomModelTypes:
 
         model_path = '/Users/Piyush'

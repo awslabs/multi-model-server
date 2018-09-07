@@ -57,18 +57,6 @@ class ModelExportUtils(object):
         return export_file
 
     @staticmethod
-    def get_absolute_model_path(model_path):
-        """
-        Function to ge the absolute path, if given a relative path
-        :param model_path:
-        :return:
-        """
-        if model_path.startswith('~'):
-            return os.path.expanduser(model_path)
-        else:
-            return model_path
-
-    @staticmethod
     def check_custom_model_types(model_path):
         """
         This functions checks whether any special handling is required for custom model extensions such as

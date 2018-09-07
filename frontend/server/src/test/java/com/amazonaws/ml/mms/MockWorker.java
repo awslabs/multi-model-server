@@ -213,7 +213,8 @@ public class MockWorker {
             //                Response<?> resp = noop.predict(request);
             //                String json = JsonUtils.GSON_PRETTY.toJson(resp.getContent());
             //                result.addPayload(
-            //                        new Payload(payload.getId(), json.getBytes(StandardCharsets.UTF_8)));
+            //                        new Payload(payload.getId(),
+            // json.getBytes(StandardCharsets.UTF_8)));
             //            }
             //
             //            ctx.writeAndFlush(result);

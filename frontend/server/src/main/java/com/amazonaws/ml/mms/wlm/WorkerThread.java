@@ -181,8 +181,8 @@ public class WorkerThread extends Thread {
                                     p.addLast(
                                             new DelimiterBasedFrameDecoder(
                                                     81920000,
-                                                    Delimiters
-                                                            .lineDelimiter())); // TODO: Make this config based
+                                                    Delimiters.lineDelimiter())); // TODO: Make this
+                                    // config based
                                     p.addLast(STRING_DECODER);
                                     p.addLast(MSG_DECODER);
                                     p.addLast(MSG_ENCODER);
@@ -272,7 +272,8 @@ public class WorkerThread extends Thread {
             currentThread.interrupt();
             try {
                 if (parentThreads.size() < model.getMinWorkers()) {
-                    // minWorkers is the numWorkers configured for this model. If parent thread group
+                    // minWorkers is the numWorkers configured for this model. If parent thread
+                    // group
                     // has less threads than expected minWorkers, we should restart the workers.
                     manager.updateModel(
                             model.getModelName(), model.getMinWorkers(), model.getMinWorkers());

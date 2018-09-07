@@ -56,7 +56,7 @@ public class ConfigManagerTest {
         configManager.setProperty("keystore", "src/test/resources/keystore.p12");
         Dimension dimension;
         List<Metric> metrics = new ArrayList<>();
-        //Create two metrics and add them to a list
+        // Create two metrics and add them to a list
 
         metrics.add(createMetric("TestMetric1", "12345"));
         metrics.add(createMetric("TestMetric2", "23478"));

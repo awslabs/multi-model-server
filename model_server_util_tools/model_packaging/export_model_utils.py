@@ -21,10 +21,14 @@ from model_server_util_tools.model_packaging.manifest_components.manifest import
 from model_server_util_tools.model_packaging.manifest_components.engine import Engine
 from model_server_util_tools.model_packaging.manifest_components.model import Model
 from model_server_util_tools.model_packaging.model_packaging_error import ModelPackagingError
-from model_server_util_tools.model_packaging.export_model import MODEL_ARCHIVE_EXTENSION
-from model_server_util_tools.model_packaging.export_model import MAR_INF
-from model_server_util_tools.model_packaging.export_model import MANIFEST_FILE_NAME
-from model_server_util_tools.model_packaging.export_model import ONNX_TYPE
+from model_server_util_tools import model_packaging
+
+MODEL_ARCHIVE_EXTENSION = '.mar'
+MODEL_SERVER_VERSION = '1.0'
+MODEL_ARCHIVE_VERSION = model_packaging.__version__
+MANIFEST_FILE_NAME = 'MANIFEST.json'
+MAR_INF = 'MAR-INF'
+ONNX_TYPE = '.onnx'
 
 
 class ModelExportUtils(object):
@@ -44,11 +48,13 @@ class ModelExportUtils(object):
         :return:
         """
         if export_file is None:
-            export_file = '{}/{}.{}'.format(os.getcwd(), model_name, MODEL_ARCHIVE_EXTENSION)
+            export_file = os.path.join(os.getcwd(), '{}{}'.format(model_name, MODEL_ARCHIVE_EXTENSION))
 
         if os.path.exists(export_file):
             raise ModelPackagingError(ModelPackagingErrorCodes.MODEL_ARCHIVE_ALREADY_PRESENT,
                                       "model file {} already exists.".format(export_file))
+
+        return export_file
 
     @staticmethod
     def get_absolute_model_path(model_path):

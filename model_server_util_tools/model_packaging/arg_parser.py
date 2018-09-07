@@ -17,8 +17,10 @@ import argparse
 
 
 class StoreDictKeyPair(argparse.Action):
+
     """This class is a helper class to parse <model-name>=<model-uri> pairs
     """
+
     def __call__(self, parser, namespace, values, option_string=None):
         try:
             setattr(namespace, 'models', {kv.split('=', 1)[0]: kv.split('=', 1)[1] for kv in values})
@@ -28,6 +30,7 @@ class StoreDictKeyPair(argparse.Action):
 
 
 class ArgParser(object):
+
     """Argument parser for mxnet-model-export commands
     More detailed example is available at https://github.com/awslabs/mxnet-model-server/blob/master/README.md
     """

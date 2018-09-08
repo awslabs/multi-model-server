@@ -15,6 +15,8 @@ import os
 import sys
 from collections import namedtuple
 from model_server_tools.model_packaging.export_model_utils import ModelExportUtils
+from model_server_tools.model_packaging.manifest_components.engine import EngineType
+from model_server_tools.model_packaging.manifest_components.manifest import RuntimeType
 
 
 # noinspection PyClassHasNoInit
@@ -178,3 +180,37 @@ class TestExportModelUtils:
             patches.os_path.join.assert_called()
             m_json.assert_called()
             m.assert_called_with('/Users/ghaipiyu/', 'w')
+
+    # noinspection PyClassHasNoInit
+    class TestGenerateManifestProps:
+
+        class Namespace:
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+
+        author = 'ABC'
+        email = 'ABC@XYZ.com'
+        engine = EngineType.MXNET.value
+        model_name = 'my-model'
+        handler = 'a.py::my-awesome-func'
+
+        args = Namespace(author=author, email=email, engine=engine, model_name=model_name, handler=handler,
+                         runtime=RuntimeType.PYTHON2_7.value)
+
+        def test_publisher(self):
+            pub = ModelExportUtils.generate_publisher(self.args)
+            assert pub.email == self.email
+            assert pub.author == self.author
+
+        def test_engine(self):
+            eng = ModelExportUtils.generate_engine(self.args)
+            assert eng.engine_name == EngineType(self.engine)
+
+        def test_model(self):
+            mod = ModelExportUtils.generate_model(self.args)
+            assert mod.model_name == self.model_name
+            assert mod.handler == self.handler
+
+        def test_manifest_json(self):
+            manifest = ModelExportUtils.generate_manifest_json(self.args)
+            assert manifest == "{\"engine\": {\"engineName\": \"MXNet\"}, \"publisher\": {\"email\": \"ABC@XYZ.com\", \"author\": \"ABC\"}, \"model\": {\"handler\": \"a.py::my-awesome-func\", \"modelName\": \"my-model\"}, \"runtime\": \"python2.7\"}"

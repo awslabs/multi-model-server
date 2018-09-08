@@ -213,4 +213,9 @@ class TestExportModelUtils:
 
         def test_manifest_json(self):
             manifest = ModelExportUtils.generate_manifest_json(self.args)
-            assert manifest == "{\"engine\": {\"engineName\": \"MXNet\"}, \"publisher\": {\"email\": \"ABC@XYZ.com\", \"author\": \"ABC\"}, \"model\": {\"handler\": \"a.py::my-awesome-func\", \"modelName\": \"my-model\"}, \"runtime\": \"python2.7\"}"
+            manifest_json = json.loads(manifest)
+            assert manifest_json['runtime'] == RuntimeType.PYTHON2_7.value
+            assert 'engine' in manifest_json
+            assert 'model' in manifest_json
+            assert 'publisher' in manifest_json
+            assert 'license' not in manifest_json

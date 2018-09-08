@@ -18,8 +18,7 @@ import com.amazonaws.ml.mms.util.messages.ModelLoadModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
 import com.amazonaws.ml.mms.util.messages.RequestBatch;
-import java.nio.charset.Charset;
-import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -93,9 +92,7 @@ public class BatchAggregator {
                 if (job == null) {
                     throw new IllegalStateException("Unexpected job: " + jobId);
                 }
-                job.response(
-                        Base64.getDecoder().decode(prediction.getValue()),
-                        prediction.getContentType());
+                job.response(prediction.getResp(), prediction.getContentType());
             }
         } else {
             for (String reqId : jobs.keySet()) {
@@ -111,7 +108,7 @@ public class BatchAggregator {
                                 + "message"
                                 + ":"
                                 + message.getMessage();
-                j.response(err.getBytes(Charset.forName("UTF-8")), "application/json");
+                j.response(err.getBytes(StandardCharsets.UTF_8), "application/json");
             }
             if (!jobs.isEmpty()) {
                 throw new IllegalStateException("Not all jobs get response.");

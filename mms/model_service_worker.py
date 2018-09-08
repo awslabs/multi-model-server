@@ -16,9 +16,8 @@ Communication message format: JSON message
 # pylint: disable=redefined-builtin
 
 import socket
+import ast
 import os
-import json
-from builtins import bytes
 from builtins import str
 from collections import OrderedDict
 
@@ -27,10 +26,9 @@ from mms.arg_parser import ArgParser
 from mms.service_manager import ServiceManager
 from mms.log import log_msg, log_error
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
-from mms.utils.codec_helpers.codec import ModelWorkerCodecHelper
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
-from mms.metrics.metric_encoder import MetricEncoder
+from mms.protocol.otf_message_handler import OtfCodecHandler
 
 MAX_FAILURE_THRESHOLD = 5
 SOCKET_ACCEPT_TIMEOUT = 30.0
@@ -43,6 +41,8 @@ class MXNetModelServiceWorker(object):
     Backend worker to handle Model Server's python service code
     """
     def __init__(self, s_type=None, s_name=None, host_addr=None, port_num=None):
+        if os.environ.get('OMP_NUM_THREADS') is None:
+            os.environ['OMP_NUM_THREADS'] = "1"
         self.sock_type = s_type
         if s_type == 'unix':
             if s_name is None:
@@ -64,6 +64,7 @@ class MXNetModelServiceWorker(object):
         self.model_services = {}
         self.service_manager = ServiceManager()
         self.send_failures = 0
+        self.codec = OtfCodecHandler()
 
         try:
             msg = "Listening on port: {}\n".format(s_name)
@@ -76,106 +77,15 @@ class MXNetModelServiceWorker(object):
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(repr(e)))
 
-    def create_predict_response(self, ret, req_id_map, invalid_reqs):
+    def retrieve_model_input(self, model_inputs, req_bat_content_type=None):
         """
-        Response object is as follows :
-        RESPONSE =
-        {
-            "code": val,
-            "message": "Success"
-            "predictions": [ PREDICTION_RESULTS ]
-        }
 
-        PREDICTION_RESULTS = {
-            "requestId": 111-222-3333,
-            "code": "Success/Fail" # TODO: Add this
-            "value": Abefz23=,
-            "encoding": "utf-8, base64"
-        }
-
-        :param ret:
-        :param req_id_map:
-        :param invalid_reqs:
-        :return:
-        """
-        result = {}
-        encoding = u'base64'
-        try:
-            for idx, val in enumerate(ret):
-                result.update({"requestId": req_id_map[idx]})
-                result.update({"code": 200})
-
-                if isinstance(val, str):
-                    value = ModelWorkerCodecHelper.encode_msg(encoding, val.encode('utf-8'))
-                elif isinstance(val, bytes):
-                    value = ModelWorkerCodecHelper.encode_msg(encoding, val)
-                else:
-                    value = ModelWorkerCodecHelper.encode_msg(encoding, json.dumps(val).encode('utf-8'))
-
-                result.update({"value": value})
-                result.update({"encoding": encoding})
-
-            for req in invalid_reqs.keys():
-                result.update({"requestId": req})
-                result.update({"code": invalid_reqs.get(req)})
-                result.update({"value": ModelWorkerCodecHelper.encode_msg(encoding,
-                                                                          "Invalid input provided".encode('utf-8'))})
-                result.update({"encoding": encoding})
-
-            resp = [result]
-
-        except Exception as e:  # pylint: disable=broad-except
-            raise MMSError(err.CODEC_FAIL, "codec failed {}".format(repr(e)))
-        return resp
-
-    @staticmethod
-    def recv_msg(client_sock):
-        """
-        Receive a message from a given socket file descriptor
-        :param client_sock:
-        :return:
-        """
-        data = b''
-        try:
-            while True:
-                if BENCHMARK:
-                    pr.disable()
-                    pr.dump_stats('/tmp/mmsPythonProfile.prof')
-                pkt = client_sock.recv(1024)
-                if BENCHMARK:
-                    pr.enable()
-                if not pkt:
-                    exit(1)
-
-                data += pkt
-                # Check if we received last segment. Assumption is we receive only one packet at a time.
-                # TODO:
-                # Modify this. If we receive multiple packets, the '\r\n' be in the middle of the pkt/data. We
-                # need to buffer the rest.
-                if data[-2:] == b'\r\n':
-                    break
-            in_msg = json.loads(data.decode('utf8'))
-            if u'command' not in in_msg:
-                raise MMSError(err.INVALID_COMMAND, "Invalid message received")
-        except (IOError, OSError) as sock_err:
-            raise MMSError(err.RECEIVE_ERROR, "{}".format(repr(sock_err)))
-        except ValueError as v:
-            raise MMSError(err.INVALID_REQUEST, "JSON message format error: {}".format(v))
-        except MMSError as error:  # The error raise in #138 goes into the Exception block below and we lose the
-            raise error           # status code
-        except Exception as e:  # pylint: disable=broad-except
-            raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(e))
-
-        return in_msg['command'], in_msg
-
-    def retrieve_model_input(self, model_inputs):
-        """
-        MODEL_INPUTS = [{
-                "encoding": "base64", (This is how the value is encoded)
+        MODEL_INPUTS : [{
                 "value": "val1"
                 "name" : model_input_name (This is defined in the symbol file and the signature file)
         }]
 
+        :param req_bat_content_type: Content-type of the request-batch, the outer scope of model-inputs
         :param model_inputs: list of model_input elements each containing "encoding", "value" and "name"
         :return:
         """
@@ -183,11 +93,19 @@ class MXNetModelServiceWorker(object):
         model_in = OrderedDict()
         for _, ip in enumerate(model_inputs):
             ModelWorkerMessageValidators.validate_predict_inputs(ip)
-            ip_name = ip.get(u'name')
-            encoding = ip.get('encoding')
-            decoded_val = ModelWorkerCodecHelper.decode_msg(encoding, ip['value'])
+            ip_name = ip.get('name')
+            content_type = ip.get('contentType')
 
-            model_in.update({ip_name: decoded_val})
+            if content_type is None or content_type == b'':
+                content_type = req_bat_content_type
+
+            if content_type is not None and content_type != b'' and "text" in content_type.decode():
+                decoded_val = ip.get(u'value').decode()
+            elif content_type is not None and content_type != b'' and "json" in content_type.decode():
+                decoded_val = ast.literal_eval(ip.get(u'value').decode())
+            else:
+                decoded_val = ip.get(u'value')
+            model_in.update({ip_name.decode(): decoded_val})
 
         return model_in
 
@@ -195,12 +113,10 @@ class MXNetModelServiceWorker(object):
         """
         REQUESTS = [ {
             "requestId" : "111-222-3333",
-            "encoding" : "None | base64 | utf-8",
             "modelInputs" : [ MODEL_INPUTS ]
         } ]
 
         MODEL_INPUTS = {
-                "encoding": "base64/utf-8", (This is how the value is encoded)
                 "value": "val1"
                 "name" : model_input_name (This is defined in the symbol file and the signature file)
         }
@@ -218,13 +134,12 @@ class MXNetModelServiceWorker(object):
         input_batch = []
         for batch_idx, request_batch in enumerate(requests):
             ModelWorkerMessageValidators.validate_predict_data(request_batch)
-            req_id = request_batch['requestId']
-            # TODO: If encoding present in "REQUEST" we shouldn't look for input-names and just pass it to the
-            # custom service code.
+            req_id = request_batch.get('requestId').decode()
 
             model_inputs = request_batch['modelInputs']
+            req_batch_content_type = request_batch.get('contentType')
             try:
-                input_data = self.retrieve_model_input(model_inputs)
+                input_data = self.retrieve_model_input(model_inputs, req_batch_content_type)
                 input_batch.append(input_data)
                 req_to_id_map[batch_idx] = req_id
             except MMSError as m:
@@ -237,7 +152,7 @@ class MXNetModelServiceWorker(object):
         PREDICT COMMAND = {
             "command": "predict",
             "modelName": "model-to-run-inference-against",
-            "contentType": "http-content-types", # TODO: Add this
+            "contentType": "http-content-types",
             "requestBatch": [ REQUESTS ]
         }
 
@@ -260,7 +175,7 @@ class MXNetModelServiceWorker(object):
         try:
             retval = []
             ModelWorkerMessageValidators.validate_predict_msg(data)
-            model_name = data[u'modelName']
+            model_name = data[u'modelName'].decode()
             loaded_services = self.service_manager.get_loaded_modelservices()
             if model_name not in loaded_services:
                 raise MMSError(err.MODEL_SERVICE_NOT_LOADED, "Model {} is currently not loaded".format(model_name))
@@ -272,19 +187,17 @@ class MXNetModelServiceWorker(object):
                 # Initialize metrics at service level
                 model_service.metrics_init(model_name, req_id_map)
                 retval.append(model_service.inference([input_batch[0][i] for i in input_batch[0]]))
-                # Dump metrics
                 emit_metrics(model_service.metrics_store.store)
-
             else:
                 raise MMSError(err.UNSUPPORTED_PREDICT_OPERATION, "Invalid batch size {}".format(batch_size))
 
-            response = self.create_predict_response(retval, req_id_map, invalid_reqs)
+            msg = self.codec.create_response(cmd=2, resp=retval, req_id_map=req_id_map, invalid_reqs=invalid_reqs)
 
         except ValueError as v:
             raise MMSError(err.INVALID_PREDICT_MESSAGE, "{}".format(repr(v)))
         except MMSError as m:
             raise m
-        return response, "Prediction success", 200
+        return msg, "Prediction success", 200
 
     def load_model(self, data):
         """
@@ -303,9 +216,9 @@ class MXNetModelServiceWorker(object):
         """
         try:
             ModelWorkerMessageValidators.validate_load_message(data)
-            model_dir = data['modelPath']
-            model_name = data['modelName']
-            handler = data['handler']
+            model_dir = data['modelPath'].decode()
+            model_name = data['modelName'].decode()
+            handler = data['handler'].decode()
             batch_size = None
             if 'batchSize' in data:
                 batch_size = int(data['batchSize'])
@@ -340,7 +253,7 @@ class MXNetModelServiceWorker(object):
         """
         try:
             ModelWorkerMessageValidators.validate_unload_msg(request)
-            model_name = request[u'model-name']
+            model_name = request[u'model-name'].decode()
             self.service_manager.unload_models(model_name)
         except KeyError:
             raise MMSError(err.MODEL_CURRENTLY_NOT_LOADED, "Model is not being served on model server")
@@ -350,25 +263,6 @@ class MXNetModelServiceWorker(object):
             raise MMSError(err.UNKNOWN_EXCEPTION, "Unknown error {}".format(repr(e)))
         return "Unloaded model {}".format(model_name), 200
 
-    def stop_server(self, sock):
-        """
-        Expected request
-        {
-             "command" : "stop"
-        }
-        :param sock:
-        :return:
-        """
-        if sock is None:
-            raise ValueError("Invalid parameter passed to stop server connection")
-        try:
-            resp = {'code': 200, 'response': "Stopped server"}
-            self.send_response(sock, json.dumps(resp).encode('utf-8'))
-            sock.close()
-            # os.unlink(self.sock_name)
-        except Exception as e:  # pylint: disable=broad-except
-            log_msg("Error closing the socket {}. Msg: {}".format(sock, repr(e)))
-
     def send_response(self, sock, msg):
         """
         Send a response back to thae client
@@ -377,8 +271,7 @@ class MXNetModelServiceWorker(object):
         :return:
         """
         try:
-            msg += '\r\n'
-            sock.send(msg.encode())
+            sock.send(msg)
         except (IOError, OSError) as e:
             # Can't send this response. So, log it.
             self.send_failures += 1
@@ -389,13 +282,12 @@ class MXNetModelServiceWorker(object):
 
     def create_and_send_response(self, sock, c, message, p=None):
         try:
-            resp = {'code': c, 'message': message}
-            if p is not None:
-                resp['predictions'] = p
-            self.send_response(sock, json.dumps(resp))
-        except Exception as ex:
-            log_error("{}".format(ex))
-            raise ex
+            resp = bytearray()
+            resp += self.codec.create_response(cmd=3, code=c, message=message, predictions=p)
+            self.send_response(sock, resp)
+        except Exception as e:
+            log_error("{}".format(e))
+            raise e
 
     def handle_connection(self, cl_socket):
         """
@@ -405,32 +297,27 @@ class MXNetModelServiceWorker(object):
         :return:
         """
         predictions = None
-        code = 200
-        result = None
         cmd = None
 
         while True:
             try:
-                cmd, data = self.recv_msg(cl_socket)
-                if cmd.lower() == u'stop':
-                    self.stop_server(cl_socket)
-                    exit(1)
-                elif cmd.lower() == u'predict':
-                    predictions, result, code = self.predict(data)
+                cmd, msg = self.codec.retrieve_msg(conn=cl_socket)
+                if cmd.lower() == u'predict':
+                    predictions, result, code = self.predict(msg)
                 elif cmd.lower() == u'load':
-                    result, code = self.load_model(data)
+                    result, code = self.load_model(msg)
                 elif cmd.lower() == u'unload':
-                    result, code = self.unload_model(data)
+                    result, code = self.unload_model(msg)
                 else:
                     result = "Received unknown command: {}".format(cmd)
                     code = err.UNKNOWN_COMMAND
 
                 self.create_and_send_response(cl_socket, code, result, predictions)
-
             except MMSError as m:
                 log_error("MMSError {} data {}".format(cmd, m.get_message()))
-                if m.get_code() == err.SEND_FAILS_EXCEEDS_LIMITS:
-                    log_error("Exceeded send failures. Ending the connections. {}".format(m))
+                if m.get_code() == err.SEND_FAILS_EXCEEDS_LIMITS or m.get_code() == err.ENCODE_FAILED or \
+                   m.get_code() == err.DECODE_FAILED:
+                    log_error("Can not recover from this error. Worker shutting down. {}".format(m))
                     break
                 self.create_and_send_response(cl_socket, m.get_code(), m.get_message())
             except Exception as e:  # pylint: disable=broad-except
@@ -493,8 +380,8 @@ def emit_metrics(metrics):
     A dictionary of all metrics, when key is metric_name
     value is a metric object
     """
-
-    log_msg("[METRICS]", json.dumps(metrics, separators=(',', ':'), cls=MetricEncoder))
+    met_list = [str(met) for met in metrics]
+    log_msg("[METRICS] [", ",".join(met_list), "]")
 
 
 if __name__ == "__main__":
@@ -518,7 +405,7 @@ if __name__ == "__main__":
     except MMSError as m:
         log_error("{}".format(m.get_message()))
         exit(1)
-    except Exception as e:  # pylint: disable=broad-except
-        log_error("Error starting the server. {}".format(str(e)))
+    except Exception as ex:  # pylint: disable=broad-except
+        log_error("Error starting the server. {}".format(str(ex)))
         exit(1)
     exit(0)

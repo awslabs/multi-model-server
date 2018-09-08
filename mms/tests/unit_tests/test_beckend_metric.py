@@ -39,7 +39,6 @@ def test_metrics(capsys):
     metrics.add_counter('CorrectCounter', 1, 1)
     metrics.add_counter('CorrectCounter', 1, 3)
     metrics.add_counter('CorrectCounter', 1)
-    print(metrics.cache)
     test_metric = metrics.cache[get_model_key('CorrectCounter', 'count', all_req_ids, model_name)]
     assert 'CorrectCounter' == test_metric.name
     metrics.add_counter('CorrectCounter', 3)
@@ -53,7 +52,7 @@ def test_metrics(capsys):
     emit_metrics(metrics.store)
     out, err = capsys.readouterr()
     assert '"Dimensions":[' in out
-    assert '"Value":"Model"' in out
+    assert '\'Value\': \'Model\'' in out
 
     # Adding other types of metrics
     # Check for time metric

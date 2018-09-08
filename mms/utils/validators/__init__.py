@@ -10,3 +10,4 @@
 """
 List of validators used by backend python workers
 """
+from . import validate_messages

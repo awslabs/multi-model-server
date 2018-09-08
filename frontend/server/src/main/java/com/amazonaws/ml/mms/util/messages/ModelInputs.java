@@ -13,20 +13,18 @@
 package com.amazonaws.ml.mms.util.messages;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 public class ModelInputs {
 
     private String name;
-    private String value;
-    private String encoding;
+    private byte[] value;
     private String contentType;
 
     public ModelInputs() {}
 
     public ModelInputs(String name, String value) {
         this.name = name;
-        this.value = value;
+        this.value = value.getBytes(StandardCharsets.UTF_8);
     }
 
     public ModelInputs(String name, byte[] data) {
@@ -36,8 +34,7 @@ public class ModelInputs {
     public ModelInputs(String name, byte[] data, String contentType) {
         this.name = name;
         this.contentType = contentType;
-        encoding = "base64";
-        value = Base64.getEncoder().encodeToString(data);
+        this.value = data;
     }
 
     public String getName() {
@@ -48,12 +45,12 @@ public class ModelInputs {
         this.name = name;
     }
 
-    public String getValue() {
+    public byte[] getValue() {
         return value;
     }
 
     public void setValue(String value) {
-        this.value = value;
+        this.value = value.getBytes(StandardCharsets.UTF_8);
     }
 
     public String getContentType() {
@@ -65,9 +62,6 @@ public class ModelInputs {
     }
 
     public byte[] getBytes() {
-        if ("base64".equals(encoding)) {
-            return Base64.getDecoder().decode(value);
-        }
-        return value.getBytes(StandardCharsets.UTF_8);
+        return value;
     }
 }

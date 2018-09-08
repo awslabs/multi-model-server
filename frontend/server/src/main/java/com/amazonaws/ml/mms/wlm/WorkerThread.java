@@ -15,8 +15,7 @@ package com.amazonaws.ml.mms.wlm;
 import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
-import com.amazonaws.ml.mms.util.codec.MessageDecoder;
-import com.amazonaws.ml.mms.util.codec.MessageEncoder;
+import com.amazonaws.ml.mms.util.codec.MessageCodec;
 import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelInputs;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
@@ -31,9 +30,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.Delimiters;
-import io.netty.handler.codec.string.StringDecoder;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.List;
@@ -48,9 +44,6 @@ public class WorkerThread extends Thread {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
     static final long WORKER_TIMEOUT = 2L;
-    static final StringDecoder STRING_DECODER = new StringDecoder();
-    static final MessageDecoder MSG_DECODER = new MessageDecoder();
-    static final MessageEncoder MSG_ENCODER = new MessageEncoder();
 
     private ConfigManager configManager;
     private EventLoopGroup backendEventGroup;
@@ -103,6 +96,7 @@ public class WorkerThread extends Thread {
         try {
             while (running.get()) {
                 req = aggregator.getRequest(getName());
+
                 backendChannel.write(req);
                 backendChannel.flush();
 
@@ -178,14 +172,7 @@ public class WorkerThread extends Thread {
                                 @Override
                                 public void initChannel(Channel ch) {
                                     ChannelPipeline p = ch.pipeline();
-                                    p.addLast(
-                                            new DelimiterBasedFrameDecoder(
-                                                    81920000,
-                                                    Delimiters.lineDelimiter())); // TODO: Make this
-                                    // config based
-                                    p.addLast(STRING_DECODER);
-                                    p.addLast(MSG_DECODER);
-                                    p.addLast(MSG_ENCODER);
+                                    p.addLast(new MessageCodec());
                                     p.addLast(new WorkerHandler());
                                 }
                             });
@@ -212,7 +199,7 @@ public class WorkerThread extends Thread {
                                         // TODO:
                                         // use gpu, batch size in load model command
                                         RequestBatch input = new RequestBatch();
-                                        if (gpuId > 0) {
+                                        if (gpuId >= 0) {
                                             input.addModelInput(
                                                     new ModelInputs("gpu", String.valueOf(gpuId)));
                                         }

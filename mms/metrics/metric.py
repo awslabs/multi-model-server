@@ -74,6 +74,15 @@ class Metric(object):
             self.value = value
         # TODO: Add specific operations for other metric methods as required.
 
+    def __str__(self):
+        dims = [dim.to_dict() for dim in self.dimensions]
+
+        data = '{{"MetricName":"{}", "Value":"{}", "Unit":"{}", "Dimensions":{}, "Timestamp":"{}", ' \
+               '"HostName":"{}", "RequestId":"{}"}}'.format(self.name, self.value, self.unit, dims,
+                                                            datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                                                            socket.gethostname(), self.req_id)
+        return data
+
     def to_dict(self):
         """
         return an Ordered Dictionary

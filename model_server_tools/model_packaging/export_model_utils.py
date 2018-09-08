@@ -195,7 +195,7 @@ class ModelExportUtils(object):
         :return:
         """
 
-        publisher = ModelExportUtils.generate_publisher(args) if 'publisher' in args else None
+        publisher = ModelExportUtils.generate_publisher(args) if args.author and args.email else None
 
         engine = ModelExportUtils.generate_engine(args)
 

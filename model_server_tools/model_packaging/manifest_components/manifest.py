@@ -47,9 +47,9 @@ class Manifest(object):
 
         manifest_dict['runtime'] = self.runtime.value
 
-        manifest_dict['engine'] = str(self.engine)
+        manifest_dict['engine'] = self.engine.__to_dict__()
 
-        manifest_dict['model'] = str(self.model)
+        manifest_dict['model'] = self.model.__to_dict__()
 
         if self.license is not None:
             manifest_dict['license'] = self.license
@@ -70,7 +70,7 @@ class Manifest(object):
             manifest_dict['userData'] = self.user_data
 
         if self.publisher is not None:
-            manifest_dict['publisher'] = str(self.publisher)
+            manifest_dict['publisher'] = self.publisher.__to_dict__()
 
         return manifest_dict
 

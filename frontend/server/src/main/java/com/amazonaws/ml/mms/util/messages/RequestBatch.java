@@ -12,6 +12,7 @@
  */
 package com.amazonaws.ml.mms.util.messages;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -58,7 +59,7 @@ public class RequestBatch {
     public String getStringParameter(String key) {
         for (ModelInputs param : modelInputs) {
             if (key.equals(param.getName())) {
-                return param.getValue();
+                return new String(param.getValue(), StandardCharsets.UTF_8);
             }
         }
         return null;

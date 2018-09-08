@@ -12,8 +12,6 @@
 Dimension class for model server metrics
 """
 
-from collections import OrderedDict
-
 
 class Dimension(object):
     """
@@ -33,11 +31,15 @@ class Dimension(object):
         self.name = name
         self.value = value
 
+    def __str__(self):
+        """
+        Return a string value
+        :return:
+        """
+        return '{{"Name":"{}", "Value":"{}"}}'.format(self.name, self.value)
+
     def to_dict(self):
         """
-        return an Ordered Dictionary
+        return an dictionary
         """
-        return OrderedDict({'Name': self.name, 'Value': self.value})
-
-    def __str__(self):
-        return "{}-{}".format(self.name, self.value)
+        return {'Name': self.name, 'Value': self.value}

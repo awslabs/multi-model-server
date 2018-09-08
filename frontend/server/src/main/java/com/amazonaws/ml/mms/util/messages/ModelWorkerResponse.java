@@ -45,4 +45,8 @@ public class ModelWorkerResponse {
     public void setPredictions(List<Predictions> predictions) {
         this.predictions = predictions;
     }
+
+    public void appendPredictions(Predictions prediction) {
+        this.predictions.add(prediction);
+    }
 }

@@ -21,7 +21,7 @@ import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
-import com.amazonaws.ml.mms.util.codec.MessageEncoder;
+import com.amazonaws.ml.mms.util.codec.MessageCodec;
 import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import com.google.gson.JsonParseException;
 import io.netty.bootstrap.Bootstrap;
@@ -305,7 +305,6 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
 
         latch.await();
-
         Assert.assertEquals(result, "test");
     }
 
@@ -315,14 +314,14 @@ public class ModelServerTest {
         DefaultFullHttpRequest req =
                 new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/noop");
-        req.content().writeCharSequence("data=test", CharsetUtil.UTF_8);
+        req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
         HttpUtil.setContentLength(req, req.content().readableBytes());
         req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
         channel.writeAndFlush(req);
 
         latch.await();
 
-        Assert.assertEquals(result, "data=test");
+        Assert.assertEquals(result, "{\"data\": \"test\"}");
     }
 
     private void testPredictionsBinary(Channel channel) throws InterruptedException {
@@ -435,7 +434,7 @@ public class ModelServerTest {
                                     p.addLast(new HttpContentDecompressor());
                                     p.addLast(new ChunkedWriteHandler());
                                     p.addLast(new HttpObjectAggregator(6553600));
-                                    p.addLast(new MessageEncoder());
+                                    p.addLast(new MessageCodec());
                                     p.addLast(new TestHandler());
                                 }
                             });

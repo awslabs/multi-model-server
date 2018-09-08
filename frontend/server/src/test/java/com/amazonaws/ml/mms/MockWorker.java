@@ -187,8 +187,9 @@ public class MockWorker {
                     String requestId = requestBatch.getRequestId();
                     Predictions prediction = new Predictions();
                     prediction.setRequestId(requestId);
-                    prediction.setValue(
-                            encoder.encodeToString("OK".getBytes(StandardCharsets.UTF_8)));
+                    prediction.setResp(
+                            encoder.encodeToString("OK".getBytes(StandardCharsets.UTF_8))
+                                    .getBytes(StandardCharsets.UTF_8));
                     predictions.add(prediction);
                 }
                 resp.setPredictions(predictions);

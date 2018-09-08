@@ -21,6 +21,7 @@ from mms.log import get_logger
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 from mms.metrics.metrics_store import MetricsStore
+
 logger = get_logger()
 PREPROCESS_METRIC = 'MMSWorkerPreprocessTimeBatch'
 INFERENCE_METRIC = 'MMSWorkerInferenceTimeBatch'
@@ -149,7 +150,6 @@ class SingleNodeService(ModelService):
             raise m
         except Exception as e:
             raise MMSError(err.CUSTOM_SERVICE_ERROR, repr(e))
-
         return data
 
     @abstractmethod

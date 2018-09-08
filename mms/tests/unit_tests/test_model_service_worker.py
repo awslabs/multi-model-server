@@ -10,12 +10,10 @@
 
 """
 ModelServiceWorker is the worker that is started by the MMS front-end.
-Communication message format: JSON message
 """
 
 # pylint: disable=redefined-builtin
 
-import json
 import socket
 from collections import namedtuple
 
@@ -28,11 +26,12 @@ from mock import Mock
 
 @pytest.fixture()
 def socket_patches(mocker):
-    Patches = namedtuple('Patches', ['socket', 'log_msg', 'msg_validator', 'codec_helper', 'json_load', 'log_error'])
-    mock_patch = Patches(mocker.patch('socket.socket'), mocker.patch('mms.model_service_worker.log_msg'),
+    Patches = namedtuple('Patches', ['socket', 'log_msg', 'msg_validator', 'log_error', 'codec'])
+    mock_patch = Patches(mocker.patch('socket.socket'),
+                         mocker.patch('mms.model_service_worker.log_msg'),
                          mocker.patch('mms.model_service_worker.ModelWorkerMessageValidators'),
-                         mocker.patch('mms.model_service_worker.ModelWorkerCodecHelper'),
-                         mocker.patch('json.loads'), mocker.patch('mms.model_service_worker.log_error'))
+                         mocker.patch('mms.model_service_worker.log_error'),
+                         mocker.patch('mms.model_service_worker.OtfCodecHandler'))
     mock_patch.socket.recv.return_value = b'{}\r\n'
     return mock_patch
 
@@ -46,16 +45,13 @@ def model_service_worker(socket_patches):
 
 
 def test_retrieve_model_input(socket_patches, model_service_worker):
-    valid_inputs = [{'encoding': 'base64', 'value': 'val1', 'name': 'model_input_name'}]
+    valid_inputs = [{'contentType': b'application/text', 'value': b'val1', 'name': b'model_input_name'}]
 
-    socket_patches.codec_helper.decode_msg.return_value = "some_decoded_resp"
-
-    expected_response = {'model_input_name': 'some_decoded_resp'}
+    expected_response = {'model_input_name': 'val1'}
 
     model_in = model_service_worker.retrieve_model_input(valid_inputs)
 
     socket_patches.msg_validator.validate_predict_inputs.assert_called()
-    socket_patches.codec_helper.decode_msg.assert_called()
 
     assert expected_response == model_in
 
@@ -74,19 +70,21 @@ class TestCreateAndSendResponse:
     def test_with_preds(self, socket_patches, model_service_worker, get_send_response_spy):
 
         model_service_worker.create_and_send_response(socket_patches.socket, self.code, self.message)
-        get_send_response_spy.assert_called_with(socket_patches.socket, json.dumps(self.resp))
+        socket_patches.codec.create_response.return_value = 'Hello World'
+        expected_result = 'Hello World'
+        get_send_response_spy.assert_called()
 
         preds = "some preds"
         self.resp['predictions'] = preds
         model_service_worker.create_and_send_response(socket_patches.socket, self.code, self.message, preds)
-        get_send_response_spy.assert_called_with(socket_patches.socket, json.dumps(self.resp))
+        get_send_response_spy.assert_called()
 
         del(self.resp['predictions'])
 
     def test_with_exception(self, socket_patches, model_service_worker, get_send_response_spy):
         message = 'hello socket'
         code = 7
-
+        socket_patches.codec.create_response.return_value = b'{}\r\n'
         get_send_response_spy.side_effect = Exception('Some Exception')
         with pytest.raises(Exception):
             model_service_worker.create_and_send_response(socket_patches.socket, code, message)
@@ -94,79 +92,6 @@ class TestCreateAndSendResponse:
         socket_patches.log_error.assert_called()
 
 
-# noinspection PyClassHasNoInit
-class TestRecvMsg:
-
-    def test_with_nil_pkt(self, socket_patches):
-        socket_patches.socket.recv.return_value = None
-        with pytest.raises(SystemExit) as ex:
-            MXNetModelServiceWorker.recv_msg(socket_patches.socket)
-
-        assert ex.value.args[0] == 1  # The exit status is exit(1)
-
-    @pytest.mark.parametrize('error', [OSError('oserr'), IOError('ioerr')])
-    def test_with_sock_err(self, socket_patches, error):
-        socket_patches.socket.recv.side_effect = error
-
-        with pytest.raises(MMSError) as ex:
-            MXNetModelServiceWorker.recv_msg(socket_patches.socket)
-
-        assert ex.value.get_code() == Err.RECEIVE_ERROR
-        assert ex.value.get_message() == "{}".format(repr(error))
-
-    def test_with_exception(self, socket_patches):
-        socket_patches.socket.recv.side_effect = Exception('Some Exception')
-
-        with pytest.raises(MMSError) as ex:
-            MXNetModelServiceWorker.recv_msg(socket_patches.socket)
-
-        assert ex.value.get_code() == Err.UNKNOWN_EXCEPTION
-        assert ex.value.get_message() == "Some Exception"
-
-    def test_with_json_value_error(self, socket_patches):
-        err_msg = "Some random json error"
-        socket_patches.json_load.side_effect = ValueError(err_msg)
-
-        with pytest.raises(MMSError) as ex:
-            MXNetModelServiceWorker.recv_msg(socket_patches.socket)
-
-        assert ex.value.get_code() == Err.INVALID_REQUEST
-        assert ex.value.get_message() == "JSON message format error: {}".format(err_msg)
-
-    def test_with_missing_command(self, socket_patches):
-        socket_patches.json_load.return_value = {}
-
-        with pytest.raises(MMSError) as excinfo:
-            MXNetModelServiceWorker.recv_msg(socket_patches.socket)
-
-        assert excinfo.value.get_code() == Err.INVALID_COMMAND
-        assert excinfo.value.get_message() == "Invalid message received"
-
-    def test_return_value(self, socket_patches):
-        recv_pkt = {'command': {'Some command'}}
-        socket_patches.json_load.return_value = recv_pkt
-
-        cmd, data = MXNetModelServiceWorker.recv_msg(socket_patches.socket)
-
-        socket_patches.json_load.assert_called()
-        assert 'command' in data.keys()
-        assert cmd == recv_pkt['command']
-        assert data == recv_pkt
-
-    def test_loop(self, socket_patches):
-        socket_patches.socket.recv.side_effect = [b"{}", b"{}\r\n"]
-        recv_pkt = {'command': {'Some command'}}
-        socket_patches.json_load.return_value = recv_pkt
-
-        cmd, data = MXNetModelServiceWorker.recv_msg(socket_patches.socket)
-
-        socket_patches.json_load.assert_called()
-        assert 'command' in data.keys()
-        assert cmd == recv_pkt['command']
-        assert data == recv_pkt
-
-
-# noinspection PyClassHasNoInit
 class TestSendResponse:
 
     def test_with_io_error(self, socket_patches, model_service_worker):
@@ -175,7 +100,7 @@ class TestSendResponse:
         msg = 'hello socket'
 
         log_call_param = "{}: Send failed. {}.\nMsg: {}".format(Err.SEND_MSG_FAIL, repr(io_error),
-                                                                ''.join([msg, '\r\n']))
+                                                                msg)
 
         model_service_worker.send_failures = 0
 
@@ -195,14 +120,12 @@ class TestSendResponse:
         socket_patches.socket.send.side_effect = os_error
         msg = 'hello socket'
 
-        log_call_param = "{}: Send failed. {}.\nMsg: {}".format(Err.SEND_MSG_FAIL, repr(os_error),
-                                                                ''.join([msg, '\r\n']))
+        log_call_param = "{}: Send failed. {}.\nMsg: {}".format(Err.SEND_MSG_FAIL, repr(os_error), msg)
 
         model_service_worker.send_failures = 0
 
         with pytest.raises(SystemExit) as ex:
             for i in range(1, MAX_FAILURE_THRESHOLD + 1):
-
                 model_service_worker.send_response(socket_patches.socket, msg)
                 socket_patches.socket.send.assert_called()
                 assert model_service_worker.send_failures == i
@@ -342,54 +265,9 @@ class TestMXNetModelServiceWorker:
             patches.log.assert_called_once_with('Listening on port: sampleSocketName\n')
             patches.socket.assert_called_once_with(socket.AF_UNIX, socket.SOCK_STREAM)
 
-    # noinspection PyClassHasNoInit
-    class TestCreatePredictResponse:
-
-        sample_ret = ['val1']
-        req_id_map = {0: 'reqId1'}
-        empty_invalid_reqs = dict()
-        invalid_reqs = {'reqId1': 'invalidCode1'}
-
-        @pytest.fixture()
-        def patches(self, mocker):
-            Patches = namedtuple('Patches', ['encode'])
-            patches = Patches(
-                mocker.patch('mms.model_service_worker.ModelWorkerCodecHelper.encode_msg')
-            )
-            return patches
-
-        # noinspection PyUnusedLocal
-        @pytest.fixture()
-        def worker(self, mocker):
-            return object.__new__(MXNetModelServiceWorker)
-
-        def test_codec_exception(self, patches, worker):
-            patches.encode.side_effect = Exception('testerr')
-            with pytest.raises(MMSError) as excinfo:
-                worker.create_predict_response(self.sample_ret, self.req_id_map, self.empty_invalid_reqs)
-            assert excinfo.value.code == Err.CODEC_FAIL
-            assert excinfo.value.message == "codec failed Exception('testerr',)"
-
-        @pytest.mark.parametrize('value', [(b'test', b'test'), ('test', b'test'), ({'test': True}, b'{"test": true}')])
-        def test_value_types(self, patches, value, worker):
-            ret = [value[0]]
-            resp = worker.create_predict_response(ret, self.req_id_map, self.empty_invalid_reqs)
-            patches.encode.assert_called_once_with('base64', value[1])
-            assert set(resp[0].keys()) == {'requestId', 'code', 'value', 'encoding'}
-
-        @pytest.mark.parametrize('invalid_reqs,requestId,code,value,encoding', [
-            (dict(), 'reqId1', 200, 'encoded', 'base64'),
-            ({'reqId1': 'invalidCode1'}, 'reqId1', 'invalidCode1', 'encoded', 'base64')
-        ])
-        def test_with_or_without_invalid_reqs(self, patches, invalid_reqs, requestId, code, value, encoding, worker):
-            patches.encode.return_value = 'encoded'
-            resp = worker.create_predict_response(self.sample_ret, self.req_id_map, invalid_reqs)
-            assert resp == [{'requestId': requestId, 'code': code, 'value': value, 'encoding': encoding}]
-
-    # noinspection PyClassHasNoInit
     class TestRetrieveDataForInference:
 
-        valid_req = [{'requestId': '111-222-3333', 'encoding': 'None|base64|utf-8', 'modelInputs': '[{}]'}]
+        valid_req = [{'requestId': b'111-222-3333', 'encoding': 'None|base64|utf-8', 'modelInputs': '[{}]'}]
 
         @pytest.fixture()
         def patches(self, mocker):
@@ -430,13 +308,14 @@ class TestMXNetModelServiceWorker:
     # noinspection PyClassHasNoInit
     class TestPredict:
 
-        data = {u'modelName': 'modelName', u'requestBatch': ['data']}
+        data = {u'modelName': b'modelName', u'requestBatch': ['data']}
 
         @pytest.fixture()
         def patches(self, mocker):
-            Patches = namedtuple('Patches', ['validate', 'emit', 'model_service'])
+            Patches = namedtuple('Patches', ['validate', 'codec', 'emit', 'model_service'])
             patches = Patches(
                 mocker.patch('mms.model_service_worker.ModelWorkerMessageValidators.validate_predict_msg'),
+                mocker.patch('mms.model_service_worker.OtfCodecHandler'),
                 mocker.patch('mms.model_service_worker.emit_metrics'),
                 Mock(['metrics_init', 'inference', 'metrics_store'])
             )
@@ -447,10 +326,10 @@ class TestMXNetModelServiceWorker:
         def worker(self, mocker, patches):
             mocker.patch.object(MXNetModelServiceWorker, 'service_manager', create=True),
             mocker.patch.object(MXNetModelServiceWorker, 'retrieve_data_for_inference'),
-            mocker.patch.object(MXNetModelServiceWorker, 'create_predict_response'),
             worker = object.__new__(MXNetModelServiceWorker)
             worker.service_manager.get_loaded_modelservices.return_value = {'modelName': patches.model_service}
             worker.retrieve_data_for_inference.return_value = [{0: 'inputBatch1'}], 'req_id_map', 'invalid_reqs'
+            worker.codec = patches.codec
             return worker
 
         def test_value_error(self, patches, worker):
@@ -478,28 +357,28 @@ class TestMXNetModelServiceWorker:
 
         # noinspection PyUnusedLocal
         def test_invalid_batch_size(self, patches, worker):
-            data = {u'modelName': 'modelName', u'requestBatch': ['data1', 'data2']}
+            data = {u'modelName': b'modelName', u'requestBatch': ['data1', 'data2']}
             with pytest.raises(MMSError) as excinfo:
                 worker.predict(data)
             assert excinfo.value.code == Err.UNSUPPORTED_PREDICT_OPERATION
             assert excinfo.value.message == "Invalid batch size 2"
 
         def test_success(self, patches, worker):
+            patches.codec.create_response.return_value = 'Hello World'
             response, msg, code = worker.predict(self.data)
             patches.validate.assert_called_once_with(self.data)
             worker.retrieve_data_for_inference.assert_called_once_with(['data'])
             patches.model_service.inference.assert_called_once_with(['inputBatch1'])
             patches.emit.assert_called_once_with(patches.model_service.metrics_store.store)
-            worker.create_predict_response.assert_called_once_with([patches.model_service.inference()], 'req_id_map',
-                                                                   'invalid_reqs')
-            assert response == worker.create_predict_response()
+
+            assert response == 'Hello World'
             assert msg == "Prediction success"
             assert code == 200
 
     # noinspection PyClassHasNoInit
     class TestLoadModel:
 
-        data = {'modelPath': 'mpath', 'modelName': 'name', 'handler': 'handled'}
+        data = {'modelPath': b'mpath', 'modelName': b'name', 'handler': b'handled'}
 
         @pytest.fixture()
         def patches(self, mocker):
@@ -561,7 +440,7 @@ class TestMXNetModelServiceWorker:
     # noinspection PyClassHasNoInit
     class TestUnloadModel:
 
-        request = {u'model-name': 'mname'}
+        request = {u'model-name': b'mname'}
 
         @pytest.fixture()
         def patches(self, mocker):
@@ -607,145 +486,79 @@ class TestMXNetModelServiceWorker:
             assert msg == "Unloaded model mname"
             assert code == 200
 
-    # noinspection PyClassHasNoInit
-    class TestStopServer:
-
-        @pytest.fixture()
-        def patches(self, mocker):
-            Patches = namedtuple('Patches', ['log'])
-            patches = Patches(
-                mocker.patch('mms.model_service_worker.log_msg'),
-            )
-            return patches
-
-        @pytest.fixture()
-        def sock(self):
-            return Mock()
-
-        @pytest.fixture()
-        def worker(self, mocker):
-            mocker.patch.object(MXNetModelServiceWorker, 'send_response')
-            return object.__new__(MXNetModelServiceWorker)
-
-        def test_with_nil_sock(self, worker):
-            with pytest.raises(ValueError) as excinfo:
-                worker.stop_server(None)
-
-            assert isinstance(excinfo.value, ValueError)
-            assert excinfo.value.args[0] == "Invalid parameter passed to stop server connection"
-
-        def test_with_exception(self, patches, worker, sock):
-            close_exception = Exception("exception")
-            sock.close.side_effect = close_exception
-            log_call_param = "Error closing the socket {}. Msg: {}".format(sock, repr(close_exception))
-
-            worker.stop_server(sock)
-
-            sock.close.assert_called()
-            patches.log.assert_called_with(log_call_param)
-
-        def test_stop_server(self, worker, sock):
-            worker.stop_server(sock)
-            worker.send_response.assert_called()
-            sock.close.assert_called()
 
 
 def test_emit_metrics(mocker, socket_patches):
-    metrics = {'test_emit_metrics': True}
-    dumps = mocker.patch('json.dumps')
+    metrics = "test_metric : test_value"
     emit_metrics(metrics)
     socket_patches.log_msg.assert_called()
-
-    for k in metrics.keys():
-        assert k in dumps.call_args_list[0][0][0]
 
 
 # noinspection PyClassHasNoInit
 class TestHandleConnection:
+    mock_error = MMSError(Err.SEND_FAILS_EXCEEDS_LIMITS, "Unknown Error")
 
     @pytest.fixture()
     def get_spies(self, model_service_worker, mocker):
-        Patches = namedtuple('Patches', ['recv_msg', 'predict', 'stop_server', 'load_model', 'unload_model',
+        Patches = namedtuple('Patches', ['codec', 'predict', 'load_model', 'unload_model',
                                          'create_and_send_response'])
-        mock_patch = Patches(mocker.patch.object(model_service_worker, 'recv_msg', wraps=model_service_worker.recv_msg),
+        mock_patch = Patches(mocker.patch('mms.model_service_worker.OtfCodecHandler'),
                              mocker.patch.object(model_service_worker, 'predict', wraps=model_service_worker.predict),
-                             mocker.patch.object(model_service_worker, 'stop_server',
-                                                 wraps=model_service_worker.stop_server),
                              mocker.patch.object(model_service_worker, 'load_model',
                                                  wraps=model_service_worker.load_model),
                              mocker.patch.object(model_service_worker, 'unload_model',
                                                  wraps=model_service_worker.unload_model),
                              mocker.patch.object(model_service_worker, 'create_and_send_response',
                                                  wraps=model_service_worker.create_and_send_response))
-
+        model_service_worker.codec = mock_patch.codec
         return mock_patch
 
-    def test_with_exit(self, model_service_worker, socket_patches, get_spies):
-        get_spies.recv_msg.return_value = 'SToP', 'somedata'  # Since we do a cmd.lower() so testing with a variant...
-
-        with pytest.raises(SystemExit) as ex:
-            model_service_worker.handle_connection(socket_patches.socket)
-
-        get_spies.recv_msg.assert_called()
-        get_spies.stop_server.assert_called()
-        assert ex.value.args[0] == 1
-
     def test_with_predict(self, model_service_worker, socket_patches, get_spies):
-        get_spies.recv_msg.side_effect = [('PreDiCT', 'somedata'), ('stop', 'somedata')]
-
-        with pytest.raises(SystemExit):
-            model_service_worker.handle_connection(socket_patches.socket)
+        get_spies.codec.retrieve_msg.side_effect = [('PreDiCT', 'somedata'), self.mock_error]
+        model_service_worker.handle_connection(socket_patches.socket)
 
         get_spies.predict.assert_called()
-        get_spies.recv_msg.assert_called()
-        get_spies.stop_server.assert_called()
+        get_spies.codec.retrieve_msg.assert_called()
 
     def test_with_load(self, model_service_worker, socket_patches, get_spies):
-        get_spies.recv_msg.side_effect = [('load', 'somedata'), ('stop', 'somedata')]
+        get_spies.codec.retrieve_msg.side_effect = [('Load', 'somedata'), self.mock_error]
 
-        with pytest.raises(SystemExit):
-            model_service_worker.handle_connection(socket_patches.socket)
+        model_service_worker.handle_connection(socket_patches.socket)
 
         get_spies.load_model.assert_called()
-        get_spies.recv_msg.assert_called()
-        get_spies.stop_server.assert_called()
+        get_spies.codec.retrieve_msg.assert_called()
 
     def test_with_unload(self, model_service_worker, socket_patches, get_spies):
-        get_spies.recv_msg.side_effect = [('unload', 'somedata'), ('stop', 'somedata')]
+        get_spies.codec.retrieve_msg.side_effect = [('unload', 'somedata'), self.mock_error]
 
-        with pytest.raises(SystemExit):
-            model_service_worker.handle_connection(socket_patches.socket)
+        model_service_worker.handle_connection(socket_patches.socket)
 
         get_spies.unload_model.assert_called()
-        get_spies.recv_msg.assert_called()
-        get_spies.stop_server.assert_called()
+        get_spies.codec.retrieve_msg.assert_called()
 
     def test_with_unknown_cmd(self, model_service_worker, socket_patches, get_spies):
         result = "Received unknown command: {}".format('unk')
         err_code = Err.UNKNOWN_COMMAND
 
-        get_spies.recv_msg.side_effect = [('unk', 'somedata'), ('stop', 'somedata')]
+        get_spies.codec.retrieve_msg.side_effect = [('unk', 'somedata'), self.mock_error]
 
-        with pytest.raises(SystemExit):
-            model_service_worker.handle_connection(socket_patches.socket)
+        model_service_worker.handle_connection(socket_patches.socket)
 
         get_spies.create_and_send_response.assert_called_with(socket_patches.socket, err_code, result, None)
-        get_spies.recv_msg.assert_called()
-        get_spies.stop_server.assert_called()
+        get_spies.codec.retrieve_msg.assert_called()
 
     def test_with_mms_error(self, model_service_worker, socket_patches, get_spies):
         error = MMSError(Err.SEND_FAILS_EXCEEDS_LIMITS, "Unknown Error")
-        get_spies.recv_msg.side_effect = error
+        get_spies.codec.retrieve_msg.side_effect = self.mock_error
 
         model_service_worker.handle_connection(socket_patches.socket)
         socket_patches.log_error.assert_called()
 
     def test_with_mms_unknown_error(self, model_service_worker, socket_patches, get_spies):
         error = Exception("Unknown Error")
-        get_spies.recv_msg.side_effect = [error, ('stop', 'somedata')]
+        get_spies.codec.retrieve_msg.side_effect = [error, self.mock_error]
 
-        with pytest.raises(SystemExit):
-            model_service_worker.handle_connection(socket_patches.socket)
+        model_service_worker.handle_connection(socket_patches.socket)
 
         socket_patches.log_error.assert_called()
         get_spies.create_and_send_response.assert_called()

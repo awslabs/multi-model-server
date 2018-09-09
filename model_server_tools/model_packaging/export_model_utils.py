@@ -17,15 +17,15 @@ import json
 import zipfile
 import sys
 import logging
+import re
 from model_server_tools.model_packaging.manifest_components.publisher import Publisher
 from model_server_tools.model_packaging.manifest_components.manifest import Manifest
 from model_server_tools.model_packaging.manifest_components.engine import Engine
 from model_server_tools.model_packaging.manifest_components.model import Model
-from model_server_tools import model_packaging
 
 MODEL_ARCHIVE_EXTENSION = '.mar'
 MODEL_SERVER_VERSION = '1.0'
-MODEL_ARCHIVE_VERSION = model_packaging.__version__
+MODEL_ARCHIVE_VERSION = '1.0'
 MANIFEST_FILE_NAME = 'MANIFEST.json'
 MAR_INF = 'MAR-INF'
 ONNX_TYPE = '.onnx'
@@ -44,7 +44,7 @@ class ModelExportUtils(object):
         Function to check if .mar already exists
         :param model_name:
         :param export_file:
-        :param model_archive_extension:
+        :param overwrite:
         :return:
         """
         if export_file is None:
@@ -52,8 +52,7 @@ class ModelExportUtils(object):
 
         if os.path.exists(export_file):
             if overwrite:
-                # pylint: disable=deprecated-method
-                logging.warn("%s already exists. It will be overwritten since --force/-f was specified", export_file)
+                logging.warning("%s already exists. It will be overwritten since --force/-f was specified", export_file)
 
             else:
                 logging.error("%s already exists. Since no --force/-f was specified, it will not be overwritten. "
@@ -72,8 +71,8 @@ class ModelExportUtils(object):
         :param model_path:
         :return:
         """
-        temp_files = [] # List of temp files added to handle custom models
-        files_to_exclude = [] # List of files to be excluded from .mar packaging.
+        temp_files = []  # List of temp files added to handle custom models
+        files_to_exclude = []  # List of files to be excluded from .mar packaging.
 
         files_set = set(os.listdir(model_path))
         onnx_file = ModelExportUtils.find_unique(files_set, ONNX_TYPE)
@@ -104,9 +103,7 @@ class ModelExportUtils(object):
             return match[0]
         else:
             params = {
-                '.params': ('.params', 'parameter file'),
-                '-symbol.json': ('...-symbol.json', 'symbol file'),
-                '.onnx': ('.onnx', 'ONNX model file'),
+                '.onnx': ('.onnx', 'ONNX model file')
             }[suffix]
 
             message = "model-export-tool expects only one %s file. Please supply the single %s file you wish to " \
@@ -197,11 +194,11 @@ class ModelExportUtils(object):
 
         publisher = ModelExportUtils.generate_publisher(args) if args.author and args.email else None
 
-        engine = ModelExportUtils.generate_engine(args)
+        engine = ModelExportUtils.generate_engine(args) if args.engine else None
 
         model = ModelExportUtils.generate_model(args)
 
-        manifest = Manifest(runtime=args.runtime, engine=engine, model=model, publisher=publisher)
+        manifest = Manifest(runtime=args.runtime, model=model, engine=engine, publisher=publisher)
 
         return str(manifest)
 
@@ -232,9 +229,11 @@ class ModelExportUtils(object):
             os.remove(f)
 
     @staticmethod
-    def zip(export_file, model_path, files_to_exclude):
+    def zip(export_file, model_path, files_to_exclude, manifest):
         with zipfile.ZipFile(export_file, 'w', zipfile.ZIP_DEFLATED) as z:
             ModelExportUtils.zip_dir(model_path, z, set(files_to_exclude))
+            # Write the manifest here now as a json
+            z.writestr(os.path.join(export_file, MAR_INF, MANIFEST_FILE_NAME), json.dumps(manifest, indent=4))
 
     @staticmethod
     def zip_dir(path, ziph, files_to_exclude):
@@ -246,7 +245,7 @@ class ModelExportUtils(object):
         :param files_to_exclude:
         :return:
         """
-        unwanted_dirs = set(['__MACOSX', '__pycache__'])
+        unwanted_dirs = {'__MACOSX', '__pycache__'}
 
         for root, directories, files in os.walk(path):
             # Filter directories
@@ -256,22 +255,26 @@ class ModelExportUtils(object):
             for f in files:
                 ziph.write(os.path.join(root, f))
 
+    # pylint: disable = redefined-builtin
     @staticmethod
-    def directory_filter(d, unwanted_dirs):
+    def directory_filter(dir, unwanted_dirs):
 
         """
-        This method weeds out unwanted directories
+        This method weeds out unwanted hidden directories from the model archive .mar file
         :param dir:
         :param unwanted_dirs:
         :return:
         """
-        if d in unwanted_dirs:
+        if dir in unwanted_dirs:
+            return False
+        if dir.startswith('.'):
             return False
 
         return True
 
+    # pylint: disable = redefined-builtin
     @staticmethod
-    def file_filter(f, files_to_exclude):
+    def file_filter(file, files_to_exclude):
 
         """
         This method weeds out unwanted files
@@ -280,10 +283,25 @@ class ModelExportUtils(object):
         :return:
         """
 
-        if f in files_to_exclude:
+        if file in files_to_exclude:
             return False
 
-        elif f.endswith(('.pyc', '.DS_Store')):
+        elif file.endswith(('.pyc', '.DS_Store')):
             return False
 
         return True
+
+    @staticmethod
+    def check_model_name_regex(model_name):
+
+        """
+        Method checks whether model name passes regex filter
+        :param model_name:
+        :return:
+        """
+        pattern = re.compile(r'[A-Za-z][A-Za-z0-9_\-.]+')
+        if pattern.match(model_name) is None:
+            logging.error("Model name contains special characters. The allowed regular expression filter for model "
+                          "name is %s ", r'[A-Za-z][A-Za-z0-9_\-.]+')
+
+            sys.exit(1)

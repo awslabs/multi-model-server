@@ -15,12 +15,12 @@ at runtime.
 
 import argparse
 from model_server_tools.model_packaging.manifest_components.manifest import RuntimeType
-from model_server_tools.model_packaging.manifest_components.engine import EngineType
 
 
 class StoreDictKeyPair(argparse.Action):
 
-    """This class is a helper class to parse <model-name>=<model-uri> pairs
+    """
+    This class is a helper class to parse <model-name>=<model-uri> pairs
     """
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -33,7 +33,8 @@ class StoreDictKeyPair(argparse.Action):
 
 class ArgParser(object):
 
-    """Argument parser for model-export-tool commands
+    """
+    Argument parser for model-export-tool commands
     More detailed example is available at https://github.com/awslabs/mxnet-model-server/blob/master/README.md
     """
 
@@ -44,7 +45,6 @@ class ArgParser(object):
         """
         # TODO Add more CLI args here later
         runtime_types = ', '.join(s.value for s in RuntimeType)
-        engine_types = ', '.join(s.value for s in EngineType)
 
         parser_export = argparse.ArgumentParser(prog='mxnet-model-export', description='MXNet Model Export')
 
@@ -77,16 +77,6 @@ class ArgParser(object):
                                    help='The runtime specifies which language to run your inference code on. '
                                         'The default runtime is {}. At the present moment we support the '
                                         'following runtimes \n {}'.format(RuntimeType.PYTHON2_7, runtime_types))
-
-        parser_export.add_argument('--engine',
-                                   required=False,
-                                   type=str,
-                                   default=EngineType.MXNET.value,
-                                   choices=[s.value for s in EngineType],
-                                   help='The engine specifies which deep learning framework is used as a backend to '
-                                        'run your inference code for the trained model files.'
-                                        'The default engine is {}. At the present moment we support the '
-                                        'following runtimes \n {}'.format(EngineType.MXNET.value, engine_types))
 
         parser_export.add_argument('--export-path',
                                    required=False,

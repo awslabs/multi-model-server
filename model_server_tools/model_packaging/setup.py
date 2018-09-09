@@ -54,7 +54,7 @@ if __name__ == '__main__':
     opt_set = set(sys.argv)
     version = detect_packaging_tool_version()
 
-    requirements = ['future']
+    requirements = ['future', 'enum34']
 
     setup(
         name='model-export-tool',

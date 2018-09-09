@@ -23,7 +23,7 @@ def export():
     """
     warnings.warn("Use model-export-tool instead of mxnet-model-export. mxnet-model-export is deprecated.",
                   DeprecationWarning, stacklevel=2)
-    export_tool.export()
+    export_tool.generate_model_archive()
 
 
 if __name__ == '__main__':

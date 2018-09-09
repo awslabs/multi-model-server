@@ -17,13 +17,13 @@ ModelServiceWorker is the worker that is started by the MMS front-end.
 import socket
 from collections import namedtuple
 
+import mock
 import pytest
 from mms.model_service_worker import MXNetModelServiceWorker, MAX_FAILURE_THRESHOLD
 from mms.mxnet_model_service_error import MMSError
-from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
 from mms.service import Service
+from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
 from mock import Mock
-import mock
 
 
 @pytest.fixture()
@@ -43,25 +43,12 @@ def socket_patches(mocker):
 def model_service_worker(socket_patches):
     model_service_worker = MXNetModelServiceWorker('unix', 'my-socket', None, None)
     model_service_worker.sock = socket_patches.socket
-    model_service_worker.service = Service('name', 'mpath','testmanifest',
-                                                      None, 0, 1)
+    model_service_worker.service = Service('name', 'mpath', 'testmanifest', None, 0, 1)
     return model_service_worker
 
 
-def test_retrieve_model_input(socket_patches, model_service_worker):
-    valid_inputs = [{'contentType': b'application/text', 'value': b'val1', 'name': b'model_input_name'}]
-
-    expected_response = {'model_input_name': 'val1'}
-
-    model_in = model_service_worker.retrieve_model_input(valid_inputs)
-
-    socket_patches.msg_validator.validate_predict_inputs.assert_called()
-
-    assert expected_response == model_in
-
-
+# noinspection PyClassHasNoInit
 class TestCreateAndSendResponse:
-
     message = 'hello socket'
     code = 7
     resp = {'code': code, 'message': message}
@@ -71,10 +58,8 @@ class TestCreateAndSendResponse:
         return mocker.patch.object(model_service_worker, 'send_response', wraps=model_service_worker.send_response)
 
     def test_with_preds(self, socket_patches, model_service_worker, get_send_response_spy):
-
         model_service_worker.create_and_send_response(socket_patches.socket, self.code, self.message)
         socket_patches.codec.create_response.return_value = 'Hello World'
-        expected_result = 'Hello World'
         get_send_response_spy.assert_called()
 
         preds = "some preds"
@@ -82,7 +67,7 @@ class TestCreateAndSendResponse:
         model_service_worker.create_and_send_response(socket_patches.socket, self.code, self.message, preds)
         get_send_response_spy.assert_called()
 
-        del(self.resp['predictions'])
+        del (self.resp['predictions'])
 
     def test_with_exception(self, socket_patches, model_service_worker, get_send_response_spy):
         message = 'hello socket'
@@ -95,6 +80,7 @@ class TestCreateAndSendResponse:
         socket_patches.log_error.assert_called()
 
 
+# noinspection PyClassHasNoInit
 class TestSendResponse:
 
     def test_with_io_error(self, socket_patches, model_service_worker):
@@ -109,7 +95,6 @@ class TestSendResponse:
 
         with pytest.raises(SystemExit) as ex:
             for i in range(1, MAX_FAILURE_THRESHOLD + 1):
-
                 model_service_worker.send_response(socket_patches.socket, msg)
                 socket_patches.socket.send.assert_called()
                 assert model_service_worker.send_failures == i
@@ -140,7 +125,6 @@ class TestSendResponse:
 
 # noinspection PyClassHasNoInit
 class TestRunServer:
-
     accept_result = ('cl_sock', None)
 
     def test_with_socket_bind_error(self, socket_patches, model_service_worker):
@@ -214,7 +198,6 @@ class TestRunServer:
 
 # noinspection PyClassHasNoInit
 class TestMXNetModelServiceWorker:
-
     # noinspection PyClassHasNoInit
     class TestInit:
 
@@ -268,157 +251,6 @@ class TestMXNetModelServiceWorker:
             patches.log.assert_called_once_with('Listening on port: sampleSocketName\n')
             patches.socket.assert_called_once_with(socket.AF_UNIX, socket.SOCK_STREAM)
 
-    class TestRetrieveDataForInference:
-
-        valid_req = [{'requestId': b'111-222-3333', 'encoding': 'None|base64|utf-8', 'modelInputs': '[{}]'}]
-        # noinspection PyClassHasNoInit
-        class TestLoadModel:
-
-            data = {'modelPath': 'mpath', 'modelName': 'name', 'handler': 'TestModule:handle', 'batchSize': 1}
-
-            @pytest.fixture()
-            def patches(self, mocker):
-                Patches = namedtuple('Patches', ['validate', 'loader', 'os_path', 'module'])
-                patches = Patches(
-                    mocker.patch('mms.model_service_worker.ModelWorkerMessageValidators.validate_load_message'),
-                    mocker.patch('mms.model_loader.MmsModelLoader.load'),
-                    mocker.patch('mms.model_service_worker.os.path.exists'),
-                    mocker.patch('mms.model_loader.importlib')
-                )
-                def temp():
-                    return "prediction"
-                context = {'handle': temp}
-                import types
-                test_context_module = types.ModuleType('TestModule', 'Module created to provide a context for tests')
-                test_context_module.__dict__.update(context)
-                patches.os_path.return_value = False
-                patches.module.import_module = mocker.MagicMock(return_value=test_context_module)
-                patches.loader.return_value = Service('name', 'mpath','testmanifest',
-                                                      temp(), 0, 1)
-                return patches
-
-            @pytest.fixture()
-            def worker(self, mocker):
-                worker = object.__new__(MXNetModelServiceWorker)
-                return worker
-
-            def test_success(self, patches, worker):
-                service, msg, code = worker.load_model(self.data)
-                patches.validate.assert_called_once_with(self.data)
-                patches.loader.assert_called_once_with('name', 'mpath', 'TestModule:handle', None, 1)
-                assert msg == 'loaded model name'
-                assert code == 200
-
-    class TestUnloadModel:
-
-        request = {u'model-name': 'name'}
-
-        @pytest.fixture()
-        def patches(self, mocker):
-            Patches = namedtuple('Patches', ['validate'])
-            patches = Patches(
-                mocker.patch('mms.model_service_worker.ModelWorkerMessageValidators.validate_unload_msg')
-            )
-            return patches
-
-        @pytest.fixture()
-        def worker(self, mocker):
-            mocker.patch.object(MXNetModelServiceWorker, 'retrieve_model_input')
-            return object.__new__(MXNetModelServiceWorker)
-
-        # noinspection PyUnusedLocal
-        def test_with_nil_request(self, patches, worker):
-            with pytest.raises(ValueError) as excinfo:
-                worker.retrieve_data_for_inference(requests=None)
-
-            assert excinfo.value.args[0] == "Received invalid inputs"
-
-        # noinspection PyUnusedLocal
-        def test_with_invalid_req(self, patches, worker):
-            worker.retrieve_model_input.side_effect = MMSError(Err.INVALID_PREDICT_INPUT, 'Some message')
-
-            input_batch, req_to_id_map, invalid_reqs = worker.retrieve_data_for_inference(requests=self.valid_req)
-
-            worker.retrieve_model_input.assert_called_once()
-            assert invalid_reqs == {'111-222-3333': Err.INVALID_PREDICT_INPUT}
-
-        def test_valid_req(self, patches, worker):
-            worker.retrieve_model_input.return_value = 'some-return-val'
-            worker.retrieve_data_for_inference(requests=self.valid_req)
-
-            patches.validate.assert_called()
-            worker.retrieve_model_input.assert_called()
-
-    # noinspection PyClassHasNoInit
-    class TestPredict:
-
-        data = {u'modelName': b'modelName', u'requestBatch': ['data']}
-
-        @pytest.fixture()
-        def patches(self, mocker):
-            Patches = namedtuple('Patches', ['validate', 'codec', 'emit', 'model_service'])
-            patches = Patches(
-                mocker.patch('mms.model_service_worker.ModelWorkerMessageValidators.validate_predict_msg'),
-                mocker.patch('mms.model_service_worker.OtfCodecHandler'),
-                mocker.patch('mms.model_service_worker.emit_metrics'),
-                Mock(['metrics_init', 'inference', 'metrics_store'])
-            )
-            patches.model_service.metrics_store.store = Mock()
-            return patches
-
-        @pytest.fixture()
-        def worker(self, mocker, patches):
-            mocker.patch.object(MXNetModelServiceWorker, 'service_manager', create=True),
-            mocker.patch.object(MXNetModelServiceWorker, 'retrieve_data_for_inference'),
-            worker = object.__new__(MXNetModelServiceWorker)
-            worker.service_manager.get_loaded_modelservices.return_value = {'modelName': patches.model_service}
-            worker.retrieve_data_for_inference.return_value = [{0: 'inputBatch1'}], 'req_id_map', 'invalid_reqs'
-            worker.codec = patches.codec
-            return worker
-
-        def test_value_error(self, patches, worker):
-            patches.validate.side_effect = ValueError('testerr')
-            with pytest.raises(MMSError) as excinfo:
-                worker.predict(self.data)
-            assert excinfo.value.code == Err.INVALID_PREDICT_MESSAGE
-            assert excinfo.value.message == "ValueError('testerr',)"
-
-        # noinspection PyUnusedLocal
-        def test_pass_mms_error(self, patches, worker):
-            error = MMSError(Err.UNKNOWN_COMMAND, 'testerr')
-            worker.service_manager.get_loaded_modelservices.side_effect = error
-            with pytest.raises(MMSError) as excinfo:
-                worker.predict(self.data)
-            assert excinfo.value == error
-
-        # noinspection PyUnusedLocal
-        def test_not_loaded(self, patches, worker):
-            worker.service_manager.get_loaded_modelservices.return_value = []
-            with pytest.raises(MMSError) as excinfo:
-                worker.predict(self.data)
-            assert excinfo.value.code == Err.MODEL_SERVICE_NOT_LOADED
-            assert excinfo.value.message == "Model modelName is currently not loaded"
-
-        # noinspection PyUnusedLocal
-        def test_invalid_batch_size(self, patches, worker):
-            data = {u'modelName': b'modelName', u'requestBatch': ['data1', 'data2']}
-            with pytest.raises(MMSError) as excinfo:
-                worker.predict(data)
-            assert excinfo.value.code == Err.UNSUPPORTED_PREDICT_OPERATION
-            assert excinfo.value.message == "Invalid batch size 2"
-
-        def test_success(self, patches, worker):
-            patches.codec.create_response.return_value = 'Hello World'
-            response, msg, code = worker.predict(self.data)
-            patches.validate.assert_called_once_with(self.data)
-            worker.retrieve_data_for_inference.assert_called_once_with(['data'])
-            patches.model_service.inference.assert_called_once_with(['inputBatch1'])
-            patches.emit.assert_called_once_with(patches.model_service.metrics_store.store)
-
-            assert response == 'Hello World'
-            assert msg == "Prediction success"
-            assert code == 200
-
     # noinspection PyClassHasNoInit
     class TestLoadModel:
 
@@ -429,9 +261,8 @@ class TestMXNetModelServiceWorker:
             Patches = namedtuple('Patches', ['validate', 'loader'])
             patches = Patches(
                 mocker.patch('mms.model_service_worker.ModelWorkerMessageValidators.validate_load_message'),
-                mocker.patch('mms.model_service_worker.ModelLoader.load')
+                mocker.patch('mms.model_loader.LegacyModelLoader.load')
             )
-            patches.loader.return_value = 'testmanifest', 'test_service_file_path'
             return patches
 
         @pytest.fixture()
@@ -470,76 +301,12 @@ class TestMXNetModelServiceWorker:
             if gpu[0]:
                 data['gpu'] = gpu[0]
             worker.load_model(data)
-            worker.service_manager.register_and_load_modules.assert_called_once_with('name', 'mpath', 'testmanifest',
-                                                                                     'test_service_file_path', gpu[1],
-                                                                                     batch_size[1])
 
         def test_success(self, patches, worker):
-            msg, code = worker.load_model(self.data)
+            service, msg, code = worker.load_model(self.data)
             patches.validate.assert_called_once_with(self.data)
-            patches.loader.assert_called_once_with('mpath', 'handled')
-            assert msg == 'loaded model test_service_file_path'
-            assert code == 200
-
-    # noinspection PyClassHasNoInit
-    class TestUnloadModel:
-
-        request = {u'model-name': b'mname'}
-
-        @pytest.fixture()
-        def patches(self, mocker):
-            Patches = namedtuple('Patches', ['validate'])
-            patches = Patches(
-                mocker.patch('mms.model_service_worker.ModelWorkerMessageValidators.validate_unload_msg')
-            )
-            return patches
-
-        @pytest.fixture()
-        def worker(self, mocker):
-            mocker.patch.object(MXNetModelServiceWorker, 'service_manager', create=True),
-            return object.__new__(MXNetModelServiceWorker)
-
-        # noinspection PyUnusedLocal
-        def test_not_loaded(self, patches, worker):
-            worker.service_manager.unload_models.side_effect = KeyError()
-            with pytest.raises(MMSError) as excinfo:
-                worker.unload_model(self.request)
-            assert excinfo.value.code == Err.MODEL_CURRENTLY_NOT_LOADED
-            assert excinfo.value.args[0] == 'Model is not being served on model server'
-
-        # noinspection PyUnusedLocal
-        def test_pass_mms_error(self, patches, worker):
-            error = MMSError(Err.UNKNOWN_COMMAND, 'testerr')
-            worker.service_manager.unload_models.side_effect = error
-            with pytest.raises(MMSError) as excinfo:
-                worker.unload_model(self.request)
-            assert excinfo.value == error
-
-        # noinspection PyUnusedLocal
-        def test_unknown_error(self, patches, worker):
-            worker.service_manager.unload_models.side_effect = Exception('testerr')
-            with pytest.raises(MMSError) as excinfo:
-                worker.unload_model(self.request)
-            assert excinfo.value.code == Err.UNKNOWN_EXCEPTION
-            assert excinfo.value.args[0] == "Unknown error Exception('testerr',)"
-
-        def test_success(self, patches, worker):
-            msg, code = worker.unload_model(self.request)
-            worker = object.__new__(MXNetModelServiceWorker)
-            worker.service = None
-            return worker
-
-        @pytest.fixture()
-        def worker_remove(self, mocker):
-            worker_remove = object.__new__(MXNetModelServiceWorker)
-            worker_remove.service = Service('name', 'mpath','testmanifest',
-                                                      None, 0, 1)
-            return worker_remove
-
-        def test_success(self, patches, worker_remove):
-            msg, code = worker_remove.unload_model(self.request)
-            patches.validate.assert_called_once_with(self.request)
-            assert msg == "Unloaded model name"
+            patches.loader.assert_called_once_with('name', 'mpath', 'handled', None, None)
+            assert msg == 'loaded model name'
             assert code == 200
 
 
@@ -549,40 +316,21 @@ class TestHandleConnection:
 
     @pytest.fixture()
     def get_spies(self, model_service_worker, mocker):
-        Patches = namedtuple('Patches', ['codec', 'predict', 'load_model', 'unload_model',
-                                         'create_and_send_response', 'predict'])
+        Patches = namedtuple('Patches', ['codec', 'load_model', 'create_and_send_response'])
         mock_patch = Patches(mocker.patch('mms.model_service_worker.OtfCodecHandler'),
-                             mocker.patch.object(model_service_worker, 'predict', wraps=model_service_worker.predict),
                              mocker.patch.object(model_service_worker, 'load_model',
                                                  wraps=model_service_worker.load_model),
-                             mocker.patch.object(model_service_worker, 'unload_model',
-                                                 wraps=model_service_worker.unload_model),
                              mocker.patch.object(model_service_worker, 'create_and_send_response',
-                                                 wraps=model_service_worker.create_and_send_response),
-                             mocker.patch('mms.service.Service.predict'))
+                                                 wraps=model_service_worker.create_and_send_response))
+        model_service_worker.codec = mock_patch.codec
         return mock_patch
 
-    def test_with_predict(self, model_service_worker, socket_patches, get_spies):
-        get_spies.codec.retrieve_msg.side_effect = [('PreDiCT', 'somedata'), self.mock_error]
-        model_service_worker.handle_connection(socket_patches.socket)
-
-        get_spies.predict.assert_called()
-        get_spies.codec.retrieve_msg.assert_called()
-
     def test_with_load(self, model_service_worker, socket_patches, get_spies):
-        get_spies.codec.retrieve_msg.side_effect = [('Load', 'somedata'), self.mock_error]
+        get_spies.codec.retrieve_msg.side_effect = [('load', 'somedata'), self.mock_error]
 
         model_service_worker.handle_connection(socket_patches.socket)
 
         get_spies.load_model.assert_called()
-        get_spies.codec.retrieve_msg.assert_called()
-
-    def test_with_unload(self, model_service_worker, socket_patches, get_spies):
-        get_spies.codec.retrieve_msg.side_effect = [('unload', 'somedata'), self.mock_error]
-
-        model_service_worker.handle_connection(socket_patches.socket)
-
-        get_spies.unload_model.assert_called()
         get_spies.codec.retrieve_msg.assert_called()
 
     def test_with_unknown_cmd(self, model_service_worker, socket_patches, get_spies):
@@ -597,7 +345,6 @@ class TestHandleConnection:
         get_spies.codec.retrieve_msg.assert_called()
 
     def test_with_mms_error(self, model_service_worker, socket_patches, get_spies):
-        error = MMSError(Err.SEND_FAILS_EXCEEDS_LIMITS, "Unknown Error")
         get_spies.codec.retrieve_msg.side_effect = self.mock_error
 
         model_service_worker.handle_connection(socket_patches.socket)

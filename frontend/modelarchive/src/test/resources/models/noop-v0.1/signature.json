@@ -1,8 +1,8 @@
-{  
-  "inputs":[  
-    {  
-      "data_name":"data",
-      "shape":[  
+{
+  "inputs": [
+    {
+      "data_name": "data",
+      "shape": [
         0,
         3,
         224,
@@ -10,11 +10,11 @@
       ]
     }
   ],
-  "input_type":"application/json",
-  "outputs":[  
-    {  
-      "data_name":"data",
-      "shape":[  
+  "input_type": "image/jpeg",
+  "outputs": [
+    {
+      "data_name": "data",
+      "shape": [
         0,
         3,
         224,
@@ -22,5 +22,5 @@
       ]
     }
   ],
-  "output_type":"application/json"
+  "output_type": "application/json"
 }

@@ -22,7 +22,6 @@ class Context(object):
     """
 
     def __init__(self, model_name, model_dir, manifest, batch_size, gpu, mms_version):
-
         self.model_name = model_name
         self.manifest = manifest
         self._system_properties = {
@@ -30,12 +29,11 @@ class Context(object):
             'gpu': gpu,
             'batch_size': batch_size,
             'server_name': 'MMS',
-            'server_version': '1.0'
+            'server_version': mms_version
         }
         self.request_ids = None
         self.request_processor = RequestProcessor(dict())
         self.logger = logging.getLogger()
-        self.mms_version = mms_version
         self._metrics = None
 
     @property

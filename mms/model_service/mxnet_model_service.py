@@ -11,14 +11,14 @@
 """
 `MXNetBaseService` defines an API for MXNet service.
 """
-# pylint: disable=redefined-builtin
 import json
 import os
+
 import mxnet as mx
 from mxnet.io import DataBatch
+
 from mms.log import get_logger
 from mms.model_service.model_service import SingleNodeService
-
 
 logger = get_logger()
 
@@ -34,47 +34,40 @@ def check_input_shape(inputs, signature):
     signature : dict
         Dictionary containing model signature.
     """
-    if signature is None:
-        return
-
     assert isinstance(inputs, list), 'Input data must be a list.'
-    assert len(inputs) == len(signature['inputs']), 'Input number mismatches with ' \
-                                           'signature. %d expected but got %d.' \
-                                           % (len(signature['inputs']), len(inputs))
-    for input, sig_input in zip(inputs, signature['inputs']):
-        assert isinstance(input, mx.nd.NDArray), 'Each input must be NDArray.'
-        assert len(input.shape) == \
-               len(sig_input['data_shape']), 'Shape dimension of input %s mismatches with ' \
-                                'signature. %d expected but got %d.' \
-                                % (sig_input['data_name'], len(sig_input['data_shape']),
-                                   len(input.shape))
-        for idx in range(len(input.shape)):
+    assert len(inputs) == len(signature['inputs']), \
+        "Input number mismatches with " \
+        "signature. %d expected but got %d." \
+        % (len(signature['inputs']), len(inputs))
+    for input_data, sig_input in zip(inputs, signature["inputs"]):
+        assert isinstance(input_data, mx.nd.NDArray), 'Each input must be NDArray.'
+        assert len(input_data.shape) == len(sig_input["data_shape"]), \
+            'Shape dimension of input %s mismatches with ' \
+            'signature. %d expected but got %d.' \
+            % (sig_input['data_name'],
+               len(sig_input['data_shape']),
+               len(input_data.shape))
+        for idx in range(len(input_data.shape)):
             if idx != 0 and sig_input['data_shape'][idx] != 0:
-                assert sig_input['data_shape'][idx] == \
-                       input.shape[idx], 'Input %s has different shape with ' \
-                                         'signature. %s expected but got %s.' \
-                                         % (sig_input['data_name'], sig_input['data_shape'],
-                                            input.shape)
+                assert sig_input['data_shape'][idx] == input_data.shape[idx], \
+                    'Input %s has different shape with ' \
+                    'signature. %s expected but got %s.' \
+                    % (sig_input['data_name'], sig_input['data_shape'],
+                       input_data.shape)
 
 
-# pylint: disable=too-many-nested-blocks
 class MXNetBaseService(SingleNodeService):
     """
     MXNetBaseService defines the fundamental loading model and inference
     operations when serving MXNet model. This is a base class and needs to be
     inherited.
     """
+
     def __init__(self, model_name, model_dir, manifest, gpu=None):
         super(MXNetBaseService, self).__init__(model_name, model_dir, manifest, gpu)
-
         self.param_filename = None
         self.model_name = model_name
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
-
-        data_names = []
-        data_shapes = []
-        epoch = 0
-
         signature_file_path = os.path.join(model_dir, manifest['Model']['Signature'])
         if not os.path.isfile(signature_file_path):
             raise RuntimeError('Signature file is not found. Please put signature.json '
@@ -85,27 +78,31 @@ class MXNetBaseService(SingleNodeService):
         except Exception:
             raise Exception('Failed to open model signature file: %s' % signature_file_path)
 
-        for input in self._signature['inputs']:
-            data_names.append(input['data_name'])
+        data_names = []
+        data_shapes = []
+        epoch = 0
+        for input_data in self._signature['inputs']:
+            data_names.append(input_data['data_name'])
             # Replace 0 entry in data shape with 1 for binding executor.
             # Set batch size as 1
-            data_shape = input['data_shape']
+            data_shape = input_data['data_shape']
             data_shape[0] = 1
             # pylint: disable=consider-using-enumerate
             for idx in range(len(data_shape)):
                 if data_shape[idx] == 0:
                     data_shape[idx] = 1
-            data_shapes.append((input['data_name'], tuple(data_shape)))
+            data_shapes.append((input_data['data_name'], tuple(data_shape)))
 
         # Load MXNet module
+        # noinspection PyBroadException
         try:
             self.param_filename = manifest['Model']['Parameters']
             epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
         except Exception:  # pylint: disable=broad-except
             logger.info("Failed to parse epoch from param file, setting epoch to 0")
 
-        sym, arg_params, aux_params = mx.model.load_checkpoint(
-            '%s/%s' % (model_dir, manifest['Model']['Symbol'][:-12]), epoch)
+        sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
+                                                               (model_dir, manifest['Model']['Symbol'][:-12]), epoch)
         self.mx_model = mx.mod.Module(symbol=sym, context=self.ctx,
                                       data_names=data_names, label_names=None)
         self.mx_model.bind(for_training=False, data_shapes=data_shapes)
@@ -176,10 +173,7 @@ class MXNetBaseService(SingleNodeService):
         Dict
             Model service signiture.
         """
-        if hasattr(self, '_signature'):
-            return self._signature
-
-        return None
+        return self._signature
 
 
 class GluonImperativeBaseService(SingleNodeService):
@@ -187,8 +181,9 @@ class GluonImperativeBaseService(SingleNodeService):
        operations when serving Gluon model. This is a base class and needs to be
        inherited.
     """
+
     def __init__(self, model_name, model_dir, manifest, net=None, gpu=None):
-        # pylint: disable=super-init-not-called
+        super(GluonImperativeBaseService, self).__init__(model_name, model_dir, manifest, gpu)
         self.param_filename = None
         self.model_name = model_name
         self.ctx = mx.gpu(int(gpu)) if gpu is not None else mx.cpu()
@@ -204,6 +199,7 @@ class GluonImperativeBaseService(SingleNodeService):
             raise Exception('Failed to open model signature file: %s' % signature_file_path)
 
         # Load MXNet module
+        # noinspection PyBroadException
         try:
             self.param_filename = manifest['Model']['Parameters']
             if self.param_filename or self.net is not None:

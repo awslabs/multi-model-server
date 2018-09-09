@@ -13,6 +13,7 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.archive.ModelArchive;
+import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -49,8 +50,8 @@ public class Model {
         return modelArchive.getModelName();
     }
 
-    public String getModelDir() {
-        return modelArchive.getModelDir().getAbsolutePath();
+    public File getModelDir() {
+        return modelArchive.getModelDir();
     }
 
     public String getModelUrl() {

@@ -25,14 +25,15 @@ class NoopService(object):
         self._context = None
         self.initialized = False
 
-    def initialize(self):
+    def initialize(self, context):
         """
         Initialize model. This will be called during model loading time
 
-        :param:
+        :param context: model server context
         :return:
         """
         self.initialized = True
+        self._context = context
 
     @staticmethod
     def preprocess(data):
@@ -56,11 +57,12 @@ class NoopService(object):
 
     @staticmethod
     def postprocess(model_output):
-        return model_output[0]
+        return ["OK"] * len(model_output)
 
-    def handle(self, context, data):
+    def handle(self, data, context):
         """
         Custom service entry point function.
+
         :param context: model server context
         :param data: list of objects, raw input from request
         :return: list of outputs to be send back to client
@@ -89,6 +91,8 @@ class NoopService(object):
 
             request_processor.add_response_property("Content-Type", "text/plain")
             content_type = request_processor.get_request_property("Content-Type")
+            logger.debug("content_type: {}".format(content_type))
+
             end_time = time.time()
 
             metrics = context.metrics
@@ -105,7 +109,7 @@ _service = NoopService()
 
 def handle(data, context):
     if not _service.initialized:
-        _service.initialize()
+        _service.initialize(context)
 
     if data is None:
         return None

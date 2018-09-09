@@ -309,7 +309,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
 
         latch.await();
-        Assert.assertEquals(result, "test");
+        Assert.assertEquals(result, "OK");
     }
 
     private void testPredictionsJson(Channel channel) throws InterruptedException {
@@ -324,8 +324,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
 
         latch.await();
-
-        Assert.assertEquals(result, "{\"data\": \"test\"}");
+        Assert.assertEquals(result, "OK");
     }
 
     private void testPredictionsBinary(Channel channel) throws InterruptedException {
@@ -341,7 +340,7 @@ public class ModelServerTest {
 
         latch.await();
 
-        Assert.assertEquals(result, "test");
+        Assert.assertEquals(result, "OK");
     }
 
     private void testInvocationsJson(Channel channel) throws InterruptedException {
@@ -356,7 +355,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(result, "{\"data\": \"test\"}");
+        Assert.assertEquals(result, "OK");
     }
 
     private void testInvocationsMultipart(Channel channel)
@@ -381,7 +380,7 @@ public class ModelServerTest {
 
         latch.await();
 
-        Assert.assertEquals(result, "noop_v0.1");
+        Assert.assertEquals(result, "OK");
     }
 
     private void testMetricManager() throws JsonParseException, InterruptedException {

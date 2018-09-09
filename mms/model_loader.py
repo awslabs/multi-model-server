@@ -11,20 +11,17 @@
 """
 Model loader.
 """
+import importlib
 import inspect
 import json
 import os
 import sys
-import importlib
 from abc import ABCMeta, abstractmethod
 
-from mms.service import Service
-from mms.model_service.mxnet_model_service import SingleNodeService
-from mms.log import log_error
 from mms.mxnet_model_service_error import MMSError
-from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
+from mms.service import Service
+from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
 
-MANIFEST_FILENAME = 'MANIFEST.json'
 
 class ModelLoaderFactory(object):
     """
@@ -74,12 +71,11 @@ class ModelLoader(object):
         # Parsing the module to get all defined classes
         classes = [cls[1] for cls in inspect.getmembers(module, lambda member: inspect.isclass(member) and
                                                         member.__module__ == module.__name__)]
-        print(classes)
         # filter classes that is subclass of parent_class
         if parent_class is not None:
             return [c for c in classes if issubclass(c, parent_class)]
-        else:
-            return classes
+
+        return classes
 
 
 class MmsModelLoader(ModelLoader):
@@ -98,13 +94,13 @@ class MmsModelLoader(ModelLoader):
         :param batch_size:
         :return:
         """
-        manifest_file = os.path.join(model_dir, MANIFEST_FILENAME)
+        manifest_file = os.path.join(model_dir, "MAR_INF/MANIFEST.json")
         manifest = None
         if os.path.exists(manifest_file):
             with open(manifest_file) as f:
                 manifest = json.load(f)
 
-        temp = handler.split(':', 1)
+        temp = handler.split(":", 2)
         module_name = temp[0]
         function_name = None if len(temp) == 1 else temp[1]
         module = importlib.import_module(module_name)
@@ -115,26 +111,29 @@ class MmsModelLoader(ModelLoader):
         if hasattr(module, function_name):
             entry_point = getattr(module, function_name)
             service = Service(model_name, model_dir, manifest, entry_point, gpu_id, batch_size)
+
+            # initialize model at load time
+            entry_point(None, service.context)
         else:
             model_class_definitions = ModelLoader.list_model_services(module)
             if len(model_class_definitions) != 1:
-                raise MMSError(err.VALUE_ERROR_WHILE_LOADING,
+                raise MMSError(Err.VALUE_ERROR_WHILE_LOADING,
                                "Expected only one class in custom service code or a function entry point")
             model_class = model_class_definitions[0]
             model_service = model_class()
             handle = getattr(model_service, "handle")
             if handle is None:
-                raise MMSError(err.VALUE_ERROR_WHILE_LOADING,
+                raise MMSError(Err.VALUE_ERROR_WHILE_LOADING,
                                "Expect handle method in class {}".format(str(model_class)),)
             service = Service(model_name, model_dir, manifest, model_service.handle, gpu_id, batch_size)
             initialize = getattr(model_service, "initialize")
             if initialize is not None:
                 # noinspection PyBroadException
                 try:
-                    model_service.initialize()
+                    model_service.initialize(service.context)
                 # pylint: disable=broad-except
-                except Exception as e:
-                    log_error("Error during initialize in custom service class {}".format(str(e)))
+                except Exception:
+                    sys.exc_clear()
 
         return service
 
@@ -155,7 +154,7 @@ class LegacyModelLoader(ModelLoader):
         :param batch_size:
         :return:
         """
-        manifest_file = os.path.join(model_dir, 'MANIFEST.legacy')
+        manifest_file = os.path.join(model_dir, "MANIFEST.json")
         with open(manifest_file) as f:
             manifest = json.load(f)
         if not handler.endswith(".py"):
@@ -163,19 +162,26 @@ class LegacyModelLoader(ModelLoader):
 
         service_file = os.path.join(model_dir, handler)
         name = os.path.splitext(os.path.basename(service_file))[0]
-        module = None
         if sys.version_info[0] > 2:
-            spec = importlib.util.spec_from_file_location(name, service_file)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            from importlib import util
 
+            spec = util.spec_from_file_location(name, service_file)
+            module = util.module_from_spec(spec)
+            spec.loader.exec_module(module)
         else:
             import imp
             module = imp.load_source(name, service_file)
         if module is None:
-            raise MMSError(err.VALUE_ERROR_WHILE_LOADING, "Unable to load module {}".format(service_file))
-        model_class_definitions = ModelLoader.list_model_services(module, SingleNodeService)
-        module = model_class_definitions[0]
+            raise MMSError(Err.VALUE_ERROR_WHILE_LOADING, "Unable to load module {}".format(service_file))
 
-        entry_point = module(model_name, model_dir, manifest, gpu_id)
-        return Service(model_name, model_dir, manifest, entry_point, gpu_id, batch_size)
+        from mms.model_service.mxnet_model_service import SingleNodeService
+
+        model_class_definitions = ModelLoader.list_model_services(module, SingleNodeService)
+        module_class = model_class_definitions[0]
+
+        module = module_class(model_name, model_dir, manifest, gpu_id)
+        service = Service(model_name, model_dir, manifest, module.handle, gpu_id, batch_size)
+
+        module.initialize(service.context)
+
+        return service

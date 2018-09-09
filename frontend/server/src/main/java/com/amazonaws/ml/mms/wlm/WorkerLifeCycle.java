@@ -48,10 +48,20 @@ public class WorkerLifeCycle {
     }
 
     public boolean startWorker(int port) {
+        File workingDir;
+        File modelPath;
+        try {
+            workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
+            modelPath = model.getModelDir().getCanonicalFile();
+        } catch (IOException e) {
+            logger.error("Failed get MMS home directory", e);
+            return false;
+        }
+
         SocketAddress address = NettyUtils.getSocketAddress(port);
         String[] args = new String[6];
         args[0] = "python";
-        args[1] = "mms/model_service_worker.py";
+        args[1] = new File(workingDir, "mms/model_service_worker.py").getAbsolutePath();
         args[4] = "--sock-type";
 
         if (address instanceof DomainSocketAddress) {
@@ -64,39 +74,21 @@ public class WorkerLifeCycle {
             args[3] = String.valueOf(port);
         }
 
-        File workingDir;
-
-        try {
-            workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
-        } catch (IOException e) {
-            logger.error("Failed start worker process", e);
-            return false;
+        StringBuilder pythonPath = new StringBuilder("PYTHONPATH=");
+        if (System.getenv("PYTHONPATH") != null) {
+            pythonPath.append(System.getenv("PYTHONPATH")).append(File.pathSeparatorChar);
         }
-
-        String pythonPath = System.getenv("PYTHONPATH");
-        String pythonEnv;
-        if (pythonPath == null || pythonPath.isEmpty()) {
-            pythonEnv =
-                    "PYTHONPATH="
-                            + workingDir.getAbsolutePath()
-                            + File.pathSeparatorChar
-                            + model.getModelDir();
-        } else {
-            pythonEnv =
-                    "PYTHONPATH="
-                            + pythonPath
-                            + File.pathSeparatorChar
-                            + workingDir.getAbsolutePath()
-                            + File.pathSeparatorChar
-                            + model.getModelDir();
-        }
-        String[] envp = new String[] {pythonEnv};
+        pythonPath
+                .append(modelPath.getAbsolutePath())
+                .append(File.pathSeparatorChar)
+                .append(workingDir.getAbsolutePath());
+        String[] envp = new String[] {pythonPath.toString()};
 
         try {
             latch = new CountDownLatch(1);
 
             synchronized (this) {
-                process = Runtime.getRuntime().exec(args, envp, workingDir);
+                process = Runtime.getRuntime().exec(args, envp, modelPath);
 
                 String threadName = "W-" + port;
                 new ReaderThread(threadName, process.getErrorStream(), true, this).start();

@@ -15,11 +15,6 @@ b. Creates end-points based on the configured models.
 c. Exposes standard "ping" and "api-description" endpoints.
 d. Waits for servicing inference requests.
 """
-from . import log
 from . import version
-from . import utils
-from . import metrics
-from . import model_service
-from . import arg_parser
 
 __version__ = version.__version__

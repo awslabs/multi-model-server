@@ -15,20 +15,18 @@ Communication message format: JSON message
 
 # pylint: disable=redefined-builtin
 
-import socket
-import ast
 import os
-import json
+import socket
 
 from builtins import str
 
-from mms.model_loader import ModelLoaderFactory
 from mms.arg_parser import ArgParser
 from mms.log import log_msg, log_error
-from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
+from mms.model_loader import ModelLoaderFactory
 from mms.mxnet_model_service_error import MMSError
-from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 from mms.protocol.otf_message_handler import OtfCodecHandler
+from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
+from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 
 MAX_FAILURE_THRESHOLD = 5
 SOCKET_ACCEPT_TIMEOUT = 30.0
@@ -76,169 +74,6 @@ class MXNetModelServiceWorker(object):
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(repr(e)))
 
-    def retrieve_model_input(self, model_inputs, req_bat_content_type=None):
-        """
-
-        MODEL_INPUTS : [{
-                "value": "val1"
-                "name" : model_input_name (This is defined in the symbol file and the signature file)
-        }]
-
-        :param req_bat_content_type: Content-type of the request-batch, the outer scope of model-inputs
-        :param model_inputs: list of model_input elements each containing "encoding", "value" and "name"
-        :return:
-        """
-
-        model_in = OrderedDict()
-        for _, ip in enumerate(model_inputs):
-            ModelWorkerMessageValidators.validate_predict_inputs(ip)
-            ip_name = ip.get('name')
-            content_type = ip.get('contentType')
-
-            if content_type is None or content_type == b'':
-                content_type = req_bat_content_type
-
-            if content_type is not None and content_type != b'' and "text" in content_type.decode():
-                decoded_val = ip.get(u'value').decode()
-            elif content_type is not None and content_type != b'' and "json" in content_type.decode():
-                decoded_val = ast.literal_eval(ip.get(u'value').decode())
-            else:
-                decoded_val = ip.get(u'value')
-            model_in.update({ip_name.decode(): decoded_val})
-
-        return model_in
-
-    def retrieve_data_for_inference(self, requests=None):
-        """
-        REQUESTS = [ {
-            "requestId" : "111-222-3333",
-            "modelInputs" : [ MODEL_INPUTS ]
-        } ]
-
-        MODEL_INPUTS = {
-                "value": "val1"
-                "name" : model_input_name (This is defined in the symbol file and the signature file)
-        }
-
-        inputs: List of requests
-        Returns a list(dict(inputs))
-        """
-
-        req_to_id_map = {}
-        invalid_reqs = {}
-
-        if requests is None:
-            raise ValueError("Received invalid inputs")
-
-        input_batch = []
-        for batch_idx, request_batch in enumerate(requests):
-            ModelWorkerMessageValidators.validate_predict_data(request_batch)
-            req_id = request_batch.get('requestId').decode()
-
-            model_inputs = request_batch['modelInputs']
-            req_batch_content_type = request_batch.get('contentType')
-            try:
-                input_data = self.retrieve_model_input(model_inputs, req_batch_content_type)
-                input_batch.append(input_data)
-                req_to_id_map[batch_idx] = req_id
-            except MMSError as m:
-                invalid_reqs.update({req_id: m.get_code()})
-
-        return input_batch, req_to_id_map, invalid_reqs
-
-    def predict(self, data):
-        """
-        PREDICT COMMAND = {
-            "command": "predict",
-            "modelName": "model-to-run-inference-against",
-            "contentType": "http-content-types",
-            "requestBatch": [ REQUESTS ]
-        }
-
-        REQUESTS = {
-            "requestId" : "111-222-3333",
-            "encoding" : "None|base64|utf-8",
-            "modelInputs" : [ MODEL_INPUTS ]
-        }
-
-        MODEL_INPUTS = {
-                "encoding": "base64/utf-8", (# This is how the value is encoded)
-                "value": "val1"
-                "name" : model_input_name (# This is defined in the symbol file and the signature file)
-        }
-
-        :param data:
-        :return:
-
-        """
-        try:
-            retval = []
-            ModelWorkerMessageValidators.validate_predict_msg(data)
-            model_name = data[u'modelName'].decode()
-            loaded_services = self.service_manager.get_loaded_modelservices()
-            if model_name not in loaded_services:
-                raise MMSError(err.MODEL_SERVICE_NOT_LOADED, "Model {} is currently not loaded".format(model_name))
-            model_service = loaded_services[model_name]
-            req_batch = data[u'requestBatch']
-            batch_size = len(req_batch)  # num-inputs gives the batch size
-            input_batch, req_id_map, invalid_reqs = self.retrieve_data_for_inference(req_batch)
-            if batch_size == 1:
-                # Initialize metrics at service level
-                model_service.metrics_init(model_name, req_id_map)
-                retval.append(model_service.inference([input_batch[0][i] for i in input_batch[0]]))
-                emit_metrics(model_service.metrics_store.store)
-            else:
-                raise MMSError(err.UNSUPPORTED_PREDICT_OPERATION, "Invalid batch size {}".format(batch_size))
-
-            msg = self.codec.create_response(cmd=2, resp=retval, req_id_map=req_id_map, invalid_reqs=invalid_reqs)
-
-        except ValueError as v:
-            raise MMSError(err.INVALID_PREDICT_MESSAGE, "{}".format(repr(v)))
-        except MMSError as m:
-            raise m
-        return msg, "Prediction success", 200
-
-
-    @staticmethod
-    def recv_msg(client_sock):
-        """
-        Receive a message from a given socket file descriptor
-        :param client_sock:
-        :return:
-        """
-        data = b''
-        try:
-            while True:
-                if BENCHMARK:
-                    pr.disable()
-                    pr.dump_stats('/tmp/mmsPythonProfile.prof')
-                pkt = client_sock.recv(1024)
-                if BENCHMARK:
-                    pr.enable()
-                if not pkt:
-                    exit(1)
-
-                data += pkt
-                # Check if we received last segment. Assumption is we receive only one packet at a time.
-                # TODO:
-                # Modify this. If we receive multiple packets, the '\r\n' be in the middle of the pkt/data. We
-                # need to buffer the rest.
-                if data[-2:] == b'\r\n':
-                    break
-            in_msg = json.loads(data.decode('utf8'))
-            if u'command' not in in_msg:
-                raise MMSError(err.INVALID_COMMAND, "Invalid message received")
-        except (IOError, OSError) as sock_err:
-            raise MMSError(err.RECEIVE_ERROR, "{}".format(repr(sock_err)))
-        except ValueError as v:
-            raise MMSError(err.INVALID_REQUEST, "JSON message format error: {}".format(v))
-        except MMSError as error:  # The error raise in #138 goes into the Exception block below and we lose the
-            raise error           # status code
-        except Exception as e:  # pylint: disable=broad-except
-            raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(e))
-
-        return in_msg['command'], in_msg
-
     def load_model(self, data):
         """
         Expected command
@@ -267,13 +102,11 @@ class MXNetModelServiceWorker(object):
             if u'gpu' in data:
                 gpu = int(data[u'gpu'])
 
-            manifest_file = os.path.join(model_dir, 'MANIFEST.legacy')
-            model_type = "legacy_mms" if os.path.exists(manifest_file) else "mms"
+            manifest_file = os.path.join(model_dir, "MAR_INF/MANIFEST.json")
+            model_type = "mms" if os.path.exists(manifest_file) else "legacy_mms"
 
             model_loader = ModelLoaderFactory.get_model_loader(model_type)
-            print("calling load")
             service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
-            service.legacy = (model_type == "legacy_mms")
             return service, "loaded model {}".format(model_name), 200
 
         except ValueError as v:
@@ -282,30 +115,6 @@ class MXNetModelServiceWorker(object):
             raise m
         except Exception as e:  # pylint: disable=broad-except
             raise MMSError(err.UNKNOWN_EXCEPTION_WHILE_LOADING, "{}".format(repr(e)))
-
-
-    def unload_model(self, request):
-        """
-        Expected request
-        {
-            "command" : "unload",
-            "model-name": "name"
-        }
-
-        :param request:
-        :return:
-        """
-        try:
-            ModelWorkerMessageValidators.validate_unload_msg(request)
-            model_name = request[u'model-name'].decode()
-            self.service_manager.unload_models(model_name)
-        except KeyError:
-            raise MMSError(err.MODEL_CURRENTLY_NOT_LOADED, "Model is not being served on model server")
-        except MMSError as m:
-            raise m
-        except Exception as e:  # pylint: disable=broad-except
-            raise MMSError(err.UNKNOWN_EXCEPTION, "Unknown error {}".format(repr(e)))
-        return "Unloaded model {}".format(model_name), 200
 
     def send_response(self, sock, msg):
         """
@@ -346,12 +155,10 @@ class MXNetModelServiceWorker(object):
         while True:
             try:
                 cmd, msg = self.codec.retrieve_msg(conn=cl_socket)
-                if cmd.lower() == u'predict':
-                    predictions, result, code = service.predict(data)
-                elif cmd.lower() == u'load':
-                    service, result, code = self.load_model(data)
-                elif cmd.lower() == u'unload':
-                    result, code = self.unload_model(msg)
+                if cmd == u"predict":
+                    predictions, result, code = service.predict(msg, self.codec)
+                elif cmd == u"load":
+                    service, result, code = self.load_model(msg)
                 else:
                     result = "Received unknown command: {}".format(cmd)
                     code = err.UNKNOWN_COMMAND

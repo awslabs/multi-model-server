@@ -31,7 +31,8 @@ class OtfCodecHandler(object):
     OTF Codec class
     """
 
-    def _retrieve_buffer(self, conn, length):
+    @staticmethod
+    def _retrieve_buffer(conn, length):
         data = bytearray()
 
         try:
@@ -65,7 +66,7 @@ class OtfCodecHandler(object):
         | int batch-size length | batch-size value | int handler length | handler value |
         | int gpu id length | gpu ID value |
 
-        :param data:
+        :param conn:
         :return:
         """
         msg = dict()
@@ -157,14 +158,15 @@ class OtfCodecHandler(object):
 
         return cmd, msg
 
-    def _encode_inference_response(self, kwargs):
+    @staticmethod
+    def _encode_inference_response(kwargs):
         try:
             req_id_map = kwargs['req_id_map']
             invalid_reqs = kwargs['invalid_reqs']
             ret = kwargs['resp']
             msg = bytearray()
             msg += struct.pack('!i', -1)  # start of list
-            content_type = ""
+
             for idx, val in enumerate(ret):
                 msg += struct.pack("!i", len(req_id_map[idx]))
                 msg += struct.pack('!{}s'.format(len(req_id_map[idx])), req_id_map[idx].encode('utf-8'))
@@ -222,7 +224,8 @@ class OtfCodecHandler(object):
         except Exception:
             raise MMSError(Err.ENCODE_FAILED, "Invalid message received for encode")
 
-    def _encode_response(self, kwargs):
+    @staticmethod
+    def _encode_response(kwargs):
         msg = bytearray()
         try:
             msg += struct.pack('!i', int(kwargs['code']))

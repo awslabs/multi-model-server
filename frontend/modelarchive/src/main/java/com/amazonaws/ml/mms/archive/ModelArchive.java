@@ -24,9 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -69,7 +67,7 @@ public class ModelArchive {
         if (URL_PATTERN.matcher(url).matches()) {
             try {
                 File modelDir = download(url);
-                return load(url, modelDir, false);
+                return load(url, modelDir);
             } catch (IOException e) {
                 throw new InvalidModelException(
                         ErrorCodes.MODEL_ARCHIVE_DOWNLOAD_FAIL,
@@ -89,7 +87,7 @@ public class ModelArchive {
         if (url.endsWith(".model") || url.endsWith(".mar")) {
             try (InputStream is = new FileInputStream(modelLocation)) {
                 File unzipDir = unzip(is, null);
-                return load(url, unzipDir, false);
+                return load(url, unzipDir);
             } catch (IOException e) {
                 throw new InvalidModelException(
                         ErrorCodes.MODEL_ARCHIVE_INCORRECT,
@@ -97,7 +95,7 @@ public class ModelArchive {
                         e);
             }
         }
-        return load(url, modelLocation, true);
+        return load(url, modelLocation);
     }
 
     public static void migrate(File legacyModelFile, File destination)
@@ -131,7 +129,8 @@ public class ModelArchive {
                         "Missing Model entry in manifest file.");
             }
 
-            zos.putNextEntry(new ZipEntry(MANIFEST_FILE));
+            zos.putNextEntry(new ZipEntry("MAR_INF/"));
+            zos.putNextEntry(new ZipEntry("MAR_INF/" + MANIFEST_FILE));
             zos.write(GSON.toJson(manifest).getBytes(StandardCharsets.UTF_8));
 
             Enumeration<? extends ZipEntry> en = zip.entries();
@@ -178,86 +177,27 @@ public class ModelArchive {
         return unzip(conn.getInputStream(), eTag);
     }
 
-    private static ModelArchive load(String url, File dir, boolean copyOnMigrate)
-            throws InvalidModelException {
-        File manifestFile = findFile(dir, MANIFEST_FILE, true); // for 0.1 model archive
-        File modelDir;
-        if (manifestFile == null) {
-            modelDir = dir;
-        } else {
-            modelDir = manifestFile.getParentFile();
-        }
-
-        Manifest manifest = null;
-        if (manifestFile != null && manifestFile.exists()) {
-            JsonObject json;
-            try (Reader reader =
-                    new InputStreamReader(
-                            new FileInputStream(manifestFile), StandardCharsets.UTF_8)) {
-                JsonParser parser = new JsonParser();
-                json = (JsonObject) parser.parse(reader);
-            } catch (IOException | JsonParseException e) {
-                throw new InvalidModelException(
-                        ErrorCodes.INCORRECT_ARTIFACT_MANIFEST,
-                        "Failed to parse MANIFEST.json.",
-                        e);
-            }
-
-            JsonPrimitive version = json.getAsJsonPrimitive("specificationVersion");
-            if (version == null) {
-                // MMS 0.4
-                return migrateOnLoad(url, modelDir, json, copyOnMigrate);
-            }
-
-            manifest = GSON.fromJson(json, Manifest.class);
-        } else {
+    private static ModelArchive load(String url, File dir) throws InvalidModelException {
+        File manifestFile = new File(dir, "MAR_INF/" + MANIFEST_FILE);
+        Manifest manifest;
+        File modelDir = dir;
+        if (manifestFile.exists()) {
             // Must be MMS 1.0 or later
-            if (manifestFile != null) {
-                manifest = readFile(manifestFile, Manifest.class);
-            }
-            if (manifest == null) {
+            manifest = readFile(manifestFile, Manifest.class);
+        } else {
+            manifestFile = findFile(dir, MANIFEST_FILE, true); // for 0.1 model archive
+            if (manifestFile == null) {
                 // Must be 1.0
                 manifest = new Manifest();
                 Manifest.Model model = new Manifest.Model();
                 model.setModelName(dir.getName());
                 manifest.setModel(model);
+            } else {
+                // 0.1 model may have extra parent directory
+                modelDir = manifestFile.getParentFile();
+                LegacyManifest legacyManifest = readFile(manifestFile, LegacyManifest.class);
+                manifest = legacyManifest.migrate();
             }
-        }
-
-        ModelArchive archive = new ModelArchive(manifest, url, modelDir);
-        archive.validate();
-        return archive;
-    }
-
-    private static ModelArchive migrateOnLoad(
-            String url, File modelDir, JsonObject json, boolean copyOnMigrate)
-            throws InvalidModelException {
-        LegacyManifest legacyManifest = GSON.fromJson(json, LegacyManifest.class);
-        Manifest manifest = legacyManifest.migrate();
-
-        try {
-            if (copyOnMigrate) {
-                File tmpDir = FileUtils.getTempDirectory();
-                File copyDir = new File(tmpDir, "models/" + modelDir.getName());
-                FileUtils.deleteDirectory(copyDir);
-                FileUtils.forceMkdir(copyDir);
-                FileUtils.copyDirectory(modelDir, copyDir, f -> !f.isHidden());
-                modelDir = copyDir;
-            }
-
-            File output = new File(modelDir, MANIFEST_FILE);
-            File bak = new File(modelDir, "MANIFEST.legacy");
-            FileUtils.copyFile(output, bak);
-            try (Writer writer =
-                    new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.UTF_8)) {
-                writer.write(GSON.toJson(manifest));
-            }
-        } catch (IOException e) {
-            // TODO: Should migration be supported?
-            throw new InvalidModelException(
-                    ErrorCodes.INCORRECT_ARTIFACT_LEGACY_MODEL,
-                    "Failed to migrate legacy model.",
-                    e);
         }
 
         ModelArchive archive = new ModelArchive(manifest, url, modelDir);
@@ -266,18 +206,12 @@ public class ModelArchive {
     }
 
     private static <T> T readFile(File file, Class<T> type) throws InvalidModelException {
-        if (file.exists()) {
-            try (Reader r =
-                    new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
-                return GSON.fromJson(r, type);
-            } catch (IOException | JsonParseException e) {
-                throw new InvalidModelException(
-                        ErrorCodes.INCORRECT_ARTIFACT_MANIFEST,
-                        "Failed to parse signature.json.",
-                        e);
-            }
+        try (Reader r = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+            return GSON.fromJson(r, type);
+        } catch (IOException | JsonParseException e) {
+            throw new InvalidModelException(
+                    ErrorCodes.INCORRECT_ARTIFACT_MANIFEST, "Failed to parse signature.json.", e);
         }
-        return null;
     }
 
     private static File findFile(File dir, String fileName, boolean recursive) {
@@ -341,8 +275,6 @@ public class ModelArchive {
             throw new InvalidModelException(
                     ErrorCodes.INCORRECT_ARTIFACT_MANIFEST, "Missing Model name in manifest file.");
         }
-
-        // TODO: Add more validation
     }
 
     public Manifest getManifest() {

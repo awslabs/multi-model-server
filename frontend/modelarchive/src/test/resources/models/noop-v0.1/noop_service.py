@@ -14,17 +14,14 @@ NoopService defines a noop service
 
 from mms.model_service.mxnet_model_service import SingleNodeService
 
+
 class NoopService(SingleNodeService):
     """
     NoopService defines a noop service.
     """
 
     def _inference(self, data):
-        return data[0]
+        return "OK"
 
     def ping(self):
-        return None
-
-    @property
-    def signature(self):
         return None

@@ -100,6 +100,7 @@ public class LegacyManifest {
         Manifest manifest = new Manifest();
         manifest.setDescription(description);
         manifest.setLicense(license);
+        manifest.setSpecificationVersion("0.1");
 
         if (createdBy != null) {
             Manifest.Publisher publisher = new Manifest.Publisher();

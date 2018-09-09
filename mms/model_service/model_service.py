@@ -12,19 +12,20 @@
 """
 # pylint: disable=W0223
 
-
+import ast
+import json
+import os
 import time
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 from mms.log import get_logger
-from mms.mxnet_model_service_error import MMSError
-from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
-from mms.metrics.metrics_store import MetricsStore
 
-logger = get_logger()
 PREPROCESS_METRIC = 'MMSWorkerPreprocessTimeBatch'
 INFERENCE_METRIC = 'MMSWorkerInferenceTimeBatch'
 POSTPROCESS_METRIC = 'MMSWorkerPostprocessTimeBatch'
+
+logger = get_logger()
+
 
 class ModelService(object):
     """
@@ -34,31 +35,29 @@ class ModelService(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        self.model_name = model_name
-        self.model_dir = model_dir
-        self.manifest = manifest
-        self.gpu = gpu
+    # noinspection PyUnusedLocal
+    def __init__(self, model_name, model_dir, manifest, gpu=None):  # pylint: disable=unused-argument
         self.ctx = None
+        self._context = None
         self._signature = None
-        self.metrics_store = None
 
-    def _init_internal(self, model_name, model_dir, manifest, gpu=None, batch_size=None):
+    def initialize(self, context):
         """
-        Initialize ModelService. This will be called from model_service_worker.
-        DO NOT override this method!!!
-        :param model_name:
-        :param model_dir:
-        :param manifest:
-        :param gpu:
-        :param batch_size:
+        Internal initialize ModelService.
+
+        :param context: MMS context object
         :return:
         """
-        self.model_name = model_name
-        self.model_dir = model_dir
-        self.manifest = manifest
-        self.gpu = gpu
-        self.batch_size = batch_size
+        self._context = context
+        properties = context.system_properties
+        model_dir = properties.get("model_dir")
+
+        signature_file_path = os.path.join(model_dir, context.manifest['Model']['Signature'])
+        if not os.path.isfile(signature_file_path):
+            raise ValueError("Signature file is not found.")
+
+        with open(signature_file_path) as f:
+            self._signature = json.load(f)
 
     @abstractmethod
     def inference(self, data):
@@ -89,20 +88,44 @@ class ModelService(object):
         """
         pass
 
-    @abstractproperty
     def signature(self):
         """
-        Signiture for model service.
+        Signature for model service.
 
         Returns
         -------
         Dict
             Model service signature.
         """
-        pass
+        return self._signature
 
-    def metrics_init(self, model_name, req_id_map=None):
-        self.metrics_store = MetricsStore(req_id_map, model_name)
+    # noinspection PyUnusedLocal
+    def handle(self, data, context):  # pylint: disable=unused-argument
+        """
+        Backward compatible handle function.
+
+        :param data:
+        :param context:
+        :return:
+
+        """
+        input_type = self._signature['input_type']
+
+        input_data = []
+        if input_type == "application/json":
+            for inputs in self._signature['inputs']:
+                input_name = inputs['data_name']
+                form_data = data[0].get(input_name)
+                form_data = ast.literal_eval(form_data)
+                input_data.append(form_data)
+        else:
+            input_data = [data[0][i] for i in data[0]]
+
+        ret = self.inference(input_data)
+        if isinstance(ret, list):
+            return ret
+
+        return [ret]
 
 
 class SingleNodeService(ModelService):
@@ -125,30 +148,23 @@ class SingleNodeService(ModelService):
         list of outputs to be sent back to client.
             data to be sent back
         """
-        try:
-            pre_start_time = time.time()
-            data = self._preprocess(data)
-            infer_start_time = time.time()
-            data = self._inference(data)
-            post_start_ms = time.time()
-            data = self._postprocess(data)
-            post_end_ms = time.time()
+        pre_start_time = time.time()
+        data = self._preprocess(data)
+        infer_start_time = time.time()
+        data = self._inference(data)
+        post_start_ms = time.time()
+        data = self._postprocess(data)
+        post_end_ms = time.time()
 
-            pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
+        pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
+        infer_time_in_ms = (post_start_ms - infer_start_time) * 1000
+        post_time_in_ms = (post_end_ms - post_start_ms) * 1000
 
-            infer_time_in_ms = (post_start_ms - infer_start_time) * 1000
+        metrics = self._context.metrics
+        metrics.add_time(PREPROCESS_METRIC, pre_time_in_ms)
+        metrics.add_time(INFERENCE_METRIC, infer_time_in_ms)
+        metrics.add_time(POSTPROCESS_METRIC, post_time_in_ms)
 
-            post_time_in_ms = (post_end_ms - post_start_ms) * 1000
-
-            self.metrics_store.add_time(PREPROCESS_METRIC, pre_time_in_ms)
-            self.metrics_store.add_time(INFERENCE_METRIC, infer_time_in_ms)
-            self.metrics_store.add_time(POSTPROCESS_METRIC, post_time_in_ms)
-
-        except MMSError as m:
-            m.set_code(err.CUSTOM_SERVICE_ERROR)
-            raise m
-        except Exception as e:
-            raise MMSError(err.CUSTOM_SERVICE_ERROR, repr(e))
         return data
 
     @abstractmethod

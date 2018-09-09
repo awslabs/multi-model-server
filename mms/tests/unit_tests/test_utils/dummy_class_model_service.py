@@ -15,9 +15,9 @@ Dummy custom service which is class based
 
 class CustomService(object):
 
-    def initialize(self):
+    def initialize(self, context):
         pass
 
-    def handle(self, context):
+    def handle(self, data, context):
         from mms.context import Context
-        return isinstance(context, Context)
+        return ["OK"]

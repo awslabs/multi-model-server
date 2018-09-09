@@ -27,8 +27,8 @@ class Manifest(object):
     The main manifest object which gets written into the model archive as MANIFEST.json
     """
 
-    def __init__(self, runtime, engine, model, specification_version=None, implementation_version=None,
-                 description=None, publisher=None, model_server_version=None, license=None, user_data=None):
+    def __init__(self, runtime, model, engine=None, specification_version='1.0', implementation_version='1.0',
+                 description=None, publisher=None, model_server_version='1.0', license=None, user_data=None):
 
         self.runtime = RuntimeType(runtime)
         self.engine = engine

@@ -23,6 +23,7 @@ def export_model(args, manifest, export_file_path=None):
     """
     model_path = args.model_path
     model_name = args.model_name
+    ModelExportUtils.check_model_name_regex(model_name)
     temp_files = []
     try:
         # Step 1 : Check if .mar already exists with the given model name
@@ -32,21 +33,17 @@ def export_model(args, manifest, export_file_path=None):
         t, files_to_exclude = ModelExportUtils.check_custom_model_types(model_path)
         temp_files.extend(t)
 
-        # Step 3 : write the manifest file
-        manifest_file = ModelExportUtils.create_manifest_file(model_path, manifest)
-        temp_files.append(manifest_file)
-
-        # Step 4 : Zip 'em all up
-        ModelExportUtils.zip(export_file_path, model_path, files_to_exclude)
+        # Step 3 : Zip 'em all up
+        ModelExportUtils.zip(export_file_path, model_path, files_to_exclude, manifest)
         logging.info("Successfully exported model %s to file %s", model_name, export_file_path)
 
     finally:
         ModelExportUtils.clean_temp_files(temp_files)
 
 
-def export():
+def generate_model_archive():
     """
-    Export as MXNet model
+    Generate a model archive file
     :return:
     """
     args = ArgParser.export_model_args_parser().parse_args()
@@ -55,4 +52,4 @@ def export():
 
 
 if __name__ == '__main__':
-    export()
+    generate_model_archive()

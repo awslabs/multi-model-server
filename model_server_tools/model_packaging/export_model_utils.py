@@ -18,10 +18,10 @@ import zipfile
 import sys
 import logging
 import re
-from model_server_tools.model_packaging.manifest_components.publisher import Publisher
-from model_server_tools.model_packaging.manifest_components.manifest import Manifest
-from model_server_tools.model_packaging.manifest_components.engine import Engine
-from model_server_tools.model_packaging.manifest_components.model import Model
+from .manifest_components.publisher import Publisher
+from .manifest_components.manifest import Manifest
+from .manifest_components.engine import Engine
+from .manifest_components.model import Model
 
 MODEL_ARCHIVE_EXTENSION = '.mar'
 MODEL_SERVER_VERSION = '1.0'

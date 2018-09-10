@@ -174,3 +174,48 @@ class TestExportModelUtils:
             assert 'model' in manifest_json
             assert 'publisher' in manifest_json
             assert 'license' not in manifest_json
+
+    # noinspection PyClassHasNoInit
+    class TestModelNameRegEx:
+
+        def test_regex_pass(self):
+            model_names = ['my-awesome-model', 'Aa.model', 'aA.model', 'a1234.model','a-A-A.model']
+            for m in model_names:
+                ModelExportUtils.check_model_name_regex(m)
+
+        def test_regex_fail(self):
+            model_names = ['123.abc', '12-model-a.model', '##.model', '-.model']
+            for m in model_names:
+                with pytest.raises(SystemExit):
+                    ModelExportUtils.check_model_name_regex(m)
+
+    # noinspection PyClassHasNoInit
+    class TestFileFilter:
+
+        files_to_exclude = ['abc.onnx']
+
+        def test_with_return_false(self):
+            assert ModelExportUtils.file_filter('abc.onnx', self.files_to_exclude) is False
+
+        def test_with_pyc(self):
+            assert ModelExportUtils.file_filter('abc.pyc', self.files_to_exclude) is False
+
+        def test_with_ds_store(self):
+            assert ModelExportUtils.file_filter('.DS_Store', self.files_to_exclude) is False
+
+        def test_with_return_true(self):
+            assert ModelExportUtils.file_filter('abc.mxnet', self.files_to_exclude) is True
+
+    # noinspection PyClassHasNoInit
+    class TestDirectoryFilter:
+
+        unwanted_dirs = {'__MACOSX', '__pycache__'}
+
+        def test_with_unwanted_dirs(self):
+            assert ModelExportUtils.directory_filter('__MACOSX', self.unwanted_dirs) is False
+
+        def test_with_starts_with_dot(self):
+            assert ModelExportUtils.directory_filter('.gitignore', self.unwanted_dirs) is False
+
+        def test_with_return_true(self):
+            assert ModelExportUtils.directory_filter('my-model', self.unwanted_dirs) is True

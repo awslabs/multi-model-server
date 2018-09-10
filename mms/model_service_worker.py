@@ -29,7 +29,6 @@ from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
 from mms.protocol.otf_message_handler import OtfCodecHandler
-from mms.metrics.metric_encoder import MetricEncoder
 
 MAX_FAILURE_THRESHOLD = 5
 SOCKET_ACCEPT_TIMEOUT = 30.0

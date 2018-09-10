@@ -203,27 +203,6 @@ class ModelExportUtils(object):
         return str(manifest)
 
     @staticmethod
-    def create_manifest_file(model_path, manifest):
-        """
-        Function creates a file called manifest.json under model_path/MAR-INF folder
-
-        :param model_path:
-        :param manifest:
-        :return:
-        """
-        mar_inf_path = os.path.join(model_path, MAR_INF)
-
-        if not os.path.exists(mar_inf_path):
-            os.makedirs(mar_inf_path)
-
-        manifest_path = os.path.join(mar_inf_path, MANIFEST_FILE_NAME)
-
-        with open(manifest_path, 'w') as m:
-            json.dump(manifest, m, indent=4)
-
-        return manifest_path
-
-    @staticmethod
     def clean_temp_files(temp_files):
         for f in temp_files:
             os.remove(f)
@@ -301,7 +280,7 @@ class ModelExportUtils(object):
         """
         pattern = re.compile(r'[A-Za-z][A-Za-z0-9_\-.]+')
         if pattern.match(model_name) is None:
+
             logging.error("Model name contains special characters. The allowed regular expression filter for model "
                           "name is %s ", r'[A-Za-z][A-Za-z0-9_\-.]+')
-
             sys.exit(1)

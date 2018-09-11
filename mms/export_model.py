@@ -9,22 +9,17 @@
 # permissions and limitations under the License.
 
 """
-Command line interface to export model files to be used for inference by MXNet Model Server
+This command line interface is no longer used. Please refer to model-archiver tool for the new CLI for exporting models.
 """
 
-import warnings
-from model_server_tools.model_packaging import export_model as export_tool
 
-
-def export():
-    """
-    Export as MXNet model
-    :return:
-    """
-    warnings.warn("Use model-export-tool instead of mxnet-model-export. mxnet-model-export is deprecated.",
-                  DeprecationWarning, stacklevel=2)
-    export_tool.generate_model_archive()
+def main():
+    print('\033[93m'  # Red Color start
+          + "mxnet-model-export is no longer supported.\n"
+            "Please use model-archiver to create 1.0 model archive.\n"
+            "For more detail, see: https://pypi.org/project/model-archiver"
+          + '\033[0m')  # Red Color end
 
 
 if __name__ == '__main__':
-    export()
+    main()

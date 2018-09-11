@@ -57,7 +57,7 @@ if __name__ == '__main__':
     requirements = ['future', 'enum34']
 
     setup(
-        name='model-export-tool',
+        name='model-archiver',
         version=version.strip() + 'b' + str(date.today()).replace('-', '') + '2',
         description='Model Export Tool is used for creating archives of trained neural net models that can be consumed '
                     'by MXNet-Model-Server inference',
@@ -73,7 +73,7 @@ if __name__ == '__main__':
             'onnx': ['onnx==1.1.1']
         },
         entry_points={
-            'console_scripts': ['model-export-tool=model_server_tools.model_packaging.export_model:export']
+            'console_scripts': ['model-archiver=model_server_tools.model_packaging.export_model:export']
         },
         include_package_data=True,
         license='Apache License Version 2.0'

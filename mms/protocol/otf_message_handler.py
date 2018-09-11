@@ -18,7 +18,6 @@ from mms.mxnet_model_service_error import MMSError
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
 
 int_size = 4
-double_size = 8
 END_OF_LIST = -2
 START_OF_LIST = -1
 PREDICT_MSG = 2
@@ -52,10 +51,6 @@ class OtfCodecHandler(object):
     def _retrieve_int(self, conn):
         data = self._retrieve_buffer(conn, int_size)
         return struct.unpack('!i', data)[0]
-
-    def _retrieve_double(self, conn):
-        data = self._retrieve_buffer(conn, double_size)
-        return struct.unpack('!d', data)[0]
 
     def _retrieve_load_msg(self, conn):
         """

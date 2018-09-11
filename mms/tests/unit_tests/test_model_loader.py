@@ -61,6 +61,7 @@ class TestListModels:
         assert classes[0].__name__ == 'CustomService'
 
 
+# noinspection PyProtectedMember
 # noinspection PyClassHasNoInit
 class TestLoadModels:
     model_name = 'testmodel'

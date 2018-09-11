@@ -28,16 +28,15 @@
 Setup.py for the model server package
 """
 
-import platform
-import os
-import ctypes
 import errno
-from datetime import date
-import sys
-from shutil import copyfile, rmtree
+import os
 import subprocess
-from setuptools import setup, find_packages, Command
+import sys
+from datetime import date
+from shutil import copyfile, rmtree
+
 import setuptools.command.build_py
+from setuptools import setup, find_packages, Command
 
 pkgs = find_packages()
 source_server_file = os.path.abspath('frontend/server/build/libs/server-1.0.jar')
@@ -45,22 +44,22 @@ dest_file_name = os.path.abspath('mms/frontend/model-server.jar')
 
 
 def pypi_description():
-    """Imports the long description for the project page"""
+    """
+    Imports the long description for the project page
+    """
     with open('PyPiDescription.rst') as df:
         return df.read()
 
 
 def detect_model_server_version():
-    with open(os.path.abspath(os.path.join("mms", "version.py")), 'r') as vf:
-        exec(vf.read(), None, globals())
-        # TODO: Look to remove this exec and version coming from file
-    return __version__
+    sys.path.append(os.path.abspath("mms"))
+    import mms
+    return mms.__version__
 
 
 class BuildFrontEnd(Command):
     """
-    Class defined to run custom commands. In this class we build the frontend if it hasn't been built in the last
-    5 mins. This is to avoid the accidentally publishing old binaries.
+    Class defined to run custom commands.
     """
     description = 'Build Model Server Frontend'
     user_options = []
@@ -71,6 +70,7 @@ class BuildFrontEnd(Command):
     def finalize_options(self):
         pass
 
+    # noinspection PyMethodMayBeStatic
     def run(self):
         """
         Actual method called to run the build command
@@ -88,16 +88,14 @@ class BuildFrontEnd(Command):
         if os.path.exists(source_server_file):
             os.remove(source_server_file)
 
-        cwd = os.getcwd()
         # Remove build/lib directory.
-        if os.path.exists(os.path.abspath('./build/lib/')):
-            rmtree(os.path.abspath('./build/lib/'))
-        os.chdir(os.path.abspath('./frontend/'))
+        if os.path.exists('build/lib/'):
+            rmtree('build/lib/')
+
         try:
-            subprocess.check_call('./gradlew build', shell=True)
+            subprocess.check_call('frontend/gradlew -p frontend build', shell=True)
         except OSError:
             assert 0, "build failed"
-        os.chdir(cwd)
         copyfile(source_server_file, dest_file_name)
 
 
@@ -116,13 +114,13 @@ if __name__ == '__main__':
     opt_set = set(sys.argv)
     version = detect_model_server_version()
 
-    #requirements = ['Pillow', 'psutil', 'future', 'model-archiver']
+    # requirements = ['Pillow', 'psutil', 'future', 'model-archiver']
     # TODO : Update this to the above line once model-arhiver gets published to PyPi
     requirements = ['Pillow', 'psutil', 'future']
 
     setup(
         name='mxnet-model-server',
-        version=version.strip() + 'b'+ str(date.today()).replace('-', ''),
+        version=version.strip() + 'b' + str(date.today()).replace('-', ''),
         description='Model Server for Apache MXNet is a tool for serving neural net models for inference',
         long_description=pypi_description(),
         url='https://github.com/awslabs/mxnet-model-server',
@@ -139,8 +137,10 @@ if __name__ == '__main__':
             'mxnet': ['mxnet==1.2'],
         },
         entry_points={
-            'console_scripts': ['mxnet-model-server=mms.model_server:start',
-                                'mxnet-model-export=mms.export_model:main']
+            'console_scripts': [
+                'mxnet-model-server=mms.model_server:start',
+                'mxnet-model-export=mms.export_model:main'
+            ]
         },
         include_package_data=True,
         license='Apache License Version 2.0'

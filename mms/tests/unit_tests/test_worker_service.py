@@ -12,6 +12,7 @@ from mock import Mock
 
 
 # noinspection PyClassHasNoInit
+# noinspection PyUnusedLocal
 class TestService:
     model_name = 'testmodel'
     model_dir = os.path.abspath('mms/tests/unit_tests/test_utils/')
@@ -26,7 +27,6 @@ class TestService:
         )
         return patches
 
-    # noinspection PyUnusedLocal
     @pytest.fixture()
     def service(self, mocker, patches):
         service = object.__new__(Service)
@@ -36,7 +36,6 @@ class TestService:
         service.retrieve_data_for_inference.return_value = [{0: 'inputBatch1'}], [b'2323'], 'invalid_reqs'
         return service
 
-    # noinspection PyUnusedLocal
     def test_success(self, patches, service):
         codec = OtfCodecHandler()
         response, msg, code = service.predict(self.data, codec)
@@ -61,6 +60,7 @@ class TestEmitMetrics:
 
 
 # noinspection PyClassHasNoInit
+# noinspection PyUnusedLocal
 class TestRetrieveDataForInference:
     valid_req = [{'requestId': b'111-222-3333', 'modelInputs': '[{}]'}]
 
@@ -77,14 +77,12 @@ class TestRetrieveDataForInference:
         mocker.patch.object(Service, 'retrieve_model_input')
         return object.__new__(Service)
 
-    # noinspection PyUnusedLocal
     def test_with_nil_request(self, patches, service):
         with pytest.raises(ValueError) as excinfo:
             service.retrieve_data_for_inference(requests=None)
 
         assert excinfo.value.args[0] == "Received invalid inputs"
 
-    # noinspection PyUnusedLocal
     def test_with_invalid_req(self, patches, service):
         service.retrieve_model_input.side_effect = MMSError(Err.INVALID_PREDICT_INPUT, 'Some message')
 
@@ -99,4 +97,3 @@ class TestRetrieveDataForInference:
 
         patches.validate.assert_called()
         service.retrieve_model_input.assert_called()
-

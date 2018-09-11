@@ -42,8 +42,9 @@ def pypi_description():
 
 
 def detect_packaging_tool_version():
-    import model_archiver.version
-    return model_archiver.version.__version__
+    # pylint: disable = relative-import
+    from version import __version__
+    return __version__
 
 
 if __name__ == '__main__':

@@ -18,14 +18,12 @@ Communication message format: JSON message
 import os
 import socket
 
-from builtins import str
-
 from mms.arg_parser import ArgParser
 from mms.log import log_msg, log_error
 from mms.model_loader import ModelLoaderFactory
 from mms.mxnet_model_service_error import MMSError
 from mms.protocol.otf_message_handler import OtfCodecHandler
-from mms.utils.model_server_error_codes import ModelServerErrorCodes as err
+from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
 
 MAX_FAILURE_THRESHOLD = 5
@@ -44,17 +42,17 @@ class MXNetModelServiceWorker(object):
         self.sock_type = s_type
         if s_type == 'unix':
             if s_name is None:
-                raise MMSError(err.INVALID_ARGUMENTS, "Wrong arguments passed. No socket name given.")
+                raise MMSError(Err.INVALID_ARGUMENTS, "Wrong arguments passed. No socket name given.")
             self.sock_name, self.port = s_name, -1
             try:
                 os.unlink(s_name)
             except OSError:
                 if os.path.exists(s_name):
-                    raise MMSError(err.SOCKET_ERROR, "socket already in use: {}.".format(s_name))
+                    raise MMSError(Err.SOCKET_ERROR, "socket already in use: {}.".format(s_name))
         elif s_type == 'tcp':
             self.sock_name = host_addr if host_addr is not None else "127.0.0.1"
             if port_num is None:
-                raise MMSError(err.INVALID_ARGUMENTS, "Wrong arguments passed. No socket port given.")
+                raise MMSError(Err.INVALID_ARGUMENTS, "Wrong arguments passed. No socket port given.")
             self.port = port_num
         else:
             raise ValueError("Incomplete data provided")
@@ -70,11 +68,12 @@ class MXNetModelServiceWorker(object):
             self.sock = socket.socket(socket_family, socket.SOCK_STREAM)
 
         except (IOError, OSError) as e:
-            raise MMSError(err.SOCKET_ERROR, "Socket error in init {}. {}".format(self.sock_name, repr(e)))
+            raise MMSError(Err.SOCKET_ERROR, "Socket error in init {}. {}".format(self.sock_name, repr(e)))
         except Exception as e:  # pylint: disable=broad-except
-            raise MMSError(err.UNKNOWN_EXCEPTION, "{}".format(repr(e)))
+            raise MMSError(Err.UNKNOWN_EXCEPTION, "{}".format(repr(e)))
 
-    def load_model(self, data):
+    @staticmethod
+    def load_model(data):
         """
         Expected command
         {
@@ -107,11 +106,11 @@ class MXNetModelServiceWorker(object):
             return service, "loaded model {}".format(model_name), 200
 
         except ValueError as v:
-            raise MMSError(err.VALUE_ERROR_WHILE_LOADING, "{}".format(v))
+            raise MMSError(Err.VALUE_ERROR_WHILE_LOADING, "{}".format(v))
         except MMSError as m:
             raise m
         except Exception as e:  # pylint: disable=broad-except
-            raise MMSError(err.UNKNOWN_EXCEPTION_WHILE_LOADING, "{}".format(repr(e)))
+            raise MMSError(Err.UNKNOWN_EXCEPTION_WHILE_LOADING, "{}".format(repr(e)))
 
     def send_response(self, sock, msg):
         """
@@ -125,10 +124,10 @@ class MXNetModelServiceWorker(object):
         except (IOError, OSError) as e:
             # Can't send this response. So, log it.
             self.send_failures += 1
-            log_error("{}: Send failed. {}.\nMsg: {}".format(err.SEND_MSG_FAIL, repr(e), msg))
+            log_error("{}: Send failed. {}.\nMsg: {}".format(Err.SEND_MSG_FAIL, repr(e), msg))
 
             if self.send_failures >= MAX_FAILURE_THRESHOLD:
-                exit(err.SEND_FAILS_EXCEEDS_LIMITS)
+                exit(Err.SEND_FAILS_EXCEEDS_LIMITS)
 
     def create_and_send_response(self, sock, c, message, p=None):
         try:
@@ -158,19 +157,19 @@ class MXNetModelServiceWorker(object):
                     service, result, code = self.load_model(msg)
                 else:
                     result = "Received unknown command: {}".format(cmd)
-                    code = err.UNKNOWN_COMMAND
+                    code = Err.UNKNOWN_COMMAND
 
                 self.create_and_send_response(cl_socket, code, result, predictions)
             except MMSError as m:
                 log_error("MMSError {} data {}".format(cmd, m.get_message()))
-                if m.get_code() == err.SEND_FAILS_EXCEEDS_LIMITS or m.get_code() == err.ENCODE_FAILED or \
-                   m.get_code() == err.DECODE_FAILED:
+                if m.get_code() == Err.SEND_FAILS_EXCEEDS_LIMITS or m.get_code() == Err.ENCODE_FAILED or \
+                   m.get_code() == Err.DECODE_FAILED:
                     log_error("Can not recover from this error. Worker shutting down. {}".format(m))
                     break
                 self.create_and_send_response(cl_socket, m.get_code(), m.get_message())
             except Exception as e:  # pylint: disable=broad-except
                 log_error("Exception {} data {}".format(cmd, repr(e)))
-                self.create_and_send_response(cl_socket, err.UNKNOWN_EXCEPTION, repr(e))
+                self.create_and_send_response(cl_socket, Err.UNKNOWN_EXCEPTION, repr(e))
 
     def run_server(self):
         """
@@ -189,7 +188,7 @@ class MXNetModelServiceWorker(object):
             log_msg("[PID]{}".format(os.getpid()))
             log_msg("MxNet worker started.")
         except Exception as e:  # pylint: disable=broad-except
-            raise MMSError(err.SOCKET_BIND_ERROR,
+            raise MMSError(Err.SOCKET_BIND_ERROR,
                            "Socket {} could not be bound to. {}".format(self.sock_name, repr(e)))
 
         while True:
@@ -236,10 +235,10 @@ if __name__ == "__main__":
         if BENCHMARK:
             pr.disable()
             pr.dump_stats('/tmp/mmsPythonProfile.prof')
-    except MMSError as m:
-        log_error("{}".format(m.get_message()))
+    except MMSError as mms_error:
+        log_error("{}".format(mms_error.get_message()))
         exit(1)
-    except Exception as ex:  # pylint: disable=broad-except
-        log_error("Error starting the server. {}".format(str(ex)))
+    except Exception as exc:  # pylint: disable=broad-except
+        log_error("Error starting the server. {}".format(repr(exc)))
         exit(1)
     exit(0)

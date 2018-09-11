@@ -236,15 +236,6 @@ class TestService(unittest.TestCase):
                                    mx.gluon.model_zoo.vision.alexnet(pretrained=True))
         os.system('rm -rf %s' % model_path)
 
-    def test_incorrect_service(self):
-        from mms.module_loader import load_service
-        path = os.getcwd()
-        try:
-            load_service(os.path.join(path, 'mms/tests/unit_tests/helper/incorrect_service.py'))
-        except Exception as e:
-            assert "No module" in str(e)
-            print(e)
-
     def runTest(self):
         self.test_vision_init()
         self.test_vision_inference()

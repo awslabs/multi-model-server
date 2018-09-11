@@ -11,10 +11,10 @@
 import pytest
 from mock import Mock, mock_open, patch
 from collections import namedtuple
-from model_server_tools.model_packaging.manifest_components.engine import EngineType
-from model_server_tools.model_packaging.manifest_components.manifest import RuntimeType
-from model_server_tools.model_packaging.model_packaging import generate_model_archive, export_model
-from model_server_tools.model_packaging.model_packaging_utils import ModelExportUtils
+from model_archiver.manifest_components.engine import EngineType
+from model_archiver.manifest_components.manifest import RuntimeType
+from model_archiver.model_packaging import generate_model_archive, export_model
+from model_archiver.model_packaging_utils import ModelExportUtils
 
 
 # noinspection PyClassHasNoInit
@@ -30,16 +30,17 @@ class TestModelPackaging:
     model_name = 'my-model'
     model_path = 'my-model/'
     handler = 'a.py::my-awesome-func'
+    export_path = '/Users/ghaipiyu/'
 
     args = Namespace(author=author, email=email, engine=engine, model_name=model_name, handler=handler,
-                     runtime=RuntimeType.PYTHON2_7.value, model_path=model_path, force=False)
+                     runtime=RuntimeType.PYTHON2_7.value, model_path=model_path, export_path=export_path, force=False)
 
     @pytest.fixture()
     def patches(self, mocker):
         Patches = namedtuple('Patches', ['arg_parse', 'export_utils', 'export_method'])
-        patch = Patches(mocker.patch('model_server_tools.model_packaging.model_packaging.ArgParser'),
-                        mocker.patch('model_server_tools.model_packaging.model_packaging.ModelExportUtils'),
-                        mocker.patch('model_server_tools.model_packaging.model_packaging.export_model'))
+        patch = Patches(mocker.patch('model_archiver.model_packaging.ArgParser'),
+                        mocker.patch('model_archiver.model_packaging.ModelExportUtils'),
+                        mocker.patch('model_archiver.model_packaging.export_model'))
 
         return patch
 

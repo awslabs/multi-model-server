@@ -43,11 +43,8 @@ def pypi_description():
 
 
 def detect_packaging_tool_version():
-    with open(os.path.abspath(os.path.join('version.py')), 'r') as vf:
-        # pylint: disable=exec-used
-        exec(vf.read(), None, globals())
-        # TODO: Look to remove this exec and version coming from file
-    return __version__
+    import version
+    return version.__version__
 
 
 if __name__ == '__main__':

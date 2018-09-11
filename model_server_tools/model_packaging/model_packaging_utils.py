@@ -234,38 +234,36 @@ class ModelExportUtils(object):
             for f in files:
                 ziph.write(os.path.join(root, f))
 
-    # pylint: disable = redefined-builtin
     @staticmethod
-    def directory_filter(dir, unwanted_dirs):
+    def directory_filter(directory, unwanted_dirs):
 
         """
         This method weeds out unwanted hidden directories from the model archive .mar file
-        :param dir:
+        :param directory:
         :param unwanted_dirs:
         :return:
         """
-        if dir in unwanted_dirs:
+        if directory in unwanted_dirs:
             return False
-        if dir.startswith('.'):
+        if directory.startswith('.'):
             return False
 
         return True
 
-    # pylint: disable = redefined-builtin
     @staticmethod
-    def file_filter(file, files_to_exclude):
+    def file_filter(current_file, files_to_exclude):
 
         """
         This method weeds out unwanted files
-        :param f:
+        :param current_file:
         :param files_to_exclude:
         :return:
         """
 
-        if file in files_to_exclude:
+        if current_file in files_to_exclude:
             return False
 
-        elif file.endswith(('.pyc', '.DS_Store')):
+        elif current_file.endswith(('.pyc', '.DS_Store')):
             return False
 
         return True

@@ -181,13 +181,13 @@ class TestExportModelUtils:
         def test_regex_pass(self):
             model_names = ['my-awesome-model', 'Aa.model', 'aA.model', 'a1234.model','a-A-A.model']
             for m in model_names:
-                ModelExportUtils.check_model_name_regex(m)
+                ModelExportUtils.check_model_name_regex_or_exit(m)
 
         def test_regex_fail(self):
             model_names = ['123.abc', '12-model-a.model', '##.model', '-.model']
             for m in model_names:
                 with pytest.raises(SystemExit):
-                    ModelExportUtils.check_model_name_regex(m)
+                    ModelExportUtils.check_model_name_regex_or_exit(m)
 
     # noinspection PyClassHasNoInit
     class TestFileFilter:

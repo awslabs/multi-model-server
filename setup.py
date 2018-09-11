@@ -116,10 +116,7 @@ if __name__ == '__main__':
     opt_set = set(sys.argv)
     version = detect_model_server_version()
 
-    requirements = ['Pillow', 'psutil', 'future']
-
-    # TODO : Replace the requirements with the line below once model-export-tool gets separated
-    # requirements = ['Pillow', 'psutil', 'future', 'model-arhiver']
+    requirements = ['Pillow', 'psutil', 'future', 'model-archiver']
 
     setup(
         name='mxnet-model-server',

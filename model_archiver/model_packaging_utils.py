@@ -39,16 +39,18 @@ class ModelExportUtils(object):
     """
 
     @staticmethod
-    def check_mar_already_exists(model_name, export_file, overwrite):
+    def check_mar_already_exists(model_name, export_file_path, overwrite):
         """
         Function to check if .mar already exists
         :param model_name:
-        :param export_file:
+        :param export_file_path:
         :param overwrite:
         :return:
         """
-        if export_file is None:
-            export_file = os.path.join(os.getcwd(), '{}{}'.format(model_name, MODEL_ARCHIVE_EXTENSION))
+        if export_file_path is None:
+            export_file_path = os.getcwd()
+
+        export_file = os.path.join(export_file_path, '{}{}'.format(model_name, MODEL_ARCHIVE_EXTENSION))
 
         if os.path.exists(export_file):
             if overwrite:
@@ -61,7 +63,7 @@ class ModelExportUtils(object):
 
                 sys.exit(1)
 
-        return export_file
+        return export_file_path
 
     @staticmethod
     def check_custom_model_types(model_path):
@@ -191,10 +193,11 @@ class ModelExportUtils(object):
         :param args:
         :return:
         """
+        arg_dict = vars(args)
 
-        publisher = ModelExportUtils.generate_publisher(args) if args.author and args.email else None
+        publisher = ModelExportUtils.generate_publisher(args) if 'author' in arg_dict and 'email' in arg_dict else None
 
-        engine = ModelExportUtils.generate_engine(args) if args.engine else None
+        engine = ModelExportUtils.generate_engine(args) if 'engine' in arg_dict else None
 
         model = ModelExportUtils.generate_model(args)
 
@@ -208,11 +211,12 @@ class ModelExportUtils(object):
             os.remove(f)
 
     @staticmethod
-    def zip(export_file, model_path, files_to_exclude, manifest):
-        with zipfile.ZipFile(export_file, 'w', zipfile.ZIP_DEFLATED) as z:
+    def zip(export_file, model_name, model_path, files_to_exclude, manifest):
+        mar_path = os.path.join(export_file, '{}{}'.format(model_name, MODEL_ARCHIVE_EXTENSION))
+        with zipfile.ZipFile(mar_path, 'w', zipfile.ZIP_DEFLATED) as z:
             ModelExportUtils.zip_dir(model_path, z, set(files_to_exclude))
             # Write the manifest here now as a json
-            z.writestr(os.path.join(export_file, MAR_INF, MANIFEST_FILE_NAME), json.dumps(manifest, indent=4))
+            z.writestr(os.path.join(MAR_INF, MANIFEST_FILE_NAME), json.dumps(manifest, indent=4))
 
     @staticmethod
     def zip_dir(path, ziph, files_to_exclude):
@@ -232,7 +236,7 @@ class ModelExportUtils(object):
             # Filter files
             files[:] = [f for f in files if ModelExportUtils.file_filter(f, files_to_exclude)]
             for f in files:
-                ziph.write(os.path.join(root, f))
+                ziph.write(os.path.join(root, f), f)
 
     @staticmethod
     def directory_filter(directory, unwanted_dirs):

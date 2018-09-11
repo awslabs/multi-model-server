@@ -73,7 +73,7 @@ if __name__ == '__main__':
             'onnx': ['onnx==1.1.1']
         },
         entry_points={
-            'console_scripts': ['model-archiver=model_server_tools.model_packaging.export_model:export']
+            'console_scripts': ['model-archiver=model_archiver.model_packaging:generate_model_archive']
         },
         include_package_data=True,
         license='Apache License Version 2.0'

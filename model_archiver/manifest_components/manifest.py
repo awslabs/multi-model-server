@@ -47,9 +47,10 @@ class Manifest(object):
 
         manifest_dict['runtime'] = self.runtime.value
 
-        manifest_dict['engine'] = self.engine.__to_dict__()
-
         manifest_dict['model'] = self.model.__to_dict__()
+
+        if self.engine is not None:
+            manifest_dict['engine'] = self.engine.__to_dict__()
 
         if self.license is not None:
             manifest_dict['license'] = self.license

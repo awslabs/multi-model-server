@@ -16,7 +16,7 @@ from enum import Enum
 class EngineType(Enum):
     MXNET = "MXNet"
 
-    #TODO Add more engines here as and when MMS supports more DL Frameworks
+    # TODO Add more engines here as and when MMS supports more DL Frameworks
 
 
 class Engine(object):

@@ -28,19 +28,15 @@ from mms.mxnet_model_service_error import MMSError
 # @pytest.mark.skip(reason="Disabling it currently until the PR #467 gets merged")
 class TestModelFactory:
 
-    def test_model_loader_factory_incorrect(self):
-        with pytest.raises(ValueError) as excinfo:
-            _ = ModelLoaderFactory.get_model_loader("wrong_loader")
-
-        assert str(excinfo.value) == "Unknown model loader type: wrong_loader"
-
     def test_model_loader_factory_legacy(self):
-        model_loader = ModelLoaderFactory.get_model_loader("legacy_mms")
+        model_loader = ModelLoaderFactory.get_model_loader(
+            os.path.abspath('mms/tests/unit_tests/model_service/dummy_model'))
 
         assert isinstance(model_loader, LegacyModelLoader)
 
     def test_model_loader_factory(self):
-        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        model_loader = ModelLoaderFactory.get_model_loader(
+            os.path.abspath('mms/tests/unit_tests/test_utils/'))
 
         assert isinstance(model_loader, MmsModelLoader)
 
@@ -87,10 +83,10 @@ class TestLoadModels:
         patches.mock_open.side_effect = [mock.mock_open(read_data=self.mock_manifest).return_value]
         patches.open_signature.side_effect = [mock.mock_open(read_data='{}').return_value]
         patches.is_file.return_value = True
-
+        patches.os_path.return_value = False
         sys.path.append(self.model_dir)
         handler = 'dummy_model_service'
-        model_loader = ModelLoaderFactory.get_model_loader("legacy_mms")
+        model_loader = ModelLoaderFactory.get_model_loader(self.model_dir)
         service = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
 
         assert inspect.ismethod(service._entry_point)
@@ -100,7 +96,7 @@ class TestLoadModels:
         sys.path.append(os.path.abspath('mms/tests/unit_tests/test_utils/'))
         patches.os_path.return_value = True
         handler = 'dummy_class_model_service'
-        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        model_loader = ModelLoaderFactory.get_model_loader(os.path.abspath('mms/unit_tests/test_utils/'))
         service = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
 
         assert inspect.ismethod(service._entry_point)
@@ -110,7 +106,7 @@ class TestLoadModels:
         sys.path.append(os.path.abspath('mms/tests/unit_tests/test_utils/'))
         patches.os_path.return_value = True
         handler = 'dummy_func_model_service:infer'
-        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        model_loader = ModelLoaderFactory.get_model_loader(os.path.abspath('mms/unit_tests/test_utils/'))
         service = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
 
         assert isinstance(service._entry_point, types.FunctionType)
@@ -121,7 +117,7 @@ class TestLoadModels:
         sys.path.append(os.path.abspath('mms/tests/unit_tests/test_utils/'))
         patches.os_path.return_value = True
         handler = 'dummy_func_model_service:wrong'
-        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        model_loader = ModelLoaderFactory.get_model_loader(os.path.abspath('mms/unit_tests/test_utils/'))
         with pytest.raises(MMSError) as excinfo:
             _ = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
         assert str(excinfo.value.message) == "Expected only one class in custom service code or a function entry point"
@@ -132,7 +128,7 @@ class TestLoadModels:
         sys.path.append(os.path.abspath('mms/tests/unit_tests/test_utils/'))
         patches.os_path.return_value = True
         handler = 'dummy_func_model_service'
-        model_loader = ModelLoaderFactory.get_model_loader("mms")
+        model_loader = ModelLoaderFactory.get_model_loader(os.path.abspath('mms/unit_tests/test_utils/'))
         with pytest.raises(Exception) as excinfo:
             _ = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
         assert str(excinfo.value.message) == "Expected only one class in custom service code or a function entry point"

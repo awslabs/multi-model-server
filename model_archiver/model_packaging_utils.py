@@ -216,7 +216,7 @@ class ModelExportUtils(object):
         with zipfile.ZipFile(mar_path, 'w', zipfile.ZIP_DEFLATED) as z:
             ModelExportUtils.zip_dir(model_path, z, set(files_to_exclude))
             # Write the manifest here now as a json
-            z.writestr(os.path.join(MAR_INF, MANIFEST_FILE_NAME), json.dumps(manifest, indent=4))
+            z.writestr(os.path.join(MAR_INF, MANIFEST_FILE_NAME), bytes=bytes(json.dumps(manifest, indent=4)))
 
     @staticmethod
     def zip_dir(path, ziph, files_to_exclude):
@@ -228,7 +228,7 @@ class ModelExportUtils(object):
         :param files_to_exclude:
         :return:
         """
-        unwanted_dirs = {'__MACOSX', '__pycache__'}
+        unwanted_dirs = {'__MACOSX', '__pycache__', 'MANIFEST.json'}
 
         for root, directories, files in os.walk(path):
             # Filter directories
@@ -273,10 +273,11 @@ class ModelExportUtils(object):
         return True
 
     @staticmethod
-    def check_model_name_regex(model_name):
+    def check_model_name_regex_or_exit(model_name):
 
         """
-        Method checks whether model name passes regex filter
+        Method checks whether model name passes regex filter.
+        If the regex Filter fails, the method exits.
         :param model_name:
         :return:
         """

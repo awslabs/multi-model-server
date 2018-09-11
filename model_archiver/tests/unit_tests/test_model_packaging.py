@@ -13,7 +13,7 @@ from mock import Mock, mock_open, patch
 from collections import namedtuple
 from model_archiver.manifest_components.engine import EngineType
 from model_archiver.manifest_components.manifest import RuntimeType
-from model_archiver.model_packaging import generate_model_archive, export_model
+from model_archiver.model_packaging import generate_model_archive, package_model
 from model_archiver.model_packaging_utils import ModelExportUtils
 
 
@@ -40,7 +40,7 @@ class TestModelPackaging:
         Patches = namedtuple('Patches', ['arg_parse', 'export_utils', 'export_method'])
         patch = Patches(mocker.patch('model_archiver.model_packaging.ArgParser'),
                         mocker.patch('model_archiver.model_packaging.ModelExportUtils'),
-                        mocker.patch('model_archiver.model_packaging.export_model'))
+                        mocker.patch('model_archiver.model_packaging.package_model'))
 
         return patch
 
@@ -55,7 +55,7 @@ class TestModelPackaging:
         patches.export_utils.check_custom_model_types.return_value = '/Users/ghaipiyu', ['a.txt', 'b.txt']
         patches.export_utils.zip.return_value = None
 
-        export_model(self.args, ModelExportUtils.generate_manifest_json(self.args))
-        patches.export_utils.check_model_name_regex.assert_called()
+        package_model(self.args, ModelExportUtils.generate_manifest_json(self.args))
+        patches.export_utils.check_model_name_regex_or_exit.assert_called()
         patches.export_utils.zip.assert_called()
         patches.export_utils.clean_temp_files.assert_called()

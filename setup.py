@@ -119,7 +119,7 @@ if __name__ == '__main__':
     requirements = ['Pillow', 'psutil', 'future']
 
     # TODO : Replace the requirements with the line below once model-export-tool gets separated
-    # requirements = ['Pillow', 'psutil', 'future', 'model-export-tool']
+    # requirements = ['Pillow', 'psutil', 'future', 'model-arhiver']
 
     setup(
         name='mxnet-model-server',
@@ -141,7 +141,7 @@ if __name__ == '__main__':
         },
         entry_points={
             'console_scripts': ['mxnet-model-server=mms.model_server:start',
-                                'mxnet-model-export=mms.export_model:export']
+                                'mxnet-model-export=mms.export_model:main']
         },
         include_package_data=True,
         license='Apache License Version 2.0'

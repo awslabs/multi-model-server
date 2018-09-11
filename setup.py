@@ -116,7 +116,9 @@ if __name__ == '__main__':
     opt_set = set(sys.argv)
     version = detect_model_server_version()
 
-    requirements = ['Pillow', 'psutil', 'future', 'model-archiver']
+    #requirements = ['Pillow', 'psutil', 'future', 'model-archiver']
+    # TODO : Update this to the above line once model-arhiver gets published to PyPi
+    requirements = ['Pillow', 'psutil', 'future']
 
     setup(
         name='mxnet-model-server',

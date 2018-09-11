@@ -102,10 +102,7 @@ class MXNetModelServiceWorker(object):
             if u'gpu' in data:
                 gpu = int(data[u'gpu'])
 
-            manifest_file = os.path.join(model_dir, "MAR_INF/MANIFEST.json")
-            model_type = "mms" if os.path.exists(manifest_file) else "legacy_mms"
-
-            model_loader = ModelLoaderFactory.get_model_loader(model_type)
+            model_loader = ModelLoaderFactory.get_model_loader(model_dir)
             service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
             return service, "loaded model {}".format(model_name), 200
 

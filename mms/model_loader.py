@@ -29,13 +29,12 @@ class ModelLoaderFactory(object):
     """
 
     @staticmethod
-    def get_model_loader(service_type):
-        if service_type == "mms":
+    def get_model_loader(model_dir):
+        manifest_file = os.path.join(model_dir, "MAR_INF/MANIFEST.json")
+        if os.path.exists(manifest_file):
             return MmsModelLoader()
-        elif service_type == "legacy_mms":
-            return LegacyModelLoader()
         else:
-            raise ValueError("Unknown model loader type: {}".format(service_type))
+            return LegacyModelLoader()
 
 
 class ModelLoader(object):

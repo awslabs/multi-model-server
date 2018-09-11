@@ -28,7 +28,6 @@
 Setup.py for the model export tool package
 """
 
-import os
 from datetime import date
 import sys
 from setuptools import setup, find_packages
@@ -43,8 +42,8 @@ def pypi_description():
 
 
 def detect_packaging_tool_version():
-    import version
-    return version.__version__
+    import model_archiver.version
+    return model_archiver.version.__version__
 
 
 if __name__ == '__main__':

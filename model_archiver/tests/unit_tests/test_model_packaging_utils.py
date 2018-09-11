@@ -192,7 +192,7 @@ class TestExportModelUtils:
     # noinspection PyClassHasNoInit
     class TestFileFilter:
 
-        files_to_exclude = ['abc.onnx']
+        files_to_exclude = set(['abc.onnx'])
 
         def test_with_return_false(self):
             assert ModelExportUtils.file_filter('abc.onnx', self.files_to_exclude) is False

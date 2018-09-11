@@ -10,7 +10,6 @@
 
 import json
 import os
-import pytest
 import shutil
 import sys
 import tempfile
@@ -20,6 +19,7 @@ from io import BytesIO
 import PIL
 import mxnet as mx
 import numpy as np
+import pytest
 from helper.pixel2pixel_service import UnetGenerator
 from mms.model_service.mxnet_model_service import MXNetBaseService, GluonImperativeBaseService
 

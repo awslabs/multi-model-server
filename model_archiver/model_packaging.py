@@ -17,13 +17,13 @@ from .arg_parser import ArgParser
 from .model_packaging_utils import ModelExportUtils
 
 
-def export_model(args, manifest):
+def package_model(args, manifest):
     """
     Internal helper for the exporting model command line interface.
     """
     model_path = args.model_path
     model_name = args.model_name
-    ModelExportUtils.check_model_name_regex(model_name)
+    ModelExportUtils.check_model_name_regex_or_exit(model_name)
     export_file_path = args.export_path
     temp_files = []
     try:
@@ -49,7 +49,7 @@ def generate_model_archive():
     """
     args = ArgParser.export_model_args_parser().parse_args()
     manifest = ModelExportUtils.generate_manifest_json(args)
-    export_model(args, manifest=manifest)
+    package_model(args, manifest=manifest)
 
 
 if __name__ == '__main__':

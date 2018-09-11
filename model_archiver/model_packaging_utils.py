@@ -228,7 +228,7 @@ class ModelExportUtils(object):
         :param files_to_exclude:
         :return:
         """
-        unwanted_dirs = {'__MACOSX', '__pycache__', 'MANIFEST.json'}
+        unwanted_dirs = {'__MACOSX', '__pycache__'}
 
         for root, directories, files in os.walk(path):
             # Filter directories
@@ -263,7 +263,7 @@ class ModelExportUtils(object):
         :param files_to_exclude:
         :return:
         """
-
+        files_to_exclude.add('MANIFEST.json')
         if current_file in files_to_exclude:
             return False
 

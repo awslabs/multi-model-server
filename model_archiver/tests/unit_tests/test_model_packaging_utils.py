@@ -14,9 +14,9 @@ from mock import Mock, mock_open, patch
 import os
 import sys
 from collections import namedtuple
-from model_server_tools.model_packaging.model_packaging_utils import ModelExportUtils
-from model_server_tools.model_packaging.manifest_components.engine import EngineType
-from model_server_tools.model_packaging.manifest_components.manifest import RuntimeType
+from model_archiver.model_packaging_utils import ModelExportUtils
+from model_archiver.manifest_components.engine import EngineType
+from model_archiver.manifest_components.manifest import RuntimeType
 
 
 # noinspection PyClassHasNoInit
@@ -39,13 +39,13 @@ class TestExportModelUtils:
             ret_val = ModelExportUtils.check_mar_already_exists('some-model', None, False)
 
             patches.path_exists.assert_called_once_with("/Users/Piyush/some-model.mar")
-            assert ret_val == "/Users/Piyush/some-model.mar"
+            assert ret_val == "/Users/Piyush"
 
         def test_export_file_is_not_none(self, patches):
             patches.path_exists.return_value = False
-            ModelExportUtils.check_mar_already_exists('some-model', '/Users/Piyush/some-model', False)
+            ModelExportUtils.check_mar_already_exists('some-model', '/Users/Piyush/', False)
 
-            patches.path_exists.assert_called_once_with('/Users/Piyush/some-model')
+            patches.path_exists.assert_called_once_with('/Users/Piyush/some-model.mar')
 
         def test_export_file_already_exists_with_override(self, patches):
             patches.path_exists.return_value = True
@@ -70,7 +70,7 @@ class TestExportModelUtils:
         @pytest.fixture()
         def patches(self, mocker):
             Patches = namedtuple('Patches', ['utils', 'listdir'])
-            patch = Patches(mocker.patch('model_server_tools.model_packaging.model_packaging_utils.ModelExportUtils'),
+            patch = Patches(mocker.patch('model_archiver.model_packaging_utils.ModelExportUtils'),
                             mocker.patch('os.listdir'))
 
             patch.listdir.return_value = set(['a', 'b', 'c'])

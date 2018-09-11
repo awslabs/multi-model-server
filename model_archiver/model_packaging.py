@@ -17,13 +17,14 @@ from .arg_parser import ArgParser
 from .model_packaging_utils import ModelExportUtils
 
 
-def export_model(args, manifest, export_file_path=None):
+def export_model(args, manifest):
     """
     Internal helper for the exporting model command line interface.
     """
     model_path = args.model_path
     model_name = args.model_name
     ModelExportUtils.check_model_name_regex(model_name)
+    export_file_path = args.export_path
     temp_files = []
     try:
         # Step 1 : Check if .mar already exists with the given model name
@@ -34,7 +35,7 @@ def export_model(args, manifest, export_file_path=None):
         temp_files.extend(t)
 
         # Step 3 : Zip 'em all up
-        ModelExportUtils.zip(export_file_path, model_path, files_to_exclude, manifest)
+        ModelExportUtils.zip(export_file_path, model_name, model_path, files_to_exclude, manifest)
         logging.info("Successfully exported model %s to file %s", model_name, export_file_path)
 
     finally:

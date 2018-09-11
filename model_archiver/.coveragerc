@@ -8,12 +8,17 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import os
-import model_server_tools.model_packaging
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    if __name__ == "__main__" :
 
+[run]
+branch = True
+omit = */__init__.py
+       model_archiver/tests/*
+       model_archiver/manifest_components/*
+       model_archiver/arg_parser.py
+       model_archiver/setup.py
 
-def test_model_export_tool_version():
-    with (open(os.path.join('model_server_tools', 'model_packaging', 'version.py'))) as f:
-        exec(f.read(), globals())
-
-    assert __version__ == str(model_server_tools.model_packaging.__version__), "Versions do not match"

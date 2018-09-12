@@ -93,7 +93,7 @@ public class ModelServerTest {
     public void beforeSuite()
             throws InterruptedException, InvalidModelException, WorkerInitializationException,
                     IOException, GeneralSecurityException {
-        configManager = new ConfigManager();
+        configManager = new ConfigManager(new ConfigManager.Arguments());
 
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
 

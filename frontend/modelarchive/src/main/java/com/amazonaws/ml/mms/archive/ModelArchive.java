@@ -55,11 +55,13 @@ public class ModelArchive {
     private Manifest manifest;
     private String url;
     private File modelDir;
+    private boolean extracted;
 
-    public ModelArchive(Manifest manifest, String url, File modelDir) {
+    public ModelArchive(Manifest manifest, String url, File modelDir, boolean extracted) {
         this.manifest = manifest;
         this.url = url;
         this.modelDir = modelDir;
+        this.extracted = extracted;
     }
 
     public static ModelArchive downloadModel(String modelStore, String url)
@@ -67,7 +69,7 @@ public class ModelArchive {
         if (URL_PATTERN.matcher(url).matches()) {
             try {
                 File modelDir = download(url);
-                return load(url, modelDir);
+                return load(url, modelDir, true);
             } catch (IOException e) {
                 throw new InvalidModelException(
                         ErrorCodes.MODEL_ARCHIVE_DOWNLOAD_FAIL,
@@ -87,7 +89,7 @@ public class ModelArchive {
         if (url.endsWith(".model") || url.endsWith(".mar")) {
             try (InputStream is = new FileInputStream(modelLocation)) {
                 File unzipDir = unzip(is, null);
-                return load(url, unzipDir);
+                return load(url, unzipDir, true);
             } catch (IOException e) {
                 throw new InvalidModelException(
                         ErrorCodes.MODEL_ARCHIVE_INCORRECT,
@@ -95,7 +97,7 @@ public class ModelArchive {
                         e);
             }
         }
-        return load(url, modelLocation);
+        return load(url, modelLocation, false);
     }
 
     public static void migrate(File legacyModelFile, File destination)
@@ -177,7 +179,8 @@ public class ModelArchive {
         return unzip(conn.getInputStream(), eTag);
     }
 
-    private static ModelArchive load(String url, File dir) throws InvalidModelException {
+    private static ModelArchive load(String url, File dir, boolean extracted)
+            throws InvalidModelException {
         File manifestFile = new File(dir, "MAR_INF/" + MANIFEST_FILE);
         Manifest manifest;
         File modelDir = dir;
@@ -200,7 +203,7 @@ public class ModelArchive {
             }
         }
 
-        ModelArchive archive = new ModelArchive(manifest, url, modelDir);
+        ModelArchive archive = new ModelArchive(manifest, url, modelDir, extracted);
         archive.validate();
         return archive;
     }
@@ -294,7 +297,7 @@ public class ModelArchive {
     }
 
     public void clean() {
-        if (url != null) {
+        if (url != null && extracted) {
             FileUtils.deleteQuietly(modelDir);
         }
     }

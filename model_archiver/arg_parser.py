@@ -14,23 +14,11 @@ at runtime.
 """
 
 import argparse
+
 from .manifest_components.manifest import RuntimeType
 
 
-class StoreDictKeyPair(argparse.Action):
-
-    """
-    This class is a helper class to parse <model-name>=<model-uri> pairs
-    """
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        try:
-            setattr(namespace, 'models', {kv.split('=', 1)[0]: kv.split('=', 1)[1] for kv in values})
-        except Exception:
-            raise Exception('Failed to parse <model=path>: ' + str(values) +
-                            'Format should be <model-name>=<model-path> (Local file path, URL, S3).')
-
-
+# noinspection PyTypeChecker
 class ArgParser(object):
 
     """

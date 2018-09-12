@@ -17,7 +17,8 @@ import argparse
 
 
 class StoreDictKeyPair(argparse.Action):
-    """This class is a helper class to parse <model-name>=<model-uri> pairs
+    """
+    This class is a helper class to parse <model-name>=<model-uri> pairs
     """
     def __call__(self, parser, namespace, values, option_string=None):
         try:
@@ -27,8 +28,10 @@ class StoreDictKeyPair(argparse.Action):
                             'Format should be <model-name>=<model-path> (Local file path, URL, S3).')
 
 
+# noinspection PyTypeChecker
 class ArgParser(object):
-    """Argument parser for mxnet-model-server and mxnet-model-export commands
+    """
+    Argument parser for mxnet-model-server and mxnet-model-export commands
     More detailed example is available at https://github.com/awslabs/mxnet-model-server/blob/master/README.md
     """
     @staticmethod

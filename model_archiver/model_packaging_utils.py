@@ -12,16 +12,17 @@
 Helper utils for Model Export tool
 """
 
-import os
 import json
-import zipfile
-import sys
 import logging
+import os
 import re
-from .manifest_components.publisher import Publisher
-from .manifest_components.manifest import Manifest
+import sys
+import zipfile
+
 from .manifest_components.engine import Engine
+from .manifest_components.manifest import Manifest
 from .manifest_components.model import Model
+from .manifest_components.publisher import Publisher
 
 MODEL_ARCHIVE_EXTENSION = '.mar'
 MODEL_SERVER_VERSION = '1.0'

@@ -2,12 +2,11 @@
 File to define the entry point to Model Server
 """
 
+import tempfile
 import subprocess
 import os
-import psutil
+import signal
 from mms.arg_parser import ArgParser
-
-pid_file = '/tmp/.model_server.pid'
 
 
 def start():
@@ -16,17 +15,34 @@ def start():
     :return:
     """
     args = ArgParser.mms_parser().parse_args()
-    if args.start is True:
-        os.environ['MODEL_SERVER_HOME'] = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        if args.mms_config is not None:
-            os.environ['MMS_CONFIG_FILE'] = args.mms_config
-        subprocess.Popen("java -jar %s/frontend/model-server.jar" %
-                         os.path.dirname(os.path.abspath(__file__)), shell=True)
+    pid_file = tempfile.gettempdir() + "/.model_server.pid"
+    if args.stop is True:
+        if os.path.isfile(pid_file):
+            with open(pid_file, "r") as f:
+                try:
+                    os.kill(int(f.readline()), signal.SIGKILL)
+                except OSError:
+                    print("Model server already stopped")
+            os.remove(pid_file)
+        else:
+            print("Model server is not currently running")
 
-    else:  # args.stop is True:
-        # TODO: Can we write this in a better way?
-        for p in psutil.process_iter():
-            if "java" in p.name():
-                for pc in p.cmdline():
-                    if "model-server.jar" in pc:
-                        p.terminate()
+    else:
+        mms_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        cmd = ["java -jar frontend/model-server.jar"]
+        if args.mms_config is not None:
+            cmd.append("-f")
+            cmd.append(args.mms_config)
+
+        if args.models is not None:
+            cmd.append("-m")
+            cmd.extend(args.models)
+
+        process = subprocess.Popen(cmd.join(" "), shell=True, cwd=mms_home)
+        pid = process.pid
+        with open(pid_file, "w") as pf:
+            pf.write(str(pid))
+
+
+if __name__ == "__main__":
+    start()

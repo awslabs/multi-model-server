@@ -178,7 +178,6 @@ class MXNetModelServiceWorker(object):
         """
         try:
             self.sock.settimeout(SOCKET_ACCEPT_TIMEOUT)
-            self.sock.setblocking(True)  # workaround error(35, 'Resource temporarily unavailable') on OSX
 
             if self.sock_type == 'unix':
                 self.sock.bind(self.sock_name)
@@ -202,6 +201,8 @@ class MXNetModelServiceWorker(object):
                     pr.disable()
                     pr.dump_stats('/tmp/mmsPythonProfile.prof')
                 (cl_socket, _) = self.sock.accept()
+                # workaround error(35, 'Resource temporarily unavailable') on OSX
+                cl_socket.setblocking(True)
                 if BENCHMARK:
                     pr.enable()
                 self.handle_connection(cl_socket)

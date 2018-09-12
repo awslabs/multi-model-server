@@ -125,7 +125,7 @@ class TestSendResponse:
 
 # noinspection PyClassHasNoInit
 class TestRunServer:
-    accept_result = ('cl_sock', None)
+    accept_result = (mock.MagicMock(), None)
 
     def test_with_socket_bind_error(self, socket_patches, model_service_worker):
         bind_exception = socket.error("binding error")

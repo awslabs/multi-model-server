@@ -15,11 +15,9 @@ package com.amazonaws.ml.mms.util;
 import com.amazonaws.ml.mms.TestUtils;
 import com.amazonaws.ml.mms.metrics.Dimension;
 import com.amazonaws.ml.mms.metrics.Metric;
-import com.google.gson.reflect.TypeToken;
 import io.netty.handler.ssl.SslContext;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 public class ConfigManagerTest {
-    private static final Type LIST_TYPE = new TypeToken<ArrayList<Metric>>() {}.getType();
 
     static {
         TestUtils.init();
@@ -52,7 +49,9 @@ public class ConfigManagerTest {
 
     @Test
     public void test() throws IOException, GeneralSecurityException {
-        ConfigManager configManager = new ConfigManager();
+        ConfigManager.Arguments args = new ConfigManager.Arguments();
+        args.setModels(new String[] {"noop_v0.1"});
+        ConfigManager configManager = new ConfigManager(args);
         configManager.setProperty("keystore", "src/test/resources/keystore.p12");
         Dimension dimension;
         List<Metric> metrics = new ArrayList<>();

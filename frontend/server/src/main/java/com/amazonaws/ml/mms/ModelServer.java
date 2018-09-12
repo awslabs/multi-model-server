@@ -37,6 +37,11 @@ import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.slf4j.Logger;
@@ -61,10 +66,23 @@ public class ModelServer {
     public static void main(String[] args)
             throws InterruptedException, InvalidModelException, WorkerInitializationException,
                     IOException, GeneralSecurityException {
-        ConfigManager configManager = new ConfigManager();
+        Options options = ConfigManager.Arguments.getOptions();
+        try {
+            DefaultParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args, null, false);
+            ConfigManager.Arguments arguments = new ConfigManager.Arguments(cmd);
 
-        InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
-        new ModelServer(configManager).startAndWait();
+            ConfigManager configManager = new ConfigManager(arguments);
+
+            InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
+            new ModelServer(configManager).startAndWait();
+        } catch (ParseException e) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.setLeftPadding(1);
+            formatter.setWidth(120);
+            formatter.printHelp(e.getMessage(), options);
+            System.exit(1); // NOPMD
+        }
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -111,24 +129,25 @@ public class ModelServer {
                         modelManager.updateModel(archive.getModelName(), 1, 1);
                     }
                 }
-            } else {
+            } else if (loadModels != null) {
                 String[] models = loadModels.split(",");
                 for (String model : models) {
-                    File modelFile = new File(modelStore, model);
-                    if (!modelFile.exists()) {
-                        if (!model.endsWith(".model")) {
-                            modelFile = new File(modelStore, model + ".model");
-                        }
-
-                        if (!model.endsWith(".mar")) {
-                            modelFile = new File(modelStore, model + ".mar");
-                        }
+                    String[] pair = model.split("=", 2);
+                    String modelName = null;
+                    String url;
+                    if (pair.length == 1) {
+                        url = pair[0];
+                    } else {
+                        modelName = pair[0];
+                        url = pair[1];
+                    }
+                    if (url.isEmpty()) {
+                        continue;
                     }
 
-                    if (modelFile.exists()) {
-                        ModelArchive archive = modelManager.registerModel(modelFile.getName());
-                        modelManager.updateModel(archive.getModelName(), 1, 1);
-                    }
+                    ModelArchive archive =
+                            modelManager.registerModel(url, modelName, null, null, 1, 100);
+                    modelManager.updateModel(archive.getModelName(), 1, 1);
                 }
             }
         }

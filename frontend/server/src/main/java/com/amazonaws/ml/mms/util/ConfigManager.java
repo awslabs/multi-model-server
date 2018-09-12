@@ -36,6 +36,9 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.commons.io.IOUtils;
 
 public final class ConfigManager {
@@ -64,12 +67,15 @@ public final class ConfigManager {
 
     private Properties prop;
 
-    public ConfigManager() {
+    public ConfigManager(Arguments args) {
         prop = new Properties();
 
         String filePath = System.getenv("MMS_CONFIG_FILE");
         if (filePath == null) {
-            filePath = System.getProperty("mmsConfigFile", "config.properties");
+            filePath = args.getMmsConfigFile();
+            if (filePath == null) {
+                filePath = System.getProperty("mmsConfigFile", "config.properties");
+            }
         }
 
         File file = new File(filePath);
@@ -92,6 +98,11 @@ public final class ConfigManager {
             System.setProperty("METRICS_LOCATION", metricsLocation);
         } else if (System.getProperty("METRICS_LOCATION") == null) {
             System.setProperty("METRICS_LOCATION", "logs");
+        }
+
+        String[] models = args.getModels();
+        if (models != null) {
+            prop.setProperty(LOAD_MODELS, String.join(",", models));
         }
     }
 
@@ -145,7 +156,7 @@ public final class ConfigManager {
     }
 
     public String getLoadModels() {
-        return getProperty(LOAD_MODELS, "NONE");
+        return prop.getProperty(LOAD_MODELS);
     }
 
     public boolean isUseSsl() {
@@ -257,5 +268,53 @@ public final class ConfigManager {
             return def;
         }
         return Integer.parseInt(value);
+    }
+
+    public static final class Arguments {
+
+        private String[] models;
+        private String mmsConfigFile;
+
+        public Arguments() {}
+
+        public Arguments(CommandLine cmd) {
+            models = cmd.getOptionValues("models");
+            mmsConfigFile = cmd.getOptionValue("mms-config-file");
+        }
+
+        public static Options getOptions() {
+            Options options = new Options();
+            options.addOption(
+                    Option.builder("m")
+                            .longOpt("models")
+                            .hasArgs()
+                            .argName("MODELS")
+                            .desc("Models to be loaded at startup.")
+                            .build());
+            options.addOption(
+                    Option.builder("f")
+                            .longOpt("mms-config-file")
+                            .hasArg()
+                            .argName("MMS-CONFIG-FILE")
+                            .desc("Path to the configuration properties file.")
+                            .build());
+            return options;
+        }
+
+        public String[] getModels() {
+            return models;
+        }
+
+        public void setModels(String[] models) {
+            this.models = models;
+        }
+
+        public String getMmsConfigFile() {
+            return mmsConfigFile;
+        }
+
+        public void setMmsConfigFile(String mmsConfigFile) {
+            this.mmsConfigFile = mmsConfigFile;
+        }
     }
 }

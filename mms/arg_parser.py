@@ -16,18 +16,6 @@ at runtime.
 import argparse
 
 
-class StoreDictKeyPair(argparse.Action):
-    """
-    This class is a helper class to parse <model-name>=<model-uri> pairs
-    """
-    def __call__(self, parser, namespace, values, option_string=None):
-        try:
-            setattr(namespace, 'models', {kv.split('=', 1)[0]: kv.split('=', 1)[1] for kv in values})
-        except Exception:
-            raise Exception('Failed to parse <model=path>: ' + str(values) +
-                            'Format should be <model-name>=<model-path> (Local file path, URL, S3).')
-
-
 # noinspection PyTypeChecker
 class ArgParser(object):
     """
@@ -36,7 +24,8 @@ class ArgParser(object):
     """
     @staticmethod
     def mms_parser():
-        """ Argument parser for mxnet-model-server start service
+        """
+        Argument parser for mxnet-model-server start service
         """
         parser = argparse.ArgumentParser(prog='mxnet-model-server', description='MXNet Model Server')
 
@@ -47,13 +36,19 @@ class ArgParser(object):
         parser.add_argument('--mms-config',
                             dest='mms_config',
                             help='Configuration file for model server')
-
+        parser.add_argument('--models',
+                            required=True,
+                            metavar='MODEL_PATH1 MODEL_NAME=MODEL_PATH2...',
+                            nargs='+',
+                            help='Models to be loaded using [model_name=]model_location format. '
+                                 'Location can be a HTTP URL, a model archive file or directory '
+                                 'contains model archive files in MODEL_STORE.')
         return parser
 
     @staticmethod
     def model_service_worker_args():
         """
-        Argparser for backend worker. Takes the socket name and socket type.
+        ArgParser for backend worker. Takes the socket name and socket type.
         :return:
         """
         parser = argparse.ArgumentParser(prog='model-server-worker', description='Model Server Worker')

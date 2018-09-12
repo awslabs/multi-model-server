@@ -13,6 +13,7 @@ Command line interface to export model files to be used for inference by MXNet M
 """
 
 import logging
+
 from .arg_parser import ArgParser
 from .model_packaging_utils import ModelExportUtils
 

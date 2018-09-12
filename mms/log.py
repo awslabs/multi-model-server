@@ -32,6 +32,7 @@ class _Formatter(logging.Formatter):
         self.colored = colored
         super(_Formatter, self).__init__()
 
+    # noinspection PyMethodMayBeStatic
     def _get_color(self, level):
         if logging.WARNING <= level:
             return '\x1b[31m'

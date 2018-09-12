@@ -8,9 +8,10 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import pytest
-from mock import Mock, mock_open, patch
 from collections import namedtuple
+
+import pytest
+
 from model_archiver.manifest_components.engine import EngineType
 from model_archiver.manifest_components.manifest import RuntimeType
 from model_archiver.model_packaging import generate_model_archive, package_model
@@ -38,11 +39,11 @@ class TestModelPackaging:
     @pytest.fixture()
     def patches(self, mocker):
         Patches = namedtuple('Patches', ['arg_parse', 'export_utils', 'export_method'])
-        patch = Patches(mocker.patch('model_archiver.model_packaging.ArgParser'),
-                        mocker.patch('model_archiver.model_packaging.ModelExportUtils'),
-                        mocker.patch('model_archiver.model_packaging.package_model'))
+        patches = Patches(mocker.patch('model_archiver.model_packaging.ArgParser'),
+                          mocker.patch('model_archiver.model_packaging.ModelExportUtils'),
+                          mocker.patch('model_archiver.model_packaging.package_model'))
 
-        return patch
+        return patches
 
     def test_gen_model_archive(self, patches):
         patches.arg_parse.export_model_args_parser.parse_args.return_value = self.args

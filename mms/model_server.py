@@ -15,7 +15,7 @@ def start():
     :return:
     """
     args = ArgParser.mms_parser().parse_args()
-    pid_file = tempfile.gettempdir() + "/.model_server.pid"
+    pid_file = os.path.join(tempfile.gettempdir(), ".model_server.pid")
     if args.stop is True:
         if os.path.isfile(pid_file):
             with open(pid_file, "r") as f:

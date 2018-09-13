@@ -381,6 +381,12 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         boolean synchronous =
                 Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
 
+        ModelManager modelManager = ModelManager.getInstance();
+        if (!modelManager.getModels().containsKey(modelName)) {
+            NettyUtils.sendError(
+                    ctx, HttpResponseStatus.NOT_FOUND, ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
+            return;
+        }
         updateModelWorkers(ctx, modelName, minWorkers, maxWorkers, synchronous, null);
     }
 

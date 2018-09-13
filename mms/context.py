@@ -13,6 +13,7 @@ Context object of incoming request
 """
 
 import logging
+import sys
 
 
 class Context(object):
@@ -25,15 +26,16 @@ class Context(object):
         self.model_name = model_name
         self.manifest = manifest
         self._system_properties = {
-            'model_dir': model_dir,
-            'gpu': gpu,
-            'batch_size': batch_size,
-            'server_name': 'MMS',
-            'server_version': mms_version
+            "model_dir": model_dir,
+            "gpu_id": gpu,
+            "batch_size": batch_size,
+            "server_name": "MMS",
+            "server_version": mms_version
         }
         self.request_ids = None
         self.request_processor = RequestProcessor(dict())
         self.logger = logging.getLogger()
+        self.logger.addHandler(logging.StreamHandler(sys.stdout))
         self._metrics = None
 
     @property

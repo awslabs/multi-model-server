@@ -18,6 +18,7 @@ import os
 import sys
 from abc import ABCMeta, abstractmethod
 
+from mms.log import log_msg
 from mms.mxnet_model_service_error import MMSError
 from mms.service import Service
 from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
@@ -93,6 +94,7 @@ class MmsModelLoader(ModelLoader):
         :param batch_size:
         :return:
         """
+        log_msg("Loading model - working dir: {}".format(os.getcwd()))
         manifest_file = os.path.join(model_dir, "MAR_INF/MANIFEST.json")
         manifest = None
         if os.path.exists(manifest_file):

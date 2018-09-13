@@ -33,6 +33,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -198,7 +199,8 @@ public class WorkerThread extends Thread {
                                     future -> {
                                         // TODO:
                                         // use gpu, batch size in load model command
-                                        RequestBatch input = new RequestBatch();
+                                        RequestBatch input =
+                                                new RequestBatch(UUID.randomUUID().toString());
                                         if (gpuId >= 0) {
                                             input.addModelInput(
                                                     new ModelInputs("gpu", String.valueOf(gpuId)));

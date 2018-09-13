@@ -15,17 +15,12 @@ package com.amazonaws.ml.mms.util.messages;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class RequestBatch {
 
     private String requestId;
     private String contentType;
     private List<ModelInputs> modelInputs;
-
-    public RequestBatch() {
-        this(UUID.randomUUID().toString());
-    }
 
     public RequestBatch(String requestId) {
         this.requestId = requestId;

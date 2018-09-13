@@ -188,7 +188,7 @@ class OtfCodecHandler(object):
                 else:
                     content_type = 'json'
                     ctype_encoded = content_type.encode('utf-8')
-                    json_value = json.dumps(val)
+                    json_value = json.dumps(val, indent=2)
                     msg += struct.pack('!i', len(ctype_encoded))
                     msg += struct.pack('!{}s'.format(len(ctype_encoded)), ctype_encoded)
 

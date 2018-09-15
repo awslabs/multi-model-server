@@ -12,6 +12,7 @@
 CustomService class definitions
 """
 import ast
+import time
 from collections import OrderedDict
 
 import mms
@@ -20,6 +21,8 @@ from mms.log import log_msg
 from mms.metrics.metrics_store import MetricsStore
 from mms.mxnet_model_service_error import MMSError
 from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
+
+INFERENCE_METRIC = 'InferenceTime'
 
 
 class Service(object):
@@ -136,10 +139,16 @@ class Service(object):
         input_batch, req_id_map, invalid_reqs = Service.retrieve_data_for_inference(req_batch)
 
         self.context.request_ids = req_id_map
-        self.context.metrics = MetricsStore(req_id_map, model_name)
+        metrics = MetricsStore(req_id_map, model_name)
+        self.context.metrics = metrics
+
+        start_time = time.time()
 
         ret = self._entry_point(input_batch, self.context)
-        emit_metrics(self.context.metrics.store)
+
+        duration = int((time.time() - start_time) * 1000)
+        metrics.add_time(INFERENCE_METRIC, duration)
+        emit_metrics(metrics.store)
 
         predictions = codec.create_response(cmd=2, resp=ret, req_id_map=req_id_map, invalid_reqs=invalid_reqs)
         return predictions, "Prediction success", 200
@@ -155,5 +164,6 @@ def emit_metrics(metrics):
     A dictionary of all metrics, when key is metric_name
     value is a metric object
     """
-    met_list = [str(met) for met in metrics]
-    log_msg("[METRICS] [", ",".join(met_list), "]")
+    if metrics:
+        for met in metrics:
+            log_msg("[METRICS]", str(met))

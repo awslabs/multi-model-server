@@ -14,17 +14,13 @@ package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
-import com.google.gson.reflect.TypeToken;
 import io.netty.channel.unix.DomainSocketAddress;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -140,7 +136,6 @@ public class WorkerLifeCycle {
         private WorkerLifeCycle lifeCycle;
         static final org.apache.log4j.Logger loggerModelMetrics =
                 org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
-        private static final Type LIST_TYPE = new TypeToken<ArrayList<Metric>>() {}.getType();
 
         public ReaderThread(String name, InputStream is, boolean error, WorkerLifeCycle lifeCycle) {
             super(name + (error ? "-stderr" : "-stdout"));
@@ -158,9 +153,7 @@ public class WorkerLifeCycle {
                         break;
                     }
                     if (result.startsWith("[METRICS]")) {
-                        loggerModelMetrics.info(
-                                JsonUtils.GSON.fromJson(
-                                        result.substring("[METRICS]".length()), LIST_TYPE));
+                        loggerModelMetrics.info(Metric.parse(result.substring(9)));
                         continue;
                     }
 

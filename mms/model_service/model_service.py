@@ -15,14 +15,9 @@
 import ast
 import json
 import os
-import time
 from abc import ABCMeta, abstractmethod
 
 from mms.log import get_logger
-
-PREPROCESS_METRIC = 'MMSWorkerPreprocessTimeBatch'
-INFERENCE_METRIC = 'MMSWorkerInferenceTimeBatch'
-POSTPROCESS_METRIC = 'MMSWorkerPostprocessTimeBatch'
 
 logger = get_logger()
 
@@ -148,22 +143,9 @@ class SingleNodeService(ModelService):
         list of outputs to be sent back to client.
             data to be sent back
         """
-        pre_start_time = time.time()
         data = self._preprocess(data)
-        infer_start_time = time.time()
         data = self._inference(data)
-        post_start_ms = time.time()
         data = self._postprocess(data)
-        post_end_ms = time.time()
-
-        pre_time_in_ms = (infer_start_time - pre_start_time) * 1000
-        infer_time_in_ms = (post_start_ms - infer_start_time) * 1000
-        post_time_in_ms = (post_end_ms - post_start_ms) * 1000
-
-        metrics = self._context.metrics
-        metrics.add_time(PREPROCESS_METRIC, pre_time_in_ms)
-        metrics.add_time(INFERENCE_METRIC, infer_time_in_ms)
-        metrics.add_time(POSTPROCESS_METRIC, post_time_in_ms)
 
         return data
 

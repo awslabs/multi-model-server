@@ -13,9 +13,16 @@
 package com.amazonaws.ml.mms.metrics;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Metric {
+
+    private static final Pattern PATTERN =
+            Pattern.compile(
+                    "\\s*(\\w+)\\.(\\w+):([0-9\\-,.]+)\\|#([^|]*)\\|#hostname:([^,]+)(,(.+))?");
 
     @SerializedName("MetricName")
     private String metricName;
@@ -94,16 +101,51 @@ public class Metric {
         this.timestamp = timestamp;
     }
 
+    public static Metric parse(String line) {
+        // DiskAvailable.Gigabytes:311|#Level:Host,hostname:localhost
+        Matcher matcher = PATTERN.matcher(line);
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        Metric metric = new Metric();
+        metric.setMetricName(matcher.group(1));
+        metric.setUnit(matcher.group(2));
+        metric.setValue(matcher.group(3));
+        metric.setHostName(matcher.group(5));
+        metric.setRequestId(matcher.group(7));
+        String dimensions = matcher.group(4);
+        if (dimensions != null) {
+            String[] dimension = dimensions.split(",");
+            List<Dimension> list = new ArrayList<>(dimension.length);
+            for (String dime : dimension) {
+                String[] pair = dime.split(":");
+                if (pair.length == 2) {
+                    list.add(new Dimension(pair[0], pair[1]));
+                }
+            }
+            metric.setDimensions(list);
+        }
+
+        return metric;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(metricName).append('.').append(unit).append(':').append(getValue()).append("|#");
+        boolean first = true;
         for (Dimension dimension : getDimensions()) {
-            sb.append(dimension.getName()).append(':').append(dimension.getValue()).append(',');
+            if (first) {
+                first = false;
+            } else {
+                sb.append(',');
+            }
+            sb.append(dimension.getName()).append(':').append(dimension.getValue());
         }
-        sb.append("hostname:").append(hostName).append(',');
+        sb.append("|#hostname:").append(hostName);
         if (requestId != null) {
-            sb.append("requestID:").append(requestId);
+            sb.append(',').append("requestID:").append(requestId);
         }
         return sb.toString();
     }

@@ -15,6 +15,7 @@ package com.amazonaws.ml.mms.metrics;
 import com.google.gson.annotations.SerializedName;
 
 public class Dimension {
+
     @SerializedName("Name")
     private String name;
 
@@ -22,6 +23,11 @@ public class Dimension {
     private String value;
 
     public Dimension() {}
+
+    public Dimension(String name, String value) {
+        this.name = name;
+        this.value = value;
+    }
 
     public String getName() {
         return name;

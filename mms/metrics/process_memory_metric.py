@@ -12,11 +12,10 @@
 Collect process memory usage metrics  here
 Pass a json, collection of pids and gpuID
 """
-import sys
+
+import logging
 
 import psutil
-
-from mms.log import log_error, log_msg
 
 
 def get_cpu_usage(pid):
@@ -27,9 +26,10 @@ def get_cpu_usage(pid):
     """
     try:
         process = psutil.Process(int(pid))
-    except psutil.Error as e:
-        log_error("Pid error in psutil: {}".format(str(e)))
+    except psutil.Error:
+        logging.error("Failed get process for pid: {}".format(pid), exc_info=True)
         return 0
+
     mem_utilization = process.memory_info()[0]
     return mem_utilization
 
@@ -45,8 +45,4 @@ def check_process_mem_usage(stdin):
     for process in process_list:
         if not process:
             continue
-        log_msg("{}:{}".format(process, get_cpu_usage(process)))
-
-
-if __name__ == "__main__":
-    check_process_mem_usage(sys.stdin)
+        logging.info("{}:{}".format(process, get_cpu_usage(process)))

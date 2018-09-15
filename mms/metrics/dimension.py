@@ -36,7 +36,7 @@ class Dimension(object):
         Return a string value
         :return:
         """
-        return '{{"Name":"{}", "Value":"{}"}}'.format(self.name, self.value)
+        return "{}:{}".format(self.name, self.value)
 
     def to_dict(self):
         """

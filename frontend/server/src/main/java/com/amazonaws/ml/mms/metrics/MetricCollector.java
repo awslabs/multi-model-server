@@ -13,16 +13,13 @@
 package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import com.amazonaws.ml.mms.wlm.WorkerThread;
-import com.google.gson.reflect.TypeToken;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +33,6 @@ public class MetricCollector implements Runnable {
     static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
     private static final org.apache.log4j.Logger loggerMetrics =
             org.apache.log4j.Logger.getLogger(ConfigManager.MMS_METRICS_LOGGER);
-    private static final Type LIST_TYPE = new TypeToken<ArrayList<Metric>>() {}.getType();
     private ConfigManager configManager;
 
     public MetricCollector(ConfigManager configManager) {
@@ -98,17 +94,21 @@ public class MetricCollector implements Runnable {
             try (BufferedReader reader =
                     new BufferedReader(
                             new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
-                // first line is system metrics
-                String line = reader.readLine();
-                if (line == null || line.isEmpty()) {
-                    logger.error("Expecting system metrics line, but received empty.");
-                    return;
-                }
-
-                List<Metric> metricsSystem = JsonUtils.GSON.fromJson(line, LIST_TYPE);
+                List<Metric> metricsSystem = new ArrayList<>();
                 metricManager.setMetrics(metricsSystem);
-                for (Metric metric : metricsSystem) {
-                    loggerMetrics.info(metric);
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.isEmpty()) {
+                        break;
+                    }
+                    Metric metric = Metric.parse(line);
+                    if (metric == null) {
+                        logger.warn("Parse metrics failed: " + line);
+                    } else {
+                        loggerMetrics.info(metric);
+                        metricsSystem.add(metric);
+                    }
                 }
 
                 // Collect process level metrics
@@ -143,5 +143,6 @@ public class MetricCollector implements Runnable {
             }
             IOUtils.write(pid.toString(), os, StandardCharsets.UTF_8);
         }
+        os.write('\n');
     }
 }

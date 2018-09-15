@@ -26,7 +26,7 @@ class Metric(object):
     """
 
     def __init__(self, name, value,
-                 unit, dimensions, req_id=None, metric_method=None):
+                 unit, dimensions, request_id=None, metric_method=None):
         """
         Constructor for Metric class
 
@@ -42,13 +42,12 @@ class Metric(object):
             unit can be one of ms, percent, count, MB, GB or a generic string
         dimensions: list
             list of dimension objects
-        req_id: str
+        request_id: str
             req_id of metric
         metric_method: str
            useful for defining different operations, optional
 
         """
-
         self.name = name
         self.unit = unit
         if unit in list(MetricUnit.units.keys()):
@@ -56,7 +55,7 @@ class Metric(object):
         self.metric_method = metric_method
         self.value = value
         self.dimensions = dimensions
-        self.req_id = req_id
+        self.request_id = request_id
 
     def update(self, value):
         """
@@ -72,16 +71,15 @@ class Metric(object):
             self.value += value
         else:
             self.value = value
-        # TODO: Add specific operations for other metric methods as required.
 
     def __str__(self):
-        dims = [dim.to_dict() for dim in self.dimensions]
+        dims = ",".join([str(d) for d in self.dimensions])
+        if self.request_id:
+            return "{}.{}:{}|#{}|#hostname:{},{}".format(
+                self.name, self.unit, self.value, dims, socket.gethostname(), self.request_id)
 
-        data = '{{"MetricName":"{}", "Value":"{}", "Unit":"{}", "Dimensions":{}, "Timestamp":"{}", ' \
-               '"HostName":"{}", "RequestId":"{}"}}'.format(self.name, self.value, self.unit, dims,
-                                                            datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                                                            socket.gethostname(), self.req_id)
-        return data
+        return "{}.{}:{}|#{}|#hostname:{}".format(
+            self.name, self.unit, self.value, dims, socket.gethostname())
 
     def to_dict(self):
         """
@@ -91,4 +89,4 @@ class Metric(object):
                             'Dimensions': self.dimensions,
                             'Timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
                             'HostName': socket.gethostname(),
-                            'RequestId': self.req_id})
+                            'RequestId': self.request_id})

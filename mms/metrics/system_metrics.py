@@ -10,16 +10,13 @@
 """
 Module to collect system metrics for front-end
 """
-import json
-import sys
+import logging
 import types
 
 import psutil
 
-from mms.log import log_msg
-from mms.metrics.dimension import Dimension
-from mms.metrics.metric import Metric
-from mms.metrics.metric_encoder import MetricEncoder
+from dimension import Dimension
+from metric import Metric
 
 system_metrics = []
 dimension = [Dimension('Level', 'Host')]
@@ -66,8 +63,8 @@ def collect_all(mod):
         value = getattr(mod, i)
         if isinstance(value, types.FunctionType) and value.__name__ not in ('collect_all', 'log_msg'):
             value()
-    log_msg(json.dumps(system_metrics, separators=(',', ':'), cls=MetricEncoder))
 
+    for met in system_metrics:
+        logging.info(str(met))
 
-if __name__ == '__main__':
-    collect_all(sys.modules[__name__])
+    logging.info("")

@@ -1,7 +1,12 @@
+import logging
+import sys
+
 import pytest
 from mms.metrics.dimension import Dimension
 from mms.metrics.metrics_store import MetricsStore
 from mms.service import emit_metrics
+
+logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
 
 def get_model_key(name, unit, req_id, model_name):
@@ -19,7 +24,7 @@ def get_error_key(name, unit):
     return '-'.join(dim_str)
 
 
-def test_metrics(capsys):
+def test_metrics(caplog):
     """
     Test if metric classes methods behave as expected
     Also checks global metric service methods
@@ -50,9 +55,9 @@ def test_metrics(capsys):
     assert test_metric.value == 4
     # Check what is emitted is correct
     emit_metrics(metrics.store)
-    out, err = capsys.readouterr()
-    assert '"Dimensions":[' in out
-    assert '\'Value\': \'Model\'' in out
+
+    assert "hjshfj" in caplog.text
+    assert "ModelName:dummy model" in caplog.text
 
     # Adding other types of metrics
     # Check for time metric

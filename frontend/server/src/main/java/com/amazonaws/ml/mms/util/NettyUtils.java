@@ -13,7 +13,7 @@
 package com.amazonaws.ml.mms.util;
 
 import com.amazonaws.ml.mms.http.ErrorResponse;
-import com.amazonaws.ml.mms.util.messages.ModelInputs;
+import com.amazonaws.ml.mms.util.messages.InputParameter;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -218,7 +218,7 @@ public final class NettyUtils {
         }
     }
 
-    public static ModelInputs getFormData(InterfaceHttpData data) {
+    public static InputParameter getFormData(InterfaceHttpData data) {
         if (data == null) {
             return null;
         }
@@ -228,7 +228,7 @@ public final class NettyUtils {
             case Attribute:
                 Attribute attribute = (Attribute) data;
                 try {
-                    return new ModelInputs(name, attribute.getValue());
+                    return new InputParameter(name, attribute.getValue());
                 } catch (IOException e) {
                     throw new AssertionError(e);
                 }
@@ -236,7 +236,7 @@ public final class NettyUtils {
                 FileUpload fileUpload = (FileUpload) data;
                 String contentType = fileUpload.getContentType();
                 try {
-                    return new ModelInputs(name, getBytes(fileUpload.getByteBuf()), contentType);
+                    return new InputParameter(name, getBytes(fileUpload.getByteBuf()), contentType);
                 } catch (IOException e) {
                     throw new AssertionError(e);
                 }

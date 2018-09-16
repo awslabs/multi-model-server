@@ -13,14 +13,12 @@
 """
 import json
 import os
+import logging
 
 import mxnet as mx
 from mxnet.io import DataBatch
 
-from mms.log import get_logger
-from mms.model_service.model_service import SingleNodeService
-
-logger = get_logger()
+from .model_service import SingleNodeService
 
 
 def check_input_shape(inputs, signature):
@@ -99,7 +97,7 @@ class MXNetBaseService(SingleNodeService):
             self.param_filename = manifest['Model']['Parameters']
             epoch = int(self.param_filename[len(model_name) + 1: -len('.params')])
         except Exception:  # pylint: disable=broad-except
-            logger.info("Failed to parse epoch from param file, setting epoch to 0")
+            logging.info("Failed to parse epoch from param file, setting epoch to 0")
 
         sym, arg_params, aux_params = mx.model.load_checkpoint('%s/%s' %
                                                                (model_dir, manifest['Model']['Symbol'][:-12]), epoch)
@@ -142,7 +140,7 @@ class MXNetBaseService(SingleNodeService):
         self.mx_model.forward(DataBatch(data))
         data = self.mx_model.get_outputs()
         # by pass lazy evaluation get_outputs either returns a list of nd arrays
-        # a list of list of ndarrays
+        # a list of list of NDArray
         for d in data:
             if isinstance(d, list):
                 for n in data:
@@ -205,9 +203,9 @@ class GluonImperativeBaseService(SingleNodeService):
             if self.param_filename or self.net is not None:
                 self.net.load_params(os.path.join(model_dir, self.param_filename), ctx=self.ctx)
             else:
-                logger.info("No parameters file given for this imperative service")
+                logging.info("No parameters file given for this imperative service")
         except Exception:  # pylint: disable=broad-except
-            logger.info("Failed to parse epoch from param file, setting epoch to 0")
+            logging.info("Failed to parse epoch from param file, setting epoch to 0")
 
         # Read synset file
         # If synset is not specified, check whether model archive contains synset file.
@@ -245,6 +243,6 @@ class GluonImperativeBaseService(SingleNodeService):
         Returns
         -------
         Dict
-            Model service signiture.
+            Model service signature.
         """
         return self._signature

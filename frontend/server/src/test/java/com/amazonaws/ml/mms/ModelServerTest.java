@@ -22,7 +22,6 @@ import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
-import com.amazonaws.ml.mms.util.codec.MessageCodec;
 import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import com.google.gson.JsonParseException;
 import io.netty.bootstrap.Bootstrap;
@@ -437,7 +436,6 @@ public class ModelServerTest {
                                     p.addLast(new HttpContentDecompressor());
                                     p.addLast(new ChunkedWriteHandler());
                                     p.addLast(new HttpObjectAggregator(6553600));
-                                    p.addLast(new MessageCodec());
                                     p.addLast(new TestHandler());
                                 }
                             });

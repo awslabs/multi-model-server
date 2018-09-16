@@ -11,234 +11,262 @@
 """
 OTF Codec
 """
-import struct
+import ast
 import json
+import logging
+import struct
 
-from mms.mxnet_model_service_error import MMSError
-from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
+MAX_BUFFER_SIZE = 6553500
 
 int_size = 4
-END_OF_LIST = -2
-START_OF_LIST = -1
-PREDICT_MSG = 2
-LOAD_MSG = 1
+END_OF_LIST = -1
+LOAD_MSG = b'L'
+PREDICT_MSG = b'I'
 RESPONSE = 3
 
 
-class OtfCodecHandler(object):
+def retrieve_msg(conn):
     """
-    OTF Codec class
+    Retrieve a message from the socket channel.
+
+    :param conn:
+    :return:
     """
+    cmd = _retrieve_buffer(conn, 1)
+    if cmd == LOAD_MSG:
+        msg = _retrieve_load_msg(conn)
+    elif cmd == PREDICT_MSG:
+        msg = _retrieve_inference_msg(conn)
+    else:
+        raise ValueError("Invalid command: {}".format(cmd))
 
-    @staticmethod
-    def _retrieve_buffer(conn, length):
-        data = bytearray()
+    return cmd, msg
 
-        try:
-            while length > 0:
-                pkt = conn.recv(length)
-                if len(pkt) == 0:
-                    raise MMSError(Err.DECODE_FAILED, "Remote side disconnected.. recv None")
-                data += pkt
-                length -= len(pkt)
-        except (IOError, OSError) as sock_err:
-            raise MMSError(Err.DECODE_FAILED, "{}".format(repr(sock_err)))
-        except Exception as e:  # pylint: disable=broad-except
-            raise MMSError(Err.DECODE_FAILED, "{}".format(e))
 
-        return data
+def create_predict_response(ret, req_id_map, message, code):
+    """
+    Create inference response.
 
-    def _retrieve_int(self, conn):
-        data = self._retrieve_buffer(conn, int_size)
-        return struct.unpack('!i', data)[0]
+    :param ret:
+    :param req_id_map:
+    :param message:
+    :param code:
+    :return:
+    """
+    msg = bytearray()
+    msg += struct.pack('!i', code)
 
-    def _retrieve_load_msg(self, conn):
-        """
-        MSG Frame Format:
+    buf = message.encode("utf-8")
+    msg += struct.pack('!i', len(buf))
+    msg += buf
 
-        | 1.0 | int cmd_length | cmd value | int model-name length | model-name value |
-        | int model-path length | model-path value |
-        | int batch-size length | batch-size value | int handler length | handler value |
-        | int gpu id length | gpu ID value |
+    for idx in req_id_map:
+        buf = req_id_map[idx].encode('utf-8')
+        msg += struct.pack("!i", len(buf))
+        msg += buf
 
-        :param conn:
-        :return:
-        """
-        msg = dict()
-        length = self._retrieve_int(conn)
-        msg['modelName'] = self._retrieve_buffer(conn=conn, length=length)
-        length = self._retrieve_int(conn)
-        msg['modelPath'] = self._retrieve_buffer(conn=conn, length=length)
-        msg['batchSize'] = self._retrieve_int(conn=conn)
-        length = self._retrieve_int(conn=conn)
-        msg['handler'] = self._retrieve_buffer(conn, length)
-        gpu_id = self._retrieve_int(conn=conn)
-        if gpu_id >= 0:
-            msg['gpu'] = gpu_id
+        # TODO: retrieve content_type from context
+        msg += struct.pack('!i', 0)  # content_type
 
-        return "load", msg
-
-    def _retrieve_model_inputs(self, conn, msg):
-        end = False
-        while end is False:
-            model_input = dict()
-            length = self._retrieve_int(conn)
-            if length > 0:
-                model_input['name'] = self._retrieve_buffer(conn, length)
-            elif length == END_OF_LIST:
-                end = True
-                continue
-
-            length = self._retrieve_int(conn)
-
-            model_input['contentType'] = self._retrieve_buffer(conn, length)
-            length = self._retrieve_int(conn)
-            value = self._retrieve_buffer(conn, length)
-            model_input['value'] = value
-            msg.append(model_input)
-
-    def _retrieve_request_batch(self, conn, msg):
-        end = False
-        while end is False:
-            req_batch = dict()
-            length = self._retrieve_int(conn)
-
-            if length > 0:
-                req_batch['requestId'] = self._retrieve_buffer(conn, length)
-            elif length == END_OF_LIST:
-                end = True
-                continue
-
-            length = self._retrieve_int(conn)
-            req_batch['contentType'] = self._retrieve_buffer(conn, length)
-
-            length = self._retrieve_int(conn)
-            if length == START_OF_LIST:  # Beginning of list
-                req_batch['modelInputs'] = list()
-                self._retrieve_model_inputs(conn, req_batch['modelInputs'])
-
-            msg.append(req_batch)
-
-    def _retrieve_inference_msg(self, conn):
-        msg = dict()
-        length = self._retrieve_int(conn)
-        msg['modelName'] = self._retrieve_buffer(conn, length)
-        length = self._retrieve_int(conn)
-        if length == START_OF_LIST:
-            msg['requestBatch'] = list()
-            self._retrieve_request_batch(conn, msg['requestBatch'])
-
-        return "predict", msg
-
-    def retrieve_msg(self, conn):
-        """
-        Retrieve a message from the socket channel.
-
-        :param conn:
-        :return:
-        """
-        # Validate its beginning of a message
-        version = self._retrieve_int(conn)
-        if version != 1:
-            raise MMSError(Err.DECODE_FAILED, "Invalid message received")
-
-        cmd = self._retrieve_int(conn)
-
-        if cmd == LOAD_MSG:
-            cmd, msg = self._retrieve_load_msg(conn)
-        elif cmd == PREDICT_MSG:
-            cmd, msg = self._retrieve_inference_msg(conn)
+        if ret is None:
+            buf = b"error"
+            msg += struct.pack('!i', len(buf))
+            msg += buf
         else:
-            return "unknown", "Wrong command"
-
-        return cmd, msg
-
-    @staticmethod
-    def _encode_inference_response(kwargs):
-        try:
-            req_id_map = kwargs['req_id_map']
-            invalid_reqs = kwargs['invalid_reqs']
-            ret = kwargs['resp']
-            msg = bytearray()
-            msg += struct.pack('!i', -1)  # start of list
-
-            for idx, val in enumerate(ret):
-                msg += struct.pack("!i", len(req_id_map[idx]))
-                msg += struct.pack('!{}s'.format(len(req_id_map[idx])), req_id_map[idx].encode('utf-8'))
-
-                if isinstance(val, str):
-                    content_type = "text"
-
-                    ctype_encoded = content_type.encode('utf-8')
-                    msg += struct.pack('!i', len(ctype_encoded))
-                    msg += struct.pack('!{}s'.format(len(content_type)), ctype_encoded)
-
-                    val_encoded = val.encode('utf-8')
-                    msg += struct.pack('!i', len(val_encoded))
-                    msg += struct.pack('!{}s'.format(len(val_encoded)), val_encoded)
-                elif isinstance(val, (bytes, bytearray)):
-                    content_type = "binary"
-
-                    ctype_encoded = content_type.encode('utf-8')
-                    msg += struct.pack('!i', len(ctype_encoded))
-                    msg += struct.pack('!{}s'.format(len(ctype_encoded)), ctype_encoded)
-
+            val = ret[idx]
+            if isinstance(val, str):
+                buf = val.encode("utf-8")
+                msg += struct.pack('!i', len(buf))
+                msg += buf
+            elif isinstance(val, (bytes, bytearray)):
+                msg += struct.pack('!i', len(val))
+                msg += val
+            else:
+                try:
+                    json_value = json.dumps(val, indent=2)
+                    msg += struct.pack('!i', len(json_value))
+                    msg += json_value
+                except TypeError:
+                    logging.warning("Unable to serialize model output.", exc_info=True)
                     msg += struct.pack('!i', len(val))
                     msg += val
-                else:
-                    content_type = 'json'
-                    ctype_encoded = content_type.encode('utf-8')
-                    json_value = json.dumps(val, indent=2)
-                    msg += struct.pack('!i', len(ctype_encoded))
-                    msg += struct.pack('!{}s'.format(len(ctype_encoded)), ctype_encoded)
 
-                    val_encoded = json_value.encode('utf-8')
-                    msg += struct.pack('!i', len(val_encoded))
-                    msg += struct.pack('!{}s'.format(len(val_encoded)), val_encoded)
+    msg += struct.pack('!i', -1)  # End of list
+    return msg
 
-            for req in invalid_reqs.keys():
-                req_encoded = req.encode('utf-8')
-                msg += struct.pack('!i', len(req_encoded))
-                msg += struct.pack('!{}s'.format(len(req_encoded)), req_encoded)
 
-                msg += struct.pack('!i', 4)
-                msg += struct.pack('!i', invalid_reqs.get(req))
+def create_load_model_response(code, message):
+    """
+    Create load model response.
 
-                msg_encoded = "Invalid input provided".encode('utf-8')
-                msg += struct.pack('!i', len(msg_encoded))
-                msg += struct.pack('!{}s'.format(msg_encoded), msg_encoded)
+    :param code:
+    :param message:
+    :return:
+    """
+    msg = bytearray()
+    msg += struct.pack('!i', code)
 
-                content_type = "text"
-                ctype_encoded = content_type.encode('utf-8')
-                msg += struct.pack('!i', len(ctype_encoded))
-                msg += struct.pack('!{}s'.format(len(ctype_encoded)), ctype_encoded)
-            msg += struct.pack('!i', -2)  # End of list
+    buf = message.encode()
+    msg += struct.pack('!i', len(buf))
+    msg += buf
+    msg += struct.pack('!i', -1)  # no predictions
 
-            return msg
+    return msg
 
-        except Exception:
-            raise MMSError(Err.ENCODE_FAILED, "Invalid message received for encode")
 
-    @staticmethod
-    def _encode_response(kwargs):
-        msg = bytearray()
-        try:
-            msg += struct.pack('!i', int(kwargs['code']))
-            msg_len = len(kwargs['message'])
-            msg += struct.pack('!i', msg_len)
-            msg += struct.pack('!{}s'.format(msg_len), kwargs['message'].encode())
-            if 'predictions' in kwargs and kwargs['predictions'] is not None:
-                msg += kwargs['predictions']
-            else:
-                msg += struct.pack('!i', 0)  # no predictions
-        except Exception:
-            raise MMSError(Err.ENCODE_FAILED, "Failed to encode response.")
-        return msg
+def _retrieve_buffer(conn, length):
+    if length > MAX_BUFFER_SIZE:
+        raise ValueError("Exceed max buffer size: {}".format(length))
 
-    def create_response(self, cmd, **kwargs):
-        if cmd == PREDICT_MSG:  # Predict request response
-            return self._encode_inference_response(kwargs=kwargs)
-        elif cmd == RESPONSE:  # All responses
-            return self._encode_response(kwargs=kwargs)
-        else:
-            raise MMSError(Err.ENCODE_FAILED, "Unknown message received {}".format(cmd))
+    data = bytearray()
+
+    while length > 0:
+        pkt = conn.recv(length)
+        if len(pkt) == 0:
+            logging.info("Frontend disconnected.")
+            exit(0)
+
+        data += pkt
+        length -= len(pkt)
+
+    return data
+
+
+def _retrieve_int(conn):
+    data = _retrieve_buffer(conn, int_size)
+    return struct.unpack("!i", data)[0]
+
+
+def _retrieve_load_msg(conn):
+    """
+    MSG Frame Format:
+
+    | cmd value |
+    | int model-name length | model-name value |
+    | int model-path length | model-path value |
+    | int batch-size length |
+    | int handler length | handler value |
+    | int gpu id |
+
+    :param conn:
+    :return:
+    """
+    msg = dict()
+    length = _retrieve_int(conn)
+    msg["modelName"] = _retrieve_buffer(conn, length)
+    length = _retrieve_int(conn)
+    msg["modelPath"] = _retrieve_buffer(conn, length)
+    msg["batchSize"] = _retrieve_int(conn)
+    length = _retrieve_int(conn)
+    msg["handler"] = _retrieve_buffer(conn, length)
+    gpu_id = _retrieve_int(conn)
+    if gpu_id >= 0:
+        msg["gpu"] = gpu_id
+
+    return msg
+
+
+def _retrieve_inference_msg(conn):
+    """
+    MSG Frame Format:
+
+    | cmd value |
+    | batch: list of requests |
+    """
+    msg = []
+    while True:
+        request = _retrieve_request(conn)
+        if request is None:
+            break
+
+        msg.append(request)
+
+    return msg
+
+
+def _retrieve_request(conn):
+    """
+    MSG Frame Format:
+
+    | request_id |
+    | request_headers: list of request headers|
+    | parameters: list of request parameters |
+    """
+    length = _retrieve_int(conn)
+    if length == -1:
+        return None
+
+    request = dict()
+    request["requestId"] = _retrieve_buffer(conn, length)
+
+    headers = []
+    while True:
+        header = _retrieve_reqest_header(conn)
+        if header is None:
+            break
+        headers.append(header)
+
+    request["headers"] = headers
+
+    model_inputs = []
+    while True:
+        input_data = _retrieve_input_data(conn)
+        if input_data is None:
+            break
+        model_inputs.append(input_data)
+
+    request["parameters"] = model_inputs
+    return request
+
+
+def _retrieve_reqest_header(conn):
+    """
+    MSG Frame Format:
+
+    | parameter_name |
+    | content_type |
+    | input data in bytes |
+    """
+    length = _retrieve_int(conn)
+    if length == -1:
+        return None
+
+    header = dict()
+    header["name"] = _retrieve_buffer(conn, length)
+
+    length = _retrieve_int(conn)
+    header["value"] = _retrieve_buffer(conn, length)
+
+    return header
+
+
+def _retrieve_input_data(conn):
+    """
+    MSG Frame Format:
+
+    | parameter_name |
+    | content_type |
+    | input data in bytes |
+    """
+    length = _retrieve_int(conn)
+    if length == -1:
+        return None
+
+    model_input = dict()
+    model_input["name"] = _retrieve_buffer(conn, length).decode()
+
+    length = _retrieve_int(conn)
+    content_type = _retrieve_buffer(conn, length).decode()
+    model_input["contentType"] = content_type
+
+    length = _retrieve_int(conn)
+    value = _retrieve_buffer(conn, length)
+
+    if content_type == "application/json":
+        model_input["value"] = ast.literal_eval(value.decode())
+    elif content_type.startswith("text"):
+        model_input["value"] = value.decode()
+    else:
+        model_input["value"] = value
+
+    return model_input

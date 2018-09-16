@@ -132,7 +132,7 @@ public class Metric {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(128);
         sb.append(metricName).append('.').append(unit).append(':').append(getValue()).append("|#");
         boolean first = true;
         for (Dimension dimension : getDimensions()) {
@@ -145,7 +145,7 @@ public class Metric {
         }
         sb.append("|#hostname:").append(hostName);
         if (requestId != null) {
-            sb.append(',').append("requestID:").append(requestId);
+            sb.append(",requestID:").append(requestId);
         }
         return sb.toString();
     }

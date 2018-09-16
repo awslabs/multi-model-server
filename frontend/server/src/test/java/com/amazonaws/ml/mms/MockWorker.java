@@ -19,7 +19,7 @@ import com.amazonaws.ml.mms.util.messages.ModelInferenceRequest;
 import com.amazonaws.ml.mms.util.messages.ModelLoadModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
-import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import com.amazonaws.ml.mms.util.messages.RequestInput;
 import com.amazonaws.ml.mms.util.messages.WorkerCommands;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -177,13 +177,13 @@ public class MockWorker {
         public void channelRead0(ChannelHandlerContext ctx, BaseModelRequest msg) {
             logger.debug("Mock worker received: {}", msg.getModelName());
             ModelWorkerResponse resp = new ModelWorkerResponse();
-            resp.setCode("200");
+            resp.setCode(200);
             resp.setMessage("Loaded.");
             if (msg instanceof ModelInferenceRequest) {
-                List<RequestBatch> requestBatches = ((ModelInferenceRequest) msg).getRequestBatch();
+                List<RequestInput> requestBatches = ((ModelInferenceRequest) msg).getRequestBatch();
                 List<Predictions> predictions = new ArrayList<>(requestBatches.size());
                 Base64.Encoder encoder = Base64.getEncoder();
-                for (RequestBatch requestBatch : requestBatches) {
+                for (RequestInput requestBatch : requestBatches) {
                     String requestId = requestBatch.getRequestId();
                     Predictions prediction = new Predictions();
                     prediction.setRequestId(requestId);

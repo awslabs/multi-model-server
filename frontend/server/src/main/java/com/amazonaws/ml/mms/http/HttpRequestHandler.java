@@ -18,8 +18,8 @@ import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
-import com.amazonaws.ml.mms.util.messages.ModelInputs;
-import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import com.amazonaws.ml.mms.util.messages.InputParameter;
+import com.amazonaws.ml.mms.util.messages.RequestInput;
 import com.amazonaws.ml.mms.util.messages.WorkerCommands;
 import com.amazonaws.ml.mms.wlm.Job;
 import com.amazonaws.ml.mms.wlm.Model;
@@ -192,7 +192,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        RequestBatch input;
+        RequestInput input;
         try {
             input = parseRequest(ctx, req);
         } catch (IllegalArgumentException e) {
@@ -229,7 +229,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        RequestBatch input;
+        RequestInput input;
         try {
             input = parseRequest(ctx, req);
             if (modelName == null) {
@@ -427,22 +427,17 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         NettyUtils.sendJsonResponse(ctx, resp);
     }
 
-    private static RequestBatch parseRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
+    private static RequestInput parseRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
         String requestId = NettyUtils.getRequestId(ctx);
-        RequestBatch inputData = new RequestBatch(requestId);
+        RequestInput inputData = new RequestInput(requestId);
         CharSequence contentType = HttpUtil.getMimeType(req);
-        if (contentType != null) {
-            inputData.setContentType(contentType.toString());
-        }
-        if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(contentType)) {
-            inputData.addModelInput(new ModelInputs("body", NettyUtils.getBytes(req.content())));
-        } else if (HttpPostRequestDecoder.isMultipart(req)
+        if (HttpPostRequestDecoder.isMultipart(req)
                 || HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.contentEqualsIgnoreCase(
                         contentType)) {
             HttpPostRequestDecoder form = new HttpPostRequestDecoder(req);
             try {
                 while (form.hasNext()) {
-                    inputData.addModelInput(NettyUtils.getFormData(form.next()));
+                    inputData.addParameter(NettyUtils.getFormData(form.next()));
                 }
             } catch (HttpPostRequestDecoder.EndOfDataDecoderException ignore) {
                 logger.debug("End of multipart items.");
@@ -450,7 +445,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 form.cleanFiles();
             }
         } else {
-            inputData.addModelInput(new ModelInputs("body", NettyUtils.getBytes(req.content())));
+            byte[] content = NettyUtils.getBytes(req.content());
+            inputData.addParameter(new InputParameter("body", content, contentType));
         }
         return inputData;
     }

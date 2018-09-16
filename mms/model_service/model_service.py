@@ -17,10 +17,6 @@ import json
 import os
 from abc import ABCMeta, abstractmethod
 
-from mms.log import get_logger
-
-logger = get_logger()
-
 
 class ModelService(object):
     """

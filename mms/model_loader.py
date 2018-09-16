@@ -14,14 +14,12 @@ Model loader.
 import importlib
 import inspect
 import json
+import logging
 import os
 import sys
 from abc import ABCMeta, abstractmethod
 
-from mms.log import log_msg
-from mms.mxnet_model_service_error import MMSError
 from mms.service import Service
-from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
 
 
 class ModelLoaderFactory(object):
@@ -94,7 +92,8 @@ class MmsModelLoader(ModelLoader):
         :param batch_size:
         :return:
         """
-        log_msg("Loading model - working dir: {}".format(os.getcwd()))
+        logging.debug("Loading model - working dir: %s", os.getcwd())
+
         manifest_file = os.path.join(model_dir, "MAR_INF/MANIFEST.json")
         manifest = None
         if os.path.exists(manifest_file):
@@ -109,7 +108,7 @@ class MmsModelLoader(ModelLoader):
 
         module = importlib.import_module(module_name)
         if module is None:
-            raise Exception("Unable to load module {}, make sure it is added to python path".format(module_name))
+            raise ValueError("Unable to load module {}, make sure it is added to python path".format(module_name))
         if function_name is None:
             function_name = "handle"
         if hasattr(module, function_name):
@@ -121,14 +120,14 @@ class MmsModelLoader(ModelLoader):
         else:
             model_class_definitions = ModelLoader.list_model_services(module)
             if len(model_class_definitions) != 1:
-                raise MMSError(Err.VALUE_ERROR_WHILE_LOADING,
-                               "Expected only one class in custom service code or a function entry point")
+                raise ValueError("Expected only one class in custom service code or a function entry point")
+
             model_class = model_class_definitions[0]
             model_service = model_class()
             handle = getattr(model_service, "handle")
             if handle is None:
-                raise MMSError(Err.VALUE_ERROR_WHILE_LOADING,
-                               "Expect handle method in class {}".format(str(model_class)),)
+                raise ValueError("Expect handle method in class {}".format(str(model_class)),)
+
             service = Service(model_name, model_dir, manifest, model_service.handle, gpu_id, batch_size)
             initialize = getattr(model_service, "initialize")
             if initialize is not None:
@@ -175,8 +174,9 @@ class LegacyModelLoader(ModelLoader):
         else:
             import imp
             module = imp.load_source(name, service_file)
+
         if module is None:
-            raise MMSError(Err.VALUE_ERROR_WHILE_LOADING, "Unable to load module {}".format(service_file))
+            raise ValueError("Unable to load module {}".format(service_file))
 
         from mms.model_service.mxnet_model_service import SingleNodeService
 

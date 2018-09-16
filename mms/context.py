@@ -12,9 +12,6 @@
 Context object of incoming request
 """
 
-import logging
-import sys
-
 
 class Context(object):
     """
@@ -34,8 +31,6 @@ class Context(object):
         }
         self.request_ids = None
         self.request_processor = RequestProcessor(dict())
-        self.logger = logging.getLogger()
-        self.logger.addHandler(logging.StreamHandler(sys.stdout))
         self._metrics = None
 
     @property

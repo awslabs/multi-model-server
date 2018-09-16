@@ -8,8 +8,8 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import inspect
 import importlib
+import inspect
 import os
 import sys
 import types
@@ -17,11 +17,11 @@ from collections import namedtuple
 
 import mock
 import pytest
+
 from mms.model_loader import LegacyModelLoader
 from mms.model_loader import MmsModelLoader
 from mms.model_loader import ModelLoaderFactory
 from mms.model_service.model_service import SingleNodeService
-from mms.mxnet_model_service_error import MMSError
 
 
 # noinspection PyClassHasNoInit
@@ -119,9 +119,8 @@ class TestLoadModels:
         patches.os_path.return_value = True
         handler = 'dummy_func_model_service:wrong'
         model_loader = ModelLoaderFactory.get_model_loader(os.path.abspath('mms/unit_tests/test_utils/'))
-        with pytest.raises(MMSError) as excinfo:
-            _ = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
-        assert str(excinfo.value.message) == "Expected only one class in custom service code or a function entry point"
+        with pytest.raises(ValueError, match=r"Expected only one class .*"):
+            model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
 
     def test_load_model_with_error(self, patches):
         patches.mock_open.side_effect = [
@@ -130,6 +129,5 @@ class TestLoadModels:
         patches.os_path.return_value = True
         handler = 'dummy_func_model_service'
         model_loader = ModelLoaderFactory.get_model_loader(os.path.abspath('mms/unit_tests/test_utils/'))
-        with pytest.raises(Exception) as excinfo:
-            _ = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
-        assert str(excinfo.value.message) == "Expected only one class in custom service code or a function entry point"
+        with pytest.raises(ValueError, match=r"Expected only one class .*"):
+            model_loader.load(self.model_name, self.model_dir, handler, 0, 1)

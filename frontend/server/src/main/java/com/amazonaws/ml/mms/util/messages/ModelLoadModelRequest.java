@@ -24,49 +24,29 @@ public class ModelLoadModelRequest extends BaseModelRequest {
 
     private String handler;
     private int batchSize;
-    private String gpu;
+    private int gpuId;
 
-    public ModelLoadModelRequest() {
-        super(WorkerCommands.LOAD, null);
-    }
-
-    public ModelLoadModelRequest(Model model, String gpu) {
+    public ModelLoadModelRequest(Model model, int gpuId) {
         super(WorkerCommands.LOAD, model.getModelName());
-        this.handler = model.getModelArchive().getManifest().getModel().getHandler();
-        this.batchSize = model.getBatchSize();
-        this.gpu = gpu;
+        this.gpuId = gpuId;
         modelPath = model.getModelDir().getAbsolutePath();
+        handler = model.getModelArchive().getManifest().getModel().getHandler();
+        batchSize = model.getBatchSize();
     }
 
     public String getModelPath() {
         return modelPath;
     }
 
-    public void setModelPath(String modelPath) {
-        this.modelPath = modelPath;
-    }
-
     public String getHandler() {
         return handler;
-    }
-
-    public void setHandler(String handler) {
-        this.handler = handler;
     }
 
     public int getBatchSize() {
         return batchSize;
     }
 
-    public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
-    }
-
-    public String getGpu() {
-        return gpu;
-    }
-
-    public void setGpu(String gpu) {
-        this.gpu = gpu;
+    public int getGpuId() {
+        return gpuId;
     }
 }

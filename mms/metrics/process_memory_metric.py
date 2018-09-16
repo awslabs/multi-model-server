@@ -27,7 +27,7 @@ def get_cpu_usage(pid):
     try:
         process = psutil.Process(int(pid))
     except psutil.Error:
-        logging.error("Failed get process for pid: {}".format(pid), exc_info=True)
+        logging.error("Failed get process for pid: %s", pid, exc_info=True)
         return 0
 
     mem_utilization = process.memory_info()[0]
@@ -45,4 +45,4 @@ def check_process_mem_usage(stdin):
     for process in process_list:
         if not process:
             continue
-        logging.info("{}:{}".format(process, get_cpu_usage(process)))
+        logging.info("%s:%d", process, get_cpu_usage(process))

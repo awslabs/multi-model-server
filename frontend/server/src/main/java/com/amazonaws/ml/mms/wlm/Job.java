@@ -13,7 +13,7 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.util.NettyUtils;
-import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import com.amazonaws.ml.mms.util.messages.RequestInput;
 import com.amazonaws.ml.mms.util.messages.WorkerCommands;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -32,11 +32,11 @@ public class Job {
 
     private String modelName;
     private WorkerCommands cmd; // Else its data msg or inf requests
-    private RequestBatch input;
+    private RequestInput input;
     private long begin;
 
     public Job(
-            ChannelHandlerContext ctx, String modelName, WorkerCommands cmd, RequestBatch input) {
+            ChannelHandlerContext ctx, String modelName, WorkerCommands cmd, RequestInput input) {
         this.ctx = ctx;
         this.modelName = modelName;
         this.cmd = cmd;
@@ -61,7 +61,7 @@ public class Job {
         return !WorkerCommands.PREDICT.equals(cmd);
     }
 
-    public RequestBatch getPayload() {
+    public RequestInput getPayload() {
         return input;
     }
 

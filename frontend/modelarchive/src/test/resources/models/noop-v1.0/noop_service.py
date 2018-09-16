@@ -11,6 +11,7 @@
 """
 NoopService defines a no operational model handler.
 """
+import logging
 import time
 
 
@@ -75,12 +76,11 @@ class NoopService(object):
         gpu_id = properties.get("gpu_id")
         batch_size = properties.get("batch_size")
 
-        logger = context.logger
-        logger.debug("server_name: {}".format(server_name))
-        logger.debug("server_version: {}".format(server_version))
-        logger.debug("model_dir: {}".format(model_dir))
-        logger.debug("gpu_id: {}".format(gpu_id))
-        logger.debug("batch_size: {}".format(batch_size))
+        logging.debug("server_name: {}".format(server_name))
+        logging.debug("server_version: {}".format(server_version))
+        logging.debug("model_dir: {}".format(model_dir))
+        logging.debug("gpu_id: {}".format(gpu_id))
+        logging.debug("batch_size: {}".format(batch_size))
         request_processor = context.request_processor
         try:
             start_time = time.time()
@@ -91,7 +91,7 @@ class NoopService(object):
 
             request_processor.add_response_property("Content-Type", "text/plain")
             content_type = request_processor.get_request_property("Content-Type")
-            logger.debug("content_type: {}".format(content_type))
+            logging.debug("content_type: {}".format(content_type))
 
             end_time = time.time()
 
@@ -99,7 +99,7 @@ class NoopService(object):
             metrics.add_time("InferenceTime", start_time - end_time)
             return data
         except Exception as e:
-            logger.error(e, exc_info=True)
+            logging.error(e, exc_info=True)
             request_processor.report_status(500, "Unknown inference error.")
             return ["Error {}".format(str(e))] * len(data)
 

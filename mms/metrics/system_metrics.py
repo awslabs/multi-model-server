@@ -15,8 +15,8 @@ import types
 
 import psutil
 
-from dimension import Dimension
-from metric import Metric
+from mms.metrics.dimension import Dimension
+from mms.metrics.metric import Metric
 
 system_metrics = []
 dimension = [Dimension('Level', 'Host')]
@@ -58,6 +58,12 @@ def disk_available():
 
 
 def collect_all(mod):
+    """
+    Collect all system metrics.
+
+    :param mod:
+    :return:
+    """
     members = dir(mod)
     for i in members:
         value = getattr(mod, i)

@@ -17,7 +17,7 @@ import com.amazonaws.ml.mms.util.messages.ModelInferenceRequest;
 import com.amazonaws.ml.mms.util.messages.ModelLoadModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
-import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import com.amazonaws.ml.mms.util.messages.RequestInput;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,9 +42,13 @@ public class BatchAggregator {
         // first job is a blocking call;
         Job job = model.nextJob(threadName);
         if (job.isControlCmd()) {
-            RequestBatch input = job.getPayload();
+            RequestInput input = job.getPayload();
+            int gpuId = -1;
             String gpu = input.getStringParameter("gpu");
-            return new ModelLoadModelRequest(model, gpu);
+            if (gpu != null) {
+                gpuId = Integer.parseInt(gpu);
+            }
+            return new ModelLoadModelRequest(model, gpuId);
         }
 
         jobs.put(job.getJobId(), job);
@@ -72,7 +76,7 @@ public class BatchAggregator {
 
         ModelInferenceRequest req = new ModelInferenceRequest(model.getModelName());
         for (Job j : jobs.values()) {
-            req.addRequestBatches(j.getPayload());
+            req.addRequest(j.getPayload());
         }
         return req;
     }
@@ -80,7 +84,7 @@ public class BatchAggregator {
     public void sendResponse(ModelWorkerResponse message) {
         // TODO: Handle prediction level code
 
-        if (message.getCode().equals(String.valueOf(200))) {
+        if (message.getCode() == 200) {
             if (jobs.isEmpty()) {
                 // this is from initial load.
                 return;
@@ -124,7 +128,7 @@ public class BatchAggregator {
 
         if (message != null) {
             ModelInferenceRequest msg = (ModelInferenceRequest) message;
-            for (RequestBatch req : msg.getRequestBatch()) {
+            for (RequestInput req : msg.getRequestBatch()) {
                 String requestId = req.getRequestId();
                 Job job = jobs.remove(requestId);
                 if (job == null) {

@@ -14,24 +14,24 @@ package com.amazonaws.ml.mms.util.messages;
 
 import java.nio.charset.StandardCharsets;
 
-public class ModelInputs {
+public class InputParameter {
 
     private String name;
     private byte[] value;
-    private String contentType;
+    private CharSequence contentType;
 
-    public ModelInputs() {}
+    public InputParameter() {}
 
-    public ModelInputs(String name, String value) {
+    public InputParameter(String name, String value) {
         this.name = name;
         this.value = value.getBytes(StandardCharsets.UTF_8);
     }
 
-    public ModelInputs(String name, byte[] data) {
+    public InputParameter(String name, byte[] data) {
         this(name, data, null);
     }
 
-    public ModelInputs(String name, byte[] data, String contentType) {
+    public InputParameter(String name, byte[] data, CharSequence contentType) {
         this.name = name;
         this.contentType = contentType;
         this.value = data;
@@ -41,27 +41,11 @@ public class ModelInputs {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public byte[] getValue() {
         return value;
     }
 
-    public void setValue(String value) {
-        this.value = value.getBytes(StandardCharsets.UTF_8);
-    }
-
-    public String getContentType() {
+    public CharSequence getContentType() {
         return contentType;
-    }
-
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
-    public byte[] getBytes() {
-        return value;
     }
 }

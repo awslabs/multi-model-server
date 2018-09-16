@@ -11,18 +11,16 @@
 """
 CustomService class definitions
 """
-import ast
+import logging
 import time
-from collections import OrderedDict
 
 import mms
 from mms.context import Context
-from mms.log import log_msg
 from mms.metrics.metrics_store import MetricsStore
-from mms.mxnet_model_service_error import MMSError
-from mms.utils.validators.validate_messages import ModelWorkerMessageValidators
+from mms.protocol.otf_message_handler import create_predict_response
 
-INFERENCE_METRIC = 'InferenceTime'
+PREDICTION_METRIC = 'PredictionTime'
+logger = logging.getLogger(__name__)
 
 
 class Service(object):
@@ -39,119 +37,81 @@ class Service(object):
         return self._context
 
     @staticmethod
-    def retrieve_model_input(model_inputs, req_bat_content_type=None):
+    def retrieve_data_for_inference(batch):
         """
 
-        MODEL_INPUTS : [{
-                "value": "val1"
-                "name" : model_input_name (This is defined in the symbol file and the signature file)
-        }]
-
-        :param req_bat_content_type: Content-type of the request-batch, the outer scope of model-inputs
-        :param model_inputs: list of model_input elements each containing "encoding", "value" and "name"
-        :return:
-        """
-        model_in = OrderedDict()
-        for _, ip in enumerate(model_inputs):
-            ModelWorkerMessageValidators.validate_predict_inputs(ip)
-            ip_name = ip.get('name')
-            content_type = ip.get('contentType')
-
-            if content_type is None or content_type == b'':
-                content_type = req_bat_content_type
-
-            if content_type is not None and content_type != b'' and "text" in content_type.decode():
-                decoded_val = ip.get(u'value').decode()
-            elif content_type is not None and content_type != b'' and "json" in content_type.decode():
-                decoded_val = ast.literal_eval(ip.get(u'value').decode())
-            else:
-                decoded_val = ip.get(u'value')
-            model_in.update({ip_name.decode(): decoded_val})
-
-        return model_in
-
-    @staticmethod
-    def retrieve_data_for_inference(requests=None):
-        """
-        REQUESTS = [ {
+        REQUEST_INPUT = {
             "requestId" : "111-222-3333",
-            "modelInputs" : [ MODEL_INPUTS ]
-        } ]
-
-        MODEL_INPUTS = {
-                "value": "val1"
-                "name" : model_input_name (This is defined in the symbol file and the signature file)
+            "parameters" : [ PARAMETER ]
         }
 
-        inputs: List of requests
-        Returns a list(dict(inputs))
+        PARAMETER = {
+            "name" : parameter name
+            "contentType": "http-content-types",
+            "value": "val1"
+        }
+
+        :param batch:
+        :return:
         """
-
-        req_to_id_map = {}
-        invalid_reqs = {}
-
-        if requests is None:
+        if batch is None:
             raise ValueError("Received invalid inputs")
 
+        req_to_id_map = {}
+
         input_batch = []
-        for batch_idx, request_batch in enumerate(requests):
-            ModelWorkerMessageValidators.validate_predict_data(request_batch)
+        for batch_idx, request_batch in enumerate(batch):
             req_id = request_batch.get('requestId').decode()
+            parameters = request_batch['parameters']
 
-            model_inputs = request_batch['modelInputs']
-            req_batch_content_type = request_batch.get('contentType')
-            try:
-                input_data = Service.retrieve_model_input(model_inputs, req_batch_content_type)
-                input_batch.append(input_data)
-                req_to_id_map[batch_idx] = req_id
-            except MMSError as m:
-                invalid_reqs.update({req_id: m.get_code()})
+            model_in = dict()
+            for parameter in parameters:
+                model_in.update({parameter["name"]: parameter["value"]})
 
-        return input_batch, req_to_id_map, invalid_reqs
+            input_batch.append(model_in)
+            req_to_id_map[batch_idx] = req_id
 
-    def predict(self, data, codec):
+        return input_batch, req_to_id_map
+
+    def predict(self, batch):
         """
         PREDICT COMMAND = {
             "command": "predict",
-            "modelName": "model-to-run-inference-against",
-            "contentType": "http-content-types",
-            "requestBatch": [ REQUESTS ]
+            "batch": [ REQUEST_INPUT ]
         }
-
-        REQUESTS = {
-            "requestId" : "111-222-3333",
-            "modelInputs" : [ MODEL_INPUTS ]
-        }
-
-        MODEL_INPUTS = {
-                "encoding": "base64/utf-8", (# This is how the value is encoded)
-                "value": "val1"
-                "name" : model_input_name (# This is defined in the symbol file and the signature file)
-        }
-
-        :param data:
-        :param codec:
+        :param batch: list of request
         :return:
 
         """
-        model_name = data[u'modelName'].decode()
-        req_batch = data[u'requestBatch']
-        input_batch, req_id_map, invalid_reqs = Service.retrieve_data_for_inference(req_batch)
+        input_batch, req_id_map = Service.retrieve_data_for_inference(batch)
 
         self.context.request_ids = req_id_map
-        metrics = MetricsStore(req_id_map, model_name)
+        metrics = MetricsStore(req_id_map, self.context.model_name)
         self.context.metrics = metrics
 
         start_time = time.time()
 
-        ret = self._entry_point(input_batch, self.context)
+        # noinspection PyBroadException
+        try:
+            ret = self._entry_point(input_batch, self.context)
+        except Exception:  # pylint: disable=broad-except
+            logger.warning("Invoking custom service failed.", exc_info=True)
+            return create_predict_response(None, req_id_map, "Prediction failed", 503)
+
+        if not isinstance(ret, list):
+            logger.warning("model: %s, Invalid return type: %s.", self.context.model_name, type(ret))
+            return create_predict_response(None, req_id_map, "Invalid model predict output", 503)
+
+        if len(ret) != len(input_batch):
+            logger.warning("model: %s, number of batch response mismatched, expect: %d, got: %d.",
+                           self.context.model_name, len(input_batch), len(ret))
+            return create_predict_response(None, req_id_map, "number of batch response mismatched", 503)
 
         duration = int((time.time() - start_time) * 1000)
-        metrics.add_time(INFERENCE_METRIC, duration)
+        metrics.add_time(PREDICTION_METRIC, duration)
         emit_metrics(metrics.store)
 
-        predictions = codec.create_response(cmd=2, resp=ret, req_id_map=req_id_map, invalid_reqs=invalid_reqs)
-        return predictions, "Prediction success", 200
+        return create_predict_response(ret, req_id_map, "Prediction success", 200)
 
 
 def emit_metrics(metrics):
@@ -166,4 +126,4 @@ def emit_metrics(metrics):
     """
     if metrics:
         for met in metrics:
-            log_msg("[METRICS]", str(met))
+            logger.info("[METRICS]%s", str(met))

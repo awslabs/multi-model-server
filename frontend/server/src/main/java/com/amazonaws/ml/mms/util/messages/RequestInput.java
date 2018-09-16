@@ -14,17 +14,20 @@ package com.amazonaws.ml.mms.util.messages;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class RequestBatch {
+public class RequestInput {
 
     private String requestId;
-    private String contentType;
-    private List<ModelInputs> modelInputs;
+    private Map<String, String> headers;
+    private List<InputParameter> parameters;
 
-    public RequestBatch(String requestId) {
+    public RequestInput(String requestId) {
         this.requestId = requestId;
-        modelInputs = new ArrayList<>();
+        headers = new HashMap<>();
+        parameters = new ArrayList<>();
     }
 
     public String getRequestId() {
@@ -35,28 +38,28 @@ public class RequestBatch {
         this.requestId = requestId;
     }
 
-    public String getContentType() {
-        return contentType;
+    public Map<String, String> getHeaders() {
+        return headers;
     }
 
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
+    public void setHeaders(Map<String, String> headers) {
+        this.headers = headers;
     }
 
-    public List<ModelInputs> getModelInputs() {
-        return modelInputs;
+    public List<InputParameter> getParameters() {
+        return parameters;
     }
 
-    public void setModelInputs(List<ModelInputs> modelInputs) {
-        this.modelInputs = modelInputs;
+    public void setParameters(List<InputParameter> parameters) {
+        this.parameters = parameters;
     }
 
-    public void addModelInput(ModelInputs modelInput) {
-        modelInputs.add(modelInput);
+    public void addParameter(InputParameter modelInput) {
+        parameters.add(modelInput);
     }
 
     public String getStringParameter(String key) {
-        for (ModelInputs param : modelInputs) {
+        for (InputParameter param : parameters) {
             if (key.equals(param.getName())) {
                 return new String(param.getValue(), StandardCharsets.UTF_8);
             }

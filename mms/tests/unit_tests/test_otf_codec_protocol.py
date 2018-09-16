@@ -15,10 +15,8 @@ On The Fly Codec tester
 from collections import namedtuple
 
 import pytest
-from mms.mxnet_model_service_error import MMSError
-from mms.protocol.otf_message_handler import OtfCodecHandler
-from mms.utils.model_server_error_codes import ModelServerErrorCodes as Err
-from mock import Mock
+
+import mms.protocol.otf_message_handler as codec
 
 
 @pytest.fixture()
@@ -29,239 +27,141 @@ def socket_patches(mocker):
     return mock_patch
 
 
-@pytest.fixture()
-def otf_codec_fixture():
-    return OtfCodecHandler()
-
-
 # noinspection PyClassHasNoInit
-# noinspection PyProtectedMember
 class TestOtfCodecHandler:
-    def test_retrieve_buffer(self, socket_patches, otf_codec_fixture):
-        socket_patches.socket.recv.return_value = b'1'
-        data = otf_codec_fixture._retrieve_buffer(socket_patches.socket, 1)
-        assert data == b'1'
 
-    def test_retrieve_buffer_ioerror(self, socket_patches, otf_codec_fixture):
-        socket_patches.socket.recv.side_effect = IOError("Error")
-        with pytest.raises(MMSError) as e:
-            otf_codec_fixture._retrieve_buffer(socket_patches.socket, 1)
-        assert e.value.code == Err.DECODE_FAILED
+    def test_retrieve_msg_unknown(self, socket_patches):
+        socket_patches.socket.recv.side_effect = [b"U", b"\x00\x00\x00\x03"]
+        with pytest.raises(ValueError, match=r"Invalid command: .*"):
+            codec.retrieve_msg(socket_patches.socket)
 
-    def test_retrieve_buffer_oserror(self, socket_patches, otf_codec_fixture):
-        socket_patches.socket.recv.side_effect = OSError("Error")
-        with pytest.raises(MMSError) as e:
-            otf_codec_fixture._retrieve_buffer(socket_patches.socket, 1)
-        assert e.value.code == Err.DECODE_FAILED
+    def test_retrieve_msg_exceed_buffer_size(self, socket_patches):
+        socket_patches.socket.recv.side_effect = [b"L", b"\x0F\x00\x00\x03"]
+        with pytest.raises(ValueError, match=r"Exceed max buffer size: .*"):
+            codec.retrieve_msg(socket_patches.socket)
 
-    def test_retrieve_buffer_mmserror(self, socket_patches, otf_codec_fixture):
-        socket_patches.socket.recv.side_effect = MMSError(Err.UNKNOWN_CONTENT_TYPE, "Error")
-        with pytest.raises(MMSError) as e:
-            otf_codec_fixture._retrieve_buffer(socket_patches.socket, 1)
-        assert e.value.code == Err.DECODE_FAILED
+    def test_retrieve_msg_load_gpu(self, socket_patches):
+        expected = {"modelName": b"model_name", "modelPath": b"model_path",
+                    "batchSize": 1, "handler": b"handler", "gpu": 1}
 
-    def test_retrieve_buffer_exception(self, socket_patches, otf_codec_fixture):
-        socket_patches.socket.recv.side_effect = Exception("Error")
-        with pytest.raises(MMSError) as e:
-            otf_codec_fixture._retrieve_buffer(socket_patches.socket, 1)
-        assert e.value.code == Err.DECODE_FAILED
+        socket_patches.socket.recv.side_effect = [
+            b"L",
+            b"\x00\x00\x00\x0a", b"model_name",
+            b"\x00\x00\x00\x0a", b"model_path",
+            b"\x00\x00\x00\x01",
+            b"\x00\x00\x00\x07", b"handler",
+            b"\x00\x00\x00\x01"
+        ]
+        cmd, ret = codec.retrieve_msg(socket_patches.socket)
 
-    def test_retrieve_int(self, socket_patches, otf_codec_fixture):
-        otf_codec_fixture._retrieve_buffer = Mock()
-        otf_codec_fixture._retrieve_buffer.return_value = b'\x00\x00\x00\x01'
-        data = otf_codec_fixture._retrieve_int(socket_patches.socket)
-        assert data == 1
-
-    def test_retrieve_load(self, socket_patches, otf_codec_fixture):
-        expected = {'modelName': b'asdf', 'modelPath': b'/dummy',
-                    'batchSize': 1, 'handler': b'fn', 'gpu': 0}
-
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
-
-        otf_codec_fixture._retrieve_int.side_effect = [len('asdf'), len('/dummy'),
-                                                       1, len('fn'), 0]
-        otf_codec_fixture._retrieve_buffer.side_effect = [b'asdf', b'/dummy', b'fn']
-
-        cmd, ret = otf_codec_fixture._retrieve_load_msg(socket_patches.socket)
-
-        assert cmd == 'load'
+        assert cmd == b"L"
         assert ret == expected
 
-    def test_retrieve_load_no_gpu(self, socket_patches, otf_codec_fixture):
-        expected = {'modelName': b'asdf', 'modelPath': b'/dummy',
-                    'batchSize': 1, 'handler': b'fn'}
+    def test_retrieve_msg_load_no_gpu(self, socket_patches):
+        expected = {"modelName": b"model_name", "modelPath": b"model_path",
+                    "batchSize": 1, "handler": b"handler"}
 
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
+        socket_patches.socket.recv.side_effect = [
+            b"L",
+            b"\x00\x00\x00\x0a", b"model_name",
+            b"\x00\x00\x00\x0a", b"model_path",
+            b"\x00\x00\x00\x01",
+            b"\x00\x00\x00\x07", b"handler",
+            b"\xFF\xFF\xFF\xFF"
+        ]
+        cmd, ret = codec.retrieve_msg(socket_patches.socket)
 
-        otf_codec_fixture._retrieve_int.side_effect = [len('asdf'), len('/dummy'),
-                                                       1, len('fn'), -1]
-        otf_codec_fixture._retrieve_buffer.side_effect = [b'asdf', b'/dummy', b'fn']
-
-        cmd, ret = otf_codec_fixture._retrieve_load_msg(socket_patches.socket)
-
-        assert cmd == 'load'
+        assert cmd == b"L"
         assert ret == expected
 
-    def test_retrieve_model_inputs(self, socket_patches, otf_codec_fixture):
-        data = {'name': b'asdf', 'contentType': b'json', 'value': b'val'}
-        expected = list()
-        expected.append(data)
-        ret = list()
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
+    def test_retrieve_msg_predict(self, socket_patches):
+        expected = [{
+            "requestId": b"request_id", "headers": [], "parameters": [
+                {"name": "input_name",
+                 "contentType": "application/json",
+                 "value": {"data": "value"}
+                 }
+            ]
+        }]
 
-        otf_codec_fixture._retrieve_int.side_effect = [len(b'asdf'),
-                                                       len(b'contentType'),
-                                                       len(b'val'), -2]
-        otf_codec_fixture._retrieve_buffer.side_effect = [b'asdf', b'json', b'val']
-        otf_codec_fixture._retrieve_model_inputs(socket_patches.socket, ret)
+        socket_patches.socket.recv.side_effect = [
+            b"I",
+            b"\x00\x00\x00\x0a", b"request_id",
+            b"\xFF\xFF\xFF\xFF",
+            b"\x00\x00\x00\x0a", b"input_name",
+            b"\x00\x00\x00\x0F", b"application/json",
+            b"\x00\x00\x00\x0F", b"{'data':'value'}",
+            b"\xFF\xFF\xFF\xFF",  # end of parameters
+            b"\xFF\xFF\xFF\xFF"  # end of batch
+        ]
+        cmd, ret = codec.retrieve_msg(socket_patches.socket)
 
+        assert cmd == b'I'
         assert ret == expected
 
-    def test_retrieve_request_batch(self, socket_patches, otf_codec_fixture):
-        data = {'requestId': b'111', 'contentType': b'json',
-                'modelInputs': list()}
-        expected = list()
-        expected.append(data)
+    def test_retrieve_msg_predict_text(self, socket_patches):
+        expected = [{
+            "requestId": b"request_id", "headers": [], "parameters": [
+                {"name": "input_name",
+                 "contentType": "text/plain",
+                 "value": "text_value"
+                 }
+            ]
+        }]
 
-        ret = list()
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
-        otf_codec_fixture._retrieve_model_inputs = Mock()
+        socket_patches.socket.recv.side_effect = [
+            b"I",
+            b"\x00\x00\x00\x0a", b"request_id",
+            b"\xFF\xFF\xFF\xFF",
+            b"\x00\x00\x00\x0a", b"input_name",
+            b"\x00\x00\x00\x0a", b"text/plain",
+            b"\x00\x00\x00\x0a", b"text_value",
+            b"\xFF\xFF\xFF\xFF",  # end of parameters
+            b"\xFF\xFF\xFF\xFF"  # end of batch
+        ]
+        cmd, ret = codec.retrieve_msg(socket_patches.socket)
 
-        otf_codec_fixture._retrieve_int.side_effect = [len('111'), len('json'), -1,
-                                                       -2]
-        otf_codec_fixture._retrieve_buffer.side_effect = [b'111', b'json']
-        otf_codec_fixture._retrieve_request_batch(socket_patches.socket, ret)
+        assert cmd == b'I'
         assert ret == expected
 
-    def test_retrieve_inference_msg(self, socket_patches, otf_codec_fixture):
-        expected = {'modelName': b'asdf', 'requestBatch': list()}
+    def test_retrieve_msg_predict_binary(self, socket_patches):
+        expected = [{
+            "requestId": b"request_id", "headers": [], "parameters": [
+                {"name": "input_name",
+                 "contentType": "",
+                 "value": b"binary"
+                 }
+            ]
+        }]
 
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
-        otf_codec_fixture._retrieve_request_batch = Mock()
+        socket_patches.socket.recv.side_effect = [
+            b"I",
+            b"\x00\x00\x00\x0a", b"request_id",
+            b"\xFF\xFF\xFF\xFF",
+            b"\x00\x00\x00\x0a", b"input_name",
+            b"\x00\x00\x00\x00",
+            b"\x00\x00\x00\x06", b"binary",
+            b"\xFF\xFF\xFF\xFF",  # end of parameters
+            b"\xFF\xFF\xFF\xFF"  # end of batch
+        ]
+        cmd, ret = codec.retrieve_msg(socket_patches.socket)
 
-        otf_codec_fixture._retrieve_int.side_effect = [len(b'asdf'), -1]
-        otf_codec_fixture._retrieve_buffer.side_effect = [b'asdf']
+        assert cmd == b'I'
+        assert ret == expected
 
-        cmd, msg = otf_codec_fixture._retrieve_inference_msg(socket_patches.socket)
+    def test_create_load_model_response(self):
+        msg = codec.create_load_model_response(200, "model_loaded")
 
-        assert cmd == 'predict'
-        assert msg == expected
+        assert msg == b'\x00\x00\x00\xc8\x00\x00\x00\x0cmodel_loaded\xff\xff\xff\xff'
 
-    def test_retrieve_msg_load(self, socket_patches, otf_codec_fixture):
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
-        otf_codec_fixture._retrieve_inference_msg = Mock()
-        otf_codec_fixture._retrieve_load_msg = Mock()
+    def test_create_predict_response(self):
+        msg = codec.create_predict_response(["OK"], {0: "request_id"}, "success", 200)
 
-        otf_codec_fixture._retrieve_int.side_effect = [1, 1]
-        otf_codec_fixture._retrieve_load_msg.side_effect = [('load', b'asdf')]
-        otf_codec_fixture._retrieve_buffer.side_effect = [b'\r\n']
+        assert msg == b'\x00\x00\x00\xc8\x00\x00\x00\x07success\x00\x00\x00\nrequest_id' \
+                      b'\x00\x00\x00\x00\x00\x00\x00\x02OK\xff\xff\xff\xff'
 
-        cmd, msg = otf_codec_fixture.retrieve_msg(socket_patches.socket)
+    def test_create_predict_response_with_error(self):
+        msg = codec.create_predict_response(None, {0: "request_id"}, "failed", 200)
 
-        assert cmd == 'load'
-        assert msg == b'asdf'
-
-    def test_retrieve_msg_version_error(self, socket_patches, otf_codec_fixture):
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
-        otf_codec_fixture._retrieve_inference_msg = Mock()
-        otf_codec_fixture._retrieve_load_msg = Mock()
-
-        otf_codec_fixture._retrieve_int.side_effect = [2, 1]
-        otf_codec_fixture._retrieve_load_msg.side_effect = [('load', b'asdf')]
-        otf_codec_fixture._retrieve_buffer.side_effect = [b'']
-
-        with pytest.raises(MMSError) as e:
-            otf_codec_fixture.retrieve_msg(socket_patches.socket)
-
-        assert e.value.code == Err.DECODE_FAILED
-
-    def test_retrieve_msg_predict(self, socket_patches, otf_codec_fixture):
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
-        otf_codec_fixture._retrieve_inference_msg = Mock()
-        otf_codec_fixture._retrieve_load_msg = Mock()
-
-        otf_codec_fixture._retrieve_int.side_effect = [1, 2]
-        otf_codec_fixture._retrieve_inference_msg.side_effect = [('predict', b'asdf')]
-        otf_codec_fixture._retrieve_buffer.side_effect = [b'\r\n']
-
-        cmd, msg = otf_codec_fixture.retrieve_msg(socket_patches.socket)
-
-        assert cmd == 'predict'
-        assert msg == b'asdf'
-
-    def test_retrieve_msg_predict_error(self, socket_patches, otf_codec_fixture):
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
-        otf_codec_fixture._retrieve_inference_msg = Mock()
-        otf_codec_fixture._retrieve_load_msg = Mock()
-
-        otf_codec_fixture._retrieve_int.side_effect = [2]
-        otf_codec_fixture._retrieve_inference_msg.side_effect = [('predict', b'asdf')]
-        otf_codec_fixture._retrieve_buffer.side_effect = [b'']
-
-        with pytest.raises(MMSError) as e:
-            otf_codec_fixture.retrieve_msg(socket_patches.socket)
-
-        assert e.value.code == Err.DECODE_FAILED
-
-    def test_retrieve_msg_unknown(self, socket_patches, otf_codec_fixture):
-        otf_codec_fixture._retrieve_int = Mock()
-        otf_codec_fixture._retrieve_buffer = Mock()
-        otf_codec_fixture._retrieve_inference_msg = Mock()
-        otf_codec_fixture._retrieve_load_msg = Mock()
-
-        otf_codec_fixture._retrieve_int.side_effect = [1, 3]
-        cmd, msg = otf_codec_fixture.retrieve_msg(socket_patches.socket)
-
-        assert cmd == 'unknown'
-        assert msg == 'Wrong command'
-
-    def test_encode_response_predictions(self, otf_codec_fixture):
-        msg = {'predictions': b'dummy', 'message': 'Success', 'code': 200}
-        ret = otf_codec_fixture._encode_response(msg)
-        assert b'dummy' in ret
-
-    def test_encode_response_no_predictions(self, otf_codec_fixture):
-        msg = {'message': 'Success', 'code': 200}
-        ret = otf_codec_fixture._encode_response(msg)
-        assert 'Success'.encode() in ret
-
-    def test_encode_response_error(self, otf_codec_fixture):
-        msg = {'message': 'Success', 'code': "hello"}
-        with pytest.raises(Exception):
-            otf_codec_fixture._encode_response(msg)
-
-    def test_create_response_predict(self, otf_codec_fixture):
-        dummy = dict()
-        otf_codec_fixture._encode_inference_response = Mock()
-        otf_codec_fixture._encode_response = Mock()
-
-        otf_codec_fixture._encode_inference_response.side_effect = [b'encoded msg']
-
-        enc_msg = otf_codec_fixture.create_response(cmd=2, kwargs=dummy)
-        assert enc_msg == b'encoded msg'
-
-    def test_create_response_general(self, otf_codec_fixture):
-        dummy = dict()
-        otf_codec_fixture._encode_inference_response = Mock()
-        otf_codec_fixture._encode_response = Mock()
-
-        otf_codec_fixture._encode_response.side_effect = [b'encoded msg']
-
-        enc_msg = otf_codec_fixture.create_response(cmd=3, kwargs=dummy)
-        assert enc_msg == b'encoded msg'
-
-    def test_create_response_general_with_error(self, otf_codec_fixture):
-        dummy = dict()
-
-        with pytest.raises(MMSError) as e:
-            otf_codec_fixture.create_response(cmd=4, kwargs=dummy)
-        assert e.value.code == Err.ENCODE_FAILED
+        assert msg == b"\x00\x00\x00\xc8\x00\x00\x00\x06failed\x00\x00\x00\x0a" \
+                      b"request_id\x00\x00\x00\x00\x00\x00\x00\x05error\xff\xff\xff\xff"

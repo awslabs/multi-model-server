@@ -15,11 +15,12 @@ package com.amazonaws.ml.mms.wlm;
 import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
-import com.amazonaws.ml.mms.util.codec.MessageCodec;
+import com.amazonaws.ml.mms.util.codec.ModelRequestEncoder;
+import com.amazonaws.ml.mms.util.codec.ModelResponseDecoder;
 import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
-import com.amazonaws.ml.mms.util.messages.ModelInputs;
+import com.amazonaws.ml.mms.util.messages.InputParameter;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
-import com.amazonaws.ml.mms.util.messages.RequestBatch;
+import com.amazonaws.ml.mms.util.messages.RequestInput;
 import com.amazonaws.ml.mms.util.messages.WorkerCommands;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -44,7 +45,9 @@ import org.slf4j.LoggerFactory;
 public class WorkerThread extends Thread {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
+
     static final long WORKER_TIMEOUT = 2L;
+    static final ModelRequestEncoder ENCODER = new ModelRequestEncoder();
 
     private ConfigManager configManager;
     private EventLoopGroup backendEventGroup;
@@ -117,7 +120,7 @@ public class WorkerThread extends Thread {
                         model.resetFailedInfReqs();
                         break;
                     case LOAD:
-                        if ("200".equals(reply.getCode())) {
+                        if (reply.getCode() == 200) {
                             listener.notifyChangeState(
                                     modelName, WorkerStateListener.WORKER_MODEL_LOADED);
                         } else {
@@ -173,7 +176,8 @@ public class WorkerThread extends Thread {
                                 @Override
                                 public void initChannel(Channel ch) {
                                     ChannelPipeline p = ch.pipeline();
-                                    p.addLast(new MessageCodec());
+                                    p.addLast(ENCODER);
+                                    p.addLast(new ModelResponseDecoder());
                                     p.addLast(new WorkerHandler());
                                 }
                             });
@@ -199,11 +203,12 @@ public class WorkerThread extends Thread {
                                     future -> {
                                         // TODO:
                                         // use gpu, batch size in load model command
-                                        RequestBatch input =
-                                                new RequestBatch(UUID.randomUUID().toString());
+                                        RequestInput input =
+                                                new RequestInput(UUID.randomUUID().toString());
                                         if (gpuId >= 0) {
-                                            input.addModelInput(
-                                                    new ModelInputs("gpu", String.valueOf(gpuId)));
+                                            input.addParameter(
+                                                    new InputParameter(
+                                                            "gpu", String.valueOf(gpuId)));
                                         }
 
                                         Job job =
@@ -221,7 +226,6 @@ public class WorkerThread extends Thread {
                         ErrorCodes.INTERNAL_SERVER_ERROR_WORKER_HEALTH_CHECK_TIMEOUT,
                         "Worker failed to initialize within {} mins" + WORKER_TIMEOUT);
             }
-
         } catch (InterruptedException e) {
             lifeCycle.exit();
             throw new WorkerInitializationException(ErrorCodes.WORKER_INSTANTIATION_ERROR, e);

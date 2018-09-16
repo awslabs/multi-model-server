@@ -17,35 +17,22 @@ import java.util.List;
 
 public class ModelInferenceRequest extends BaseModelRequest {
 
-    private String contentType;
-    private List<RequestBatch> requestBatch;
-
-    public ModelInferenceRequest() {
-        this(null);
-    }
+    private List<RequestInput> batch;
 
     public ModelInferenceRequest(String modelName) {
         super(WorkerCommands.PREDICT, modelName);
-        requestBatch = new ArrayList<>();
+        batch = new ArrayList<>();
     }
 
-    public String getContentType() {
-        return contentType;
+    public List<RequestInput> getRequestBatch() {
+        return batch;
     }
 
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
+    public void setRequestBatch(List<RequestInput> requestBatch) {
+        this.batch = requestBatch;
     }
 
-    public List<RequestBatch> getRequestBatch() {
-        return requestBatch;
-    }
-
-    public void setRequestBatch(List<RequestBatch> requestBatch) {
-        this.requestBatch = requestBatch;
-    }
-
-    public void addRequestBatches(RequestBatch req) {
-        requestBatch.add(req);
+    public void addRequest(RequestInput req) {
+        batch.add(req);
     }
 }

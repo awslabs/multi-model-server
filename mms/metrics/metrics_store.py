@@ -11,6 +11,8 @@
 """
 Metrics collection module
 """
+from builtins import str
+
 from mms.metrics.dimension import Dimension
 from mms.metrics.metric import Metric
 

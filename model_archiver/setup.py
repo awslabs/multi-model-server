@@ -28,6 +28,7 @@
 Setup.py for the model export tool package
 """
 
+import os
 from datetime import date
 import sys
 from setuptools import setup, find_packages
@@ -43,8 +44,9 @@ def pypi_description():
 
 def detect_packaging_tool_version():
     # pylint: disable = relative-import
-    from version import __version__
-    return __version__
+    sys.path.append(os.path.abspath("model_archiver"))
+    import model_archiver
+    return model_archiver.__version__
 
 
 if __name__ == '__main__':
@@ -55,7 +57,7 @@ if __name__ == '__main__':
 
     setup(
         name='model-archiver',
-        version=version.strip() + 'b' + str(date.today()).replace('-', '') + '2',
+        version=version.strip() + 'b' + str(date.today()).replace('-', ''),
         description='Model Export Tool is used for creating archives of trained neural net models that can be consumed '
                     'by MXNet-Model-Server inference',
         long_description=pypi_description(),

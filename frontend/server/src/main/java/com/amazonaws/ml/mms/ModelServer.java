@@ -76,6 +76,8 @@ public class ModelServer {
 
             InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
             new ModelServer(configManager).startAndWait();
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid configuration: " + e.getMessage()); // NOPMD
         } catch (ParseException e) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.setLeftPadding(1);
@@ -85,17 +87,19 @@ public class ModelServer {
         }
     }
 
-    @SuppressWarnings("PMD.SystemPrintln")
     public void startAndWait()
             throws InterruptedException, InvalidModelException, WorkerInitializationException,
                     IOException, GeneralSecurityException {
         try {
+            String mmsHome = configManager.getModelServerHome();
+            logger.info("Start MMS from: {}", mmsHome);
+
             initModelStore();
 
             ChannelFuture f = start();
             // Create and schedule metrics manager
             MetricManager.scheduleMetrics(configManager);
-            System.out.println("Model server started.");
+            System.out.println("Model server started."); // NOPMD
             f.sync();
         } finally {
             serverGroups.shutdown(true);

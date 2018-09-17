@@ -2,10 +2,13 @@
 File to define the entry point to Model Server
 """
 
-import tempfile
-import subprocess
 import os
 import signal
+import subprocess
+import tempfile
+
+from builtins import str
+
 from mms.arg_parser import ArgParser
 
 

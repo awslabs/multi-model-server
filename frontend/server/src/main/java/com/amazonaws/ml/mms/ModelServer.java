@@ -91,11 +91,6 @@ public class ModelServer {
             throws InterruptedException, InvalidModelException, WorkerInitializationException,
                     IOException, GeneralSecurityException {
         try {
-            String mmsHome = configManager.getModelServerHome();
-            logger.info("Start MMS from: {}", mmsHome);
-
-            initModelStore();
-
             ChannelFuture f = start();
             // Create and schedule metrics manager
             MetricManager.scheduleMetrics(configManager);
@@ -164,8 +159,14 @@ public class ModelServer {
      * @throws InterruptedException if interrupted
      */
     public ChannelFuture start()
-            throws InterruptedException, IOException, GeneralSecurityException {
+            throws InterruptedException, IOException, GeneralSecurityException,
+                    InvalidModelException, WorkerInitializationException {
         stopped.set(false);
+
+        String mmsHome = configManager.getModelServerHome();
+        logger.info("Start MMS from: {}", mmsHome);
+
+        initModelStore();
 
         SslContext sslCtx = configManager.getSslContext();
         int port = configManager.getPort();

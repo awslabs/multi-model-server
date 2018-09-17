@@ -142,6 +142,8 @@ public final class NettyUtils {
         // Send the response and close the connection if necessary.
         Channel channel = ctx.channel();
         Session session = channel.attr(SESSION_KEY).getAndSet(null);
+        session.setCode(resp.status().code());
+
         resp.headers().set(REQUEST_ID, session.getRequestId());
         HttpUtil.setContentLength(resp, resp.content().readableBytes());
         if (!keepAlive || resp.status().code() >= 400) {
@@ -151,7 +153,6 @@ public final class NettyUtils {
             resp.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
             channel.writeAndFlush(resp);
         }
-        session.setCode(resp.status().code());
         logger.info(session.toString());
     }
 

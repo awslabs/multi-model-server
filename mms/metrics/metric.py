@@ -15,6 +15,8 @@ import datetime
 import socket
 from collections import OrderedDict
 
+from builtins import str
+
 from mms.metrics.unit import Units
 
 MetricUnit = Units()

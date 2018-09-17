@@ -16,6 +16,9 @@ import json
 import logging
 import struct
 
+from builtins import bytearray
+from builtins import bytes
+
 MAX_BUFFER_SIZE = 6553500
 
 int_size = 4

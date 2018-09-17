@@ -12,6 +12,7 @@ Module to collect system metrics for front-end
 """
 import logging
 import types
+from builtins import str
 
 import psutil
 

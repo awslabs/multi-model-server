@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -60,8 +59,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     /** {@inheritDoc} */
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest req) {
-        ctx.channel().attr(NettyUtils.REQUEST_ID_ATTR).set(UUID.randomUUID().toString());
-
+        NettyUtils.requestReceived(ctx.channel(), req);
         if (!req.decoderResult().isSuccess()) {
             NettyUtils.sendError(
                     ctx, HttpResponseStatus.BAD_REQUEST, ErrorCodes.MESSAGE_DECODE_FAILURE);
@@ -428,7 +426,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     }
 
     private static RequestInput parseRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
-        String requestId = NettyUtils.getRequestId(ctx);
+        String requestId = NettyUtils.getRequestId(ctx.channel());
         RequestInput inputData = new RequestInput(requestId);
         CharSequence contentType = HttpUtil.getMimeType(req);
         if (HttpPostRequestDecoder.isMultipart(req)

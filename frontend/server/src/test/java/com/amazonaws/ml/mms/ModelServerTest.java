@@ -96,7 +96,6 @@ public class ModelServerTest {
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
 
         server = new ModelServer(configManager);
-        server.initModelStore();
         server.start();
 
         try (InputStream is = new FileInputStream("src/test/resources/open_api.txt")) {

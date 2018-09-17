@@ -135,7 +135,7 @@ public class WorkerThread extends Thread {
                 req = null;
             }
         } catch (InterruptedException e) {
-            logger.warn("Backend worker thread interrupted.", e);
+            logger.warn("Backend worker thread interrupted.");
         } catch (WorkerInitializationException wi) {
             logger.error("Backend worker error", wi);
         } catch (Throwable t) {

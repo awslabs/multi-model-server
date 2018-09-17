@@ -34,6 +34,8 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
+import io.netty.handler.codec.http.multipart.HttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -432,7 +434,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         if (HttpPostRequestDecoder.isMultipart(req)
                 || HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.contentEqualsIgnoreCase(
                         contentType)) {
-            HttpPostRequestDecoder form = new HttpPostRequestDecoder(req);
+            HttpDataFactory factory = new DefaultHttpDataFactory(6553500);
+            HttpPostRequestDecoder form = new HttpPostRequestDecoder(factory, req);
             try {
                 while (form.hasNext()) {
                     inputData.addParameter(NettyUtils.getFormData(form.next()));

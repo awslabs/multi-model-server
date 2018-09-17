@@ -80,6 +80,7 @@ public final class ConfigManager {
 
         File file = new File(filePath);
         if (file.exists()) {
+            System.out.println("Loading config from: " + file.getAbsolutePath()); // NOPMD
             try (FileInputStream stream = new FileInputStream(file)) {
                 prop.load(stream);
             } catch (IOException e) {

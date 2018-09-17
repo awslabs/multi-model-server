@@ -21,7 +21,6 @@ import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
-import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import com.google.gson.JsonParseException;
 import io.netty.bootstrap.Bootstrap;
@@ -167,7 +166,7 @@ public class ModelServerTest {
 
         StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
         Assert.assertEquals(resp.getStatus(), "Healthy");
-        Assert.assertTrue(headers.contains(NettyUtils.REQUEST_ID));
+        Assert.assertTrue(headers.contains("x-request-id"));
     }
 
     private void testApiDescription(Channel channel) throws InterruptedException {

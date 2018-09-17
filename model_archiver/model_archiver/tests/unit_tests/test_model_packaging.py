@@ -12,10 +12,10 @@ from collections import namedtuple
 
 import pytest
 
-from model_archiver.manifest_components.engine import EngineType
-from model_archiver.manifest_components.manifest import RuntimeType
-from model_archiver.model_packaging import generate_model_archive, package_model
-from model_archiver.model_packaging_utils import ModelExportUtils
+from model_archiver.model_archiver.manifest_components.engine import EngineType
+from model_archiver.model_archiver.manifest_components.manifest import RuntimeType
+from model_archiver.model_archiver.model_packaging import generate_model_archive, package_model
+from model_archiver.model_archiver.model_packaging_utils import ModelExportUtils
 
 
 # noinspection PyClassHasNoInit
@@ -39,9 +39,9 @@ class TestModelPackaging:
     @pytest.fixture()
     def patches(self, mocker):
         Patches = namedtuple('Patches', ['arg_parse', 'export_utils', 'export_method'])
-        patches = Patches(mocker.patch('model_archiver.model_packaging.ArgParser'),
-                          mocker.patch('model_archiver.model_packaging.ModelExportUtils'),
-                          mocker.patch('model_archiver.model_packaging.package_model'))
+        patches = Patches(mocker.patch('model_archiver.model_archiver.model_packaging.ArgParser'),
+                          mocker.patch('model_archiver.model_archiver.model_packaging.ModelExportUtils'),
+                          mocker.patch('model_archiver.model_archiver.model_packaging.package_model'))
 
         return patches
 

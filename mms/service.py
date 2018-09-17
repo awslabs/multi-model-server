@@ -14,6 +14,8 @@ CustomService class definitions
 import logging
 import time
 
+from builtins import str
+
 import mms
 from mms.context import Context
 from mms.metrics.metrics_store import MetricsStore

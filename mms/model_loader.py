@@ -19,6 +19,8 @@ import os
 import sys
 from abc import ABCMeta, abstractmethod
 
+from builtins import str
+
 from mms.service import Service
 
 

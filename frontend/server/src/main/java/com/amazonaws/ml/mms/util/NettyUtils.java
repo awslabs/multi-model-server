@@ -13,6 +13,7 @@
 package com.amazonaws.ml.mms.util;
 
 import com.amazonaws.ml.mms.http.ErrorResponse;
+import com.amazonaws.ml.mms.http.Session;
 import com.amazonaws.ml.mms.util.messages.InputParameter;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -40,6 +41,7 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
@@ -53,18 +55,34 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A utility class that handling Netty request and response. */
 public final class NettyUtils {
 
-    public static final String REQUEST_ID = "x-request-id";
-    public static final AttributeKey<String> REQUEST_ID_ATTR = AttributeKey.valueOf("requestId");
+    private static final Logger logger = LoggerFactory.getLogger("ACCESS_LOG");
+
+    private static final String REQUEST_ID = "x-request-id";
+    private static final AttributeKey<Session> SESSION_KEY = AttributeKey.valueOf("session");
     private static final String UDS_PREFIX = "/tmp/.mms.worker.";
 
     private NettyUtils() {}
 
-    public static String getRequestId(ChannelHandlerContext ctx) {
-        return ctx.channel().attr(REQUEST_ID_ATTR).get();
+    public static void requestReceived(Channel channel, HttpRequest request) {
+        Session session = channel.attr(SESSION_KEY).get();
+        assert session == null;
+
+        String remoteIp = channel.remoteAddress().toString();
+        channel.attr(SESSION_KEY).set(new Session(remoteIp, request));
+    }
+
+    public static String getRequestId(Channel channel) {
+        Session accessLog = channel.attr(SESSION_KEY).get();
+        if (accessLog != null) {
+            return accessLog.getRequestId();
+        }
+        return null;
     }
 
     public static void sendJsonResponse(ChannelHandlerContext ctx, Object json) {
@@ -122,15 +140,19 @@ public final class NettyUtils {
     public static void sendHttpResponse(
             ChannelHandlerContext ctx, FullHttpResponse resp, boolean keepAlive) {
         // Send the response and close the connection if necessary.
-        resp.headers().set(REQUEST_ID, getRequestId(ctx));
+        Channel channel = ctx.channel();
+        Session session = channel.attr(SESSION_KEY).getAndSet(null);
+        resp.headers().set(REQUEST_ID, session.getRequestId());
         HttpUtil.setContentLength(resp, resp.content().readableBytes());
         if (!keepAlive || resp.status().code() >= 400) {
-            ChannelFuture f = ctx.channel().writeAndFlush(resp);
+            ChannelFuture f = channel.writeAndFlush(resp);
             f.addListener(ChannelFutureListener.CLOSE);
         } else {
             resp.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-            ctx.channel().writeAndFlush(resp);
+            channel.writeAndFlush(resp);
         }
+        session.setCode(resp.status().code());
+        logger.info(session.toString());
     }
 
     /** Closes the specified channel after all queued write requests are flushed. */

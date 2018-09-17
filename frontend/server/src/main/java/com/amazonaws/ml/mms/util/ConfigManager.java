@@ -140,12 +140,27 @@ public final class ConfigManager {
         if (mmsHome == null) {
             mmsHome = System.getProperty(MODEL_SERVER_HOME);
             if (mmsHome == null) {
-                File dir = new File("/mxnet-model-server");
-                if (!dir.exists()) {
-                    dir = new File(".");
+                mmsHome = getProperty(MODEL_SERVER_HOME, null);
+                if (mmsHome == null) {
+                    File dir = findMmsHome();
+                    try {
+                        mmsHome = dir.getCanonicalPath();
+                    } catch (IOException e) {
+                        mmsHome = dir.getAbsolutePath();
+                    }
+                    return mmsHome;
                 }
-                mmsHome = getProperty(MODEL_SERVER_HOME, dir.getAbsolutePath());
             }
+        }
+
+        File dir = new File(mmsHome);
+        if (!dir.exists()) {
+            throw new IllegalArgumentException("Model server home not exist: " + mmsHome);
+        }
+        try {
+            mmsHome = dir.getCanonicalPath();
+        } catch (IOException e) {
+            // ignore
         }
         return mmsHome;
     }
@@ -268,6 +283,29 @@ public final class ConfigManager {
             return def;
         }
         return Integer.parseInt(value);
+    }
+
+    private File findMmsHome() {
+        File dir = new File("/mxnet-model-server");
+        if (dir.exists()) {
+            return dir;
+        }
+
+        File cwd = new File(".");
+        try {
+            cwd = cwd.getCanonicalFile();
+        } catch (IOException e) {
+            cwd = new File(cwd.getAbsolutePath());
+        }
+        File file = cwd;
+        while (file != null) {
+            File mms = new File(file, "mms");
+            if (mms.exists()) {
+                return file;
+            }
+            file = file.getParentFile();
+        }
+        return cwd;
     }
 
     public static final class Arguments {

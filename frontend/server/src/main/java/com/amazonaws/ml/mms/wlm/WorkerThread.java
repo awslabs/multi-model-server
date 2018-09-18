@@ -105,7 +105,11 @@ public class WorkerThread extends Thread {
                 backendChannel.flush();
 
                 // TODO: Change this to configurable param
+                long begin = System.currentTimeMillis();
                 ModelWorkerResponse reply = replies.poll(WORKER_TIMEOUT, TimeUnit.MINUTES);
+
+                long duration = System.currentTimeMillis() - begin;
+                logger.info("Backend response time: {}", duration);
 
                 if (reply != null) {
                     aggregator.sendResponse(reply);

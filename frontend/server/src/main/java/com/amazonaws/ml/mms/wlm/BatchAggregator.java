@@ -76,6 +76,7 @@ public class BatchAggregator {
 
         ModelInferenceRequest req = new ModelInferenceRequest(model.getModelName());
         for (Job j : jobs.values()) {
+            j.setScheduled();
             req.addRequest(j.getPayload());
         }
         return req;

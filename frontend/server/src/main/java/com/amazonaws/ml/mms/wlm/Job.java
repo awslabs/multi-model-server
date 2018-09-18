@@ -34,6 +34,7 @@ public class Job {
     private WorkerCommands cmd; // Else its data msg or inf requests
     private RequestInput input;
     private long begin;
+    private long scheduled;
 
     public Job(
             ChannelHandlerContext ctx, String modelName, WorkerCommands cmd, RequestInput input) {
@@ -43,6 +44,7 @@ public class Job {
         this.input = input;
 
         begin = System.currentTimeMillis();
+        scheduled = begin;
     }
 
     public String getJobId() {
@@ -65,6 +67,10 @@ public class Job {
         return input;
     }
 
+    public void setScheduled() {
+        scheduled = System.currentTimeMillis();
+    }
+
     public void response(byte[] body, CharSequence contentType) {
         FullHttpResponse resp =
                 new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
@@ -83,7 +89,10 @@ public class Job {
             NettyUtils.sendHttpResponse(ctx, resp, true);
         }
 
-        logger.debug("Inference time: {}", System.currentTimeMillis() - begin);
+        logger.debug(
+                "Waiting time: {}, Backend time: {}",
+                scheduled - begin,
+                System.currentTimeMillis() - scheduled);
     }
 
     public void sendError(String error) {
@@ -97,6 +106,9 @@ public class Job {
             NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, error);
         }
 
-        logger.debug("Inference time: {}", System.currentTimeMillis() - begin);
+        logger.debug(
+                "Waiting time: {}, Inference time: {}",
+                scheduled - begin,
+                System.currentTimeMillis() - begin);
     }
 }

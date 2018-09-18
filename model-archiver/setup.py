@@ -28,10 +28,11 @@
 Setup.py for the model export tool package
 """
 
-import os
 from datetime import date
 import sys
 from setuptools import setup, find_packages
+# pylint: disable = relative-import
+import model_archiver
 
 pkgs = find_packages()
 
@@ -44,8 +45,6 @@ def pypi_description():
 
 def detect_packaging_tool_version():
     # pylint: disable = relative-import
-    sys.path.append(os.path.abspath("model_archiver"))
-    import model_archiver
     return model_archiver.__version__
 
 

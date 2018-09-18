@@ -103,14 +103,13 @@ class ModelService(object):
         input_type = self._signature['input_type']
 
         input_data = []
+        data_name = self._signature["inputs"][0]["data_name"]
         if input_type == "application/json":
-            for inputs in self._signature['inputs']:
-                input_name = inputs['data_name']
-                form_data = data[0].get(input_name)
-                form_data = ast.literal_eval(form_data)
-                input_data.append(form_data)
+            form_data = data[0].get(data_name)
+            form_data = ast.literal_eval(form_data)
+            input_data.append(form_data)
         else:
-            input_data = [data[0][i] for i in data[0]]
+            input_data.append(data[0].get(data_name))
 
         ret = self.inference(input_data)
         if isinstance(ret, list):

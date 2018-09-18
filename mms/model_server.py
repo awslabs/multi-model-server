@@ -29,7 +29,7 @@ def start():
 
     else:
         mms_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        cmd = ["java -jar frontend/model-server.jar"]
+        cmd = ["java -jar mms/frontend/model-server.jar"]
         if args.mms_config is not None:
             cmd.append("-f")
             cmd.append(args.mms_config)
@@ -38,7 +38,7 @@ def start():
             cmd.append("-m")
             cmd.extend(args.models)
 
-        process = subprocess.Popen(cmd.join(" "), shell=True, cwd=mms_home)
+        process = subprocess.Popen(" ".join(cmd), shell=True, cwd=mms_home)
         pid = process.pid
         with open(pid_file, "w") as pf:
             pf.write(str(pid))

@@ -12,9 +12,9 @@ import json
 import pytest
 import os
 from collections import namedtuple
-from model_archiver.model_archiver.model_packaging_utils import ModelExportUtils
-from model_archiver.model_archiver.manifest_components.engine import EngineType
-from model_archiver.model_archiver.manifest_components.manifest import RuntimeType
+from model_archiver.model_packaging_utils import ModelExportUtils
+from model_archiver.manifest_components.engine import EngineType
+from model_archiver.manifest_components.manifest import RuntimeType
 
 
 # noinspection PyClassHasNoInit
@@ -68,7 +68,7 @@ class TestExportModelUtils:
         @pytest.fixture()
         def patches(self, mocker):
             Patches = namedtuple('Patches', ['utils', 'listdir'])
-            patch = Patches(mocker.patch('model_archiver.model_archiver.model_packaging_utils.ModelExportUtils'),
+            patch = Patches(mocker.patch('model_archiver.model_packaging_utils.ModelExportUtils'),
                             mocker.patch('os.listdir'))
 
             patch.listdir.return_value = set(['a', 'b', 'c'])

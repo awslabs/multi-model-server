@@ -7,13 +7,3 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
-
-import os
-import model_archiver.model_archiver as model_archiver
-
-
-def test_model_export_tool_version():
-    with (open(os.path.join('model_archiver/model_archiver', 'version.py'))) as f:
-        exec(f.read(), globals())
-
-    assert __version__ == str(model_archiver.__version__), "Versions do not match"

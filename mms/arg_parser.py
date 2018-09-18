@@ -37,7 +37,7 @@ class ArgParser(object):
                             dest='mms_config',
                             help='Configuration file for model server')
         parser.add_argument('--models',
-                            required=True,
+                            required=False,
                             metavar='MODEL_PATH1 MODEL_NAME=MODEL_PATH2...',
                             nargs='+',
                             help='Models to be loaded using [model_name=]model_location format. '

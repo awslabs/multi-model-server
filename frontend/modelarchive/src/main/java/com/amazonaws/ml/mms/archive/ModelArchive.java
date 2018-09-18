@@ -125,11 +125,6 @@ public class ModelArchive {
 
             LegacyManifest legacyManifest = GSON.fromJson(json, LegacyManifest.class);
             manifest = legacyManifest.migrate();
-            if (manifest.getModel() == null) {
-                throw new InvalidModelException(
-                        ErrorCodes.INCORRECT_ARTIFACT_MANIFEST,
-                        "Missing Model entry in manifest file.");
-            }
 
             zos.putNextEntry(new ZipEntry("MAR_INF/"));
             zos.putNextEntry(new ZipEntry("MAR_INF/" + MANIFEST_FILE));

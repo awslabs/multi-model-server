@@ -14,7 +14,9 @@
 
 import ast
 import json
+import logging
 import os
+import time
 from abc import ABCMeta, abstractmethod
 
 
@@ -109,7 +111,14 @@ class ModelService(object):
             form_data = ast.literal_eval(form_data)
             input_data.append(form_data)
         else:
-            input_data.append(data[0].get(data_name))
+            form_data = data[0].get(data_name)
+            if form_data is None:
+                form_data = data[0].get("body")
+
+            if form_data is None:
+                form_data = data[0].get("data")
+
+            input_data.append(form_data)
 
         ret = self.inference(input_data)
         if isinstance(ret, list):
@@ -138,9 +147,17 @@ class SingleNodeService(ModelService):
         list of outputs to be sent back to client.
             data to be sent back
         """
+        preprocess_start = time.time()
         data = self._preprocess(data)
+        inference_start = time.time()
         data = self._inference(data)
+        postprocess_start = time.time()
         data = self._postprocess(data)
+        end_time = time.time()
+
+        logging.info("preprocess time: %d", int((inference_start - preprocess_start) * 1000))
+        logging.info("inference time: %d", int((postprocess_start - inference_start) * 1000))
+        logging.info("postprocess time: %d", int((end_time - postprocess_start) * 1000))
 
         return data
 

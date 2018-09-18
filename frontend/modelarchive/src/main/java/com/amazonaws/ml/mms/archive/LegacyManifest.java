@@ -96,7 +96,7 @@ public class LegacyManifest {
         this.createdBy = createdBy;
     }
 
-    public Manifest migrate() {
+    public Manifest migrate() throws InvalidModelException {
         Manifest manifest = new Manifest();
         manifest.setDescription(description);
         manifest.setLicense(license);
@@ -119,15 +119,17 @@ public class LegacyManifest {
             }
         }
 
-        if (modelInfo != null) {
-            Manifest.Model model = new Manifest.Model();
-            model.setModelName(modelInfo.getModelName());
-            model.setDescription(modelInfo.getDescription());
-            model.setHandler(modelInfo.getService());
-            model.setModelVersion("snapshot");
-            model.addExtension("parametersFile", modelInfo.getParameters());
-            model.addExtension("symbolFile", modelInfo.getSymbol());
-            manifest.setModel(model);
+        Manifest.Model model = new Manifest.Model();
+        model.setModelName(modelInfo.getModelName());
+        model.setDescription(modelInfo.getDescription());
+        model.setHandler(modelInfo.getService());
+        model.setModelVersion("snapshot");
+        model.addExtension("parametersFile", modelInfo.getParameters());
+        model.addExtension("symbolFile", modelInfo.getSymbol());
+        manifest.setModel(model);
+
+        if (model.getHandler() == null) {
+            throw new InvalidModelException("Missing Service entry in MANIFEST.json");
         }
 
         return manifest;

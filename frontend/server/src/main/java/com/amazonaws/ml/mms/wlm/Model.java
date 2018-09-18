@@ -102,9 +102,13 @@ public class Model {
         this.maxBatchDelay = maxBatchDelay;
     }
 
-    public boolean addJob(String threadId, Job job) {
-        jobsDb.putIfAbsent(threadId, new LinkedBlockingDeque<>());
-        return jobsDb.get(threadId).offer(job);
+    public void addJob(String threadId, Job job) {
+        LinkedBlockingDeque<Job> blockingDeque = jobsDb.get(threadId);
+        if (blockingDeque == null) {
+            blockingDeque = new LinkedBlockingDeque<>();
+            jobsDb.put(threadId, blockingDeque);
+        }
+        blockingDeque.offer(job);
     }
 
     public void removeJobQueue(String threadId) {
@@ -114,16 +118,11 @@ public class Model {
     }
 
     public boolean addJob(Job job) {
-        return addJob(DEFAULT_DATA_QUEUE, job);
+        return jobsDb.get(DEFAULT_DATA_QUEUE).offer(job);
     }
 
-    public void addFirst(String threadId, Job job) {
-        jobsDb.putIfAbsent(threadId, new LinkedBlockingDeque<>());
-        jobsDb.get(threadId).addFirst(job);
-    }
-
-    public void addFirst(Job j) {
-        addFirst(DEFAULT_DATA_QUEUE, j);
+    public void addFirst(Job job) {
+        jobsDb.get(DEFAULT_DATA_QUEUE).addFirst(job);
     }
 
     public Job nextJob(String threadId) throws InterruptedException {

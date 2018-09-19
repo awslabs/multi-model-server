@@ -106,10 +106,9 @@ MMS_BASE = reduce(lambda val,func: func(val), (os.path.abspath(__file__),) + (os
 JMX_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jmx')
 CONFIG_PROP_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.properties')
 
-
-ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput', 'concurrent_inference'), (MODEL_RESNET_18, MODEL_NOOP, MODEL_NOOP_ECHO))) \
-               + [('multiple_models', MODEL_NOOP)]
-
+# Commenting our NOOPs for now since there's a bug on MMS model loading for .mar files
+ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput', 'concurrent_inference'), (MODEL_RESNET_18,)))
+               # + [('multiple_models', MODEL_NOOP)]
                # + list(itertools.product(('load', 'repeated_scale_calls'), (MODEL_RESNET_18,))) \ To Add once
                # repeated_scale_calls is fixed
 

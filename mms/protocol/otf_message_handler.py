@@ -86,7 +86,7 @@ def create_predict_response(ret, req_id_map, message, code):
                 msg += val
             else:
                 try:
-                    json_value = json.dumps(val, indent=2)
+                    json_value = json.dumps(val, indent=2).encode("utf-8")
                     msg += struct.pack('!i', len(json_value))
                     msg += json_value
                 except TypeError:

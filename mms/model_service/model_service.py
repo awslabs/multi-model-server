@@ -106,19 +106,19 @@ class ModelService(object):
 
         input_data = []
         data_name = self._signature["inputs"][0]["data_name"]
+        form_data = data[0].get(data_name)
+        if form_data is None:
+            form_data = data[0].get("body")
+
+        if form_data is None:
+            form_data = data[0].get("data")
+
         if input_type == "application/json":
-            form_data = data[0].get(data_name)
-            form_data = ast.literal_eval(form_data)
-            input_data.append(form_data)
-        else:
-            form_data = data[0].get(data_name)
-            if form_data is None:
-                form_data = data[0].get("body")
+            # user might not send content in HTTP request
+            if isinstance(form_data, (bytes, bytearray)):
+                form_data = ast.literal_eval(form_data.decode())
 
-            if form_data is None:
-                form_data = data[0].get("data")
-
-            input_data.append(form_data)
+        input_data.append(form_data)
 
         ret = self.inference(input_data)
         if isinstance(ret, list):
@@ -155,9 +155,9 @@ class SingleNodeService(ModelService):
         data = self._postprocess(data)
         end_time = time.time()
 
-        logging.info("preprocess time: %d", int((inference_start - preprocess_start) * 1000))
-        logging.info("inference time: %d", int((postprocess_start - inference_start) * 1000))
-        logging.info("postprocess time: %d", int((end_time - postprocess_start) * 1000))
+        logging.info("preprocess time: %.2f", (inference_start - preprocess_start) * 1000)
+        logging.info("inference time: %.2f", (postprocess_start - inference_start) * 1000)
+        logging.info("postprocess time: %.2f", (end_time - postprocess_start) * 1000)
 
         return data
 

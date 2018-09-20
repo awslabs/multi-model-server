@@ -35,7 +35,6 @@ BENCHMARK_DIR = "/tmp/MMSBenchmark/"
 
 OUT_DIR = os.path.join(BENCHMARK_DIR, 'out/')
 RESOURCE_DIR = os.path.join(BENCHMARK_DIR, 'resource/')
-CONFIG_PROP = os.path.join(BENCHMARK_DIR, 'config.properties')
 
 RESOURCE_MAP = {
     'kitten.jpg': 'https://s3.amazonaws.com/model-server/inputs/kitten.jpg'
@@ -102,9 +101,10 @@ CELLAR = '/home/ubuntu/.linuxbrew/Cellar/jmeter' if 'linux' in sys.platform else
 JMETER_VERSION = os.listdir(CELLAR)[0]
 CMDRUNNER = '{}/{}/libexec/lib/ext/CMDRunner.jar'.format(CELLAR, JMETER_VERSION)
 JMETER = '{}/{}/libexec/bin/jmeter'.format(CELLAR, JMETER_VERSION)
-MMS_BASE = reduce(lambda val,func: func(val), (os.path.abspath(__file__),) + (os.path.dirname,) * 3)
+MMS_BASE = reduce(lambda val,func: func(val), (os.path.abspath(__file__),) + (os.path.dirname,) * 2)
+CONFIG_PROP = os.path.join(MMS_BASE, 'benchmarks', 'config.properties')
 JMX_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jmx')
-CONFIG_PROP_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.properties')
+CONFIG_PROP_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config_template.properties')
 
 # Commenting our NOOPs for now since there's a bug on MMS model loading for .mar files
 ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput', 'concurrent_inference'), (MODEL_RESNET_18,)))

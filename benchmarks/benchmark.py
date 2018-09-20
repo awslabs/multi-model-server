@@ -192,8 +192,7 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         run_process("{} rm -f {}".format(docker, container))
         docker_run_call = "{} run --name {} -p 8080:8080 -p 8081:8081 -v {}:/mxnet-model-server -itd {}".format(docker, container, MMS_BASE, docker_path)
         run_process(docker_run_call)
-        with ChDir(MMS_BASE):
-            run_process("python setup.py bdist_wheel --universal")
+        run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && python setup.py bdist_wheel --universal && pip install -U -e .'".format(docker, container), shell=True)
         run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && pip install -U -e .'".format(docker, container), shell=True)
         run_process("{} start {}".format(docker, container))
 

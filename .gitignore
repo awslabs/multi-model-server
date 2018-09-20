@@ -117,3 +117,6 @@ ENV/
 
 # Pictures
 *.jpg
+
+# Prop file in benchmark
+benchmarks/*.properties

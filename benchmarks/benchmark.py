@@ -60,7 +60,7 @@ MODEL_MAP = {
     MODEL_SQUEEZE_NET: (JMX_IMAGE_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model', 'model_name': MODEL_SQUEEZE_NET, 'input_filepath': 'kitten.jpg'}),
     MODEL_RESNET_18: (JMX_IMAGE_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model', 'model_name': MODEL_RESNET_18, 'input_filepath': 'kitten.jpg'}),
     MODEL_LSTM_PTB: (JMX_TEXT_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb.model', 'model_name': MODEL_LSTM_PTB}),
-    MODEL_NOOP: (JMX_TEXT_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/noop/noop-v1.0.model', 'model_name': MODEL_NOOP})
+    MODEL_NOOP: (JMX_TEXT_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/noop/noop-v1.0.mar', 'model_name': MODEL_NOOP})
 }
 
 

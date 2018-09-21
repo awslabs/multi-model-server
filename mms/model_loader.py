@@ -31,7 +31,7 @@ class ModelLoaderFactory(object):
 
     @staticmethod
     def get_model_loader(model_dir):
-        manifest_file = os.path.join(model_dir, "MAR_INF/MANIFEST.json")
+        manifest_file = os.path.join(model_dir, "MAR-INF/MANIFEST.json")
         if os.path.exists(manifest_file):
             return MmsModelLoader()
         else:
@@ -96,7 +96,7 @@ class MmsModelLoader(ModelLoader):
         """
         logging.debug("Loading model - working dir: %s", os.getcwd())
 
-        manifest_file = os.path.join(model_dir, "MAR_INF/MANIFEST.json")
+        manifest_file = os.path.join(model_dir, "MAR-INF/MANIFEST.json")
         manifest = None
         if os.path.exists(manifest_file):
             with open(manifest_file) as f:

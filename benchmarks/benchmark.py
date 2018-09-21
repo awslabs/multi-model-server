@@ -107,7 +107,7 @@ DOCKER_MMS_BASE = "/mxnet-model-server"
 DOCKER_CONFIG_PROP = os.path.join(DOCKER_MMS_BASE, 'benchmarks', 'config.properties')
 
 # Commenting our NOOPs for now since there's a bug on MMS model loading for .mar files
-ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput', 'concurrent_inference'), (MODEL_RESNET_18,MODEL_NOOP, MODEL_LSTM_PTB)))
+ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput'), (MODEL_RESNET_18,MODEL_NOOP, MODEL_LSTM_PTB)))
                # + [('multiple_models', MODEL_NOOP)]
                # + list(itertools.product(('load', 'repeated_scale_calls'), (MODEL_RESNET_18,))) \ To Add once
                # repeated_scale_calls is fixed
@@ -431,10 +431,10 @@ def run_benchmark():
 def modify_config_props_for_mms(pargs):
     shutil.copyfile(CONFIG_PROP_TEMPLATE, CONFIG_PROP)
     with open(CONFIG_PROP, 'a') as f:
-        f.write('number_of_netty_threads=32')
-        f.write('job_queue_size=1000')
+        f.write('\nnumber_of_netty_threads=32')
+        f.write('\njob_queue_size=1000')
         if pargs.gpus:
-            f.write('number_of_gpu={}'.format(pargs.gpus[0]))
+            f.write('\nnumber_of_gpu={}'.format(pargs.gpus[0]))
 
 
 if __name__ == '__main__':

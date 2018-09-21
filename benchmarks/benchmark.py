@@ -104,7 +104,10 @@ JMETER = '{}/{}/libexec/bin/jmeter'.format(CELLAR, JMETER_VERSION)
 MMS_BASE = reduce(lambda val,func: func(val), (os.path.abspath(__file__),) + (os.path.dirname,) * 2)
 JMX_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jmx')
 CONFIG_PROP = os.path.join(MMS_BASE, 'benchmarks', 'config.properties')
-CONFIG_PROP_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config_template.properties')
+CONFIG_PROP_TEMPLATE = os.path.join(MMS_BASE, 'benchmarks', 'config_template.properties')
+
+DOCKER_MMS_BASE = "/mxnet-model-server"
+DOCKER_CONFIG_PROP = os.path.join(DOCKER_MMS_BASE, 'benchmarks', 'config.properties')
 
 # Commenting our NOOPs for now since there's a bug on MMS model loading for .mar files
 ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput', 'concurrent_inference'), (MODEL_RESNET_18,)))
@@ -190,13 +193,13 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
             container = 'mms_benchmark_{}'.format(pargs.docker[0].split('/')[1])
             docker_path = pargs.docker[0]
         run_process("{} rm -f {}".format(docker, container))
-        docker_run_call = "{} run --name {} -p 8080:8080 -p 8081:8081 -v {}:/mxnet-model-server -itd {}".format(docker, container, MMS_BASE, docker_path)
+        docker_run_call = "{} run --name {} -p 8080:8080 -p 8081:8081 -v {}:{} -itd {}".format(docker, container, MMS_BASE, DOCKER_MMS_BASE, docker_path)
         run_process(docker_run_call)
         run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && python setup.py bdist_wheel --universal && pip install -U -e .'".format(docker, container), shell=True)
         run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && pip install -U -e .'".format(docker, container), shell=True)
         run_process("{} start {}".format(docker, container))
 
-        docker_start_call = "{} exec {} mxnet-model-server --start --mms-config {}".format(docker, container, CONFIG_PROP)
+        docker_start_call = "{} exec {} mxnet-model-server --start --mms-config {}".format(docker, container, DOCKER_CONFIG_PROP)
         docker_start = run_process(docker_start_call, wait=False)
         time.sleep(3)
         docker_start.kill()

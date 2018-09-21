@@ -430,8 +430,10 @@ def run_benchmark():
 
 def modify_config_props_for_mms(pargs):
     shutil.copyfile(CONFIG_PROP_TEMPLATE, CONFIG_PROP)
-    if pargs.gpus:
-        with open(CONFIG_PROP, 'a') as f:
+    with open(CONFIG_PROP, 'a') as f:
+        f.write('number_of_netty_threads=32')
+        f.write('job_queue_size=1000')
+        if pargs.gpus:
             f.write('number_of_gpu={}'.format(pargs.gpus[0]))
 
 

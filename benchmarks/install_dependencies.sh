@@ -32,7 +32,7 @@ sudo apt-get install -y \
 if [[ $1 = True ]]
 then
         echo "Installing pip packages for GPU"
-        sudo apt install nvidia-cuda-toolkit
+        sudo apt install -y nvidia-cuda-toolkit
         pip install future psutil mxnet-cu92 pillow --user
 else
         echo "Installing pip packages for CPU"

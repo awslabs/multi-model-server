@@ -107,7 +107,7 @@ DOCKER_MMS_BASE = "/mxnet-model-server"
 DOCKER_CONFIG_PROP = os.path.join(DOCKER_MMS_BASE, 'benchmarks', 'config.properties')
 
 # Commenting our NOOPs for now since there's a bug on MMS model loading for .mar files
-ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput', 'concurrent_inference'), (MODEL_RESNET_18,)))
+ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput', 'concurrent_inference'), (MODEL_RESNET_18,MODEL_NOOP, MODEL_LSTM_PTB)))
                # + [('multiple_models', MODEL_NOOP)]
                # + list(itertools.product(('load', 'repeated_scale_calls'), (MODEL_RESNET_18,))) \ To Add once
                # repeated_scale_calls is fixed

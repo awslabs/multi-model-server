@@ -126,8 +126,8 @@ public class ModelArchive {
             LegacyManifest legacyManifest = GSON.fromJson(json, LegacyManifest.class);
             manifest = legacyManifest.migrate();
 
-            zos.putNextEntry(new ZipEntry("MAR_INF/"));
-            zos.putNextEntry(new ZipEntry("MAR_INF/" + MANIFEST_FILE));
+            zos.putNextEntry(new ZipEntry("MAR-INF/"));
+            zos.putNextEntry(new ZipEntry("MAR-INF/" + MANIFEST_FILE));
             zos.write(GSON.toJson(manifest).getBytes(StandardCharsets.UTF_8));
 
             Enumeration<? extends ZipEntry> en = zip.entries();
@@ -176,7 +176,7 @@ public class ModelArchive {
 
     private static ModelArchive load(String url, File dir, boolean extracted)
             throws InvalidModelException {
-        File manifestFile = new File(dir, "MAR_INF/" + MANIFEST_FILE);
+        File manifestFile = new File(dir, "MAR-INF/" + MANIFEST_FILE);
         Manifest manifest;
         File modelDir = dir;
         if (manifestFile.exists()) {

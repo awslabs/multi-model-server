@@ -18,8 +18,14 @@ RUN apt-get update && \
 
 RUN pip install mxnet-model-server
 
+COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
+RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh
+
 RUN useradd -m model-server
 USER model-server
 WORKDIR /home/model-server
 
 LABEL maintainer="dantu@amazon.com, rakvas@amazon.com, lufen@amazon.com, dden@amazon.com"
+
+ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
+CMD ["serve"]

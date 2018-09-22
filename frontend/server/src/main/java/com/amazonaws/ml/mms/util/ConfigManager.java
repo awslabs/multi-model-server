@@ -82,9 +82,9 @@ public final class ConfigManager {
 
         File file = new File(filePath);
         if (file.exists()) {
-            System.out.println("Loading config from: " + file.getAbsolutePath()); // NOPMD
             try (FileInputStream stream = new FileInputStream(file)) {
                 prop.load(stream);
+                prop.put("mmsConfigFile", filePath);
             } catch (IOException e) {
                 throw new IllegalStateException("Unable to read configuration file", e);
             }
@@ -170,12 +170,7 @@ public final class ConfigManager {
             if (mmsHome == null) {
                 mmsHome = getProperty(MODEL_SERVER_HOME, null);
                 if (mmsHome == null) {
-                    File dir = findMmsHome();
-                    try {
-                        mmsHome = dir.getCanonicalPath();
-                    } catch (IOException e) {
-                        mmsHome = dir.getAbsolutePath();
-                    }
+                    mmsHome = getCanonicalPath(findMmsHome());
                     return mmsHome;
                 }
             }
@@ -185,17 +180,13 @@ public final class ConfigManager {
         if (!dir.exists()) {
             throw new IllegalArgumentException("Model server home not exist: " + mmsHome);
         }
-        try {
-            mmsHome = dir.getCanonicalPath();
-        } catch (IOException e) {
-            // ignore
-        }
+        mmsHome = getCanonicalPath(dir);
         return mmsHome;
     }
 
     public String getModelStore() {
         String mmsHome = getModelServerHome();
-        return getProperty(MODEL_STORE, mmsHome + "/model");
+        return getCanonicalPath(getProperty(MODEL_STORE, mmsHome + "/model"));
     }
 
     public String getLoadModels() {
@@ -293,6 +284,23 @@ public final class ConfigManager {
         return prop.getProperty(key, def);
     }
 
+    public String dumpConfigurations() {
+        return "MMS Home: "
+                + getModelServerHome()
+                + "\nCurrent directory: "
+                + getCanonicalPath(".")
+                + "\nConfig file: "
+                + prop.getProperty("mmsConfigFile")
+                + "\nModel Store: "
+                + getModelStore()
+                + "\nInitial Models: "
+                + getLoadModels()
+                + "\nLog dir: "
+                + getCanonicalPath(System.getProperty("LOG_LOCATION"))
+                + "\nMetrics dir: "
+                + getCanonicalPath(System.getProperty("METRICS_LOCATION"));
+    }
+
     void setProperty(String key, String value) {
         prop.setProperty(key, value);
     }
@@ -311,12 +319,7 @@ public final class ConfigManager {
             return dir;
         }
 
-        File cwd = new File(".");
-        try {
-            cwd = cwd.getCanonicalFile();
-        } catch (IOException e) {
-            cwd = new File(cwd.getAbsolutePath());
-        }
+        File cwd = new File(getCanonicalPath("."));
         File file = cwd;
         while (file != null) {
             File mms = new File(file, "mms");
@@ -326,6 +329,18 @@ public final class ConfigManager {
             file = file.getParentFile();
         }
         return cwd;
+    }
+
+    private static String getCanonicalPath(File file) {
+        try {
+            return file.getCanonicalPath();
+        } catch (IOException e) {
+            return file.getAbsolutePath();
+        }
+    }
+
+    private static String getCanonicalPath(String path) {
+        return getCanonicalPath(new File(path));
     }
 
     public static final class Arguments {

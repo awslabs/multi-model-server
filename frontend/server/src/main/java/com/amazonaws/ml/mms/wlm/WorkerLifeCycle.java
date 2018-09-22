@@ -46,11 +46,10 @@ public class WorkerLifeCycle {
     }
 
     public boolean startWorker(int port) {
-        File workingDir;
+        File workingDir = new File(configManager.getModelServerHome());
         File modelPath;
         setPort(port);
         try {
-            workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
             modelPath = model.getModelDir().getCanonicalFile();
         } catch (IOException e) {
             logger.error("Failed get MMS home directory", e);

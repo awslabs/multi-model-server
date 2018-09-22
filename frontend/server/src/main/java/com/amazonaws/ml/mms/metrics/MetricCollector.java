@@ -46,7 +46,7 @@ public class MetricCollector implements Runnable {
             String[] args = new String[2];
             args[0] = "python";
             args[1] = "mms/metrics/metric_collector.py";
-            File workingDir = new File(configManager.getModelServerHome()).getCanonicalFile();
+            File workingDir = new File(configManager.getModelServerHome());
 
             String pythonPath = System.getenv("PYTHONPATH");
             String pythonEnv;

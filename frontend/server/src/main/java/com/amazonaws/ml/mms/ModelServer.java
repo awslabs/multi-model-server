@@ -214,8 +214,7 @@ public class ModelServer {
                     InvalidModelException, WorkerInitializationException {
         stopped.set(false);
 
-        String mmsHome = configManager.getModelServerHome();
-        logger.info("Start MMS from: {}", mmsHome);
+        logger.info(configManager.dumpConfigurations());
 
         initModelStore();
 

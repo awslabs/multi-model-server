@@ -3,11 +3,11 @@ File to define the entry point to Model Server
 """
 
 import os
-import signal
 import subprocess
 import tempfile
-
 from builtins import str
+
+import psutil
 
 from mms.arg_parser import ArgParser
 
@@ -19,20 +19,38 @@ def start():
     """
     args = ArgParser.mms_parser().parse_args()
     pid_file = os.path.join(tempfile.gettempdir(), ".model_server.pid")
-    if args.stop is True:
-        if os.path.isfile(pid_file):
-            with open(pid_file, "r") as f:
-                try:
-                    os.kill(int(f.readline()), signal.SIGKILL)
-                except OSError:
-                    print("Model server already stopped")
-            os.remove(pid_file)
-        else:
-            print("Model server is not currently running")
+    pid = None
+    if os.path.isfile(pid_file):
+        with open(pid_file, "r") as f:
+            pid = int(f.readline())
 
+    if args.stop is True:
+        if pid is None:
+            print("Model server is not currently running.")
+        else:
+            try:
+                parent = psutil.Process(pid)
+                for child in parent.children(recursive=True):
+                    child.kill()
+                parent.kill()
+            except OSError:
+                print("Model server already stopped.")
+            os.remove(pid_file)
     else:
+        if pid is not None:
+            try:
+                psutil.Process(pid)
+                print("Model server is already running.")
+                exit(1)
+            except psutil.Error:
+                print("Removing orphan pid file.")
+                os.remove(pid_file)
+
         mms_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        cmd = ["java -jar mms/frontend/model-server.jar"]
+        cmd = ["java",
+               "-Dmodel_server_home={}".format(mms_home),
+               "-jar",
+               "{}/mms/frontend/model-server.jar".format(mms_home)]
         if args.mms_config is not None:
             cmd.append("-f")
             cmd.append(args.mms_config)
@@ -41,7 +59,7 @@ def start():
             cmd.append("-m")
             cmd.extend(args.models)
 
-        process = subprocess.Popen(" ".join(cmd), shell=True, cwd=mms_home)
+        process = subprocess.Popen(cmd)
         pid = process.pid
         with open(pid_file, "w") as pf:
             pf.write(str(pid))

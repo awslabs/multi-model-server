@@ -106,7 +106,7 @@ public class ModelServer {
         Runtime.getRuntime().halt(-1); // NOPMD
     }
 
-    public void initModelStore() throws InvalidModelException {
+    public void initModelStore() throws InvalidModelException, IOException {
         WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getBackendGroup());
         ModelManager.init(configManager, wlm);
 
@@ -220,7 +220,7 @@ public class ModelServer {
      */
     public List<ChannelFuture> start()
             throws InterruptedException, IOException, GeneralSecurityException,
-                    InvalidModelException, WorkerInitializationException {
+                    InvalidModelException {
         stopped.set(false);
 
         logger.info(configManager.dumpConfigurations());

@@ -65,17 +65,10 @@ public class ModelArchive {
     }
 
     public static ModelArchive downloadModel(String modelStore, String url)
-            throws InvalidModelException {
+            throws InvalidModelException, IOException {
         if (URL_PATTERN.matcher(url).matches()) {
-            try {
-                File modelDir = download(url);
-                return load(url, modelDir, true);
-            } catch (IOException e) {
-                throw new InvalidModelException(
-                        ErrorCodes.MODEL_ARCHIVE_DOWNLOAD_FAIL,
-                        "Failed to download model archive: " + url,
-                        e);
-            }
+            File modelDir = download(url);
+            return load(url, modelDir, true);
         }
 
         if (url.contains("..")) {
@@ -90,18 +83,13 @@ public class ModelArchive {
             try (InputStream is = new FileInputStream(modelLocation)) {
                 File unzipDir = unzip(is, null);
                 return load(url, unzipDir, true);
-            } catch (IOException e) {
-                throw new InvalidModelException(
-                        ErrorCodes.MODEL_ARCHIVE_INCORRECT,
-                        "Failed to unzip model archive: " + url,
-                        e);
             }
         }
         return load(url, modelLocation, false);
     }
 
     public static void migrate(File legacyModelFile, File destination)
-            throws InvalidModelException {
+            throws InvalidModelException, IOException {
         try (ZipFile zip = new ZipFile(legacyModelFile);
                 ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(destination))) {
 
@@ -142,18 +130,17 @@ public class ModelArchive {
                     IOUtils.copy(zip.getInputStream(entry), zos);
                 }
             }
-        } catch (IOException e) {
+        } catch (InvalidModelException | IOException e) {
             FileUtils.deleteQuietly(destination);
-            throw new InvalidModelException(
-                    ErrorCodes.MODEL_ARCHIVE_INCORRECT, "Unable to extract model file.", e);
+            throw e;
         }
     }
 
-    private static File download(String path) throws IOException {
+    private static File download(String path) throws InvalidModelException, IOException {
         URL url = new URL(path);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-            throw new IOException(
+            throw new InvalidModelException(
                     "Failed download model from: " + path + ", code: " + conn.getResponseCode());
         }
 
@@ -175,43 +162,51 @@ public class ModelArchive {
     }
 
     private static ModelArchive load(String url, File dir, boolean extracted)
-            throws InvalidModelException {
-        File manifestFile = new File(dir, "MAR-INF/" + MANIFEST_FILE);
-        Manifest manifest;
-        if (manifestFile.exists()) {
-            // Must be MMS 1.0 or later
-            manifest = readFile(manifestFile, Manifest.class);
-        } else {
-            manifestFile = new File(dir, MANIFEST_FILE);
-            boolean nested = false;
-            if (!manifestFile.exists()) {
-                // Found MANIFEST.json in top level;
-                manifestFile = findFile(dir, MANIFEST_FILE, true); // for 0.1 model archive
-                nested = true;
-            }
-
-            if (manifestFile == null) {
-                // Must be 1.0
-                manifest = new Manifest();
+            throws InvalidModelException, IOException {
+        try {
+            File manifestFile = new File(dir, "MAR-INF/" + MANIFEST_FILE);
+            Manifest manifest;
+            if (manifestFile.exists()) {
+                // Must be MMS 1.0 or later
+                manifest = readFile(manifestFile, Manifest.class);
             } else {
-                // 0.1 model may have extra parent directory
-                LegacyManifest legacyManifest = readFile(manifestFile, LegacyManifest.class);
-                manifest = legacyManifest.migrate();
-                File modelDir = manifestFile.getParentFile();
-                if (extracted && nested) {
-                    // Move all file to top level, so we can clean up properly.
-                    moveToTopLevel(modelDir, dir);
+                manifestFile = new File(dir, MANIFEST_FILE);
+                boolean nested = false;
+                if (!manifestFile.exists()) {
+                    // Found MANIFEST.json in top level;
+                    manifestFile = findFile(dir, MANIFEST_FILE, true); // for 0.1 model archive
+                    nested = true;
+                }
+
+                if (manifestFile == null) {
+                    // Must be 1.0
+                    manifest = new Manifest();
+                } else {
+                    // 0.1 model may have extra parent directory
+                    LegacyManifest legacyManifest = readFile(manifestFile, LegacyManifest.class);
+                    manifest = legacyManifest.migrate();
+                    File modelDir = manifestFile.getParentFile();
+                    if (extracted && nested) {
+                        // Move all file to top level, so we can clean up properly.
+                        moveToTopLevel(modelDir, dir);
+                    }
                 }
             }
-        }
 
-        return new ModelArchive(manifest, url, dir, extracted);
+            return new ModelArchive(manifest, url, dir, extracted);
+        } catch (Exception e) {
+            if (extracted) {
+                FileUtils.deleteQuietly(dir);
+            }
+            throw e;
+        }
     }
 
-    private static <T> T readFile(File file, Class<T> type) throws InvalidModelException {
+    private static <T> T readFile(File file, Class<T> type)
+            throws InvalidModelException, IOException {
         try (Reader r = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
             return GSON.fromJson(r, type);
-        } catch (IOException | JsonParseException e) {
+        } catch (JsonParseException e) {
             throw new InvalidModelException(
                     ErrorCodes.INCORRECT_ARTIFACT_MANIFEST, "Failed to parse signature.json.", e);
         }
@@ -235,18 +230,14 @@ public class ModelArchive {
         return null;
     }
 
-    private static void moveToTopLevel(File from, File to) {
+    private static void moveToTopLevel(File from, File to) throws IOException {
         File[] list = from.listFiles();
         if (list != null) {
             for (File file : list) {
-                try {
-                    if (file.isDirectory()) {
-                        FileUtils.moveDirectoryToDirectory(file, to, false);
-                    } else {
-                        FileUtils.moveFileToDirectory(file, to, false);
-                    }
-                } catch (IOException e) {
-                    throw new IllegalStateException("Failed move model to top level.", e);
+                if (file.isDirectory()) {
+                    FileUtils.moveDirectoryToDirectory(file, to, false);
+                } else {
+                    FileUtils.moveFileToDirectory(file, to, false);
                 }
             }
         }

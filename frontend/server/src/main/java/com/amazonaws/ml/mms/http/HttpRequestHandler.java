@@ -52,8 +52,7 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (Throwable t) {
             logger.error("", t);
-            NettyUtils.sendError(
-                    ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, ErrorCodes.UNKNOWN_ERROR);
+            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

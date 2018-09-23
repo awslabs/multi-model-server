@@ -26,6 +26,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -222,9 +223,13 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             archive =
                     modelManager.registerModel(
                             modelUrl, modelName, runtimeType, handler, batchSize, maxBatchDelay);
+        } catch (IOException e) {
+            logger.warn("Failed to download model", e);
+            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            return;
         } catch (InvalidModelException e) {
             logger.warn("Failed to load model", e);
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getErrorCode());
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
             return;
         }
 

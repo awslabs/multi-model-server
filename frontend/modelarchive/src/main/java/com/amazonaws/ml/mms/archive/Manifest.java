@@ -34,6 +34,7 @@ public class Manifest {
         modelServerVersion = "1.0";
         license = "Apache 2.0";
         runtime = RuntimeType.PYTHON2_7;
+        model = new Model();
     }
 
     public String getSpecificationVersion() {

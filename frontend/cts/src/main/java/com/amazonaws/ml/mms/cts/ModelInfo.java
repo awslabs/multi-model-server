@@ -60,36 +60,79 @@ public class ModelInfo {
     };
 
     static final ModelInfo[] MODEL_ARCHIVE_04 = {
-        new ModelInfo(true, "FERPlus", ModelInfo.EMOTION_DETECTION),
+        new ModelInfo(
+                "FERPlus",
+                "https://s3.amazonaws.com/model-server/models/FERPlus/ferplus.model",
+                EMOTION_DETECTION),
         new ModelInfo(true, "caffenet"),
-        new ModelInfo(true, "inception-bn"),
-        new ModelInfo(true, "lstm_ptb", ModelInfo.LANGUAGE_MODELING),
+        new ModelInfo(
+                "inception-bn",
+                "https://s3.amazonaws.com/model-server/models/inception-bn/Inception-BN.model"),
+        new ModelInfo(true, "lstm_ptb", LANGUAGE_MODELING),
         new ModelInfo(true, "nin"),
-        new ModelInfo(true, "onnx-arcface-resnet100"),
-        new ModelInfo(true, "onnx-duc"),
-        new ModelInfo(true, "onnx-inception_v1"),
-        new ModelInfo(true, "onnx-mobilenet"),
-        new ModelInfo(true, "onnx-resnet101v1"),
-        new ModelInfo(true, "onnx-resnet101v2"),
-        new ModelInfo(true, "onnx-resnet152v1"),
-        new ModelInfo(true, "onnx-resnet152v2"),
-        new ModelInfo(true, "onnx-resnet18v1"),
-        new ModelInfo(true, "onnx-resnet18v2"),
-        new ModelInfo(true, "onnx-resnet34v1"),
-        new ModelInfo(true, "onnx-resnet34v2"),
-        new ModelInfo(true, "onnx-resnet50v1"),
-        new ModelInfo(true, "onnx-resnet50v2"),
-        new ModelInfo(true, "onnx-squeezenet"),
-        new ModelInfo(true, "onnx-vgg16"),
-        new ModelInfo(true, "onnx-vgg16_bn"),
-        new ModelInfo(true, "onnx-vgg19"),
-        new ModelInfo(true, "onnx-vgg19_bn"),
+        new ModelInfo(
+                "onnx-arcface-resnet100",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-arcface/arcface-resnet100.model"),
+        new ModelInfo(
+                "onnx-duc",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-duc/ResNet_DUC_HDC.model"),
+        new ModelInfo(
+                "onnx-inception_v1",
+                "https://s3.amazonaws.com/model-server/models/onnx-inception_v1/inception_v1.model"),
+        new ModelInfo(
+                "onnx-mobilenet",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-mobilenet/mobilenetv2-1.0.model"),
+        new ModelInfo(
+                "onnx-resnet101v1",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet101v1.model"),
+        new ModelInfo(
+                "onnx-resnet101v2",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet101v2.model"),
+        new ModelInfo(
+                "onnx-resnet152v1",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet152v1.model"),
+        new ModelInfo(
+                "onnx-resnet152v2",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet152v2.model"),
+        new ModelInfo(
+                "onnx-resnet18v1",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet18v1.model"),
+        new ModelInfo(
+                "onnx-resnet18v2",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet18v2.model"),
+        new ModelInfo(
+                "onnx-resnet34v1",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet34v1.model"),
+        new ModelInfo(
+                "onnx-resnet34v2",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet34v2.model"),
+        new ModelInfo(
+                "onnx-resnet50v1",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet50v1.model"),
+        new ModelInfo(
+                "onnx-resnet50v2",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet50v2.model"),
+        new ModelInfo(
+                "onnx-squeezenet",
+                "https://s3.amazonaws.com/model-server/models/onnx-squeezenet/squeezenet.model"),
+        new ModelInfo(
+                "onnx-vgg16", "https://s3.amazonaws.com/mxnet-model-server/onnx-vgg16/vgg16.model"),
+        new ModelInfo(
+                "onnx-vgg16_bn",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-vgg16_bn/vgg16_bn.model"),
+        new ModelInfo(
+                "onnx-vgg19",
+                "https://s3.amazonaws.com/model-server/models/onnx-vgg19/vgg19.model"),
+        new ModelInfo(
+                "onnx-vgg19_bn",
+                "https://s3.amazonaws.com/mxnet-model-server/onnx-vgg19_bn/vgg19_bn.model"),
         new ModelInfo(true, "resnet-152"),
         new ModelInfo(true, "resnet-18"),
-        new ModelInfo(true, "resnet50_ssd"),
+        new ModelInfo(
+                "resnet50_ssd",
+                "https://s3.amazonaws.com/model-server/models/resnet50_ssd/resnet50_ssd_model.model"),
         new ModelInfo(true, "resnext-101-64x4d"),
         new ModelInfo(true, "squeezenet_v1.1"),
-        new ModelInfo(true, "squeezenet_v1.2"),
         new ModelInfo(true, "vgg16"),
         new ModelInfo(true, "vgg19")
     };
@@ -118,6 +161,10 @@ public class ModelInfo {
             url = S3_PREFIX + modelName + ".mar";
         }
         this.type = type;
+    }
+
+    public ModelInfo(String modelName, String url) {
+        this(modelName, url, IMAGE_CLASSIFICATION);
     }
 
     public ModelInfo(String modelName, String url, int type) {

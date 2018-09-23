@@ -48,17 +48,22 @@ public class HttpClient {
 
     static final Logger logger = LoggerFactory.getLogger(HttpClient.class);
 
+    private int managementPort;
+    private int inferencePort;
+
     private Bootstrap bootstrap;
     private ClientHandler handler;
 
-    public HttpClient() {
+    public HttpClient(int managementPort, int inferencePort) {
+        this.managementPort = managementPort;
+        this.inferencePort = inferencePort;
         handler = new ClientHandler();
         bootstrap = bootstrap(handler);
     }
 
     public boolean registerModel(String modelName, String modelUrl)
             throws InterruptedException, IOException {
-        Channel channel = connect(bootstrap);
+        Channel channel = connect(bootstrap, managementPort);
 
         String uri =
                 "/models?url="
@@ -68,7 +73,7 @@ public class HttpClient {
                         + "&initial_workers=1&synchronous=true";
 
         HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-        channel.writeAndFlush(req);
+        channel.writeAndFlush(req).sync();
 
         channel.closeFuture().sync();
 
@@ -84,14 +89,14 @@ public class HttpClient {
     }
 
     public boolean unregisterModel(String modelName) throws InterruptedException, IOException {
-        Channel channel = connect(bootstrap);
+        Channel channel = connect(bootstrap, managementPort);
 
         DefaultFullHttpRequest req =
                 new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         HttpMethod.DELETE,
                         "/models/" + URLEncoder.encode(modelName, StandardCharsets.UTF_8.name()));
-        channel.writeAndFlush(req);
+        channel.writeAndFlush(req).sync();
 
         channel.closeFuture().sync();
 
@@ -108,7 +113,7 @@ public class HttpClient {
 
     public boolean predict(String modelName, byte[] content, CharSequence contentType)
             throws InterruptedException, IOException {
-        Channel channel = connect(bootstrap);
+        Channel channel = connect(bootstrap, inferencePort);
 
         DefaultFullHttpRequest req =
                 new DefaultFullHttpRequest(
@@ -119,7 +124,7 @@ public class HttpClient {
         req.content().writeBytes(content);
         HttpUtil.setContentLength(req, content.length);
         req.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
-        channel.writeAndFlush(req);
+        channel.writeAndFlush(req).sync();
 
         channel.closeFuture().sync();
 
@@ -138,7 +143,7 @@ public class HttpClient {
             String modelName, DefaultFullHttpRequest req, HttpPostRequestEncoder requestEncoder)
             throws InterruptedException, HttpPostRequestEncoder.ErrorDataEncoderException,
                     IOException {
-        Channel channel = connect(bootstrap);
+        Channel channel = connect(bootstrap, inferencePort);
 
         req.setUri("/predictions/" + URLEncoder.encode(modelName, StandardCharsets.UTF_8.name()));
         channel.writeAndFlush(requestEncoder.finalizeRequest());
@@ -163,13 +168,13 @@ public class HttpClient {
         Bootstrap b = new Bootstrap();
         b.group(new NioEventLoopGroup(1))
                 .channel(NioSocketChannel.class)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10 * 60 * 1000)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10 * 1000)
                 .handler(
                         new ChannelInitializer<Channel>() {
                             @Override
                             public void initChannel(Channel ch) {
                                 ChannelPipeline p = ch.pipeline();
-                                p.addLast(new ReadTimeoutHandler(30));
+                                p.addLast(new ReadTimeoutHandler(10 * 60 * 1000));
                                 p.addLast(new HttpClientCodec());
                                 p.addLast(new HttpContentDecompressor());
                                 p.addLast(new ChunkedWriteHandler());
@@ -180,8 +185,8 @@ public class HttpClient {
         return b;
     }
 
-    private Channel connect(Bootstrap b) throws InterruptedException {
-        SocketAddress address = new InetSocketAddress("127.0.0.1", 8080);
+    private Channel connect(Bootstrap b, int port) throws InterruptedException {
+        SocketAddress address = new InetSocketAddress("127.0.0.1", port);
         return b.connect(address).sync().channel();
     }
 

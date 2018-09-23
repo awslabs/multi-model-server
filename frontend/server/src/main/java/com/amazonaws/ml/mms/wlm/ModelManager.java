@@ -21,6 +21,7 @@ import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -52,7 +53,7 @@ public final class ModelManager {
         return modelManager;
     }
 
-    public ModelArchive registerModel(String url) throws InvalidModelException {
+    public ModelArchive registerModel(String url) throws InvalidModelException, IOException {
         return registerModel(url, null, null, null, 1, 100);
     }
 
@@ -63,7 +64,7 @@ public final class ModelManager {
             String handler,
             int batchSize,
             int maxBatchDelay)
-            throws InvalidModelException {
+            throws InvalidModelException, IOException {
         ModelArchive archive = ModelArchive.downloadModel(configManager.getModelStore(), url);
         if (modelName == null || modelName.isEmpty()) {
             modelName = archive.getModelName();

@@ -20,7 +20,6 @@ import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.Model;
 import com.amazonaws.ml.mms.wlm.ModelManager;
-import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import com.amazonaws.ml.mms.wlm.WorkerThread;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -174,7 +173,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
 
         List<WorkerThread> workers = modelManager.getWorkers(modelName);
         for (WorkerThread worker : workers) {
-            String workerId = worker.getName();
+            String workerId = worker.getWorkerId();
             long startTime = worker.getStartTime();
             boolean isRunning = worker.isRunning();
             int gpuId = worker.getGpuId();
@@ -244,11 +243,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                 initialWorkers,
                 synchronous,
                 f -> {
-                    try {
-                        modelManager.unregisterModel(archive.getModelName());
-                    } catch (WorkerInitializationException ignore) {
-                        // ignore
-                    }
+                    modelManager.unregisterModel(archive.getModelName());
                     archive.clean();
                     return null;
                 });
@@ -256,14 +251,8 @@ public class ManagementRequestHandler extends HttpRequestHandler {
 
     private void handleUnregisterModel(ChannelHandlerContext ctx, String modelName) {
         ModelManager modelManager = ModelManager.getInstance();
-        try {
-            if (!modelManager.unregisterModel(modelName)) {
-                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, "Model not found");
-            }
-        } catch (WorkerInitializationException e) {
-            logger.warn("Failed to unregister model.", e);
-            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getErrorCode());
-            return;
+        if (!modelManager.unregisterModel(modelName)) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, "Model not found");
         }
         String msg = "Model \"" + modelName + "\" unregistered";
         NettyUtils.sendJsonResponse(ctx, new StatusResponse(msg));
@@ -293,49 +282,39 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             boolean synchronous,
             final Function<Void, Void> onError) {
         ModelManager modelManager = ModelManager.getInstance();
-        try {
-            CompletableFuture<Boolean> future =
-                    modelManager.updateModel(modelName, minWorkers, maxWorkers);
-            if (!synchronous) {
-                NettyUtils.sendJsonResponse(
-                        ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
-                return;
-            }
-            future.thenApply(
-                            v -> {
-                                if (!v) {
-                                    if (onError != null) {
-                                        onError.apply(null);
-                                    }
-                                    NettyUtils.sendError(
-                                            ctx,
-                                            HttpResponseStatus.BAD_REQUEST,
-                                            ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
-                                } else {
-                                    NettyUtils.sendJsonResponse(
-                                            ctx,
-                                            new StatusResponse("Worker scaled"),
-                                            HttpResponseStatus.OK);
-                                }
-                                return v;
-                            })
-                    .exceptionally(
-                            (e) -> {
+        CompletableFuture<Boolean> future =
+                modelManager.updateModel(modelName, minWorkers, maxWorkers);
+        if (!synchronous) {
+            NettyUtils.sendJsonResponse(
+                    ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
+            return;
+        }
+        future.thenApply(
+                        v -> {
+                            if (!v) {
                                 if (onError != null) {
                                     onError.apply(null);
                                 }
                                 NettyUtils.sendError(
                                         ctx,
-                                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                        e.getMessage());
-                                return null;
-                            });
-        } catch (WorkerInitializationException e) {
-            logger.error("Failed update model workers.", e);
-            if (onError != null) {
-                onError.apply(null);
-            }
-            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
+                                        HttpResponseStatus.BAD_REQUEST,
+                                        ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
+                            } else {
+                                NettyUtils.sendJsonResponse(
+                                        ctx,
+                                        new StatusResponse("Worker scaled"),
+                                        HttpResponseStatus.OK);
+                            }
+                            return v;
+                        })
+                .exceptionally(
+                        (e) -> {
+                            if (onError != null) {
+                                onError.apply(null);
+                            }
+                            NettyUtils.sendError(
+                                    ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+                            return null;
+                        });
     }
 }

@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WorkerThread extends Thread {
+public class WorkerThread implements Runnable {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
 
@@ -65,6 +65,9 @@ public class WorkerThread extends Thread {
     private long memory;
     private long startTime;
     private Thread currentThread;
+    private String workerId;
+
+    private WorkerState state;
 
     private WorkerLifeCycle lifeCycle;
 
@@ -77,7 +80,7 @@ public class WorkerThread extends Thread {
             Model model,
             BatchAggregator aggregator,
             WorkerStateListener listener) {
-        super("BackendWorker-" + port); // ** IMPORTANT NOTE**: THIS NAME SHOULD BE UNIQUE..
+        this.workerId = String.valueOf(port); // Unique across all workers.
         this.parentThreads = parentThreads;
         this.configManager = configManager;
         this.backendEventGroup = backendEventGroup;
@@ -89,17 +92,18 @@ public class WorkerThread extends Thread {
         startTime = System.currentTimeMillis();
         lifeCycle = new WorkerLifeCycle(configManager, model);
         replies = new ArrayBlockingQueue<>(1);
-        this.setDaemon(true);
     }
 
     @Override
     public void run() {
         currentThread = Thread.currentThread();
-        String modelName = model.getModelName();
+        currentThread.setName("BackendWorker-" + port);
         BaseModelRequest req = null;
         try {
+            connect();
+
             while (running.get()) {
-                req = aggregator.getRequest(getName());
+                req = aggregator.getRequest(workerId);
 
                 backendChannel.write(req);
                 backendChannel.flush();
@@ -125,10 +129,9 @@ public class WorkerThread extends Thread {
                         break;
                     case LOAD:
                         if (reply.getCode() == 200) {
-                            listener.notifyChangeState(
-                                    modelName, WorkerStateListener.WORKER_MODEL_LOADED);
+                            setState(WorkerState.WORKER_MODEL_LOADED);
                         } else {
-                            listener.notifyChangeState(modelName, WorkerStateListener.WORKER_ERROR);
+                            setState(WorkerState.WORKER_ERROR);
                         }
                         break;
                     case UNLOAD:
@@ -140,8 +143,8 @@ public class WorkerThread extends Thread {
             }
         } catch (InterruptedException e) {
             logger.warn("Backend worker thread interrupted.");
-        } catch (WorkerInitializationException wi) {
-            logger.error("Backend worker error", wi);
+        } catch (WorkerInitializationException e) {
+            logger.error("Backend worker error", e);
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);
         } finally {
@@ -149,9 +152,13 @@ public class WorkerThread extends Thread {
                 aggregator.sendError(
                         req, ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
             }
-            listener.notifyChangeState(modelName, WorkerStateListener.WORKER_STOPPED);
+            setState(WorkerState.WORKER_STOPPED);
             lifeCycle.exit();
         }
+    }
+
+    public String getWorkerId() {
+        return workerId;
     }
 
     public long getMemory() {
@@ -162,13 +169,13 @@ public class WorkerThread extends Thread {
         this.memory = memory;
     }
 
-    public void connect() throws WorkerInitializationException {
+    private void connect() throws WorkerInitializationException {
         if (!configManager.isDebug() && !lifeCycle.startWorker(port)) {
             throw new WorkerInitializationException(
                     ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
         }
         String modelName = model.getModelName();
-        listener.notifyChangeState(modelName, WorkerStateListener.WORKER_STARTED);
+        setState(WorkerState.WORKER_STARTED);
         final CountDownLatch latch = new CountDownLatch(1);
 
         try {
@@ -196,8 +203,8 @@ public class WorkerThread extends Thread {
                                     future -> {
                                         latch.countDown();
                                         parentThreads.remove(WorkerThread.this); // NOPMD
-                                        shutdown();
-                                        logger.info("{} Worker disconnected.", getName());
+                                        logger.info("{} Worker disconnected.", getWorkerId());
+                                        retry();
                                     });
 
             backendChannel
@@ -221,7 +228,7 @@ public class WorkerThread extends Thread {
                                                         modelName,
                                                         WorkerCommands.LOAD,
                                                         input);
-                                        model.addJob(getName(), job);
+                                        model.addJob(workerId, job);
                                         latch.countDown();
                                     });
 
@@ -231,11 +238,8 @@ public class WorkerThread extends Thread {
                         "Worker failed to initialize within {} mins" + WORKER_TIMEOUT);
             }
         } catch (InterruptedException e) {
-            lifeCycle.exit();
             throw new WorkerInitializationException(ErrorCodes.WORKER_INSTANTIATION_ERROR, e);
         } catch (Throwable t) {
-            lifeCycle.exit();
-
             // https://github.com/netty/netty/issues/2597
             if (t instanceof IOException) {
                 throw new WorkerInitializationException(
@@ -263,27 +267,35 @@ public class WorkerThread extends Thread {
 
     public void shutdown() {
         running.set(false);
-        backendChannel.close();
-        ModelManager manager = ModelManager.getInstance();
+        setState(WorkerState.WORKER_TERMINATED);
+        if (backendChannel != null) {
+            backendChannel.close();
+        }
         if (currentThread != null) {
             currentThread.interrupt();
-            try {
-                if (parentThreads.size() < model.getMinWorkers()) {
-                    // minWorkers is the numWorkers configured for this model. If parent thread
-                    // group
-                    // has less threads than expected minWorkers, we should restart the workers.
-                    manager.updateModel(
-                            model.getModelName(), model.getMinWorkers(), model.getMinWorkers());
-                }
-                aggregator.sendError(null, "Internal Failure");
-            } catch (WorkerInitializationException e) {
-                logger.error("", e);
-            }
+            aggregator.sendError(null, "Internal Failure");
 
-            model.removeJobQueue(getName());
+            model.removeJobQueue(workerId);
         }
         // TODO: push current message back to queue, if no more worker,
         // drain the queue and send error back
+    }
+
+    void setState(WorkerState newState) {
+        listener.notifyChangeState(model.getModelName(), newState);
+        if (state != WorkerState.WORKER_TERMINATED) {
+            this.state = newState;
+        }
+    }
+
+    void retry() {
+        if (state == WorkerState.WORKER_TERMINATED) {
+            return;
+        }
+
+        logger.info("Retry worker: {}", workerId);
+        ModelManager modelManager = ModelManager.getInstance();
+        modelManager.submitTask(this);
     }
 
     @ChannelHandler.Sharable

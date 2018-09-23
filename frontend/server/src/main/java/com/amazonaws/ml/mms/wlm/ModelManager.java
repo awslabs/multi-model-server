@@ -77,6 +77,8 @@ public final class ModelManager {
             archive.getManifest().getModel().setHandler(handler);
         }
 
+        archive.validate();
+
         Model model = new Model(archive, configManager.getJobQueueSize());
         model.setBatchSize(batchSize);
         model.setMaxBatchDelay(maxBatchDelay);

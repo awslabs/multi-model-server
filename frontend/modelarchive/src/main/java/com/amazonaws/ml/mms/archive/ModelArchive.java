@@ -193,9 +193,6 @@ public class ModelArchive {
             if (manifestFile == null) {
                 // Must be 1.0
                 manifest = new Manifest();
-                Manifest.Model model = new Manifest.Model();
-                model.setModelName(dir.getName());
-                manifest.setModel(model);
             } else {
                 // 0.1 model may have extra parent directory
                 LegacyManifest legacyManifest = readFile(manifestFile, LegacyManifest.class);
@@ -208,9 +205,7 @@ public class ModelArchive {
             }
         }
 
-        ModelArchive archive = new ModelArchive(manifest, url, dir, extracted);
-        archive.validate();
-        return archive;
+        return new ModelArchive(manifest, url, dir, extracted);
     }
 
     private static <T> T readFile(File file, Class<T> type) throws InvalidModelException {
@@ -297,8 +292,11 @@ public class ModelArchive {
         }
 
         if (model.getModelName() == null) {
-            throw new InvalidModelException(
-                    ErrorCodes.INCORRECT_ARTIFACT_MANIFEST, "Missing Model name in manifest file.");
+            throw new InvalidModelException("Model name is not defined.");
+        }
+
+        if (model.getHandler() == null) {
+            throw new InvalidModelException("Model handler is not defined.");
         }
     }
 

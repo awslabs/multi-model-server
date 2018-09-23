@@ -69,14 +69,14 @@ public final class Cts {
                             "https://s3.amazonaws.com/mxnet-model-server/onnx-arcface/input2.jpg",
                             "player1.jpg");
 
-            HttpClient client = new HttpClient();
+            HttpClient client = new HttpClient(8081, 8080);
 
             for (ModelInfo info : ModelInfo.MODEL_ARCHIVE_1) {
-                runTest(client, info);
+                runTest(client, info, logger);
             }
 
             for (ModelInfo info : ModelInfo.MODEL_ARCHIVE_04) {
-                runTest(client, info);
+                runTest(client, info, logger);
             }
         } catch (Exception e) {
             logger.error("", e);
@@ -90,12 +90,14 @@ public final class Cts {
         System.exit(exitCode);
     }
 
-    private void runTest(HttpClient client, ModelInfo info)
+    private void runTest(HttpClient client, ModelInfo info, Logger logger)
             throws HttpPostRequestEncoder.ErrorDataEncoderException, InterruptedException,
                     IOException {
         String modelName = info.getModelName();
         String url = info.getUrl();
         int type = info.getType();
+
+        logger.info("Testing model: {}={}", modelName, url);
 
         if (!client.registerModel(modelName, url)) {
             exitCode = 1;

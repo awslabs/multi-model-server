@@ -105,8 +105,7 @@ public class WorkerThread implements Runnable {
             while (running.get()) {
                 req = aggregator.getRequest(workerId);
 
-                backendChannel.write(req);
-                backendChannel.flush();
+                backendChannel.writeAndFlush(req).sync();
 
                 // TODO: Change this to configurable param
                 long begin = System.currentTimeMillis();

@@ -1,3 +1,17 @@
 dependencies {
     compile project(":server")
 }
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.amazonaws.ml.mms.cts.Cts'
+    }
+    includeEmptyDirs = false
+    from configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
+
+    exclude "META-INF/maven/**"
+    exclude "META-INF/INDEX.LIST"
+    exclude "META-INF/MANIFEST*"
+    exclude "META-INF//LICENSE*"
+    exclude "META-INF//NOTICE*"
+}

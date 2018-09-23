@@ -24,7 +24,7 @@ public class ModelArchiveTest {
     private File output;
 
     @BeforeTest
-    public void afterTest() {
+    public void beforeTest() {
         output = new File("build/tmp/test/noop.mar");
         FileUtils.deleteQuietly(output);
         FileUtils.deleteQuietly(new File("build/tmp/test/noop"));

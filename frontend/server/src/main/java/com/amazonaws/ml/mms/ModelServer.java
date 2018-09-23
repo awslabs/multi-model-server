@@ -106,7 +106,7 @@ public class ModelServer {
         Runtime.getRuntime().halt(-1); // NOPMD
     }
 
-    public void initModelStore() throws InvalidModelException, WorkerInitializationException {
+    public void initModelStore() throws InvalidModelException {
         WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getBackendGroup());
         ModelManager.init(configManager, wlm);
 

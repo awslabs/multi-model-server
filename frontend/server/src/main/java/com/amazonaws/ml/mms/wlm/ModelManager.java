@@ -91,7 +91,7 @@ public final class ModelManager {
         return archive;
     }
 
-    public boolean unregisterModel(String modelName) throws WorkerInitializationException {
+    public boolean unregisterModel(String modelName) {
         Model model = models.remove(modelName);
         if (model == null) {
             logger.warn("Model not found: " + modelName);
@@ -101,12 +101,12 @@ public final class ModelManager {
         model.setMinWorkers(0);
         model.setMaxWorkers(0);
         wlm.modelChanged(model);
-        logger.info("Model {} unregistered.", model.getModelName());
+        logger.info("Model {} unregistered.", modelName);
         return true;
     }
 
-    public CompletableFuture<Boolean> updateModel(String modelName, int minWorkers, int maxWorkers)
-            throws WorkerInitializationException {
+    public CompletableFuture<Boolean> updateModel(
+            String modelName, int minWorkers, int maxWorkers) {
         Model model = models.get(modelName);
         if (model == null) {
             throw new AssertionError("Model not found: " + modelName);
@@ -184,5 +184,9 @@ public final class ModelManager {
                     NettyUtils.sendJsonResponse(ctx, new StatusResponse(response), status);
                 };
         wlm.scheduleAsync(r);
+    }
+
+    public void submitTask(Runnable runnable) {
+        wlm.scheduleAsync(runnable);
     }
 }

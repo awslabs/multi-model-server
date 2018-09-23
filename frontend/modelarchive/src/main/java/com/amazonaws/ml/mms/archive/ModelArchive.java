@@ -178,12 +178,18 @@ public class ModelArchive {
             throws InvalidModelException {
         File manifestFile = new File(dir, "MAR-INF/" + MANIFEST_FILE);
         Manifest manifest;
-        File modelDir = dir;
         if (manifestFile.exists()) {
             // Must be MMS 1.0 or later
             manifest = readFile(manifestFile, Manifest.class);
         } else {
-            manifestFile = findFile(dir, MANIFEST_FILE, true); // for 0.1 model archive
+            manifestFile = new File(dir, MANIFEST_FILE);
+            boolean nested = false;
+            if (!manifestFile.exists()) {
+                // Found MANIFEST.json in top level;
+                manifestFile = findFile(dir, MANIFEST_FILE, true); // for 0.1 model archive
+                nested = true;
+            }
+
             if (manifestFile == null) {
                 // Must be 1.0
                 manifest = new Manifest();
@@ -192,13 +198,17 @@ public class ModelArchive {
                 manifest.setModel(model);
             } else {
                 // 0.1 model may have extra parent directory
-                modelDir = manifestFile.getParentFile();
                 LegacyManifest legacyManifest = readFile(manifestFile, LegacyManifest.class);
                 manifest = legacyManifest.migrate();
+                File modelDir = manifestFile.getParentFile();
+                if (extracted && nested) {
+                    // Move all file to top level, so we can clean up properly.
+                    moveToTopLevel(modelDir, dir);
+                }
             }
         }
 
-        ModelArchive archive = new ModelArchive(manifest, url, modelDir, extracted);
+        ModelArchive archive = new ModelArchive(manifest, url, dir, extracted);
         archive.validate();
         return archive;
     }
@@ -228,6 +238,23 @@ public class ModelArchive {
             }
         }
         return null;
+    }
+
+    private static void moveToTopLevel(File from, File to) {
+        File[] list = from.listFiles();
+        if (list != null) {
+            for (File file : list) {
+                try {
+                    if (file.isDirectory()) {
+                        FileUtils.moveDirectoryToDirectory(file, to, false);
+                    } else {
+                        FileUtils.moveFileToDirectory(file, to, false);
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException("Failed move model to top level.", e);
+                }
+            }
+        }
     }
 
     public static File unzip(InputStream is, String eTag) throws IOException {

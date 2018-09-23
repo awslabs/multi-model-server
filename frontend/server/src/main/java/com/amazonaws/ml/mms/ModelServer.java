@@ -107,51 +107,60 @@ public class ModelServer {
     }
 
     public void initModelStore() throws InvalidModelException, WorkerInitializationException {
-        logger.debug("Loading initial models...");
         WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getBackendGroup());
         ModelManager.init(configManager, wlm);
 
-        File modelStore = new File(configManager.getModelStore());
-        if (modelStore.exists()) {
-            ModelManager modelManager = ModelManager.getInstance();
-            String loadModels = configManager.getLoadModels();
-            if ("ALL".equalsIgnoreCase(loadModels)) {
-                String[] extensions = new String[] {"model", "mar"};
-                Collection<File> models = FileUtils.listFiles(modelStore, extensions, false);
-                for (File modelFile : models) {
-                    ModelArchive archive = modelManager.registerModel(modelFile.getName());
-                    modelManager.updateModel(archive.getModelName(), 1, 1);
-                }
-                // Check folders to see if they can be models as well
-                File[] dirs =
-                        modelStore.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
-                if (dirs != null) {
-                    for (File dir : dirs) {
-                        ModelArchive archive = modelManager.registerModel(dir.getName());
-                        modelManager.updateModel(archive.getModelName(), 1, 1);
-                    }
-                }
-            } else if (loadModels != null) {
-                String[] models = loadModels.split(",");
-                for (String model : models) {
-                    String[] pair = model.split("=", 2);
-                    String modelName = null;
-                    String url;
-                    if (pair.length == 1) {
-                        url = pair[0];
-                    } else {
-                        modelName = pair[0];
-                        url = pair[1];
-                    }
-                    if (url.isEmpty()) {
-                        continue;
-                    }
+        String loadModels = configManager.getLoadModels();
+        if (loadModels == null || loadModels.isEmpty()) {
+            return;
+        }
 
-                    ModelArchive archive =
-                            modelManager.registerModel(url, modelName, null, null, 1, 100);
+        File modelStore = new File(configManager.getModelStore());
+        ModelManager modelManager = ModelManager.getInstance();
+        if ("ALL".equalsIgnoreCase(loadModels)) {
+            if (!modelStore.exists()) {
+                logger.warn("Model store is not configured.");
+                return;
+            }
+
+            logger.debug("Loading models from model store ...");
+
+            String[] extensions = new String[] {"model", "mar"};
+            Collection<File> models = FileUtils.listFiles(modelStore, extensions, false);
+            for (File modelFile : models) {
+                ModelArchive archive = modelManager.registerModel(modelFile.getName());
+                modelManager.updateModel(archive.getModelName(), 1, 1);
+            }
+            // Check folders to see if they can be models as well
+            File[] dirs = modelStore.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
+            if (dirs != null) {
+                for (File dir : dirs) {
+                    ModelArchive archive = modelManager.registerModel(dir.getName());
                     modelManager.updateModel(archive.getModelName(), 1, 1);
                 }
             }
+            return;
+        }
+
+        logger.debug("Loading initial models ...");
+
+        String[] models = loadModels.split(",");
+        for (String model : models) {
+            String[] pair = model.split("=", 2);
+            String modelName = null;
+            String url;
+            if (pair.length == 1) {
+                url = pair[0];
+            } else {
+                modelName = pair[0];
+                url = pair[1];
+            }
+            if (url.isEmpty()) {
+                continue;
+            }
+
+            ModelArchive archive = modelManager.registerModel(url, modelName, null, null, 1, 100);
+            modelManager.updateModel(archive.getModelName(), 1, 1);
         }
     }
 

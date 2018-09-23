@@ -19,10 +19,6 @@ import org.slf4j.LoggerFactory;
 
 public class WorkerStateListener {
 
-    public static final int WORKER_STARTED = 1;
-    public static final int WORKER_MODEL_LOADED = 2;
-    public static final int WORKER_STOPPED = 3;
-    public static final int WORKER_ERROR = 4;
     private static final Logger logger = LoggerFactory.getLogger(WorkerStateListener.class);
     private CompletableFuture<Boolean> future;
     private AtomicInteger count;
@@ -32,30 +28,16 @@ public class WorkerStateListener {
         this.count = new AtomicInteger(count);
     }
 
-    public void notifyChangeState(String modelName, int state) {
-        logger.debug("{} worker state is: {}", modelName, toState(state));
+    public void notifyChangeState(String modelName, WorkerState state) {
+        logger.debug("{} worker state is: {}", modelName, state);
         // Update success and fail counts
-        if (state == WORKER_MODEL_LOADED) {
+        if (state == WorkerState.WORKER_MODEL_LOADED) {
             if (count.decrementAndGet() == 0) {
                 future.complete(Boolean.TRUE);
             }
         }
-        if (state == WORKER_ERROR || state == WORKER_STOPPED) {
+        if (state == WorkerState.WORKER_ERROR || state == WorkerState.WORKER_STOPPED) {
             future.complete(Boolean.FALSE);
-        }
-    }
-
-    private static String toState(int state) {
-        switch (state) {
-            case WORKER_STARTED:
-                return "STARTED";
-            case WORKER_MODEL_LOADED:
-                return "MODEL_LOADED";
-            case WORKER_STOPPED:
-                return "STOPPED";
-            case WORKER_ERROR:
-            default:
-                return "ERROR";
         }
     }
 }

@@ -67,8 +67,7 @@ public class WorkLoadManager {
         return worker.isEmpty();
     }
 
-    public CompletableFuture<Boolean> modelChanged(Model model)
-            throws WorkerInitializationException {
+    public CompletableFuture<Boolean> modelChanged(Model model) {
         int minWorker = model.getMinWorkers();
         List<WorkerThread> threads;
         if (minWorker == 0) {
@@ -97,8 +96,7 @@ public class WorkLoadManager {
     }
 
     private CompletableFuture<Boolean> addThreads(
-            List<WorkerThread> threads, Model model, int count)
-            throws WorkerInitializationException {
+            List<WorkerThread> threads, Model model, int count) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         WorkerStateListener listener = new WorkerStateListener(future, count);
         int maxGpu = configManager.getNumberOfGpu();
@@ -121,7 +119,6 @@ public class WorkLoadManager {
                             model,
                             aggregator,
                             listener);
-            thread.connect();
             threads.add(thread);
             threadPool.submit(thread);
             if (!configManager.isDebug()) {

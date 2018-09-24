@@ -65,7 +65,6 @@ public final class NettyUtils {
 
     private static final String REQUEST_ID = "x-request-id";
     private static final AttributeKey<Session> SESSION_KEY = AttributeKey.valueOf("session");
-    private static final String UDS_PREFIX = "/tmp/.mms.worker.";
 
     private NettyUtils() {}
 
@@ -205,7 +204,8 @@ public final class NettyUtils {
 
     public static SocketAddress getSocketAddress(int port) {
         if (Epoll.isAvailable() || KQueue.isAvailable()) {
-            return new DomainSocketAddress(UDS_PREFIX + port);
+            String uds = System.getProperty("java.io.tmpdir") + "/.mms.sock." + port;
+            return new DomainSocketAddress(uds);
         }
         return new InetSocketAddress("127.0.0.1", port);
     }

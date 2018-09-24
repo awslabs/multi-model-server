@@ -47,13 +47,30 @@ def start():
                 os.remove(pid_file)
 
         mms_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        cmd = ["java",
-               "-Dmodel_server_home={}".format(mms_home),
-               "-jar",
-               "{}/mms/frontend/model-server.jar".format(mms_home)]
+        cmd = ["java", "-Dmodel_server_home={}".format(mms_home)]
+        if args.log_config is not None:
+            cmd.append("-Dlog4j.configuration={}".format(args.log_config))
+
+        tmp_dir = os.environ.get("TEMP")
+        if tmp_dir is not None:
+            cmd.append("-Djava.io.tmpdir={}".format(tmp_dir))
+
+        if args.mms_config is not None:
+            props = load_properties(args.mms_config)
+            vm_args = props.get("vmargs")
+            if vm_args is not None:
+                cmd.extend(vm_args.split())
+
+        cmd.append("-jar")
+        cmd.append("{}/mms/frontend/model-server.jar".format(mms_home))
+
         if args.mms_config is not None:
             cmd.append("-f")
             cmd.append(args.mms_config)
+
+        if args.model_store is not None:
+            cmd.append("-s")
+            cmd.append(args.model_store)
 
         if args.models is not None:
             cmd.append("-m")
@@ -63,6 +80,22 @@ def start():
         pid = process.pid
         with open(pid_file, "w") as pf:
             pf.write(str(pid))
+
+
+def load_properties(file_path):
+    """
+    Read properties file into map.
+    """
+    props = {}
+    with open(file_path, "rt") as f:
+        for line in f:
+            line = line.strip()
+            if not line.startswith("#"):
+                pair = line.split("=", 1)
+                key = pair[0].strip()
+                props[key] = pair[1]
+
+    return props
 
 
 if __name__ == "__main__":

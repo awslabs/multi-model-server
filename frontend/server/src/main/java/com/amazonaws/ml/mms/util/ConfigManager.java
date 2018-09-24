@@ -103,6 +103,11 @@ public final class ConfigManager {
             System.setProperty("METRICS_LOCATION", "logs");
         }
 
+        String modelStore = args.getModelStore();
+        if (modelStore != null) {
+            prop.setProperty(MODEL_STORE, modelStore);
+        }
+
         String[] models = args.getModels();
         if (models != null) {
             prop.setProperty(LOAD_MODELS, String.join(",", models));
@@ -114,7 +119,7 @@ public final class ConfigManager {
                 || Boolean.parseBoolean(prop.getProperty(DEBUG, "false"));
     }
 
-    public URI getAddressProperty(String key, String defaultValue) {
+    private URI getAddressProperty(String key, String defaultValue) {
         String address = getProperty(key, defaultValue);
         try {
             URI uri = new URI(address);
@@ -185,8 +190,7 @@ public final class ConfigManager {
     }
 
     public String getModelStore() {
-        String mmsHome = getModelServerHome();
-        return getCanonicalPath(getProperty(MODEL_STORE, mmsHome + "/model"));
+        return getCanonicalPath(prop.getProperty(MODEL_STORE));
     }
 
     public String getLoadModels() {
@@ -285,10 +289,12 @@ public final class ConfigManager {
     }
 
     public String dumpConfigurations() {
-        return "MMS Home: "
+        return "\nMMS Home: "
                 + getModelServerHome()
                 + "\nCurrent directory: "
                 + getCanonicalPath(".")
+                + "\nTemp directory: "
+                + System.getProperty("java.io.tmpdir")
                 + "\nConfig file: "
                 + prop.getProperty("mmsConfigFile")
                 + "\nModel Store: "
@@ -314,11 +320,6 @@ public final class ConfigManager {
     }
 
     private File findMmsHome() {
-        File dir = new File("/mxnet-model-server");
-        if (dir.exists()) {
-            return dir;
-        }
-
         File cwd = new File(getCanonicalPath("."));
         File file = cwd;
         while (file != null) {
@@ -340,23 +341,35 @@ public final class ConfigManager {
     }
 
     private static String getCanonicalPath(String path) {
+        if (path == null) {
+            return null;
+        }
         return getCanonicalPath(new File(path));
     }
 
     public static final class Arguments {
 
-        private String[] models;
         private String mmsConfigFile;
+        private String modelStore;
+        private String[] models;
 
         public Arguments() {}
 
         public Arguments(CommandLine cmd) {
-            models = cmd.getOptionValues("models");
             mmsConfigFile = cmd.getOptionValue("mms-config-file");
+            modelStore = cmd.getOptionValue("model-store");
+            models = cmd.getOptionValues("models");
         }
 
         public static Options getOptions() {
             Options options = new Options();
+            options.addOption(
+                    Option.builder("f")
+                            .longOpt("mms-config-file")
+                            .hasArg()
+                            .argName("MMS-CONFIG-FILE")
+                            .desc("Path to the configuration properties file.")
+                            .build());
             options.addOption(
                     Option.builder("m")
                             .longOpt("models")
@@ -365,21 +378,13 @@ public final class ConfigManager {
                             .desc("Models to be loaded at startup.")
                             .build());
             options.addOption(
-                    Option.builder("f")
-                            .longOpt("mms-config-file")
-                            .hasArg()
-                            .argName("MMS-CONFIG-FILE")
-                            .desc("Path to the configuration properties file.")
+                    Option.builder("s")
+                            .longOpt("model-store")
+                            .hasArgs()
+                            .argName("MODELS-STORE")
+                            .desc("Model store location where models can be loaded.")
                             .build());
             return options;
-        }
-
-        public String[] getModels() {
-            return models;
-        }
-
-        public void setModels(String[] models) {
-            this.models = models;
         }
 
         public String getMmsConfigFile() {
@@ -388,6 +393,22 @@ public final class ConfigManager {
 
         public void setMmsConfigFile(String mmsConfigFile) {
             this.mmsConfigFile = mmsConfigFile;
+        }
+
+        public String getModelStore() {
+            return modelStore;
+        }
+
+        public void setModelStore(String modelStore) {
+            this.modelStore = modelStore;
+        }
+
+        public String[] getModels() {
+            return models;
+        }
+
+        public void setModels(String[] models) {
+            this.models = models;
         }
     }
 }

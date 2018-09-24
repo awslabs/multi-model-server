@@ -75,9 +75,13 @@ public class ModelArchive {
             throw new InvalidModelException(ErrorCodes.INVALID_URL, "Invalid url: " + url);
         }
 
+        if (modelStore == null) {
+            throw new InvalidModelException("Model store has not been configured.");
+        }
+
         File modelLocation = new File(modelStore, url);
         if (!modelLocation.exists()) {
-            throw new InvalidModelException(ErrorCodes.MODEL_NOT_FOUND, "Model not found: " + url);
+            throw new InvalidModelException("Model not found: " + modelLocation.getAbsolutePath());
         }
         if (url.endsWith(".model") || url.endsWith(".mar")) {
             try (InputStream is = new FileInputStream(modelLocation)) {

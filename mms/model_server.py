@@ -47,10 +47,13 @@ def start():
                 os.remove(pid_file)
 
         mms_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        cmd = ["java",
-               "-Dmodel_server_home={}".format(mms_home),
-               "-jar",
-               "{}/mms/frontend/model-server.jar".format(mms_home)]
+        cmd = ["java", "-Dmodel_server_home={}".format(mms_home)]
+        if args.log_config is not None:
+            cmd.append("-Dlog4j.configuration={}".format(args.log_config))
+
+        cmd.append("-jar")
+        cmd.append("{}/mms/frontend/model-server.jar".format(mms_home))
+
         if args.mms_config is not None:
             cmd.append("-f")
             cmd.append(args.mms_config)

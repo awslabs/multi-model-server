@@ -34,7 +34,7 @@ class ArgParser(object):
         # TODO Add more CLI args here later
         runtime_types = ', '.join(s.value for s in RuntimeType)
 
-        parser_export = argparse.ArgumentParser(prog='mxnet-model-export', description='MXNet Model Export')
+        parser_export = argparse.ArgumentParser(prog='model-archiver', description='Model Archiver Tool')
 
         parser_export.add_argument('--model-name',
                                    required=True,

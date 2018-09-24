@@ -59,8 +59,8 @@ MODEL_NOOP = 'noop'
 MODEL_MAP = {
     MODEL_SQUEEZE_NET: (JMX_IMAGE_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model', 'model_name': MODEL_SQUEEZE_NET, 'input_filepath': 'kitten.jpg'}),
     MODEL_RESNET_18: (JMX_IMAGE_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model', 'model_name': MODEL_RESNET_18, 'input_filepath': 'kitten.jpg'}),
-    MODEL_LSTM_PTB: (JMX_TEXT_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb.model', 'model_name': MODEL_LSTM_PTB}),
-    MODEL_NOOP: (JMX_TEXT_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/noop/noop-v1.0.mar', 'model_name': MODEL_NOOP})
+    MODEL_LSTM_PTB: (JMX_TEXT_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb.model', 'model_name': MODEL_LSTM_PTB, 'data': 'lstm_ip.json'}),
+    MODEL_NOOP: (JMX_TEXT_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/noop/noop-v1.0.mar', 'model_name': MODEL_NOOP, 'data': 'noop_ip.txt'})
 }
 
 
@@ -112,6 +112,8 @@ ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput'), (MODEL_RESNET
                # + list(itertools.product(('load', 'repeated_scale_calls'), (MODEL_RESNET_18,))) \ To Add once
                # repeated_scale_calls is fixed
 
+
+BENCHMARK_NAMES = ['latency', 'throughput']
 
 class ChDir:
     def __init__(self, path):
@@ -320,6 +322,8 @@ def parseModel():
         for k, v in jmeter_args.items():
             if v in RESOURCE_MAP:
                 jmeter_args[k] = get_resource(v)
+            if k == 'data':
+                jmeter_args[k] = os.path.join(MMS_BASE, 'benchmarks', v)
         if pargs.input:
             jmeter_args['input_filepath'] = pargs.input[0]
     else:
@@ -444,6 +448,7 @@ if __name__ == '__main__':
     target = parser.add_mutually_exclusive_group(required=True)
     target.add_argument('name', nargs='?', type=str, choices=benchmark_name_options, help='The name of the benchmark to run')
     target.add_argument('-a', '--all', action='store_true', help='Run all benchmarks')
+    target.add_argument('-s', '--suite', action='store_true', help='Run throughput and latency on a supplied model')
 
     model = parser.add_mutually_exclusive_group()
     model.add_argument('-m', '--model', nargs=1, type=str, dest='model', default=[MODEL_RESNET_18], choices=MODEL_MAP.keys(), help='A preloaded model to run.  It defaults to {}'.format(MODEL_RESNET_18))
@@ -472,7 +477,12 @@ if __name__ == '__main__':
 
     modify_config_props_for_mms(pargs)
 
-    if pargs.all:
+    if pargs.suite:
+        benchmark_model = pargs.model[0].lower()
+        for benchmark_name in BENCHMARK_NAMES:
+            run_benchmark()
+
+    elif pargs.all:
         for benchmark_name, benchmark_model in ALL_BENCHMARKS:
             run_benchmark()
     else:

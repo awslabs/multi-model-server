@@ -42,7 +42,7 @@ class MXNetModelServiceWorker(object):
                 raise ValueError("Wrong arguments passed. No socket name given.")
             self.sock_name, self.port = s_name, -1
             try:
-                os.unlink(s_name)
+                os.remove(s_name)
             except OSError:
                 if os.path.exists(s_name):
                     raise RuntimeError("socket already in use: {}.".format(s_name))
@@ -139,9 +139,9 @@ class MXNetModelServiceWorker(object):
 
 if __name__ == "__main__":
     # noinspection PyBroadException
+
     try:
         logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
-
         args = ArgParser.model_service_worker_args().parse_args()
         socket_name = args.sock_name
         sock_type = args.sock_type
@@ -154,5 +154,8 @@ if __name__ == "__main__":
         logging.error("Backend worker did not receive connection in: %d", SOCKET_ACCEPT_TIMEOUT)
     except Exception:  # pylint: disable=broad-except
         logging.error("Backend worker process die.", exc_info=True)
+    finally:
+        if sock_type == 'unix' and os.path.exists(socket_name):
+            os.remove(socket_name)
 
     exit(1)

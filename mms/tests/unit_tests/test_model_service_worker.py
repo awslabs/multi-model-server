@@ -55,9 +55,9 @@ class TestInit:
             MXNetModelServiceWorker()
 
     def test_socket_in_use(self, mocker):
-        unlink = mocker.patch('os.unlink')
+        remove = mocker.patch('os.remove')
         path_exists = mocker.patch('os.path.exists')
-        unlink.side_effect = OSError()
+        remove.side_effect = OSError()
         path_exists.return_value = True
 
         with pytest.raises(Exception, match=r".*socket already in use: sampleSocketName.*"):
@@ -65,16 +65,16 @@ class TestInit:
 
     @pytest.fixture()
     def patches(self, mocker):
-        Patches = namedtuple('Patches', ['unlink', 'socket'])
+        Patches = namedtuple('Patches', ['remove', 'socket'])
         patches = Patches(
-            mocker.patch('os.unlink'),
+            mocker.patch('os.remove'),
             mocker.patch('socket.socket')
         )
         return patches
 
     def test_success(self, patches):
         MXNetModelServiceWorker('unix', self.socket_name)
-        patches.unlink.assert_called_once_with(self.socket_name)
+        patches.remove.assert_called_once_with(self.socket_name)
         patches.socket.assert_called_once_with(socket.AF_UNIX, socket.SOCK_STREAM)
 
 

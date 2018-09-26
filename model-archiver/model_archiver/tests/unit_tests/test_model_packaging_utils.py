@@ -148,7 +148,7 @@ class TestExportModelUtils:
         handler = 'a.py::my-awesome-func'
 
         args = Namespace(author=author, email=email, engine=engine, model_name=model_name, handler=handler,
-                         runtime=RuntimeType.PYTHON2_7.value)
+                         runtime=RuntimeType.PYTHON2.value)
 
         def test_publisher(self):
             pub = ModelExportUtils.generate_publisher(self.args)
@@ -167,7 +167,7 @@ class TestExportModelUtils:
         def test_manifest_json(self):
             manifest = ModelExportUtils.generate_manifest_json(self.args)
             manifest_json = json.loads(manifest)
-            assert manifest_json['runtime'] == RuntimeType.PYTHON2_7.value
+            assert manifest_json['runtime'] == RuntimeType.PYTHON2.value
             assert 'engine' in manifest_json
             assert 'model' in manifest_json
             assert 'publisher' in manifest_json

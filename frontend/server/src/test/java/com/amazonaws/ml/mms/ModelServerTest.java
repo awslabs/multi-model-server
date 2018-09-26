@@ -12,8 +12,8 @@
  */
 package com.amazonaws.ml.mms;
 
-import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.http.DescribeModelResponse;
+import com.amazonaws.ml.mms.http.ErrorResponse;
 import com.amazonaws.ml.mms.http.ListModelsResponse;
 import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.metrics.Dimension;
@@ -21,7 +21,6 @@ import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
-import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import com.google.gson.JsonParseException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
@@ -44,6 +43,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.multipart.HttpPostRequestEncoder;
@@ -64,7 +64,6 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.IOUtils;
@@ -91,9 +90,7 @@ public class ModelServerTest {
     }
 
     @BeforeSuite
-    public void beforeSuite()
-            throws InterruptedException, InvalidModelException, WorkerInitializationException,
-                    IOException, GeneralSecurityException {
+    public void beforeSuite() throws InterruptedException, IOException, GeneralSecurityException {
         configManager = new ConfigManager(new ConfigManager.Arguments());
 
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
@@ -140,12 +137,12 @@ public class ModelServerTest {
             Thread.sleep(100);
         }
 
-        Assert.assertNotNull(channel, "Model Server should have started.");
-        List<Channel> channels = Arrays.asList(channel, managementChannel);
+        Assert.assertNotNull(channel, "Failed to connect to inference port.");
+        Assert.assertNotNull(managementChannel, "Failed to connect to management port.");
 
-        for (Channel c : channels) {
-            testPing(c);
-        }
+        testPing(channel);
+        testPing(managementChannel);
+
         testRoot(managementChannel);
         testApiDescription(channel, listInferenceApisResult);
         testApiDescription(managementChannel, listManagementApisResult);
@@ -162,16 +159,39 @@ public class ModelServerTest {
         testPredictionsJson(channel);
         testInvocationsJson(channel);
         testInvocationsMultipart(channel);
+        testLegacyPredict(channel);
         testMetricManager();
+
         channel.close();
         managementChannel.close();
+
+        // negative test case, channel will be closed by server
+        testInvalidRootRequest();
+        testInvalidInferenceUri();
+        testInvalidPredictionsUri();
+        testInvalidDescribeModel();
+        testPredictionsModelNotFound();
+
+        testInvalidManagementUri();
+        testInvalidModelsMethod();
+        testInvalidModelMethod();
+        testDescribeModelNotFound();
+        testRegisterModelMissingUrl();
+        testRegisterModelInvalidRuntime();
+        testRegisterModelNotFound();
+        testRegisterModelMalformedUrl();
+        testRegisterModelConnectionFailed();
+        testRegisterModelHttpError();
+        testRegisterModelInvalidPath();
+        testScaleModelNotFound();
+        testUnregisterModelNotFound();
     }
 
     private void testRoot(Channel channel) throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
         HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, "/");
-        channel.writeAndFlush(req);
+        channel.writeAndFlush(req).sync();
         latch.await();
 
         Assert.assertEquals(result, listManagementApisResult);
@@ -220,7 +240,7 @@ public class ModelServerTest {
                 new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         HttpMethod.POST,
-                        "/models?url=noop-v0.1&model_name=noop_v0.1");
+                        "/models?url=noop-v0.1&model_name=noop_v0.1&runtime=python");
         channel.writeAndFlush(req);
         latch.await();
 
@@ -399,6 +419,311 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(result, "OK");
+    }
+
+    private void testLegacyPredict(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/noop/predict?data=test");
+        channel.writeAndFlush(req);
+
+        latch.await();
+        Assert.assertEquals(result, "OK");
+    }
+
+    private void testInvalidRootRequest() throws InterruptedException {
+        Channel channel = connect(configManager.getInferenceAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.METHOD_NOT_ALLOWED.code());
+        Assert.assertEquals(
+                resp.getMessage(), HttpResponseStatus.METHOD_NOT_ALLOWED.reasonPhrase());
+    }
+
+    private void testInvalidInferenceUri() throws InterruptedException {
+        Channel channel = connect(configManager.getInferenceAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/InvalidUrl");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
+        Assert.assertEquals(resp.getMessage(), HttpResponseStatus.NOT_FOUND.reasonPhrase());
+    }
+
+    private void testInvalidDescribeModel() throws InterruptedException {
+        Channel channel = connect(configManager.getInferenceAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, "/predictions/InvalidModel");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
+        Assert.assertEquals(resp.getMessage(), "Model not found: InvalidModel");
+    }
+
+    private void testInvalidPredictionsUri() throws InterruptedException {
+        Channel channel = connect(configManager.getInferenceAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/predictions");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
+        Assert.assertEquals(resp.getMessage(), HttpResponseStatus.NOT_FOUND.reasonPhrase());
+    }
+
+    private void testPredictionsModelNotFound() throws InterruptedException {
+        Channel channel = connect(configManager.getInferenceAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/predictions/InvalidModel");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
+        Assert.assertEquals(resp.getMessage(), "Model not found: InvalidModel");
+    }
+
+    private void testInvalidManagementUri() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/InvalidUrl");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
+        Assert.assertEquals(resp.getMessage(), HttpResponseStatus.NOT_FOUND.reasonPhrase());
+    }
+
+    private void testInvalidModelsMethod() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, "/models");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.METHOD_NOT_ALLOWED.code());
+        Assert.assertEquals(
+                resp.getMessage(), HttpResponseStatus.METHOD_NOT_ALLOWED.reasonPhrase());
+    }
+
+    private void testInvalidModelMethod() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/models/noop");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.METHOD_NOT_ALLOWED.code());
+        Assert.assertEquals(
+                resp.getMessage(), HttpResponseStatus.METHOD_NOT_ALLOWED.reasonPhrase());
+    }
+
+    private void testDescribeModelNotFound() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/models/InvalidModel");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
+        Assert.assertEquals(resp.getMessage(), "Model not found: InvalidModel");
+    }
+
+    private void testRegisterModelMissingUrl() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/models");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.BAD_REQUEST.code());
+        Assert.assertEquals(resp.getMessage(), "Parameter url is required.");
+    }
+
+    private void testRegisterModelInvalidRuntime() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=InvalidUrl&runtime=InvalidRuntime");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.BAD_REQUEST.code());
+        Assert.assertEquals(resp.getMessage(), "Invalid RuntimeType value: InvalidRuntime");
+    }
+
+    private void testRegisterModelNotFound() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/models?url=InvalidUrl");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.BAD_REQUEST.code());
+        Assert.assertEquals(resp.getMessage(), "Model not found in model store: InvalidUrl");
+    }
+
+    private void testRegisterModelMalformedUrl() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=http%3A%2F%2Flocalhost%3Aaaaa");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.BAD_REQUEST.code());
+        Assert.assertEquals(resp.getMessage(), "Invalid model url: http://localhost:aaaa");
+    }
+
+    private void testRegisterModelConnectionFailed() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=http%3A%2F%2Flocalhost%3A18888%2Ffake.mar");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.BAD_REQUEST.code());
+        Assert.assertEquals(
+                resp.getMessage(),
+                "Failed to download model from: http://localhost:18888/fake.mar");
+    }
+
+    private void testRegisterModelHttpError() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=https%3A%2F%2Flocalhost%3A8443%2Ffake.mar");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.BAD_REQUEST.code());
+        Assert.assertEquals(
+                resp.getMessage(),
+                "Failed to download model from: https://localhost:8443/fake.mar, code: 404");
+    }
+
+    private void testRegisterModelInvalidPath() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/models?url=..%2Ffake.mar");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.BAD_REQUEST.code());
+        Assert.assertEquals(resp.getMessage(), "Relative path is not allowed in url: ../fake.mar");
+    }
+
+    private void testScaleModelNotFound() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, "/models/fake");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
+        Assert.assertEquals(resp.getMessage(), "Model not found: fake");
+    }
+
+    private void testUnregisterModelNotFound() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        HttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/models/fake");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
+        Assert.assertEquals(resp.getMessage(), "Model not found: fake");
     }
 
     private void testMetricManager() throws JsonParseException, InterruptedException {

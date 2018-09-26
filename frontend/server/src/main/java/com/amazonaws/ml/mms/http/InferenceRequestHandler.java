@@ -12,7 +12,6 @@
  */
 package com.amazonaws.ml.mms.http;
 
-import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.InputParameter;
@@ -31,6 +30,8 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,10 +44,11 @@ public class InferenceRequestHandler extends HttpRequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(InferenceRequestHandler.class);
 
-    /** Creates a new {@code HttpRequestHandler} instance. */
+    /** Creates a new {@code InferenceRequestHandler} instance. */
     public InferenceRequestHandler() {}
 
-    protected boolean handleRequest(
+    @Override
+    protected void handleRequest(
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
@@ -54,15 +56,17 @@ public class InferenceRequestHandler extends HttpRequestHandler {
         switch (segments[1]) {
             case "invocations":
                 handleInvocations(ctx, req, decoder);
-                return true;
+                break;
             case "predictions":
                 handlePredictions(ctx, req, segments);
-                return true;
+                break;
             default:
-                return false;
+                handleLegacyPredict(ctx, req, decoder, segments);
+                break;
         }
     }
 
+    @Override
     protected void handleApiDescription(ChannelHandlerContext ctx) {
         NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listInferenceApis());
     }
@@ -70,97 +74,80 @@ public class InferenceRequestHandler extends HttpRequestHandler {
     private void handlePredictions(
             ChannelHandlerContext ctx, FullHttpRequest req, String[] segments) {
         if (segments.length < 3) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_REQUEST);
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
             return;
         }
-        String modelName = segments[2];
-
-        ModelManager modelManager = ModelManager.getInstance();
-        Model model = modelManager.getModels().get(modelName);
-        if (model == null) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.NOT_FOUND,
-                    ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED);
-            return;
-        }
-
-        if (HttpMethod.OPTIONS.equals(req.method())) {
-            String resp = OpenApiUtils.getModelApi(model);
-            NettyUtils.sendJsonResponse(ctx, resp);
-            return;
-        }
-
-        RequestInput input;
-        try {
-            input = parseRequest(ctx, req);
-        } catch (IllegalArgumentException e) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_PARAMETERS);
-            return;
-        }
-
-        Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
-        HttpResponseStatus status = ModelManager.getInstance().addJob(job);
-        if (status != HttpResponseStatus.OK) {
-            String code;
-            if (status == HttpResponseStatus.NOT_FOUND) {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED;
-            } else {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_SCALED;
-            }
-            NettyUtils.sendError(ctx, status, code);
-        }
+        predict(ctx, req, null, segments[2]);
     }
 
     private void handleInvocations(
             ChannelHandlerContext ctx, FullHttpRequest req, QueryStringDecoder decoder) {
         String modelName = NettyUtils.getParameter(decoder, "model_name", null);
+        predict(ctx, req, decoder, modelName);
+    }
 
-        HttpMethod method = req.method();
-        if (!HttpMethod.POST.equals(method)) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_REQUEST);
+    private void handleLegacyPredict(
+            ChannelHandlerContext ctx,
+            FullHttpRequest req,
+            QueryStringDecoder decoder,
+            String[] segments) {
+        if (segments.length < 3 || !"predict".equals(segments[2])) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
             return;
         }
 
-        RequestInput input;
-        try {
-            input = parseRequest(ctx, req);
-            if (modelName == null) {
-                modelName = input.getStringParameter("model_name");
+        predict(ctx, req, decoder, segments[1]);
+    }
+
+    private void predict(
+            ChannelHandlerContext ctx,
+            FullHttpRequest req,
+            QueryStringDecoder decoder,
+            String modelName) {
+        RequestInput input = parseRequest(ctx, req, decoder);
+        if (modelName == null) {
+            modelName = input.getStringParameter("model_name");
+        }
+
+        if (HttpMethod.OPTIONS.equals(req.method())) {
+            ModelManager modelManager = ModelManager.getInstance();
+            Model model = modelManager.getModels().get(modelName);
+            if (model == null) {
+                NettyUtils.sendError(
+                        ctx, HttpResponseStatus.NOT_FOUND, "Model not found: " + modelName);
+                return;
             }
-        } catch (IllegalArgumentException e) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_PARAMETERS);
+
+            String resp = OpenApiUtils.getModelApi(model);
+            NettyUtils.sendJsonResponse(ctx, resp);
             return;
         }
 
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
-            String code;
             if (status == HttpResponseStatus.NOT_FOUND) {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED;
+                NettyUtils.sendError(ctx, status, "Model not found: " + modelName);
             } else {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_SCALED;
+                NettyUtils.sendError(
+                        ctx, status, "No worker is available to request: " + modelName);
             }
-            NettyUtils.sendError(ctx, status, code);
         }
     }
 
-    private static RequestInput parseRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
+    private static RequestInput parseRequest(
+            ChannelHandlerContext ctx, FullHttpRequest req, QueryStringDecoder decoder) {
         String requestId = NettyUtils.getRequestId(ctx.channel());
         RequestInput inputData = new RequestInput(requestId);
+        if (decoder != null) {
+            for (Map.Entry<String, List<String>> entry : decoder.parameters().entrySet()) {
+                String key = entry.getKey();
+                for (String value : entry.getValue()) {
+                    inputData.addParameter(new InputParameter(key, value));
+                }
+            }
+        }
+
         CharSequence contentType = HttpUtil.getMimeType(req);
         if (HttpPostRequestDecoder.isMultipart(req)
                 || HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.contentEqualsIgnoreCase(
@@ -172,7 +159,7 @@ public class InferenceRequestHandler extends HttpRequestHandler {
                     inputData.addParameter(NettyUtils.getFormData(form.next()));
                 }
             } catch (HttpPostRequestDecoder.EndOfDataDecoderException ignore) {
-                logger.debug("End of multipart items.");
+                logger.trace("End of multipart items.");
             } finally {
                 form.cleanFiles();
             }

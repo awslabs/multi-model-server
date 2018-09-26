@@ -26,6 +26,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.DigestInputStream;
@@ -48,7 +50,7 @@ public class ModelArchive {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static final Pattern URL_PATTERN =
-            Pattern.compile("http(s)://.*", Pattern.CASE_INSENSITIVE);
+            Pattern.compile("http(s)?://.*", Pattern.CASE_INSENSITIVE);
 
     private static final String MANIFEST_FILE = "MANIFEST.json";
 
@@ -72,12 +74,16 @@ public class ModelArchive {
         }
 
         if (url.contains("..")) {
-            throw new InvalidModelException(ErrorCodes.INVALID_URL, "Invalid url: " + url);
+            throw new IllegalArgumentException("Relative path is not allowed in url: " + url);
+        }
+
+        if (modelStore == null) {
+            throw new IllegalArgumentException("Model store has not been configured.");
         }
 
         File modelLocation = new File(modelStore, url);
         if (!modelLocation.exists()) {
-            throw new InvalidModelException(ErrorCodes.MODEL_NOT_FOUND, "Model not found: " + url);
+            throw new IllegalArgumentException("Model not found in model store: " + url);
         }
         if (url.endsWith(".model") || url.endsWith(".mar")) {
             try (InputStream is = new FileInputStream(modelLocation)) {
@@ -95,9 +101,7 @@ public class ModelArchive {
 
             ZipEntry manifestEntry = zip.getEntry(MANIFEST_FILE);
             if (manifestEntry == null) {
-                throw new InvalidModelException(
-                        ErrorCodes.MISSING_ARTIFACT_MANIFEST,
-                        "Missing manifest file in model archive.");
+                throw new InvalidModelException("Missing manifest file in model archive.");
             }
 
             InputStream is = zip.getInputStream(manifestEntry);
@@ -136,33 +140,52 @@ public class ModelArchive {
         }
     }
 
-    private static File download(String path) throws InvalidModelException, IOException {
-        URL url = new URL(path);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-            throw new InvalidModelException(
-                    "Failed download model from: " + path + ", code: " + conn.getResponseCode());
+    private static File download(String path) throws IOException {
+        HttpURLConnection conn;
+        try {
+            URL url = new URL(path);
+            conn = (HttpURLConnection) url.openConnection();
+            if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                throw new IllegalArgumentException(
+                        "Failed to download model from: "
+                                + path
+                                + ", code: "
+                                + conn.getResponseCode());
+            }
+        } catch (IllegalArgumentException e) { // NOPMD
+            throw e;
+        } catch (MalformedURLException | RuntimeException e) {
+            // URLConnection may throw raw RuntimeException if port is out of range.
+            throw new IllegalArgumentException("Invalid model url: " + path, e);
+        } catch (IOException e) {
+            logger.trace("", e);
+            throw new IllegalArgumentException("Failed to download model from: " + path, e);
         }
 
-        String eTag = conn.getHeaderField("ETag");
-        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-        File modelDir = new File(tmpDir, "models");
-        FileUtils.forceMkdir(modelDir);
-        if (eTag != null) {
-            if (eTag.startsWith("\"") && eTag.endsWith("\"") && eTag.length() > 2) {
-                eTag = eTag.substring(1, eTag.length() - 1);
+        try {
+            String eTag = conn.getHeaderField("ETag");
+            File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+            File modelDir = new File(tmpDir, "models");
+            FileUtils.forceMkdir(modelDir);
+            if (eTag != null) {
+                if (eTag.startsWith("\"") && eTag.endsWith("\"") && eTag.length() > 2) {
+                    eTag = eTag.substring(1, eTag.length() - 1);
+                }
+                File dir = new File(modelDir, eTag);
+                if (dir.exists()) {
+                    logger.info("model folder already exists: {}", eTag);
+                    return dir;
+                }
             }
-            File dir = new File(modelDir, eTag);
-            if (dir.exists()) {
-                logger.info("model folder already exists: {}", eTag);
-                return dir;
-            }
+            return unzip(conn.getInputStream(), eTag);
+        } catch (SocketTimeoutException e) {
+            throw new IllegalArgumentException("Download model timeout: " + path, e);
         }
-        return unzip(conn.getInputStream(), eTag);
     }
 
     private static ModelArchive load(String url, File dir, boolean extracted)
             throws InvalidModelException, IOException {
+        boolean failed = true;
         try {
             File manifestFile = new File(dir, "MAR-INF/" + MANIFEST_FILE);
             Manifest manifest;
@@ -193,12 +216,12 @@ public class ModelArchive {
                 }
             }
 
+            failed = false;
             return new ModelArchive(manifest, url, dir, extracted);
-        } catch (Exception e) {
-            if (extracted) {
+        } finally {
+            if (extracted && failed) {
                 FileUtils.deleteQuietly(dir);
             }
-            throw e;
         }
     }
 
@@ -207,8 +230,7 @@ public class ModelArchive {
         try (Reader r = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
             return GSON.fromJson(r, type);
         } catch (JsonParseException e) {
-            throw new InvalidModelException(
-                    ErrorCodes.INCORRECT_ARTIFACT_MANIFEST, "Failed to parse signature.json.", e);
+            throw new InvalidModelException("Failed to parse signature.json.", e);
         }
     }
 
@@ -277,9 +299,7 @@ public class ModelArchive {
     public void validate() throws InvalidModelException {
         Manifest.Model model = manifest.getModel();
         if (model == null) {
-            throw new InvalidModelException(
-                    ErrorCodes.INCORRECT_ARTIFACT_MANIFEST,
-                    "Missing Model entry in manifest file.");
+            throw new InvalidModelException("Missing Model entry in manifest file.");
         }
 
         if (model.getModelName() == null) {

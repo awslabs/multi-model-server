@@ -15,16 +15,9 @@ package com.amazonaws.ml.mms.archive;
 public class InvalidModelException extends Exception {
 
     static final long serialVersionUID = 1L;
-    private final String errorCode;
 
-    public InvalidModelException(String code, String message, Throwable cause) {
+    public InvalidModelException(String message, Throwable cause) {
         super(message, cause);
-        this.errorCode = code;
-    }
-
-    public InvalidModelException(String code, String message) {
-        super(message);
-        this.errorCode = code;
     }
 
     /**
@@ -35,10 +28,5 @@ public class InvalidModelException extends Exception {
      */
     public InvalidModelException(String message) {
         super(message);
-        this.errorCode = "";
-    }
-
-    public String getErrorCode() {
-        return errorCode;
     }
 }

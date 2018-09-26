@@ -53,7 +53,7 @@ public class BatchAggregator {
 
         jobs.put(job.getJobId(), job);
 
-        logger.debug("get first job: {}", job.getJobId());
+        logger.trace("get first job: {}", job.getJobId());
 
         long maxBatchDelay = model.getMaxBatchDelay();
         int size = model.getBatchSize() - 1;
@@ -72,7 +72,7 @@ public class BatchAggregator {
             }
         }
 
-        logger.debug("sending jobs, size: {}", jobs.size());
+        logger.trace("sending jobs, size: {}", jobs.size());
 
         ModelInferenceRequest req = new ModelInferenceRequest(model.getModelName());
         for (Job j : jobs.values()) {

@@ -15,7 +15,6 @@ package com.amazonaws.ml.mms.http;
 import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.archive.ModelArchive;
-import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.Model;
@@ -45,26 +44,21 @@ public class ManagementRequestHandler extends HttpRequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ManagementRequestHandler.class);
 
-    /** Creates a new {@code HttpRequestHandler} instance. */
+    /** Creates a new {@code ManagementRequestHandler} instance. */
     public ManagementRequestHandler() {}
 
-    protected boolean handleRequest(
+    @Override
+    protected void handleRequest(
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
             String[] segments) {
-
         if ("/".equals(decoder.path())) {
             handleListModels(ctx, req);
-            return true;
-        }
-
-        switch (segments[1]) {
-            case "models":
-                handleModelsApi(ctx, req, segments, decoder);
-                return true;
-            default:
-                return false;
+        } else if ("models".equals(segments[1])) {
+            handleModelsApi(ctx, req, segments, decoder);
+        } else {
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
         }
     }
 
@@ -77,8 +71,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             handleApiDescription(ctx);
             return;
         }
-        NettyUtils.sendError(
-                ctx, HttpResponseStatus.NOT_FOUND, ErrorCodes.LIST_MODELS_INVALID_REQUEST_HEADER);
+        NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
     }
 
     private void handleListModels(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
@@ -128,10 +121,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                 handleRegisterModel(ctx, decoder);
                 return;
             }
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.MODELS_API_INVALID_MODELS_REQUEST);
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
         }
 
         if (HttpMethod.GET.equals(method)) {
@@ -141,10 +131,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         } else if (HttpMethod.DELETE.equals(method)) {
             handleUnregisterModel(ctx, segments[2]);
         } else {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.MODELS_API_INVALID_MODELS_REQUEST);
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
         }
     }
 
@@ -153,7 +140,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         Model model = modelManager.getModels().get(modelName);
         if (model == null) {
             NettyUtils.sendError(
-                    ctx, HttpResponseStatus.NOT_FOUND, ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
+                    ctx, HttpResponseStatus.NOT_FOUND, "Model not found: " + modelName);
             return;
         }
 
@@ -188,8 +175,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
     private void handleRegisterModel(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
         String modelUrl = NettyUtils.getParameter(decoder, "url", null);
         if (modelUrl == null) {
-            NettyUtils.sendError(
-                    ctx, HttpResponseStatus.BAD_REQUEST, ErrorCodes.MODELS_POST_INVALID_REQUEST);
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, "Parameter url is required.");
             return;
         }
 
@@ -206,13 +192,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             try {
                 runtimeType = Manifest.RuntimeType.fromValue(runtime);
             } catch (IllegalArgumentException e) {
-                String msg = e.getMessage();
-                NettyUtils.sendError(
-                        ctx,
-                        HttpResponseStatus.BAD_REQUEST,
-                        ErrorCodes.MODELS_POST_MODEL_MANIFEST_RUNTIME_INVALID
-                                + " Invalid model runtime given. "
-                                + msg);
+                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
                 return;
             }
         }
@@ -273,7 +253,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         ModelManager modelManager = ModelManager.getInstance();
         if (!modelManager.getModels().containsKey(modelName)) {
             NettyUtils.sendError(
-                    ctx, HttpResponseStatus.NOT_FOUND, ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
+                    ctx, HttpResponseStatus.NOT_FOUND, "Model not found: " + modelName);
             return;
         }
         updateModelWorkers(ctx, modelName, minWorkers, maxWorkers, synchronous, null);
@@ -281,7 +261,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
 
     private void updateModelWorkers(
             final ChannelHandlerContext ctx,
-            String modelName,
+            final String modelName,
             int minWorkers,
             int maxWorkers,
             boolean synchronous,
@@ -303,7 +283,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                                 NettyUtils.sendError(
                                         ctx,
                                         HttpResponseStatus.BAD_REQUEST,
-                                        ErrorCodes.MODELS_API_MODEL_NOT_FOUND);
+                                        "Model not found: " + modelName);
                             } else {
                                 NettyUtils.sendJsonResponse(
                                         ctx,

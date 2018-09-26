@@ -72,7 +72,7 @@ public class ModelArchive {
         }
 
         if (url.contains("..")) {
-            throw new InvalidModelException(ErrorCodes.INVALID_URL, "Invalid url: " + url);
+            throw new InvalidModelException("Relative path is not allowed in url: " + url);
         }
 
         if (modelStore == null) {
@@ -99,9 +99,7 @@ public class ModelArchive {
 
             ZipEntry manifestEntry = zip.getEntry(MANIFEST_FILE);
             if (manifestEntry == null) {
-                throw new InvalidModelException(
-                        ErrorCodes.MISSING_ARTIFACT_MANIFEST,
-                        "Missing manifest file in model archive.");
+                throw new InvalidModelException("Missing manifest file in model archive.");
             }
 
             InputStream is = zip.getInputStream(manifestEntry);
@@ -211,8 +209,7 @@ public class ModelArchive {
         try (Reader r = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
             return GSON.fromJson(r, type);
         } catch (JsonParseException e) {
-            throw new InvalidModelException(
-                    ErrorCodes.INCORRECT_ARTIFACT_MANIFEST, "Failed to parse signature.json.", e);
+            throw new InvalidModelException("Failed to parse signature.json.", e);
         }
     }
 
@@ -281,9 +278,7 @@ public class ModelArchive {
     public void validate() throws InvalidModelException {
         Manifest.Model model = manifest.getModel();
         if (model == null) {
-            throw new InvalidModelException(
-                    ErrorCodes.INCORRECT_ARTIFACT_MANIFEST,
-                    "Missing Model entry in manifest file.");
+            throw new InvalidModelException("Missing Model entry in manifest file.");
         }
 
         if (model.getModelName() == null) {

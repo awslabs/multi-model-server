@@ -119,14 +119,8 @@ public final class NettyUtils {
 
     public static void sendError(
             ChannelHandlerContext ctx, HttpResponseStatus status, String errorMessage) {
-        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
-        resp.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
-
-        ErrorResponse error = new ErrorResponse(status.code(), status.toString(), errorMessage);
-        ByteBuf content = resp.content();
-        content.writeCharSequence(JsonUtils.GSON_PRETTY.toJson(error), CharsetUtil.UTF_8);
-        content.writeByte('\n');
-        sendHttpResponse(ctx, resp, false);
+        ErrorResponse error = new ErrorResponse(status.code(), status.codeAsText(), errorMessage);
+        sendJsonResponse(ctx, error, status);
     }
 
     /**

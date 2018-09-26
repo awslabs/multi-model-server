@@ -12,7 +12,6 @@
  */
 package com.amazonaws.ml.mms.http;
 
-import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.InputParameter;
@@ -43,10 +42,11 @@ public class InferenceRequestHandler extends HttpRequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(InferenceRequestHandler.class);
 
-    /** Creates a new {@code HttpRequestHandler} instance. */
+    /** Creates a new {@code InferenceRequestHandler} instance. */
     public InferenceRequestHandler() {}
 
-    protected boolean handleRequest(
+    @Override
+    protected void handleRequest(
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
@@ -54,15 +54,16 @@ public class InferenceRequestHandler extends HttpRequestHandler {
         switch (segments[1]) {
             case "invocations":
                 handleInvocations(ctx, req, decoder);
-                return true;
+                break;
             case "predictions":
                 handlePredictions(ctx, req, segments);
-                return true;
+                break;
             default:
-                return false;
+                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST);
         }
     }
 
+    @Override
     protected void handleApiDescription(ChannelHandlerContext ctx) {
         NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listInferenceApis());
     }
@@ -70,10 +71,7 @@ public class InferenceRequestHandler extends HttpRequestHandler {
     private void handlePredictions(
             ChannelHandlerContext ctx, FullHttpRequest req, String[] segments) {
         if (segments.length < 3) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_REQUEST);
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
             return;
         }
         String modelName = segments[2];
@@ -82,9 +80,7 @@ public class InferenceRequestHandler extends HttpRequestHandler {
         Model model = modelManager.getModels().get(modelName);
         if (model == null) {
             NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.NOT_FOUND,
-                    ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED);
+                    ctx, HttpResponseStatus.NOT_FOUND, "Model not found: " + modelName);
             return;
         }
 
@@ -98,38 +94,25 @@ public class InferenceRequestHandler extends HttpRequestHandler {
         try {
             input = parseRequest(ctx, req);
         } catch (IllegalArgumentException e) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_PARAMETERS);
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
             return;
         }
 
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
-            String code;
             if (status == HttpResponseStatus.NOT_FOUND) {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED;
+                NettyUtils.sendError(ctx, status, "Model has been unregistered: " + modelName);
             } else {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_SCALED;
+                NettyUtils.sendError(
+                        ctx, status, "No worker is available to request: " + modelName);
             }
-            NettyUtils.sendError(ctx, status, code);
         }
     }
 
     private void handleInvocations(
             ChannelHandlerContext ctx, FullHttpRequest req, QueryStringDecoder decoder) {
         String modelName = NettyUtils.getParameter(decoder, "model_name", null);
-
-        HttpMethod method = req.method();
-        if (!HttpMethod.POST.equals(method)) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_REQUEST);
-            return;
-        }
 
         RequestInput input;
         try {
@@ -138,23 +121,19 @@ public class InferenceRequestHandler extends HttpRequestHandler {
                 modelName = input.getStringParameter("model_name");
             }
         } catch (IllegalArgumentException e) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_PARAMETERS);
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
             return;
         }
 
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         HttpResponseStatus status = ModelManager.getInstance().addJob(job);
         if (status != HttpResponseStatus.OK) {
-            String code;
             if (status == HttpResponseStatus.NOT_FOUND) {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED;
+                NettyUtils.sendError(ctx, status, "Model not found: " + modelName);
             } else {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_SCALED;
+                NettyUtils.sendError(
+                        ctx, status, "No worker is available to request: " + modelName);
             }
-            NettyUtils.sendError(ctx, status, code);
         }
     }
 

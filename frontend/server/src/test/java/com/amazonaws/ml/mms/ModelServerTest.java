@@ -12,7 +12,6 @@
  */
 package com.amazonaws.ml.mms;
 
-import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.http.DescribeModelResponse;
 import com.amazonaws.ml.mms.http.ListModelsResponse;
 import com.amazonaws.ml.mms.http.StatusResponse;
@@ -21,7 +20,6 @@ import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
-import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import com.google.gson.JsonParseException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
@@ -64,7 +62,6 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.IOUtils;
@@ -91,9 +88,7 @@ public class ModelServerTest {
     }
 
     @BeforeSuite
-    public void beforeSuite()
-            throws InterruptedException, InvalidModelException, WorkerInitializationException,
-                    IOException, GeneralSecurityException {
+    public void beforeSuite() throws InterruptedException, IOException, GeneralSecurityException {
         configManager = new ConfigManager(new ConfigManager.Arguments());
 
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
@@ -140,12 +135,12 @@ public class ModelServerTest {
             Thread.sleep(100);
         }
 
-        Assert.assertNotNull(channel, "Model Server should have started.");
-        List<Channel> channels = Arrays.asList(channel, managementChannel);
+        Assert.assertNotNull(channel, "Failed to connect to inference port.");
+        Assert.assertNotNull(managementChannel, "Failed to connect to management port.");
 
-        for (Channel c : channels) {
-            testPing(c);
-        }
+        testPing(channel);
+        testPing(managementChannel);
+
         testRoot(managementChannel);
         testApiDescription(channel, listInferenceApisResult);
         testApiDescription(managementChannel, listManagementApisResult);

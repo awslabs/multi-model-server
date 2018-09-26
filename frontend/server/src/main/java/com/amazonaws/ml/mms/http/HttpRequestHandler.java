@@ -12,7 +12,6 @@
  */
 package com.amazonaws.ml.mms.http;
 
-import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import io.netty.channel.ChannelHandlerContext;
@@ -40,13 +39,25 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest req) {
         NettyUtils.requestReceived(ctx.channel(), req);
         if (!req.decoderResult().isSuccess()) {
-            NettyUtils.sendError(
-                    ctx, HttpResponseStatus.BAD_REQUEST, ErrorCodes.MESSAGE_DECODE_FAILURE);
+            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, "Invalid HTTP request.");
             return;
         }
 
         try {
-            handleGeneralRequest(ctx, req);
+            QueryStringDecoder decoder = new QueryStringDecoder(req.uri());
+            String[] segments = decoder.path().split("/");
+
+            switch (segments[1]) {
+                case "ping":
+                    ModelManager.getInstance().workerStatus(ctx);
+                    break;
+                case "api-description":
+                    handleApiDescription(ctx);
+                    break;
+                default:
+                    handleRequest(ctx, req, decoder, segments);
+                    break;
+            }
         } catch (IllegalArgumentException e) {
             logger.debug("", e);
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -56,43 +67,18 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
         }
     }
 
-    protected boolean handleRequest(
+    protected abstract void handleRequest(
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
-            String[] segments) {
-        return false;
-    }
+            String[] segments);
 
     protected abstract void handleApiDescription(ChannelHandlerContext ctx);
-
-    protected void handleGeneralRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
-        QueryStringDecoder decoder = new QueryStringDecoder(req.uri());
-        String[] segments = decoder.path().split("/");
-
-        if (!handleRequest(ctx, req, decoder, segments)) {
-            switch (segments[1]) {
-                case "ping":
-                    handlePing(ctx);
-                    break;
-                case "api-description":
-                    handleApiDescription(ctx);
-                    break;
-                default:
-                    NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND, ErrorCodes.INVALID_URI);
-                    break;
-            }
-        }
-    }
 
     /** {@inheritDoc} */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         logger.error("", cause);
         ctx.close();
-    }
-
-    private void handlePing(ChannelHandlerContext ctx) {
-        ModelManager.getInstance().workerStatus(ctx);
     }
 }

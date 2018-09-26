@@ -119,7 +119,8 @@ public final class NettyUtils {
 
     public static void sendError(
             ChannelHandlerContext ctx, HttpResponseStatus status, String errorMessage) {
-        ErrorResponse error = new ErrorResponse(status.code(), status.codeAsText(), errorMessage);
+        ErrorResponse error =
+                new ErrorResponse(status.code(), status.codeAsText().toString(), errorMessage);
         sendJsonResponse(ctx, error, status);
     }
 
@@ -135,9 +136,12 @@ public final class NettyUtils {
         // Send the response and close the connection if necessary.
         Channel channel = ctx.channel();
         Session session = channel.attr(SESSION_KEY).getAndSet(null);
-        session.setCode(resp.status().code());
-
-        resp.headers().set(REQUEST_ID, session.getRequestId());
+        if (session != null) {
+            // session might be recycled if channel is closed already.
+            session.setCode(resp.status().code());
+            resp.headers().set(REQUEST_ID, session.getRequestId());
+            logger.info(session.toString());
+        }
         HttpUtil.setContentLength(resp, resp.content().readableBytes());
         if (!keepAlive || resp.status().code() >= 400) {
             ChannelFuture f = channel.writeAndFlush(resp);
@@ -146,7 +150,6 @@ public final class NettyUtils {
             resp.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
             channel.writeAndFlush(resp);
         }
-        logger.info(session.toString());
     }
 
     /** Closes the specified channel after all queued write requests are flushed. */

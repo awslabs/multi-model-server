@@ -15,7 +15,7 @@ package com.amazonaws.ml.mms.http;
 public class ErrorResponse {
 
     private int code;
-    private CharSequence type;
+    private String type;
     private String message;
 
     public ErrorResponse() {}
@@ -25,7 +25,7 @@ public class ErrorResponse {
         this.message = message;
     }
 
-    public ErrorResponse(int code, CharSequence type, String message) {
+    public ErrorResponse(int code, String type, String message) {
         this.code = code;
         this.type = type;
         this.message = message;
@@ -35,7 +35,7 @@ public class ErrorResponse {
         return code;
     }
 
-    public CharSequence getType() {
+    public String getType() {
         return type;
     }
 

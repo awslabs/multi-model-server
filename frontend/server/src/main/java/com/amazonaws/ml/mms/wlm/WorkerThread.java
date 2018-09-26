@@ -190,7 +190,7 @@ public class WorkerThread implements Runnable {
                             });
 
             SocketAddress address = NettyUtils.getSocketAddress(port);
-            logger.debug("Connecting to: {}", address);
+            logger.info("Connecting to: {}", address);
             backendChannel = b.connect(address).sync().channel();
             backendChannel
                     .closeFuture()

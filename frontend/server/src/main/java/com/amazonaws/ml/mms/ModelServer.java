@@ -98,7 +98,7 @@ public class ModelServer {
         Runtime.getRuntime().halt(-1); // NOPMD
     }
 
-    private void initModelStore() throws IOException {
+    private void initModelStore() {
         WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getBackendGroup());
         ModelManager.init(configManager, wlm);
 
@@ -139,7 +139,7 @@ public class ModelServer {
 
                         ModelArchive archive = modelManager.registerModel(file.getName());
                         modelManager.updateModel(archive.getModelName(), 1, 1);
-                    } catch (InvalidModelException e) {
+                    } catch (InvalidModelException | IOException | IllegalArgumentException e) {
                         logger.warn("Failed to load model: " + file.getAbsolutePath(), e);
                     }
                 }
@@ -163,12 +163,12 @@ public class ModelServer {
             }
 
             try {
-                logger.debug("Loading initial models: {}", url);
+                logger.info("Loading initial models: {}", url);
 
                 ModelArchive archive =
                         modelManager.registerModel(url, modelName, null, null, 1, 100);
                 modelManager.updateModel(archive.getModelName(), 1, 1);
-            } catch (InvalidModelException e) {
+            } catch (InvalidModelException | IOException | IllegalArgumentException e) {
                 logger.warn("Failed to load model: " + url, e);
             }
         }

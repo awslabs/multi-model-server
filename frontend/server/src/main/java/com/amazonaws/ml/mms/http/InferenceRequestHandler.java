@@ -104,15 +104,9 @@ public class InferenceRequestHandler extends HttpRequestHandler {
             FullHttpRequest req,
             QueryStringDecoder decoder,
             String modelName) {
-        RequestInput input;
-        try {
-            input = parseRequest(ctx, req, decoder);
-            if (modelName == null) {
-                modelName = input.getStringParameter("model_name");
-            }
-        } catch (IllegalArgumentException e) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
-            return;
+        RequestInput input = parseRequest(ctx, req, decoder);
+        if (modelName == null) {
+            modelName = input.getStringParameter("model_name");
         }
 
         if (HttpMethod.OPTIONS.equals(req.method())) {
@@ -165,7 +159,7 @@ public class InferenceRequestHandler extends HttpRequestHandler {
                     inputData.addParameter(NettyUtils.getFormData(form.next()));
                 }
             } catch (HttpPostRequestDecoder.EndOfDataDecoderException ignore) {
-                logger.debug("End of multipart items.");
+                logger.trace("End of multipart items.");
             } finally {
                 form.cleanFiles();
             }

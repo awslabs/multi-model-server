@@ -52,7 +52,7 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
                     handleApiDescription(ctx);
                     return;
                 }
-                NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+                NettyUtils.sendError(ctx, HttpResponseStatus.METHOD_NOT_ALLOWED);
                 return;
             }
 
@@ -70,7 +70,7 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
                     break;
             }
         } catch (IllegalArgumentException e) {
-            logger.debug("", e);
+            logger.trace("", e);
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (Throwable t) {
             logger.error("", t);

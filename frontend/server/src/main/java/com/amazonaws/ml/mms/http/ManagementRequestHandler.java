@@ -67,7 +67,8 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                 handleRegisterModel(ctx, decoder);
                 return;
             }
-            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+            NettyUtils.sendError(ctx, HttpResponseStatus.METHOD_NOT_ALLOWED);
+            return;
         }
 
         if (HttpMethod.GET.equals(method)) {
@@ -77,7 +78,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         } else if (HttpMethod.DELETE.equals(method)) {
             handleUnregisterModel(ctx, segments[2]);
         } else {
-            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+            NettyUtils.sendError(ctx, HttpResponseStatus.METHOD_NOT_ALLOWED);
         }
     }
 
@@ -173,12 +174,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                 Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
         Manifest.RuntimeType runtimeType = null;
         if (runtime != null) {
-            try {
-                runtimeType = Manifest.RuntimeType.fromValue(runtime);
-            } catch (IllegalArgumentException e) {
-                NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
-                return;
-            }
+            runtimeType = Manifest.RuntimeType.fromValue(runtime);
         }
 
         ModelManager modelManager = ModelManager.getInstance();
@@ -188,11 +184,11 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                     modelManager.registerModel(
                             modelUrl, modelName, runtimeType, handler, batchSize, maxBatchDelay);
         } catch (IOException e) {
-            logger.warn("Failed to download model", e);
+            logger.warn("Failed to save model: " + modelUrl, e);
             NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
             return;
         } catch (InvalidModelException e) {
-            logger.warn("Failed to load model", e);
+            logger.warn("Failed to load model: " + modelUrl, e);
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e.getMessage());
             return;
         }
@@ -221,7 +217,8 @@ public class ManagementRequestHandler extends HttpRequestHandler {
     private void handleUnregisterModel(ChannelHandlerContext ctx, String modelName) {
         ModelManager modelManager = ModelManager.getInstance();
         if (!modelManager.unregisterModel(modelName)) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, "Model not found");
+            NettyUtils.sendError(
+                    ctx, HttpResponseStatus.NOT_FOUND, "Model not found: " + modelName);
         }
         String msg = "Model \"" + modelName + "\" unregistered";
         NettyUtils.sendJsonResponse(ctx, new StatusResponse(msg));

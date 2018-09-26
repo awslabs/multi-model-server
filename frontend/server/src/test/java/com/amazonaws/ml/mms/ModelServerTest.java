@@ -162,6 +162,7 @@ public class ModelServerTest {
         testPredictionsJson(channel);
         testInvocationsJson(channel);
         testInvocationsMultipart(channel);
+        testLegacyPredict(channel);
         testMetricManager();
         channel.close();
         managementChannel.close();
@@ -398,6 +399,18 @@ public class ModelServerTest {
 
         latch.await();
 
+        Assert.assertEquals(result, "OK");
+    }
+
+    private void testLegacyPredict(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/noop/predict?data=test");
+        channel.writeAndFlush(req);
+
+        latch.await();
         Assert.assertEquals(result, "OK");
     }
 

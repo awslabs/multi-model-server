@@ -217,7 +217,7 @@ class ModelExportUtils(object):
         with zipfile.ZipFile(mar_path, 'w', zipfile.ZIP_DEFLATED) as z:
             ModelExportUtils.zip_dir(model_path, z, set(files_to_exclude))
             # Write the manifest here now as a json
-            z.writestr(os.path.join(MAR_INF, MANIFEST_FILE_NAME), json.dumps(manifest, indent=4))
+            z.writestr(os.path.join(MAR_INF, MANIFEST_FILE_NAME), manifest)
 
     @staticmethod
     def zip_dir(path, ziph, files_to_exclude):

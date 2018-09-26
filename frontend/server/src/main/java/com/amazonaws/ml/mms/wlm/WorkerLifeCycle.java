@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ public class WorkerLifeCycle {
     private Process process;
     private CountDownLatch latch;
     private boolean success;
+    private int port;
 
     public WorkerLifeCycle(ConfigManager configManager, Model model) {
         this.configManager = configManager;
@@ -46,6 +48,7 @@ public class WorkerLifeCycle {
     public boolean startWorker(int port) {
         File workingDir = new File(configManager.getModelServerHome());
         File modelPath;
+        setPort(port);
         try {
             modelPath = model.getModelDir().getCanonicalFile();
         } catch (IOException e) {
@@ -109,6 +112,11 @@ public class WorkerLifeCycle {
         if (process != null) {
             process.destroyForcibly();
             process = null;
+            SocketAddress address = NettyUtils.getSocketAddress(port);
+            if (address instanceof DomainSocketAddress) {
+                String path = ((DomainSocketAddress) address).path();
+                FileUtils.deleteQuietly(new File(path));
+            }
         }
     }
 
@@ -126,6 +134,10 @@ public class WorkerLifeCycle {
 
     public synchronized void setPid(int pid) {
         this.pid = pid;
+    }
+
+    private synchronized void setPort(int port) {
+        this.port = port;
     }
 
     private static final class ReaderThread extends Thread {

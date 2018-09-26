@@ -53,25 +53,37 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             FullHttpRequest req,
             QueryStringDecoder decoder,
             String[] segments) {
-        if ("/".equals(decoder.path())) {
-            handleListModels(ctx, req);
-        } else if ("models".equals(segments[1])) {
-            handleModelsApi(ctx, req, segments, decoder);
+        if (!"models".equals(segments[1])) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+            return;
+        }
+
+        HttpMethod method = req.method();
+        if (segments.length < 3) {
+            if (HttpMethod.GET.equals(method)) {
+                handleListModels(ctx, decoder);
+                return;
+            } else if (HttpMethod.POST.equals(method)) {
+                handleRegisterModel(ctx, decoder);
+                return;
+            }
+            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+        }
+
+        if (HttpMethod.GET.equals(method)) {
+            handleDescribeModel(ctx, segments[2]);
+        } else if (HttpMethod.PUT.equals(method)) {
+            handleScaleModel(ctx, decoder, segments[2]);
+        } else if (HttpMethod.DELETE.equals(method)) {
+            handleUnregisterModel(ctx, segments[2]);
         } else {
             NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
         }
     }
 
+    @Override
     protected void handleApiDescription(ChannelHandlerContext ctx) {
         NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listManagementApis());
-    }
-
-    private void handleListModels(ChannelHandlerContext ctx, FullHttpRequest req) {
-        if (HttpMethod.OPTIONS.equals(req.method())) {
-            handleApiDescription(ctx);
-            return;
-        }
-        NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
     }
 
     private void handleListModels(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
@@ -107,35 +119,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         NettyUtils.sendJsonResponse(ctx, list);
     }
 
-    protected void handleModelsApi(
-            ChannelHandlerContext ctx,
-            FullHttpRequest req,
-            String[] segments,
-            QueryStringDecoder decoder) {
-        HttpMethod method = req.method();
-        if (segments.length < 3) {
-            if (HttpMethod.GET.equals(method)) {
-                handleListModels(ctx, decoder);
-                return;
-            } else if (HttpMethod.POST.equals(method)) {
-                handleRegisterModel(ctx, decoder);
-                return;
-            }
-            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
-        }
-
-        if (HttpMethod.GET.equals(method)) {
-            handleDescribeModel(ctx, segments[2]);
-        } else if (HttpMethod.PUT.equals(method)) {
-            handleScaleModel(ctx, decoder, segments[2]);
-        } else if (HttpMethod.DELETE.equals(method)) {
-            handleUnregisterModel(ctx, segments[2]);
-        } else {
-            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
-        }
-    }
-
-    protected void handleDescribeModel(ChannelHandlerContext ctx, String modelName) {
+    private void handleDescribeModel(ChannelHandlerContext ctx, String modelName) {
         ModelManager modelManager = ModelManager.getInstance();
         Model model = modelManager.getModels().get(modelName);
         if (model == null) {

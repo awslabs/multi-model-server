@@ -17,6 +17,7 @@ import com.amazonaws.ml.mms.wlm.ModelManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
@@ -45,7 +46,17 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
 
         try {
             QueryStringDecoder decoder = new QueryStringDecoder(req.uri());
-            String[] segments = decoder.path().split("/");
+            String path = decoder.path();
+            if ("/".equals(path)) {
+                if (HttpMethod.OPTIONS.equals(req.method())) {
+                    handleApiDescription(ctx);
+                    return;
+                }
+                NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
+                return;
+            }
+
+            String[] segments = path.split("/");
 
             switch (segments[1]) {
                 case "ping":

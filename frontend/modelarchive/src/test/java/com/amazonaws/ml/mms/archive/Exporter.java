@@ -126,8 +126,9 @@ public final class Exporter {
                 }
             } else {
                 Manifest.RuntimeType runtimeType = manifest.getRuntime();
-                if (runtimeType == Manifest.RuntimeType.PYTHON2_7
-                        || runtimeType == Manifest.RuntimeType.PYTHON3_6) {
+                if (runtimeType == Manifest.RuntimeType.PYTHON
+                        || runtimeType == Manifest.RuntimeType.PYTHON2
+                        || runtimeType == Manifest.RuntimeType.PYTHON3) {
                     String[] tokens = handler.split(":");
                     File serviceFile = new File(modelPath, tokens[0]);
                     if (serviceFile.exists()) {

@@ -59,7 +59,8 @@ public class BatchAggregator {
         int size = model.getBatchSize() - 1;
         long begin = System.currentTimeMillis();
         for (int i = 0; i < size; ++i) {
-            job = model.nextJob(threadName, maxBatchDelay);
+            // Only data should be consumed here.
+            job = model.nextJob(Model.DEFAULT_DATA_QUEUE, maxBatchDelay);
             if (job == null) {
                 break;
             }

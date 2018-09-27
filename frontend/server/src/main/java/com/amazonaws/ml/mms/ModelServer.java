@@ -91,8 +91,8 @@ public class ModelServer {
     }
 
     public void startAndWait()
-            throws InterruptedException, InvalidModelException, WorkerInitializationException,
-                    IOException, GeneralSecurityException {
+            throws InterruptedException, InvalidModelException, IOException,
+                    GeneralSecurityException {
         try {
             List<ChannelFuture> channelFutures = start();
             // Create and schedule metrics manager

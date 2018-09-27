@@ -31,13 +31,16 @@ public class Model {
     private int maxBatchDelay;
     // Total number of subsequent inference request failures
     private AtomicInteger failedInfReqs;
-    // Per workerthread job queue. This separates out the control queue from data queue
+    static final int[] BACKOFF = new int[] {0, 10, 30, 60, 4 * 60, 8 * 60, 16 * 60, 32 * 60};
+
+    // Per worker thread job queue. This separates out the control queue from data queue
     private ConcurrentMap<String, LinkedBlockingDeque<Job>> jobsDb;
 
     public Model(ModelArchive modelArchive, int queueSize) {
         this.modelArchive = modelArchive;
         minWorkers = 1;
         maxWorkers = 1;
+
         batchSize = 1;
         maxBatchDelay = 100;
         jobsDb = new ConcurrentHashMap<>();
@@ -60,14 +63,6 @@ public class Model {
 
     public ModelArchive getModelArchive() {
         return modelArchive;
-    }
-
-    public String getRequestContentType() {
-        return null;
-    }
-
-    public String getResponseContentType() {
-        return null;
     }
 
     public int getMinWorkers() {
@@ -129,7 +124,7 @@ public class Model {
         return nextJob(threadId, Long.MAX_VALUE);
     }
 
-    public Job nextJob(String threadId, long timeout) throws InterruptedException {
+    public Job nextJob(String threadId, long timeoutMillis) throws InterruptedException {
         LinkedBlockingDeque<Job> jobs = jobsDb.get(threadId);
         if (jobs != null && !jobs.isEmpty()) {
             Job j = jobs.poll();
@@ -137,7 +132,7 @@ public class Model {
                 return j;
             }
         }
-        return jobsDb.get(DEFAULT_DATA_QUEUE).poll(timeout, TimeUnit.MILLISECONDS);
+        return jobsDb.get(DEFAULT_DATA_QUEUE).poll(timeoutMillis, TimeUnit.MILLISECONDS);
     }
 
     public int incrFailedInfReqs() {

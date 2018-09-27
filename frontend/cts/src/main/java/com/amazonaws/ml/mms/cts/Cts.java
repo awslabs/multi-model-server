@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -37,9 +39,11 @@ public final class Cts {
     private byte[] kitten;
     private byte[] player1;
     private byte[] player2;
-    private int exitCode;
+    private List<String> failedModels;
 
-    private Cts() {}
+    private Cts() {
+        failedModels = new ArrayList<>();
+    }
 
     public static void main(String[] args) {
         updateLog4jConfiguration();
@@ -87,7 +91,16 @@ public final class Cts {
                 logger.error("", e);
             }
         }
-        System.exit(exitCode);
+        if (failedModels.isEmpty()) {
+            logger.info("All models passed CTS.");
+            System.exit(0);
+        } else {
+            logger.info("Following models failed CTS:");
+            for (String model : failedModels) {
+                logger.info(model);
+            }
+            System.exit(1);
+        }
     }
 
     private void runTest(HttpClient client, ModelInfo info, Logger logger)
@@ -100,17 +113,17 @@ public final class Cts {
         logger.info("Testing model: {}={}", modelName, url);
 
         if (!client.registerModel(modelName, url)) {
-            exitCode = 1;
+            failedModels.add(url);
             return;
         }
 
         try {
             if (!predict(client, type, modelName)) {
-                exitCode = 1;
+                failedModels.add(url);
             }
         } finally {
             if (!client.unregisterModel(modelName)) {
-                exitCode = 1;
+                failedModels.add(url);
             }
         }
     }

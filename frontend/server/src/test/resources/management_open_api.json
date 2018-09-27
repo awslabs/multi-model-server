@@ -218,8 +218,9 @@
             "schema": {
               "type": "string",
               "enum": [
-                "PYTHON2_7",
-                "PYTHON3_6"
+                "PYTHON",
+                "PYTHON2",
+                "PYTHON3"
               ]
             }
           },

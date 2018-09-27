@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +40,17 @@ public final class ModelManager {
     private ConfigManager configManager;
     private WorkLoadManager wlm;
     private ConcurrentHashMap<String, Model> models;
+    private ScheduledExecutorService scheduler;
 
     private ModelManager(ConfigManager configManager, WorkLoadManager wlm) {
         this.configManager = configManager;
         this.wlm = wlm;
         models = new ConcurrentHashMap<>();
+        scheduler = Executors.newScheduledThreadPool(2);
+    }
+
+    public ScheduledExecutorService getScheduler() {
+        return scheduler;
     }
 
     public static void init(ConfigManager configManager, WorkLoadManager wlm) {

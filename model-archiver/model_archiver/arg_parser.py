@@ -60,11 +60,11 @@ class ArgParser(object):
         parser_export.add_argument('--runtime',
                                    required=False,
                                    type=str,
-                                   default=RuntimeType.PYTHON2_7.value,
+                                   default=RuntimeType.PYTHON.value,
                                    choices=[s.value for s in RuntimeType],
                                    help='The runtime specifies which language to run your inference code on. '
                                         'The default runtime is {}. At the present moment we support the '
-                                        'following runtimes \n {}'.format(RuntimeType.PYTHON2_7, runtime_types))
+                                        'following runtimes \n {}'.format(RuntimeType.PYTHON, runtime_types))
 
         parser_export.add_argument('--export-path',
                                    required=False,

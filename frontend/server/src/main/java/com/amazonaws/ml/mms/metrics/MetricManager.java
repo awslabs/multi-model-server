@@ -13,10 +13,9 @@
 package com.amazonaws.ml.mms.metrics;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.wlm.ModelManager;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public final class MetricManager {
@@ -34,9 +33,13 @@ public final class MetricManager {
 
     public static void scheduleMetrics(ConfigManager configManager) {
         MetricCollector metricCollector = new MetricCollector(configManager);
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(
-                metricCollector, 0, configManager.getMetricTimeInterval(), TimeUnit.SECONDS);
+        ModelManager.getInstance()
+                .getScheduler()
+                .scheduleAtFixedRate(
+                        metricCollector,
+                        0,
+                        configManager.getMetricTimeInterval(),
+                        TimeUnit.SECONDS);
     }
 
     public synchronized List<Metric> getMetrics() {

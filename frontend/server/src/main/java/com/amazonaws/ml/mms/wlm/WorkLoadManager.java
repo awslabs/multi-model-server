@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 public class WorkLoadManager {
 
     private ExecutorService threadPool;
+
     private ConcurrentHashMap<String, List<WorkerThread>> workers;
 
     private ConfigManager configManager;
@@ -111,14 +112,7 @@ public class WorkLoadManager {
             BatchAggregator aggregator = new BatchAggregator(model);
             WorkerThread thread =
                     new WorkerThread(
-                            configManager,
-                            threads,
-                            backendGroup,
-                            port,
-                            gpuId,
-                            model,
-                            aggregator,
-                            listener);
+                            configManager, backendGroup, port, gpuId, model, aggregator, listener);
             threads.add(thread);
             threadPool.submit(thread);
             if (!configManager.isDebug()) {

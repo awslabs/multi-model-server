@@ -33,7 +33,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -54,9 +53,10 @@ public class WorkerThread implements Runnable {
     private int port;
     private Model model;
 
-    private List<WorkerThread> parentThreads;
     private Channel backendChannel;
     private AtomicBoolean running = new AtomicBoolean(true);
+
+    private int backoffIdx;
 
     private BatchAggregator aggregator;
     private WorkerStateListener listener;
@@ -73,7 +73,6 @@ public class WorkerThread implements Runnable {
 
     public WorkerThread(
             ConfigManager configManager,
-            List<WorkerThread> parentThreads,
             EventLoopGroup backendEventGroup,
             int port,
             int gpuId,
@@ -81,7 +80,6 @@ public class WorkerThread implements Runnable {
             BatchAggregator aggregator,
             WorkerStateListener listener) {
         this.workerId = String.valueOf(port); // Unique across all workers.
-        this.parentThreads = parentThreads;
         this.configManager = configManager;
         this.backendEventGroup = backendEventGroup;
         this.port = port;
@@ -92,6 +90,7 @@ public class WorkerThread implements Runnable {
         startTime = System.currentTimeMillis();
         lifeCycle = new WorkerLifeCycle(configManager, model);
         replies = new ArrayBlockingQueue<>(1);
+        this.backoffIdx = 0;
     }
 
     @Override
@@ -102,7 +101,7 @@ public class WorkerThread implements Runnable {
         try {
             connect();
 
-            while (running.get()) {
+            while (isRunning()) {
                 req = aggregator.getRequest(workerId);
 
                 backendChannel.writeAndFlush(req).sync();
@@ -129,6 +128,7 @@ public class WorkerThread implements Runnable {
                     case LOAD:
                         if (reply.getCode() == 200) {
                             setState(WorkerState.WORKER_MODEL_LOADED);
+                            backoffIdx = 0;
                         } else {
                             setState(WorkerState.WORKER_ERROR);
                         }
@@ -153,6 +153,7 @@ public class WorkerThread implements Runnable {
             }
             setState(WorkerState.WORKER_STOPPED);
             lifeCycle.exit();
+            retry();
         }
     }
 
@@ -201,9 +202,9 @@ public class WorkerThread implements Runnable {
                             (ChannelFutureListener)
                                     future -> {
                                         latch.countDown();
-                                        parentThreads.remove(WorkerThread.this); // NOPMD
                                         logger.info("{} Worker disconnected.", getWorkerId());
-                                        retry();
+                                        running.set(false);
+                                        currentThread.interrupt();
                                     });
 
             backendChannel
@@ -236,6 +237,7 @@ public class WorkerThread implements Runnable {
                         ErrorCodes.INTERNAL_SERVER_ERROR_WORKER_HEALTH_CHECK_TIMEOUT,
                         "Worker failed to initialize within {} mins" + WORKER_TIMEOUT);
             }
+            running.set(true);
         } catch (InterruptedException e) {
             throw new WorkerInitializationException(ErrorCodes.WORKER_INSTANTIATION_ERROR, e);
         } catch (Throwable t) {
@@ -276,8 +278,6 @@ public class WorkerThread implements Runnable {
 
             model.removeJobQueue(workerId);
         }
-        // TODO: push current message back to queue, if no more worker,
-        // drain the queue and send error back
     }
 
     void setState(WorkerState newState) {
@@ -292,9 +292,14 @@ public class WorkerThread implements Runnable {
             return;
         }
 
-        logger.info("Retry worker: {}", workerId);
-        ModelManager modelManager = ModelManager.getInstance();
-        modelManager.submitTask(this);
+        ModelManager manager = ModelManager.getInstance();
+
+        this.backoffIdx = (backoffIdx + 1 >= Model.BACKOFF.length) ? backoffIdx + 1 : backoffIdx;
+
+        Runnable work = () -> manager.submitTask(this);
+
+        manager.getScheduler().schedule(work, Model.BACKOFF[backoffIdx], TimeUnit.SECONDS);
+        logger.info("Retry worker: {}. {} Seconds later", workerId, Model.BACKOFF[backoffIdx]);
     }
 
     @ChannelHandler.Sharable

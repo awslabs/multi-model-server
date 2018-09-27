@@ -33,7 +33,7 @@ public class Manifest {
         implementationVersion = "1.0";
         modelServerVersion = "1.0";
         license = "Apache 2.0";
-        runtime = RuntimeType.PYTHON2_7;
+        runtime = RuntimeType.PYTHON;
         model = new Model();
     }
 
@@ -240,10 +240,12 @@ public class Manifest {
     }
 
     public enum RuntimeType {
-        @SerializedName("python2.7")
-        PYTHON2_7("python2.7"),
-        @SerializedName("python3.6")
-        PYTHON3_6("python3.6");
+        @SerializedName("python")
+        PYTHON("python"),
+        @SerializedName("python2")
+        PYTHON2("python2"),
+        @SerializedName("python3")
+        PYTHON3("python3");
 
         String value;
 

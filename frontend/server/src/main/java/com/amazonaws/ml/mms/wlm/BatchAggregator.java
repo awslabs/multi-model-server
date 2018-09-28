@@ -53,7 +53,7 @@ public class BatchAggregator {
 
         jobs.put(job.getJobId(), job);
 
-        logger.debug("get first job: {}", job.getJobId());
+        logger.trace("get first job: {}", job.getJobId());
 
         long maxBatchDelay = model.getMaxBatchDelay();
         int size = model.getBatchSize() - 1;
@@ -73,7 +73,7 @@ public class BatchAggregator {
             }
         }
 
-        logger.debug("sending jobs, size: {}", jobs.size());
+        logger.trace("sending jobs, size: {}", jobs.size());
 
         ModelInferenceRequest req = new ModelInferenceRequest(model.getModelName());
         for (Job j : jobs.values()) {
@@ -124,7 +124,7 @@ public class BatchAggregator {
 
     public void sendError(BaseModelRequest message, String error) {
         if (message instanceof ModelLoadModelRequest) {
-            logger.warn("Load model failed: {}", message.getModelName());
+            logger.warn("Load model failed: {}, error: {}", message.getModelName(), error);
             return;
         }
 
@@ -134,13 +134,14 @@ public class BatchAggregator {
                 String requestId = req.getRequestId();
                 Job job = jobs.remove(requestId);
                 if (job == null) {
-                    throw new IllegalStateException("Unexpected job: " + requestId);
+                    logger.error("Unexpected job: " + requestId);
+                } else {
+                    job.sendError(error);
                 }
-                job.sendError(error);
             }
             if (!jobs.isEmpty()) {
                 jobs.clear();
-                throw new IllegalStateException("Not all jobs get response.");
+                logger.error("Not all jobs get response.");
             }
         } else {
             // Send the error message to all the jobs

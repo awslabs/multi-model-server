@@ -4,7 +4,7 @@
   "description": "noop v1.0",
   "modelServerVersion": "1.0",
   "license": "Apache 2.0",
-  "runtime": "python2.7",
+  "runtime": "python",
   "model": {
     "modelName": "noop",
     "description": "no operation model",

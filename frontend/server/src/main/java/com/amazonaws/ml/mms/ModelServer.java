@@ -12,15 +12,14 @@
  */
 package com.amazonaws.ml.mms;
 
-import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.ModelArchive;
+import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.ServerGroups;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import com.amazonaws.ml.mms.wlm.WorkLoadManager;
-import com.amazonaws.ml.mms.wlm.WorkerInitializationException;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -31,12 +30,10 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,8 +42,6 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,8 +62,7 @@ public class ModelServer {
     }
 
     public static void main(String[] args)
-            throws InterruptedException, InvalidModelException, WorkerInitializationException,
-                    IOException, GeneralSecurityException {
+            throws InterruptedException, IOException, GeneralSecurityException {
         Options options = ConfigManager.Arguments.getOptions();
         try {
             DefaultParser parser = new DefaultParser();
@@ -90,9 +84,7 @@ public class ModelServer {
         }
     }
 
-    public void startAndWait()
-            throws InterruptedException, InvalidModelException, IOException,
-                    GeneralSecurityException {
+    public void startAndWait() throws InterruptedException, IOException, GeneralSecurityException {
         try {
             List<ChannelFuture> channelFutures = start();
             // Create and schedule metrics manager
@@ -106,7 +98,7 @@ public class ModelServer {
         Runtime.getRuntime().halt(-1); // NOPMD
     }
 
-    public void initModelStore() throws InvalidModelException, IOException {
+    private void initModelStore() {
         WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getBackendGroup());
         ModelManager.init(configManager, wlm);
 
@@ -115,34 +107,45 @@ public class ModelServer {
             return;
         }
 
-        File modelStore = new File(configManager.getModelStore());
         ModelManager modelManager = ModelManager.getInstance();
         if ("ALL".equalsIgnoreCase(loadModels)) {
-            if (!modelStore.exists()) {
+            String modelStore = configManager.getModelStore();
+            if (modelStore == null) {
                 logger.warn("Model store is not configured.");
                 return;
             }
 
-            logger.debug("Loading models from model store ...");
-
-            String[] extensions = new String[] {"model", "mar"};
-            Collection<File> models = FileUtils.listFiles(modelStore, extensions, false);
-            for (File modelFile : models) {
-                ModelArchive archive = modelManager.registerModel(modelFile.getName());
-                modelManager.updateModel(archive.getModelName(), 1, 1);
+            File modelStoreDir = new File(modelStore);
+            if (!modelStoreDir.exists()) {
+                logger.warn("Model store path is not found: {}", modelStore);
+                return;
             }
+
             // Check folders to see if they can be models as well
-            File[] dirs = modelStore.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
-            if (dirs != null) {
-                for (File dir : dirs) {
-                    ModelArchive archive = modelManager.registerModel(dir.getName());
-                    modelManager.updateModel(archive.getModelName(), 1, 1);
+            File[] files = modelStoreDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isHidden()) {
+                        continue;
+                    }
+                    String fileName = file.getName();
+                    if (file.isFile()
+                            && !fileName.endsWith(".mar")
+                            && !fileName.endsWith(".model")) {
+                        continue;
+                    }
+                    try {
+                        logger.debug("Loading models from model store: {}", file.getName());
+
+                        ModelArchive archive = modelManager.registerModel(file.getName());
+                        modelManager.updateModel(archive.getModelName(), 1, 1);
+                    } catch (ModelException | IOException e) {
+                        logger.warn("Failed to load model: " + file.getAbsolutePath(), e);
+                    }
                 }
             }
             return;
         }
-
-        logger.debug("Loading initial models ...");
 
         String[] models = loadModels.split(",");
         for (String model : models) {
@@ -159,8 +162,15 @@ public class ModelServer {
                 continue;
             }
 
-            ModelArchive archive = modelManager.registerModel(url, modelName, null, null, 1, 100);
-            modelManager.updateModel(archive.getModelName(), 1, 1);
+            try {
+                logger.info("Loading initial models: {}", url);
+
+                ModelArchive archive =
+                        modelManager.registerModel(url, modelName, null, null, 1, 100);
+                modelManager.updateModel(archive.getModelName(), 1, 1);
+            } catch (ModelException | IOException e) {
+                logger.warn("Failed to load model: " + url, e);
+            }
         }
     }
 
@@ -219,8 +229,7 @@ public class ModelServer {
      * @throws InterruptedException if interrupted
      */
     public List<ChannelFuture> start()
-            throws InterruptedException, IOException, GeneralSecurityException,
-                    InvalidModelException {
+            throws InterruptedException, IOException, GeneralSecurityException {
         stopped.set(false);
 
         logger.info(configManager.dumpConfigurations());

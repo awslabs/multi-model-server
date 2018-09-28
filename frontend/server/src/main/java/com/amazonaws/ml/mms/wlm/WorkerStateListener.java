@@ -29,7 +29,7 @@ public class WorkerStateListener {
     }
 
     public void notifyChangeState(String modelName, WorkerState state) {
-        logger.debug("{} worker state is: {}", modelName, state);
+        logger.info("{} worker state is: {}", modelName, state);
         // Update success and fail counts
         if (state == WorkerState.WORKER_MODEL_LOADED) {
             if (count.decrementAndGet() == 0) {

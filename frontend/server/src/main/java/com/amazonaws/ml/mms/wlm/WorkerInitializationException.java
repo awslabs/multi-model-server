@@ -16,23 +16,9 @@ public class WorkerInitializationException extends Exception {
 
     static final long serialVersionUID = 1L;
 
-    private final String errorCode;
-
     /** Creates a new {@code WorkerInitializationException} instance. */
-    public WorkerInitializationException(String code) {
-        this.errorCode = code;
-    }
-
-    /**
-     * Constructs a new {@code WorkerInitializationException} with the specified detail message and
-     * cause.
-     *
-     * @param message the detail message (which is saved for later retrieval by the {@link
-     *     #getMessage()} method).
-     */
-    public WorkerInitializationException(String code, String message) {
+    public WorkerInitializationException(String message) {
         super(message);
-        this.errorCode = code;
     }
 
     /**
@@ -45,25 +31,7 @@ public class WorkerInitializationException extends Exception {
      *     method). (A <tt>null</tt> value is permitted, and indicates that the cause is nonexistent
      *     or unknown.)
      */
-    public WorkerInitializationException(String code, String message, Throwable cause) {
+    public WorkerInitializationException(String message, Throwable cause) {
         super(message, cause);
-        this.errorCode = code;
-    }
-
-    /**
-     * Constructs a new {@code WorkerInitializationException} with the specified detail message and
-     * cause.
-     *
-     * @param cause the cause (which is saved for later retrieval by the {@link #getCause()}
-     *     method). (A <tt>null</tt> value is permitted, and indicates that the cause is nonexistent
-     *     or unknown.)
-     */
-    public WorkerInitializationException(String code, Throwable cause) {
-        super(cause);
-        this.errorCode = code;
-    }
-
-    public String getErrorCode() {
-        return errorCode;
     }
 }

@@ -8,12 +8,6 @@ dependencies {
 
 apply from: file("${project.rootProject.projectDir}/tools/gradle/launcher.gradle")
 
-sourceSets {
-    main {
-        output.resourcesDir = "build/classes/java/main"
-    }
-}
-
 jar {
     manifest {
         attributes 'Main-Class': 'com.amazonaws.ml.mms.ModelServer'

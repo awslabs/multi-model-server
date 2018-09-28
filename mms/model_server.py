@@ -46,8 +46,11 @@ def start():
                 print("Removing orphan pid file.")
                 os.remove(pid_file)
 
+        java_home = os.environ.get("JAVA_HOME")
+        java = "java" if java_home is None else "{}/bin/java".format(java_home)
+
         mms_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        cmd = ["java", "-Dmodel_server_home={}".format(mms_home)]
+        cmd = [java, "-Dmodel_server_home={}".format(mms_home)]
         if args.log_config is not None:
             cmd.append("-Dlog4j.configuration={}".format(args.log_config))
 

@@ -16,8 +16,9 @@ from enum import Enum
 
 class RuntimeType(Enum):
 
-    PYTHON2_7 = "python2.7"
-    PYTHON3_6 = "python3.6"
+    PYTHON = "python"
+    PYTHON2 = "python2"
+    PYTHON3 = "python3"
 
     # TODO : Add more runtimes here when we support more runtimes such as Java/Go/Scala etc..
 

@@ -44,6 +44,10 @@ public class WorkerThread implements Runnable {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
 
+    private static final int[] BACK_OFF = {
+        0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597
+    };
+
     static final long WORKER_TIMEOUT = 2L;
     static final ModelRequestEncoder ENCODER = new ModelRequestEncoder();
 
@@ -89,7 +93,6 @@ public class WorkerThread implements Runnable {
         startTime = System.currentTimeMillis();
         lifeCycle = new WorkerLifeCycle(configManager, model);
         replies = new ArrayBlockingQueue<>(1);
-        this.backoffIdx = 0;
     }
 
     @Override
@@ -288,12 +291,13 @@ public class WorkerThread implements Runnable {
 
         ModelManager manager = ModelManager.getInstance();
 
-        this.backoffIdx = (backoffIdx + 1 >= Model.BACKOFF.length) ? backoffIdx + 1 : backoffIdx;
+        if (backoffIdx < BACK_OFF.length - 1) {
+            ++backoffIdx;
+        }
 
-        Runnable work = () -> manager.submitTask(this);
-
-        manager.getScheduler().schedule(work, Model.BACKOFF[backoffIdx], TimeUnit.SECONDS);
-        logger.info("Retry worker: {}. {} Seconds later", workerId, Model.BACKOFF[backoffIdx]);
+        manager.getScheduler()
+                .schedule(() -> manager.submitTask(this), BACK_OFF[backoffIdx], TimeUnit.SECONDS);
+        logger.info("Retry worker: {} in {} seconds.", workerId, BACK_OFF[backoffIdx]);
     }
 
     @ChannelHandler.Sharable

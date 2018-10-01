@@ -69,30 +69,32 @@ public class WorkLoadManager {
     }
 
     public CompletableFuture<Boolean> modelChanged(Model model) {
-        int minWorker = model.getMinWorkers();
-        List<WorkerThread> threads;
-        if (minWorker == 0) {
-            threads = workers.remove(model.getModelName());
-            if (threads == null) {
+        synchronized (model.getModelName()) {
+            int minWorker = model.getMinWorkers();
+            List<WorkerThread> threads;
+            if (minWorker == 0) {
+                threads = workers.remove(model.getModelName());
+                if (threads == null) {
+                    CompletableFuture<Boolean> future = new CompletableFuture<>();
+                    future.complete(Boolean.TRUE);
+                    return future;
+                }
+            } else {
+                threads = workers.computeIfAbsent(model.getModelName(), k -> new ArrayList<>());
+            }
+
+            int currentWorkers = threads.size();
+            if (currentWorkers < minWorker) {
+                return addThreads(threads, model, minWorker - currentWorkers);
+            } else {
+                for (int i = currentWorkers - 1; i >= minWorker; --i) {
+                    WorkerThread thread = threads.remove(i);
+                    thread.shutdown();
+                }
                 CompletableFuture<Boolean> future = new CompletableFuture<>();
                 future.complete(Boolean.TRUE);
                 return future;
             }
-        } else {
-            threads = workers.computeIfAbsent(model.getModelName(), k -> new ArrayList<>());
-        }
-
-        int currentWorkers = threads.size();
-        if (currentWorkers < minWorker) {
-            return addThreads(threads, model, minWorker - currentWorkers);
-        } else {
-            for (int i = currentWorkers - 1; i >= minWorker; --i) {
-                WorkerThread thread = threads.remove(i);
-                thread.shutdown();
-            }
-            CompletableFuture<Boolean> future = new CompletableFuture<>();
-            future.complete(Boolean.TRUE);
-            return future;
         }
     }
 

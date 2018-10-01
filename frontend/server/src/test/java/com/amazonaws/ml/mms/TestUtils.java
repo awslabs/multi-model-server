@@ -12,6 +12,11 @@
  */
 package com.amazonaws.ml.mms;
 
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import java.security.GeneralSecurityException;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+
 public final class TestUtils {
 
     private TestUtils() {}
@@ -26,6 +31,17 @@ public final class TestUtils {
         }
         if (System.getProperty("LOG_LOCATION") == null) {
             System.setProperty("LOG_LOCATION", "build/logs");
+        }
+
+        try {
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, InsecureTrustManagerFactory.INSTANCE.getTrustManagers(), null);
+
+            HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
+
+            HttpsURLConnection.setDefaultHostnameVerifier((s, sslSession) -> true);
+        } catch (GeneralSecurityException e) {
+            // ignore
         }
     }
 }

@@ -9,19 +9,20 @@
 # permissions and limitations under the License.
 
 import numpy as np
-from mms.utils.mxnet import image
-from mms.model_service.mxnet_vision_service import MXNetVisionService
+
+from mxnet_utils import image
+from mxnet_vision_service import MXNetVisionService
 
 
 class SSDService(MXNetVisionService):
     """
-        SSD Service to perform real time multi-object detection using pre-trained MXNet SSD model.
-        This class extends MXNetVisionService to add custom preprocessing of input
-        and preparing the output.
-        Reuses input image transformation functionality of MXNetVisionService.
+    SSD Service to perform real time multi-object detection using pre-trained MXNet SSD model.
+    This class extends MXNetVisionService to add custom preprocessing of input
+    and preparing the output.
+    Reuses input image transformation functionality of MXNetVisionService.
     """
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(SSDService, self).__init__(model_name, model_dir, manifest, gpu)
+    def __init__(self):
+        super(SSDService, self).__init__()
 
         # Threshold is used to pick the detection boxes with score > threshold.
         # The detections from this network will be of the format - [[class_id, score, x1, y1, x2, y2]].
@@ -35,15 +36,19 @@ class SSDService(MXNetVisionService):
         self.input_width = None
         self.input_height = None
 
-    def _preprocess(self, data):
+    def preprocess(self, batch):
         """
-            Input image buffer from data is read into NDArray. Then, resized to
-            expected shape. Swaps axes to convert image from BGR format to RGB.
-            Returns the preprocessed NDArray as a list for next step, Inference.
+        Input image buffer from data is read into NDArray. Then, resized to
+        expected shape. Swaps axes to convert image from BGR format to RGB.
+        Returns the preprocessed NDArray as a list for next step, Inference.
         """
 
         # Read input
-        input_image = image.read(data[0])
+        img = batch[0].get("data")
+        if img is None:
+            img = batch[0].get("body")
+
+        input_image = image.read(img)
 
         # Save original input image shape.
         # This is required for preparing the bounding box of the detected object relative to
@@ -52,17 +57,17 @@ class SSDService(MXNetVisionService):
         self.input_width = input_image.shape[1]
 
         # Transform input image - resize, BGR to RGB.
-        # Reuse MXNetVisionService _preprocess to achieve above transformations.
-        return super(SSDService, self)._preprocess(data)
+        # Reuse MXNetVisionService preprocess to achieve above transformations.
+        return super(SSDService, self).preprocess(batch)
 
-    def _postprocess(self, data):
+    def postprocess(self, data):
         """
-            From the detections, prepares the output in the format of list of
-            [(object_class, xmin, ymin, xmax, ymax)]
-            object_class is name of the object detected. xmin, ymin, xmax, ymax
-            provides the bounding box coordinates.
+        From the detections, prepares the output in the format of list of
+        [(object_class, xmin, ymin, xmax, ymax)]
+        object_class is name of the object detected. xmin, ymin, xmax, ymax
+        provides the bounding box coordinates.
 
-            Example: [(person, 555, 175, 581, 242), (dog, 306, 446, 468, 530)]
+        Example: [(person, 555, 175, 581, 242), (dog, 306, 446, 468, 530)]
         """
 
         # Read the detections output after forward pass (inference)
@@ -92,4 +97,17 @@ class SSDService(MXNetVisionService):
                     if classes and len(classes) > cls_id:
                         class_name = classes[cls_id]
                     response.append((class_name, xmin, ymin, xmax, ymax))
-        return response
+        return [response]
+
+
+_service = SSDService()
+
+
+def handle(data, context):
+    if not _service.initialized:
+        _service.initialize(context)
+
+    if data is None:
+        return None
+
+    return _service.handle(data, context)

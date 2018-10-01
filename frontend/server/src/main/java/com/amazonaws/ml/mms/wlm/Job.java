@@ -12,6 +12,7 @@
  */
 package com.amazonaws.ml.mms.wlm;
 
+import com.amazonaws.ml.mms.http.InternalServerException;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.RequestInput;
 import com.amazonaws.ml.mms.util.messages.WorkerCommands;
@@ -103,7 +104,10 @@ public class Job {
          * by external clients.
          */
         if (ctx != null) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, error);
+            NettyUtils.sendError(
+                    ctx,
+                    HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                    new InternalServerException(error));
         }
 
         logger.debug(

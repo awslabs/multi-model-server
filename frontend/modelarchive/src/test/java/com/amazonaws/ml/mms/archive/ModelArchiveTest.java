@@ -34,7 +34,7 @@ public class ModelArchiveTest {
     }
 
     @Test
-    public void test() throws InvalidModelException, IOException {
+    public void test() throws ModelException, IOException {
         String modelStore = "src/test/resources/models";
 
         // load 0.1 model from model folder

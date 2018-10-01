@@ -12,7 +12,6 @@
  */
 package com.amazonaws.ml.mms.wlm;
 
-import com.amazonaws.ml.mms.common.ErrorCodes;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.codec.ModelRequestEncoder;
@@ -144,15 +143,14 @@ public class WorkerThread implements Runnable {
                 req = null;
             }
         } catch (InterruptedException e) {
-            logger.warn("Backend worker thread interrupted.");
+            logger.debug("Backend worker thread interrupted.", e);
         } catch (WorkerInitializationException e) {
             logger.error("Backend worker error", e);
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);
         } finally {
             if (req != null) {
-                aggregator.sendError(
-                        req, ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
+                aggregator.sendError(req, "Worker died.");
             }
             setState(WorkerState.WORKER_STOPPED);
             lifeCycle.exit();
@@ -172,11 +170,11 @@ public class WorkerThread implements Runnable {
         this.memory = memory;
     }
 
-    private void connect() throws WorkerInitializationException {
-        if (!configManager.isDebug() && !lifeCycle.startWorker(port)) {
-            throw new WorkerInitializationException(
-                    ErrorCodes.INTERNAL_SERVER_ERROR_BACKEND_WORKER_INSTANTIATION);
+    private void connect() throws WorkerInitializationException, InterruptedException {
+        if (!configManager.isDebug()) {
+            lifeCycle.startWorker(port);
         }
+
         String modelName = model.getModelName();
         setState(WorkerState.WORKER_STARTED);
         final CountDownLatch latch = new CountDownLatch(1);
@@ -197,7 +195,7 @@ public class WorkerThread implements Runnable {
                             });
 
             SocketAddress address = NettyUtils.getSocketAddress(port);
-            logger.debug("Connecting to: {}", address);
+            logger.info("Connecting to: {}", address);
             backendChannel = b.connect(address).sync().channel();
             backendChannel
                     .closeFuture()
@@ -237,17 +235,13 @@ public class WorkerThread implements Runnable {
 
             if (!latch.await(WORKER_TIMEOUT, TimeUnit.MINUTES)) {
                 throw new WorkerInitializationException(
-                        ErrorCodes.INTERNAL_SERVER_ERROR_WORKER_HEALTH_CHECK_TIMEOUT,
-                        "Worker failed to initialize within {} mins" + WORKER_TIMEOUT);
+                        "Worker failed to initialize within " + WORKER_TIMEOUT + " mins");
             }
             running.set(true);
-        } catch (InterruptedException e) {
-            throw new WorkerInitializationException(ErrorCodes.WORKER_INSTANTIATION_ERROR, e);
         } catch (Throwable t) {
             // https://github.com/netty/netty/issues/2597
             if (t instanceof IOException) {
-                throw new WorkerInitializationException(
-                        ErrorCodes.INTERNAL_SERVER_ERROR_WORKER_LISTEN_FAILURE, t);
+                throw new WorkerInitializationException("Failed to connect to worker.", t);
             }
             throw t;
         }
@@ -277,7 +271,7 @@ public class WorkerThread implements Runnable {
         }
         if (currentThread != null) {
             currentThread.interrupt();
-            aggregator.sendError(null, "Internal Failure");
+            aggregator.sendError(null, "Worker scaled down.");
 
             model.removeJobQueue(workerId);
         }

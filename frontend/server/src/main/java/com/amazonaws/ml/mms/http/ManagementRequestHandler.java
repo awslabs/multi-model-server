@@ -85,7 +85,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
 
     private void handleListModels(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
         int limit = NettyUtils.getIntParameter(decoder, "limit", 100);
-        int pageToken = NettyUtils.getIntParameter(decoder, "nextPageToken", 0);
+        int pageToken = NettyUtils.getIntParameter(decoder, "next_page_token", 0);
         if (limit > 100 || limit < 0) {
             limit = 100;
         }
@@ -220,7 +220,10 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             ChannelHandlerContext ctx, QueryStringDecoder decoder, String modelName)
             throws ModelNotFoundException {
         int minWorkers = NettyUtils.getIntParameter(decoder, "min_worker", 1);
-        int maxWorkers = NettyUtils.getIntParameter(decoder, "max_worker", 1);
+        int maxWorkers = NettyUtils.getIntParameter(decoder, "max_worker", minWorkers);
+        if (maxWorkers < minWorkers) {
+            throw new BadRequestException("max_worker cannot be less than min_worker.");
+        }
         boolean synchronous =
                 Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
 

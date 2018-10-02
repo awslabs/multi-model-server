@@ -178,6 +178,10 @@ public final class ModelManager {
         wlm.scheduleAsync(r);
     }
 
+    public boolean scaleRequestStatus(String modelName) {
+        return wlm.getWorkerStatus(modelName);
+    }
+
     public void submitTask(Runnable runnable) {
         wlm.scheduleAsync(runnable);
     }

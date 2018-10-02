@@ -43,6 +43,7 @@ class GluonCrepe(HybridBlock):
                 nn.Dense(self.FULLY_CONNECTED, activation='relu'),
             )
             self.output = nn.Dense(self.NUM_OUTPUTS)
+
     def hybrid_forward(self, F, x):
         x = self.features(x)
         x = self.output(x)

@@ -15,7 +15,6 @@ package com.amazonaws.ml.mms.http;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.util.NettyUtils;
-import com.amazonaws.ml.mms.wlm.ModelManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -57,18 +56,7 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
             }
 
             String[] segments = path.split("/");
-
-            switch (segments[1]) {
-                case "ping":
-                    ModelManager.getInstance().workerStatus(ctx);
-                    break;
-                case "api-description":
-                    handleApiDescription(ctx);
-                    break;
-                default:
-                    handleRequest(ctx, req, decoder, segments);
-                    break;
-            }
+            handleRequest(ctx, req, decoder, segments);
         } catch (ResourceNotFoundException | ModelNotFoundException e) {
             logger.trace("", e);
             NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND, e);

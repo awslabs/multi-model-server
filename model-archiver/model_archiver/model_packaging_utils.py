@@ -237,7 +237,8 @@ class ModelExportUtils(object):
             # Filter files
             files[:] = [f for f in files if ModelExportUtils.file_filter(f, files_to_exclude)]
             for f in files:
-                ziph.write(os.path.join(root, f), f)
+                file_path = os.path.join(root, f)
+                ziph.write(file_path, os.path.relpath(file_path, path))
 
     @staticmethod
     def directory_filter(directory, unwanted_dirs):

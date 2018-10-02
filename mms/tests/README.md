@@ -2,7 +2,7 @@
 
 ## Pre-requisites
 
-You will need some additional Python modules to run the unit tests, integration tests and linting.
+You will need some additional Python modules to run the unit tests and linting.
 
 ```bash
 pip install mock pytest pylint
@@ -26,14 +26,13 @@ python -m pytest mms/tests/unit_tests/
 To get the coverage report of unit tests, you can run :
 
 ```bash
-python -m pytest --cov-report  term-missing --cov=mms/ --ignore mms/tests/integration_tests/
+python -m pytest --cov-report term-missing --cov=mms/ mms/tests/unit_tests/
 ```
-## CI Tests
 
-You can run the integration tests with the following:
+or:
 
 ```bash
-python -m pytest mms/tests/integration_tests/
+python -m pytest --cov-report html:htmlcov --cov=mms/ mms/tests/unit_tests/
 ```
 
 ## Lint test

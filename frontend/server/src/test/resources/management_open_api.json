@@ -6,8 +6,8 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api-description": {
-      "get": {
+    "/": {
+      "options": {
         "operationId": "apiDescription",
         "parameters": [],
         "responses": {
@@ -31,68 +31,6 @@
                     },
                     "paths": {
                       "type": "object"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      }
-    },
-    "/": {
-      "options": {
-        "operationId": "listAPIs",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List available RESTful APIs with openapi 3.0.1 descriptor.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "openapi",
-                    "info",
-                    "paths"
-                  ],
-                  "properties": {
-                    "openapi": {
-                      "type": "string"
-                    },
-                    "info": {
-                      "type": "object"
-                    },
-                    "paths": {
-                      "type": "object"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ping": {
-      "get": {
-        "operationId": "ping",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Model server status.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "status"
-                  ],
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "description": "Overall status of the Model Server."
                     }
                   }
                 }

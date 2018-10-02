@@ -71,6 +71,7 @@ public class WorkLoadManager {
     public CompletableFuture<Boolean> modelChanged(Model model) {
         synchronized (model.getModelName()) {
             int minWorker = model.getMinWorkers();
+            int maxWorker = model.getMaxWorkers();
             List<WorkerThread> threads;
             if (minWorker == 0) {
                 threads = workers.remove(model.getModelName());
@@ -87,7 +88,8 @@ public class WorkLoadManager {
             if (currentWorkers < minWorker) {
                 return addThreads(threads, model, minWorker - currentWorkers);
             } else {
-                for (int i = currentWorkers - 1; i >= minWorker; --i) {
+                for (int i = currentWorkers - 1; i >= maxWorker; --i) {
+                    // TODO: kill unhealthy worker first.
                     WorkerThread thread = threads.remove(i);
                     thread.shutdown();
                 }

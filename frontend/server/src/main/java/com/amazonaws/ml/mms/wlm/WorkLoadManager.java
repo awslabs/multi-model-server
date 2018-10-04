@@ -68,23 +68,21 @@ public class WorkLoadManager {
         return worker.isEmpty();
     }
 
-    public boolean getWorkerStatus(String modelName) {
-        boolean status = true;
+    public int getNumRunningWorkers(String modelName) {
+        int numWorking = 0;
         List<WorkerThread> threads = workers.getOrDefault(modelName, null);
 
-        if (threads == null) {
-            return true;
-        }
-
-        for (WorkerThread thread : threads) {
-            if ((thread.getState() == WorkerState.WORKER_STOPPED)
-                    || (thread.getState() == WorkerState.WORKER_ERROR)) {
-                status = false;
-                break;
+        if (threads != null) {
+            for (WorkerThread thread : threads) {
+                if ((thread.getState() != WorkerState.WORKER_STOPPED)
+                        && (thread.getState() != WorkerState.WORKER_ERROR)
+                        && (thread.getState() != WorkerState.WORKER_TERMINATED)) {
+                    numWorking += 1;
+                }
             }
         }
 
-        return status;
+        return numWorking;
     }
 
     public CompletableFuture<Boolean> modelChanged(Model model) {

@@ -85,7 +85,7 @@ public class ModelArchive {
         if (!modelLocation.exists()) {
             throw new ModelNotFoundException("Model not found in model store: " + url);
         }
-        if (url.endsWith(".model") || url.endsWith(".mar")) {
+        if (modelLocation.isFile()) {
             try (InputStream is = new FileInputStream(modelLocation)) {
                 File unzipDir = unzip(is, null);
                 return load(url, unzipDir, true);

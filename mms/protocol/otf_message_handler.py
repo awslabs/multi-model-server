@@ -91,8 +91,7 @@ def create_predict_response(ret, req_id_map, message, code):
                     msg += json_value
                 except TypeError:
                     logging.warning("Unable to serialize model output.", exc_info=True)
-                    msg += struct.pack('!i', len(val))
-                    msg += val
+                    return create_predict_response(None, req_id_map, "Unsupported model output data type.", 503)
 
     msg += struct.pack('!i', -1)  # End of list
     return msg

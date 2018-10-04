@@ -68,37 +68,54 @@ public class WorkLoadManager {
         return worker.isEmpty();
     }
 
-    public CompletableFuture<Boolean> modelChanged(Model model) {
-        int minWorker = model.getMinWorkers();
-        List<WorkerThread> threads;
-        if (minWorker == 0) {
-            threads = workers.remove(model.getModelName());
-            if (threads == null) {
-                CompletableFuture<Boolean> future = new CompletableFuture<>();
-                future.complete(Boolean.TRUE);
-                return future;
+    public int getNumRunningWorkers(String modelName) {
+        int numWorking = 0;
+        List<WorkerThread> threads = workers.getOrDefault(modelName, null);
+
+        if (threads != null) {
+            for (WorkerThread thread : threads) {
+                if ((thread.getState() != WorkerState.WORKER_STOPPED)
+                        && (thread.getState() != WorkerState.WORKER_ERROR)
+                        && (thread.getState() != WorkerState.WORKER_TERMINATED)) {
+                    numWorking += 1;
+                }
             }
-        } else {
-            threads = workers.computeIfAbsent(model.getModelName(), k -> new ArrayList<>());
         }
 
-        int currentWorkers = threads.size();
-        if (currentWorkers < minWorker) {
-            return addThreads(threads, model, minWorker - currentWorkers);
-        } else {
-            for (int i = currentWorkers - 1; i >= minWorker; --i) {
-                WorkerThread thread = threads.remove(i);
-                thread.shutdown();
-            }
+        return numWorking;
+    }
+
+    public CompletableFuture<Boolean> modelChanged(Model model) {
+        synchronized (model.getModelName()) {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
-            future.complete(Boolean.TRUE);
+            int minWorker = model.getMinWorkers();
+            List<WorkerThread> threads;
+            if (minWorker == 0) {
+                threads = workers.remove(model.getModelName());
+                if (threads == null) {
+                    future.complete(Boolean.TRUE);
+                    return future;
+                }
+            } else {
+                threads = workers.computeIfAbsent(model.getModelName(), k -> new ArrayList<>());
+            }
+
+            int currentWorkers = threads.size();
+            if (currentWorkers < minWorker) {
+                addThreads(threads, model, minWorker - currentWorkers, future);
+            } else {
+                for (int i = currentWorkers - 1; i >= minWorker; --i) {
+                    WorkerThread thread = threads.remove(i);
+                    thread.shutdown();
+                }
+                future.complete(Boolean.TRUE);
+            }
             return future;
         }
     }
 
-    private CompletableFuture<Boolean> addThreads(
-            List<WorkerThread> threads, Model model, int count) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
+    private void addThreads(
+            List<WorkerThread> threads, Model model, int count, CompletableFuture<Boolean> future) {
         WorkerStateListener listener = new WorkerStateListener(future, count);
         int maxGpu = configManager.getNumberOfGpu();
         for (int i = 0; i < count; ++i) {
@@ -119,7 +136,6 @@ public class WorkLoadManager {
                 port++;
             }
         }
-        return future;
     }
 
     public void scheduleAsync(Runnable r) {

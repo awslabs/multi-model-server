@@ -31,7 +31,6 @@ public class Model {
     private int maxBatchDelay;
     // Total number of subsequent inference request failures
     private AtomicInteger failedInfReqs;
-    static final int[] BACKOFF = new int[] {0, 10, 30, 60, 4 * 60, 8 * 60, 16 * 60, 32 * 60};
 
     // Per worker thread job queue. This separates out the control queue from data queue
     private ConcurrentMap<String, LinkedBlockingDeque<Job>> jobsDb;

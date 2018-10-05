@@ -12,10 +12,11 @@
  */
 package com.amazonaws.ml.mms.wlm;
 
-import com.amazonaws.ml.mms.archive.InvalidModelException;
 import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.archive.ModelArchive;
-import com.amazonaws.ml.mms.common.ErrorCodes;
+import com.amazonaws.ml.mms.archive.ModelException;
+import com.amazonaws.ml.mms.archive.ModelNotFoundException;
+import com.amazonaws.ml.mms.http.BadRequestException;
 import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
@@ -61,7 +62,7 @@ public final class ModelManager {
         return modelManager;
     }
 
-    public ModelArchive registerModel(String url) throws InvalidModelException, IOException {
+    public ModelArchive registerModel(String url) throws ModelException, IOException {
         return registerModel(url, null, null, null, 1, 100);
     }
 
@@ -72,7 +73,8 @@ public final class ModelManager {
             String handler,
             int batchSize,
             int maxBatchDelay)
-            throws InvalidModelException, IOException {
+            throws ModelException, IOException {
+
         ModelArchive archive = ModelArchive.downloadModel(configManager.getModelStore(), url);
         if (modelName == null || modelName.isEmpty()) {
             modelName = archive.getModelName();
@@ -94,9 +96,7 @@ public final class ModelManager {
         Model existingModel = models.putIfAbsent(modelName, model);
         if (existingModel != null) {
             // model already exists
-            throw new InvalidModelException(
-                    ErrorCodes.MODELS_POST_MODEL_ALREADY_REGISTERED,
-                    "Model \"" + modelName + "\" is already registered");
+            throw new BadRequestException("Model " + modelName + " is already registered.");
         }
         logger.info("Model {} loaded.", model.getModelName());
         return archive;
@@ -112,6 +112,7 @@ public final class ModelManager {
         model.setMinWorkers(0);
         model.setMaxWorkers(0);
         wlm.modelChanged(model);
+        model.getModelArchive().clean();
         logger.info("Model {} unregistered.", modelName);
         return true;
     }
@@ -140,61 +141,50 @@ public final class ModelManager {
         return wlm.getWorkers();
     }
 
-    public HttpResponseStatus addJob(Job job) {
+    public boolean addJob(Job job) throws ModelNotFoundException {
         String modelName = job.getModelName();
-        Model model;
-        if (modelName == null) {
-            if (models.size() != 1) {
-                return HttpResponseStatus.NOT_FOUND;
-            }
-            model = models.entrySet().iterator().next().getValue();
-            modelName = model.getModelName();
-        } else {
-            model = models.get(modelName);
-            if (model == null) {
-                return HttpResponseStatus.NOT_FOUND;
-            }
+        Model model = models.get(modelName);
+        if (model == null) {
+            throw new ModelNotFoundException("Model not found: " + modelName);
         }
 
         if (wlm.hasNoWorker(modelName)) {
-            return HttpResponseStatus.SERVICE_UNAVAILABLE;
+            return false;
         }
 
-        if (model.addJob(job)) {
-            return HttpResponseStatus.OK;
-        }
-        return HttpResponseStatus.SERVICE_UNAVAILABLE;
+        return model.addJob(job);
     }
 
     public void workerStatus(final ChannelHandlerContext ctx) {
         Runnable r =
                 () -> {
-                    // numWorkers - Number of backend workers actually running for a particular
-                    // model.
-                    // numScaled - Number of backend workers asked.
-                    // Return 200 "numWorkers == numScaled"
-                    // Return 206 "numWorkers > 0 && numWorkers < numScaled"
-
-                    HttpResponseStatus status = HttpResponseStatus.OK;
                     String response = "Healthy";
                     int numWorking = 0;
                     int numScaled = 0;
                     for (Map.Entry<String, Model> m : models.entrySet()) {
                         numScaled += m.getValue().getMinWorkers();
-                        numWorking += wlm.getWorkers(m.getValue().getModelName()).size();
+                        numWorking += wlm.getNumRunningWorkers(m.getValue().getModelName());
                     }
 
                     if ((numWorking > 0) && (numWorking < numScaled)) {
-                        // TODO: Check if this status can be set to
-                        // HttpResponseStatus.PARTIAL_CONTENT
                         response = "Partial Healthy";
                     } else if ((numWorking == 0) && (numScaled > 0)) {
-                        // TODO: Check if this can be set to HttpResponseStatus.NOT_FOUND;
                         response = "Unhealthy";
                     }
-                    NettyUtils.sendJsonResponse(ctx, new StatusResponse(response), status);
+
+                    // TODO: Check if its OK to send other 2xx errors to ALB for "Partial Healthy"
+                    // and "Unhealthy"
+                    NettyUtils.sendJsonResponse(
+                            ctx, new StatusResponse(response), HttpResponseStatus.OK);
                 };
         wlm.scheduleAsync(r);
+    }
+
+    public boolean scaleRequestStatus(String modelName) {
+        Model model = ModelManager.getInstance().getModels().get(modelName);
+        int numWorkers = wlm.getNumRunningWorkers(modelName);
+
+        return model == null || model.getMinWorkers() <= numWorkers;
     }
 
     public void submitTask(Runnable runnable) {

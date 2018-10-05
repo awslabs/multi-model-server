@@ -12,7 +12,7 @@
  */
 package com.amazonaws.ml.mms.http;
 
-import com.amazonaws.ml.mms.common.ErrorCodes;
+import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.InputParameter;
@@ -25,7 +25,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
@@ -45,7 +44,7 @@ public class InferenceRequestHandler extends HttpRequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(InferenceRequestHandler.class);
 
-    /** Creates a new {@code HttpRequestHandler} instance. */
+    /** Creates a new {@code InferenceRequestHandler} instance. */
     public InferenceRequestHandler() {}
 
     @Override
@@ -53,8 +52,15 @@ public class InferenceRequestHandler extends HttpRequestHandler {
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
-            String[] segments) {
+            String[] segments)
+            throws ModelNotFoundException {
         switch (segments[1]) {
+            case "ping":
+                ModelManager.getInstance().workerStatus(ctx);
+                break;
+            case "api-description":
+                handleApiDescription(ctx);
+                break;
             case "invocations":
                 handleInvocations(ctx, req, decoder);
                 break;
@@ -67,24 +73,23 @@ public class InferenceRequestHandler extends HttpRequestHandler {
         }
     }
 
+    @Override
     protected void handleApiDescription(ChannelHandlerContext ctx) {
         NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listInferenceApis());
     }
 
     private void handlePredictions(
-            ChannelHandlerContext ctx, FullHttpRequest req, String[] segments) {
+            ChannelHandlerContext ctx, FullHttpRequest req, String[] segments)
+            throws ModelNotFoundException {
         if (segments.length < 3) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_REQUEST);
-            return;
+            throw new ResourceNotFoundException();
         }
         predict(ctx, req, null, segments[2]);
     }
 
     private void handleInvocations(
-            ChannelHandlerContext ctx, FullHttpRequest req, QueryStringDecoder decoder) {
+            ChannelHandlerContext ctx, FullHttpRequest req, QueryStringDecoder decoder)
+            throws ModelNotFoundException {
         String modelName = NettyUtils.getParameter(decoder, "model_name", null);
         predict(ctx, req, decoder, modelName);
     }
@@ -93,10 +98,10 @@ public class InferenceRequestHandler extends HttpRequestHandler {
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
-            String[] segments) {
+            String[] segments)
+            throws ModelNotFoundException {
         if (segments.length < 3 || !"predict".equals(segments[2])) {
-            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND);
-            return;
+            throw new ResourceNotFoundException();
         }
 
         predict(ctx, req, decoder, segments[1]);
@@ -106,28 +111,21 @@ public class InferenceRequestHandler extends HttpRequestHandler {
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
-            String modelName) {
-        RequestInput input;
-        try {
-            input = parseRequest(ctx, req, decoder);
+            String modelName)
+            throws ModelNotFoundException {
+        RequestInput input = parseRequest(ctx, req, decoder);
+        if (modelName == null) {
+            modelName = input.getStringParameter("model_name");
             if (modelName == null) {
-                modelName = input.getStringParameter("model_name");
+                throw new BadRequestException("Parameter model_name is required.");
             }
-        } catch (IllegalArgumentException e) {
-            NettyUtils.sendError(
-                    ctx,
-                    HttpResponseStatus.BAD_REQUEST,
-                    ErrorCodes.PREDICTIONS_API_INVALID_PARAMETERS);
-            return;
         }
 
         if (HttpMethod.OPTIONS.equals(req.method())) {
             ModelManager modelManager = ModelManager.getInstance();
             Model model = modelManager.getModels().get(modelName);
             if (model == null) {
-                NettyUtils.sendError(
-                        ctx, HttpResponseStatus.NOT_FOUND, "Model not found: " + modelName);
-                return;
+                throw new ModelNotFoundException("Model not found: " + modelName);
             }
 
             String resp = OpenApiUtils.getModelApi(model);
@@ -136,15 +134,9 @@ public class InferenceRequestHandler extends HttpRequestHandler {
         }
 
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
-        HttpResponseStatus status = ModelManager.getInstance().addJob(job);
-        if (status != HttpResponseStatus.OK) {
-            String code;
-            if (status == HttpResponseStatus.NOT_FOUND) {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_REGISTERED;
-            } else {
-                code = ErrorCodes.PREDICTIONS_API_MODEL_NOT_SCALED;
-            }
-            NettyUtils.sendError(ctx, status, code);
+        if (!ModelManager.getInstance().addJob(job)) {
+            throw new ServiceUnavailableException(
+                    "No worker is available to serve request: " + modelName);
         }
     }
 
@@ -172,7 +164,7 @@ public class InferenceRequestHandler extends HttpRequestHandler {
                     inputData.addParameter(NettyUtils.getFormData(form.next()));
                 }
             } catch (HttpPostRequestDecoder.EndOfDataDecoderException ignore) {
-                logger.debug("End of multipart items.");
+                logger.trace("End of multipart items.");
             } finally {
                 form.cleanFiles();
             }

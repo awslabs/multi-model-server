@@ -21,9 +21,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +47,30 @@ public class WorkerLifeCycle {
     public WorkerLifeCycle(ConfigManager configManager, Model model) {
         this.configManager = configManager;
         this.model = model;
+    }
+
+    private String[] getEnvString(String cwd, String modelPath) {
+        ArrayList<String> envList = new ArrayList<>();
+        Pattern blackList = configManager.getBlacklistPattern();
+
+        StringBuilder pythonPath = new StringBuilder();
+        HashMap<String, String> environment = new HashMap<>(System.getenv());
+
+        if (System.getenv("PYTHONPATH") != null) {
+            pythonPath.append(System.getenv("PYTHONPATH")).append(File.pathSeparatorChar);
+        }
+
+        pythonPath.append(modelPath).append(File.pathSeparatorChar).append(cwd);
+
+        environment.put("PYTHONPATH", pythonPath.toString());
+
+        for (Map.Entry<String, String> entry : environment.entrySet()) {
+            if (!blackList.matcher(entry.getKey()).matches()) {
+                envList.add(entry.getKey() + '=' + entry.getValue());
+            }
+        }
+
+        return envList.toArray(new String[0]); // NOPMD
     }
 
     public void startWorker(int port) throws WorkerInitializationException, InterruptedException {
@@ -71,15 +99,7 @@ public class WorkerLifeCycle {
             args[3] = String.valueOf(port);
         }
 
-        StringBuilder pythonPath = new StringBuilder("PYTHONPATH=");
-        if (System.getenv("PYTHONPATH") != null) {
-            pythonPath.append(System.getenv("PYTHONPATH")).append(File.pathSeparatorChar);
-        }
-        pythonPath
-                .append(modelPath.getAbsolutePath())
-                .append(File.pathSeparatorChar)
-                .append(workingDir.getAbsolutePath());
-        String[] envp = new String[] {pythonPath.toString()};
+        String[] envp = getEnvString(workingDir.getAbsolutePath(), modelPath.getAbsolutePath());
 
         try {
             latch = new CountDownLatch(1);

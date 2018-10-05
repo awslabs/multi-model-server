@@ -85,7 +85,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
 
     private void handleListModels(ChannelHandlerContext ctx, QueryStringDecoder decoder) {
         int limit = NettyUtils.getIntParameter(decoder, "limit", 100);
-        int pageToken = NettyUtils.getIntParameter(decoder, "nextPageToken", 0);
+        int pageToken = NettyUtils.getIntParameter(decoder, "next_page_token", 0);
         if (limit > 100 || limit < 0) {
             limit = 100;
         }
@@ -220,7 +220,10 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             ChannelHandlerContext ctx, QueryStringDecoder decoder, String modelName)
             throws ModelNotFoundException {
         int minWorkers = NettyUtils.getIntParameter(decoder, "min_worker", 1);
-        int maxWorkers = NettyUtils.getIntParameter(decoder, "max_worker", 1);
+        int maxWorkers = NettyUtils.getIntParameter(decoder, "max_worker", minWorkers);
+        if (maxWorkers < minWorkers) {
+            throw new BadRequestException("max_worker cannot be less than min_worker.");
+        }
         boolean synchronous =
                 Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
 
@@ -238,28 +241,41 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             int maxWorkers,
             boolean synchronous,
             final Function<Void, Void> onError) {
+
         ModelManager modelManager = ModelManager.getInstance();
         CompletableFuture<Boolean> future =
                 modelManager.updateModel(modelName, minWorkers, maxWorkers);
         if (!synchronous) {
             NettyUtils.sendJsonResponse(
-                    ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
+                    ctx,
+                    new StatusResponse("Processing worker updates..."),
+                    HttpResponseStatus.ACCEPTED);
             return;
         }
         future.thenApply(
                         v -> {
+                            boolean status = modelManager.scaleRequestStatus(modelName);
+                            String response = "Workers scaled";
+                            HttpResponseStatus httpCode = HttpResponseStatus.OK;
+
                             if (!v) {
+                                response = "Workers scaling in progress";
                                 if (onError != null) {
                                     onError.apply(null);
+                                    response = "Load failed... Deregistered model " + modelName;
                                 }
                                 NettyUtils.sendError(
                                         ctx,
                                         HttpResponseStatus.NOT_FOUND,
-                                        new ModelNotFoundException(
-                                                "Model not found: " + modelName));
+                                        new ModelNotFoundException(response));
                             } else {
+                                if (!status) {
+                                    response = "Workers scaling in progress..";
+                                    httpCode = new HttpResponseStatus(210, "Partial Success");
+                                }
+
                                 NettyUtils.sendJsonResponse(
-                                        ctx, new StatusResponse("Worker scaled"));
+                                        ctx, new StatusResponse(response), httpCode);
                             }
                             return v;
                         })

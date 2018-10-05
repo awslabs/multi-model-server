@@ -16,16 +16,22 @@ RUN apt-get update && \
     && curl -O https://bootstrap.pypa.io/get-pip.py \
     && python get-pip.py
 
-RUN pip install mxnet-model-server
+RUN pip install mxnet-model-server \
+    && pip install mxnet-mkl
+
+RUN useradd -m model-server \
+    && mkdir -p /home/model-server/tmp \
+    && chown -R model-server /home/model-server
 
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
+COPY config.properties /home/model-server
+
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh
 
-RUN useradd -m model-server
 USER model-server
 WORKDIR /home/model-server
-
-LABEL maintainer="dantu@amazon.com, rakvas@amazon.com, lufen@amazon.com, dden@amazon.com"
-
+ENV TEMP=/home/model-server/tmp
 ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
 CMD ["serve"]
+
+LABEL maintainer="dantu@amazon.com, rakvas@amazon.com, lufen@amazon.com, dden@amazon.com"

@@ -10,24 +10,24 @@
  * OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package com.amazonaws.ml.mms.archive;
+package com.amazonaws.ml.mms.http;
 
-public class InvalidModelException extends ModelException {
+public class BadRequestException extends IllegalArgumentException {
 
     static final long serialVersionUID = 1L;
 
     /**
-     * Constructs an {@code InvalidModelException} with the specified detail message.
+     * Constructs an {@code BadRequestException} with the specified detail message.
      *
      * @param message The detail message (which is saved for later retrieval by the {@link
      *     #getMessage()} method)
      */
-    public InvalidModelException(String message) {
+    public BadRequestException(String message) {
         super(message);
     }
 
     /**
-     * Constructs an {@code InvalidModelException} with the specified detail message and cause.
+     * Constructs an {@code BadRequestException} with the specified detail message and cause.
      *
      * <p>Note that the detail message associated with {@code cause} is <i>not</i> automatically
      * incorporated into this exception's detail message.
@@ -38,7 +38,7 @@ public class InvalidModelException extends ModelException {
      *     method). (A null value is permitted, and indicates that the cause is nonexistent or
      *     unknown.)
      */
-    public InvalidModelException(String message, Throwable cause) {
-        super(message, cause);
+    public BadRequestException(Throwable cause) {
+        super(cause.getMessage(), cause);
     }
 }

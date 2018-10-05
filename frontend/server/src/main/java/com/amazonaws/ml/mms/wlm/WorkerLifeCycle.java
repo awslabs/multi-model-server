@@ -45,15 +45,14 @@ public class WorkerLifeCycle {
         this.model = model;
     }
 
-    public boolean startWorker(int port) {
+    public void startWorker(int port) throws WorkerInitializationException, InterruptedException {
         File workingDir = new File(configManager.getModelServerHome());
         File modelPath;
         setPort(port);
         try {
             modelPath = model.getModelDir().getCanonicalFile();
         } catch (IOException e) {
-            logger.error("Failed get MMS home directory", e);
-            return false;
+            throw new WorkerInitializationException("Failed get MMS home directory", e);
         }
 
         SocketAddress address = NettyUtils.getSocketAddress(port);
@@ -94,18 +93,19 @@ public class WorkerLifeCycle {
             }
 
             if (latch.await(2, TimeUnit.MINUTES)) {
-                return success;
+                if (!success) {
+                    throw new WorkerInitializationException("Backend stream closed.");
+                }
+                return;
             }
-            logger.error("Backend worker startup time out.");
-            exit();
+            throw new WorkerInitializationException("Backend worker startup time out.");
         } catch (IOException e) {
-            logger.error("Failed start worker process", e);
-            exit();
-        } catch (InterruptedException e) {
-            logger.error("Worker process interrupted", e);
-            exit();
+            throw new WorkerInitializationException("Failed start worker process", e);
+        } finally {
+            if (!success) {
+                exit();
+            }
         }
-        return false;
     }
 
     public synchronized void exit() {
@@ -122,9 +122,6 @@ public class WorkerLifeCycle {
 
     void setSuccess(boolean success) {
         this.success = success;
-        if (!success) {
-            exit();
-        }
         latch.countDown();
     }
 
@@ -174,7 +171,7 @@ public class WorkerLifeCycle {
                         lifeCycle.setPid(Integer.parseInt(result.substring("[PID]".length())));
                     }
                     if (error) {
-                        logger.error(result);
+                        logger.warn(result);
                     } else {
                         logger.info(result);
                     }

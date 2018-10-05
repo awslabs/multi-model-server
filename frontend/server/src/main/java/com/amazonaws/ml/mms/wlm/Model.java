@@ -37,9 +37,6 @@ public class Model {
 
     public Model(ModelArchive modelArchive, int queueSize) {
         this.modelArchive = modelArchive;
-        minWorkers = 1;
-        maxWorkers = 1;
-
         batchSize = 1;
         maxBatchDelay = 100;
         jobsDb = new ConcurrentHashMap<>();

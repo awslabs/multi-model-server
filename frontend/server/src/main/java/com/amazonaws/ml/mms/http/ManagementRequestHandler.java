@@ -241,28 +241,41 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             int maxWorkers,
             boolean synchronous,
             final Function<Void, Void> onError) {
+
         ModelManager modelManager = ModelManager.getInstance();
         CompletableFuture<Boolean> future =
                 modelManager.updateModel(modelName, minWorkers, maxWorkers);
         if (!synchronous) {
             NettyUtils.sendJsonResponse(
-                    ctx, new StatusResponse("Worker updated"), HttpResponseStatus.ACCEPTED);
+                    ctx,
+                    new StatusResponse("Processing worker updates..."),
+                    HttpResponseStatus.ACCEPTED);
             return;
         }
         future.thenApply(
                         v -> {
+                            boolean status = modelManager.scaleRequestStatus(modelName);
+                            String response = "Workers scaled";
+                            HttpResponseStatus httpCode = HttpResponseStatus.OK;
+
                             if (!v) {
+                                response = "Workers scaling in progress";
                                 if (onError != null) {
                                     onError.apply(null);
+                                    response = "Load failed... Deregistered model " + modelName;
                                 }
                                 NettyUtils.sendError(
                                         ctx,
                                         HttpResponseStatus.NOT_FOUND,
-                                        new ModelNotFoundException(
-                                                "Model not found: " + modelName));
+                                        new ModelNotFoundException(response));
                             } else {
+                                if (!status) {
+                                    response = "Workers scaling in progress..";
+                                    httpCode = new HttpResponseStatus(210, "Partial Success");
+                                }
+
                                 NettyUtils.sendJsonResponse(
-                                        ctx, new StatusResponse("Worker scaled"));
+                                        ctx, new StatusResponse(response), httpCode);
                             }
                             return v;
                         })

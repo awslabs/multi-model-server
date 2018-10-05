@@ -77,7 +77,7 @@ class Manifest(object):
         return manifest_dict
 
     def __str__(self):
-        return json.dumps(self.manifest_dict)
+        return json.dumps(self.manifest_dict, indent=2)
 
     def __repr__(self):
-        return json.dumps(self.manifest_dict)
+        return json.dumps(self.manifest_dict, indent=2)

@@ -65,7 +65,6 @@ public final class NettyUtils {
 
     private static final String REQUEST_ID = "x-request-id";
     private static final AttributeKey<Session> SESSION_KEY = AttributeKey.valueOf("session");
-    private static final String UDS_PREFIX = "/tmp/.mms.worker.";
 
     private NettyUtils() {}
 
@@ -108,26 +107,11 @@ public final class NettyUtils {
         sendHttpResponse(ctx, resp, true);
     }
 
-    /**
-     * Send simple HTTP response to client and close connection.
-     *
-     * @param ctx ChannelHandlerContext
-     * @param status HttpResponseStatus to send
-     */
-    public static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
-        sendError(ctx, status, status.reasonPhrase());
-    }
-
     public static void sendError(
-            ChannelHandlerContext ctx, HttpResponseStatus status, String errorMessage) {
-        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
-        resp.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
-
-        ErrorResponse error = new ErrorResponse(status.code(), status.toString(), errorMessage);
-        ByteBuf content = resp.content();
-        content.writeCharSequence(JsonUtils.GSON_PRETTY.toJson(error), CharsetUtil.UTF_8);
-        content.writeByte('\n');
-        sendHttpResponse(ctx, resp, false);
+            ChannelHandlerContext ctx, HttpResponseStatus status, Throwable t) {
+        ErrorResponse error =
+                new ErrorResponse(status.code(), t.getClass().getSimpleName(), t.getMessage());
+        sendJsonResponse(ctx, error, status);
     }
 
     /**
@@ -142,9 +126,12 @@ public final class NettyUtils {
         // Send the response and close the connection if necessary.
         Channel channel = ctx.channel();
         Session session = channel.attr(SESSION_KEY).getAndSet(null);
-        session.setCode(resp.status().code());
-
-        resp.headers().set(REQUEST_ID, session.getRequestId());
+        if (session != null) {
+            // session might be recycled if channel is closed already.
+            session.setCode(resp.status().code());
+            resp.headers().set(REQUEST_ID, session.getRequestId());
+            logger.info(session.toString());
+        }
         HttpUtil.setContentLength(resp, resp.content().readableBytes());
         if (!keepAlive || resp.status().code() >= 400) {
             ChannelFuture f = channel.writeAndFlush(resp);
@@ -153,7 +140,6 @@ public final class NettyUtils {
             resp.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
             channel.writeAndFlush(resp);
         }
-        logger.info(session.toString());
     }
 
     /** Closes the specified channel after all queued write requests are flushed. */
@@ -205,7 +191,8 @@ public final class NettyUtils {
 
     public static SocketAddress getSocketAddress(int port) {
         if (Epoll.isAvailable() || KQueue.isAvailable()) {
-            return new DomainSocketAddress(UDS_PREFIX + port);
+            String uds = System.getProperty("java.io.tmpdir") + "/.mms.sock." + port;
+            return new DomainSocketAddress(uds);
         }
         return new InetSocketAddress("127.0.0.1", port);
     }

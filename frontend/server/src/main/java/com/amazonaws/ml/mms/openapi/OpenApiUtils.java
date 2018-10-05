@@ -32,11 +32,12 @@ public final class OpenApiUtils {
         info.setVersion("1.0.0");
         openApi.setInfo(info);
 
-        openApi.addPath("/api-description", getApiDescriptionPath());
+        openApi.addPath("/", getApiDescriptionPath(false));
         openApi.addPath("/{model_name}/predict", getLegacyPredictPath());
         openApi.addPath("/ping", getPingPath());
-        openApi.addPath("/invocations", getInvocationsPath());
         openApi.addPath("/predictions/{model_name}", getPredictionsPath());
+        openApi.addPath("/api-description", getApiDescriptionPath(true));
+        openApi.addPath("/invocations", getInvocationsPath());
 
         return JsonUtils.GSON_PRETTY.toJson(openApi);
     }
@@ -50,9 +51,7 @@ public final class OpenApiUtils {
         info.setVersion("1.0.0");
         openApi.setInfo(info);
 
-        openApi.addPath("/api-description", getApiDescriptionPath());
-        openApi.addPath("/", getListApisPath());
-        openApi.addPath("/ping", getPingPath());
+        openApi.addPath("/", getApiDescriptionPath(false));
         openApi.addPath("/models", getModelsPath());
         openApi.addPath("/models/{model_name}", getModelManagerPath());
 
@@ -72,7 +71,7 @@ public final class OpenApiUtils {
         return JsonUtils.GSON_PRETTY.toJson(openApi);
     }
 
-    private static Path getApiDescriptionPath() {
+    private static Path getApiDescriptionPath(boolean legacy) {
         Schema schema = new Schema("object");
         schema.addProperty("openapi", new Schema("string"), true);
         schema.addProperty("info", new Schema("object"), true);
@@ -83,31 +82,14 @@ public final class OpenApiUtils {
 
         Operation operation = new Operation("apiDescription");
         operation.addResponse(resp);
-        operation.setDeprecated(true);
 
         Path path = new Path();
-        path.setGet(operation);
-        return path;
-    }
-
-    private static Path getListApisPath() {
-        Schema schema = new Schema("object");
-        schema.addProperty("openapi", new Schema("string"), true);
-        schema.addProperty("info", new Schema("object"), true);
-        schema.addProperty("paths", new Schema("object"), true);
-        MediaType mediaType = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
-
-        Response resp =
-                new Response(
-                        "200",
-                        "List available RESTful APIs with openapi 3.0.1 descriptor.",
-                        mediaType);
-
-        Operation operation = new Operation("listAPIs");
-        operation.addResponse(resp);
-
-        Path path = new Path();
-        path.setOptions(operation);
+        if (legacy) {
+            operation.setDeprecated(true);
+            path.setGet(operation);
+        } else {
+            path.setOptions(operation);
+        }
         return path;
     }
 

@@ -6,8 +6,8 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api-description": {
-      "get": {
+    "/": {
+      "options": {
         "operationId": "apiDescription",
         "parameters": [],
         "responses": {
@@ -37,8 +37,7 @@
               }
             }
           }
-        },
-        "deprecated": true
+        }
       }
     },
     "/{model_name}/predict": {
@@ -111,52 +110,6 @@
         }
       }
     },
-    "/invocations": {
-      "post": {
-        "description": "A generic invocation entry point for all models.",
-        "operationId": "invocations",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "model_name",
-            "description": "Name of model",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "required": [
-                  "data"
-                ],
-                "properties": {
-                  "model_name": {
-                    "type": "string",
-                    "description": "Name of model"
-                  },
-                  "data": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Inference input data"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "deprecated": true
-      }
-    },
     "/predictions/{model_name}": {
       "post": {
         "description": "Predictions entry point for each model. Use OPTIONS method to get detailed model API input and output description.",
@@ -224,6 +177,87 @@
             }
           }
         }
+      }
+    },
+    "/api-description": {
+      "get": {
+        "operationId": "apiDescription",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "A openapi 3.0.1 descriptor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "openapi",
+                    "info",
+                    "paths"
+                  ],
+                  "properties": {
+                    "openapi": {
+                      "type": "string"
+                    },
+                    "info": {
+                      "type": "object"
+                    },
+                    "paths": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/invocations": {
+      "post": {
+        "description": "A generic invocation entry point for all models.",
+        "operationId": "invocations",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "model_name",
+            "description": "Name of model",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "model_name": {
+                    "type": "string",
+                    "description": "Name of model"
+                  },
+                  "data": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Inference input data"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "deprecated": true
       }
     }
   }

@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
+import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -91,6 +92,8 @@ public class ModelServer {
             MetricManager.scheduleMetrics(configManager);
             System.out.println("Model server started."); // NOPMD
             channelFutures.get(0).sync();
+        } catch (InvalidPropertiesFormatException e) {
+            logger.error("Invalid configuration", e);
         } finally {
             serverGroups.shutdown(true);
             logger.info("Model server stopped.");
@@ -231,6 +234,8 @@ public class ModelServer {
     public List<ChannelFuture> start()
             throws InterruptedException, IOException, GeneralSecurityException {
         stopped.set(false);
+
+        configManager.validateConfigurations();
 
         logger.info(configManager.dumpConfigurations());
 

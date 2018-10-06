@@ -36,8 +36,11 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -55,6 +58,7 @@ public final class ConfigManager {
     private static final String MODEL_SERVER_HOME = "model_server_home";
     private static final String MODEL_STORE = "model_store";
     private static final String LOAD_MODELS = "load_models";
+    private static final String BLACKLIST_ENV_VARS = "blacklist_env_vars";
     private static final String NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
     private static final String MAX_WORKERS = "max_workers";
     private static final String JOB_QUEUE_SIZE = "job_queue_size";
@@ -67,7 +71,13 @@ public final class ConfigManager {
     private static final String CERTIFICATE_FILE = "certificate_file";
     private static final String PRIVATE_KEY_FILE = "private_key_file";
 
+    private Pattern blacklistPattern;
+
     private Properties prop;
+
+    public Pattern getBlacklistPattern() {
+        return blacklistPattern;
+    }
 
     public ConfigManager(Arguments args) {
         prop = new Properties();
@@ -288,6 +298,15 @@ public final class ConfigManager {
         return prop.getProperty(key, def);
     }
 
+    public void validateConfigurations() throws InvalidPropertiesFormatException {
+        String blacklistVars = prop.getProperty(BLACKLIST_ENV_VARS, "");
+        try {
+            blacklistPattern = Pattern.compile(blacklistVars);
+        } catch (PatternSyntaxException e) {
+            throw new InvalidPropertiesFormatException(e);
+        }
+    }
+
     public String dumpConfigurations() {
         return "\nMMS Home: "
                 + getModelServerHome()
@@ -304,7 +323,9 @@ public final class ConfigManager {
                 + "\nLog dir: "
                 + getCanonicalPath(System.getProperty("LOG_LOCATION"))
                 + "\nMetrics dir: "
-                + getCanonicalPath(System.getProperty("METRICS_LOCATION"));
+                + getCanonicalPath(System.getProperty("METRICS_LOCATION"))
+                + "\nBlacklist Regex: "
+                + prop.getProperty(BLACKLIST_ENV_VARS, "");
     }
 
     void setProperty(String key, String value) {

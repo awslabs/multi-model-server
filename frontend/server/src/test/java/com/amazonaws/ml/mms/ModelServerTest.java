@@ -146,11 +146,11 @@ public class ModelServerTest {
         Assert.assertNotNull(managementChannel, "Failed to connect to management port.");
 
         testPing(channel);
-        testPing(managementChannel);
 
-        testRoot(managementChannel);
+        testRoot(channel, listInferenceApisResult);
+        testRoot(managementChannel, listManagementApisResult);
         testApiDescription(channel, listInferenceApisResult);
-        testApiDescription(managementChannel, listManagementApisResult);
+
         testDescribeApi(channel);
         testUnregisterModel(managementChannel);
         testLoadModel(managementChannel);
@@ -192,14 +192,14 @@ public class ModelServerTest {
         testUnregisterModelNotFound();
     }
 
-    private void testRoot(Channel channel) throws InterruptedException {
+    private void testRoot(Channel channel, String expected) throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
         HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, "/");
         channel.writeAndFlush(req).sync();
         latch.await();
 
-        Assert.assertEquals(result, listManagementApisResult);
+        Assert.assertEquals(result, expected);
     }
 
     private void testPing(Channel channel) throws InterruptedException {
@@ -267,7 +267,7 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(
-                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Worker scaled")) + "\n");
+                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Workers scaled")) + "\n");
     }
 
     private void testScaleModel(Channel channel) throws InterruptedException {
@@ -280,7 +280,7 @@ public class ModelServerTest {
         latch.await();
 
         StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
-        Assert.assertEquals(resp.getStatus(), "Worker updated");
+        Assert.assertEquals(resp.getStatus(), "Processing worker updates...");
     }
 
     private void testSyncScaleModel(Channel channel) throws InterruptedException {
@@ -295,7 +295,7 @@ public class ModelServerTest {
         latch.await();
 
         StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
-        Assert.assertEquals(resp.getStatus(), "Worker scaled");
+        Assert.assertEquals(resp.getStatus(), "Workers scaled");
     }
 
     private void testUnregisterModel(Channel channel) throws InterruptedException {

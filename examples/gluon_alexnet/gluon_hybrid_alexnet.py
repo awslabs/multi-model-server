@@ -10,7 +10,7 @@
 
 from mxnet.gluon import nn
 from mxnet.gluon.block import HybridBlock
-from mms.model_service.gluon_vision_service import GluonVisionService
+from gluon_base_service import GluonBaseService
 
 """
 MMS examples for loading Gluon Hybrid models
@@ -58,15 +58,31 @@ class GluonHybridAlexNet(HybridBlock):
         return x
 
 
-class HybridAlexnetService(GluonVisionService):
+class HybridAlexnetService(GluonBaseService):
     """
     Gluon alexnet Service
     """
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(HybridAlexnetService, self).__init__(model_name, model_dir, manifest, GluonHybridAlexNet(), gpu)
+    def initialize(self, params):
+        self.net = GluonHybridAlexNet()
+        self.param_filename = "alexnet.params"
+        super(HybridAlexnetService, self).initialize(params)
         self.net.hybridize()
 
-    def _postprocess(self, data):
+    def postprocess(self, data):
         idx = data.topk(k=5)[0]
-        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
-            float(data[0, int(i.asscalar())].asscalar())} for i in idx]
+        return [[{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
+                 float(data[0, int(i.asscalar())].asscalar())} for i in idx]]
+
+
+svc = HybridAlexnetService()
+
+
+def hybrid_gluon_alexnet_inf(data, context):
+    res = None
+    if not svc.initialized:
+        svc.initialize(context)
+
+    if data is not None:
+        res = svc.predict(data)
+
+    return res

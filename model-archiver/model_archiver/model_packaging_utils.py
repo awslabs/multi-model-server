@@ -55,12 +55,11 @@ class ModelExportUtils(object):
 
         if os.path.exists(export_file):
             if overwrite:
-                logging.warning("%s already exists. It will be overwritten since --force/-f was specified", export_file)
-
+                logging.warning("Overwriting %s ...", export_file)
             else:
-                logging.error("%s already exists. Since no --force/-f was specified, it will not be overwritten. "
-                              "Exiting the program here. Specify --force/-f flag to overwrite the %s file. "
-                              "See -h/--help for more details", export_file, export_file)
+                logging.error("%s already exists.\n"
+                              "Please specify --force/-f option to overwrite the model archive output file.\n"
+                              "See -h/--help for more details.", export_file)
 
                 sys.exit(1)
 
@@ -109,8 +108,8 @@ class ModelExportUtils(object):
                 '.onnx': ('.onnx', 'ONNX model file')
             }[suffix]
 
-            message = "model-export-tool expects only one %s file. Please supply the single %s file you wish to " \
-                      "export." % (params[0], params[1])
+            message = "model-archiver expects only one %s file in the folder.\n" \
+                      "Please supply the single %s file you wish to package." % (params[0], params[1])
 
             logging.error(message)
             sys.exit(1)
@@ -126,13 +125,13 @@ class ModelExportUtils(object):
         try:
             import mxnet as mx
         except ImportError:
-            logging.error("MXNet package is not installed. Run command : pip install mxnet to install it. ")
+            logging.error("MXNet package is not installed. Run command: pip install mxnet to install it. ")
             sys.exit(1)
 
         try:
             import onnx
         except ImportError:
-            logging.error("Onnx package is not installed. Run command : pip install mxnet to install it. ")
+            logging.error("Onnx package is not installed. Run command: pip install mxnet to install it. ")
             sys.exit(1)
 
         from mxnet.contrib import onnx as onnx_mxnet
@@ -242,7 +241,6 @@ class ModelExportUtils(object):
 
     @staticmethod
     def directory_filter(directory, unwanted_dirs):
-
         """
         This method weeds out unwanted hidden directories from the model archive .mar file
         :param directory:
@@ -258,7 +256,6 @@ class ModelExportUtils(object):
 
     @staticmethod
     def file_filter(current_file, files_to_exclude):
-
         """
         This method weeds out unwanted files
         :param current_file:
@@ -276,7 +273,6 @@ class ModelExportUtils(object):
 
     @staticmethod
     def check_model_name_regex_or_exit(model_name):
-
         """
         Method checks whether model name passes regex filter.
         If the regex Filter fails, the method exits.
@@ -285,7 +281,7 @@ class ModelExportUtils(object):
         """
         pattern = re.compile(r'[A-Za-z][A-Za-z0-9_\-.]+')
         if pattern.match(model_name) is None:
-
-            logging.error("Model name contains special characters. The allowed regular expression filter for model "
-                          "name is %s ", r'[A-Za-z][A-Za-z0-9_\-.]+')
+            logging.error("Model name contains special characters.\n"
+                          "The allowed regular expression filter for model "
+                          "name is: [A-Za-z][A-Za-z0-9_\\-.]+")
             sys.exit(1)

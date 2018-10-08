@@ -1,7 +1,7 @@
 # Converting an ONNX Model
 
 ## Install model-archiver with ONNX support
-ONNX suport is optional in `model-archiver` tool. It's not installed by default with `model-archiver`.
+ONNX support is optional in `model-archiver` tool. It's not installed by default with `model-archiver`.
 
 To install MMS with ONNX support, you will need to have the [protobuf compiler](https://github.com/onnx/onnx#installation) installed:
 

@@ -8,7 +8,7 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 
 | Model File | Type | Dataset | Source | Size | Download |
 | --- | --- | --- | --- | --- | --- |
-| [AlexNet](#alexnet) | Image Classification | ImageNet | ONNX | 233 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-alexnet/alexnet.mar) |
+| [AlexNet](#alexnet) | Image Classification | ImageNet | ONNX | 233 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/alexnet.mar) |
 | [ArcFace-ResNet100](#arcface-resnet100_onnx) | Face Recognition | Refined MS-Celeb1M | ONNX | 236.4 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-arcface-resnet100.mar) |
 | [CaffeNet](#caffenet) | Image Classification | ImageNet | MXNet | 216 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/caffenet/caffenet.mar) |
 | [FERPlus](#ferplus_onnx) | Emotion Detection | FER2013 | ONNX | 35MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/FERPlus.mar) |

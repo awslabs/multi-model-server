@@ -117,8 +117,9 @@ def load_properties(file_path):
             line = line.strip()
             if not line.startswith("#"):
                 pair = line.split("=", 1)
-                key = pair[0].strip()
-                props[key] = pair[1]
+                if len(pair) > 1:
+                    key = pair[0].strip()
+                    props[key] = pair[1].strip()
 
     return props
 

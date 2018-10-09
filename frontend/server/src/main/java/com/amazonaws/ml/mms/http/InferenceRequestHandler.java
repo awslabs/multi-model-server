@@ -167,6 +167,7 @@ public class InferenceRequestHandler extends HttpRequestHandler {
                 logger.trace("End of multipart items.");
             } finally {
                 form.cleanFiles();
+                form.destroy();
             }
         } else {
             byte[] content = NettyUtils.getBytes(req.content());

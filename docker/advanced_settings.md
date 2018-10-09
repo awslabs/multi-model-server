@@ -25,31 +25,12 @@ Follow the [instructions for installing nvidia-docker](https://github.com/NVIDIA
 **Step 2: Download the GPU configuration template.**
 
 A GPU configuration template is provided for your use.
-Download the template a GPU config and place it in the `models` folder you just created:
-* [mms_app_gpu.conf](mms_app_gpu.conf)
+Download the template a GPU config and place it in the `/tmp/models` folder you just created:
+* [config.properties](config.properties)
 
 **Step 3: Modify the configuration template.**
 
-Edit the file you downloaded, `mms_app_gpu.conf`. It will have the following section for `MMS Arguments`:
-
-```
-[MMS Arguments]
---models
-squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
-...
-```
-
-To change the model, you will update the `--models` entry. Use the following or select a different model from the [model zoo](../docs/model_zoo.md) and replace the URL.
-
-```
-resnet-18=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
-```
-
-You may also download the model and use the shared file path, but specify the path from within the Docker container.
-
-```
-resnet-18=/models/resnet-18.model
-```
+Edit the file you downloaded, `config.properties` to configure the model-server.
 
 Save the file.
 
@@ -58,15 +39,15 @@ Save the file.
 When you run the following command, the `-v` argument and path values of `/tmp/models/:/models` will map the `models` folder you created (assuming it was in ) with a folder inside the Docker container. MMS will then be able to use the local model file.
 
 ```bash
-nvidia-docker run -itd --name mms -p 80:8080 -v /tmp/models/:/models awsdeeplearningteam/mms_gpu "mxnet-model-server start --mms-config /models/mms_app_gpu.conf"
+nvidia-docker run -itd --name mms -p 80:8080  -p 81:8081 -v /tmp/models/:/models awsdeeplearningteam/mms_gpu mxnet-model-server --start --mms-config /models/config.properties --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
 **Step 5: Test inference.**
 
-This configuration file is using the default Squeezenet model, so you will request the `squeezenet/predict` API endpoint.
+This configuration file is using the default Squeezenet model, so you will request the `predictions/squeezenet` API endpoint.
 
 ```bash
-curl -X POST http://127.0.0.1/squeezenet/predict -F "data=@kitten.jpg"
+curl -X POST http://127.0.0.1/predictions/squeezenet -F "data=@kitten.jpg"
 ```
 
 Given that this is a different model, the same image yields a different inference result which will be something similar to the following:
@@ -129,29 +110,39 @@ Interact with the container. This will open a shell prompt inside the container.
 docker attach mms
 ```
 
-Run the MMS Docker image:
+Run the MMS Docker image without starting the Model Server:
 ```bash
-docker run -itd --name mms -p 80:8080 awsdeeplearningteam/mms_cpu
+docker run -itd --name mms -p 80:8080 -p 81:8081 awsdeeplearningteam/mms_cpu /bin/bash
 ```
 
 Start MMS in the Docker container (CPU config):
 ```bash
-docker exec mms bash -c "mxnet-model-server start --mms-config /models/mms_app_cpu.conf"
+docker exec mms bash -c mxnet-model-server --start --mms-config /home/model-server/config.properties
 ```
 
-Start MMS in the Docker container (GPU config):
+Start MMS in the Docker container using nvidia-docker command as follows. :
 ```bash
-nvidia-docker exec mms bash -c "mxnet-model-server start --mms-config /models/mms_app_cpu.conf"
+nvidia-docker exec mms bash -c mxnet-model-server --start --mms-config /home/model-server/config.properties
+```
+
+**Note**: To use GPU configuration, modify the config.properties to reflect that the model-server should use GPUs.
+
+```properties
+inference_address=http://0.0.0.0:8080
+management_address=http://0.0.0.0:8081
+...
+number_of_gpu=8
+...
 ```
 
 Stop MMS.
 ```bash
-docker exec mms bash -c "mxnet-model-server stop"
+docker exec mms bash -c mxnet-model-server --stop
 ```
 
 Get MMS help.
 ```bash
-docker exec mms bash -c "mxnet-model-server help"
+docker exec mms bash -c mxnet-model-server --help
 ```
 
 Refer [Docker CLI](https://docs.docker.com/engine/reference/commandline/run/) to understand each parameter.
@@ -199,28 +190,6 @@ git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-se
 
 ### Building the Container Image
 
-#### Configuration Setup
-
-We can optionally update the **nginx** section of `mms_app_cpu.conf` or `mms_app_gpu.conf` files for your target environment.
-
-* For CPU builds, use [mms_app_cpu.conf](mms_app_cpu.conf) and [Dockerfile.cpu](Dockerfile.cpu).
-* For GPU builds, use [mms_app_gpu.conf](mms_app_gpu.conf) and [Dockerfile.gpu](Dockerfile.gpu).
-
-The **nginx** section will look like this:
-
-```text
-# Nginx configurations
-server {
-    listen       8080;
-
-    location / {
-        proxy_pass http://unix:/tmp/mms_app.sock;
-    }
-}
-```
-
-The `location` section defines the proxy server to which all the requests are passed. Since **gunicorn** binds to a UNIX socket, a proxy server is the corresponding URL.
-
 #### Configuring the Docker Build for Use on EC2
 
 Now you can examine how to build a Docker image with MMS and establish a public accessible endpoint on EC2 instance. You should be able to adapt this information for any cloud provider. This Docker image can be used in other production environments as well. Skip this section if you're building for local use.
@@ -243,12 +212,6 @@ The next command will build the Docker image. The `-t` flag and following value 
 
 ```bash
 # Building base image and derived MMS image
-docker build -f Dockerfile.cpu.base  awsdeeplearningteam/mms_cpu_base
-docker build -f Dockerfile.cpu -t mms_image .
-```
-
-```bash
-# Building derived MMS image with pre-built base image
 docker build -f Dockerfile.cpu -t mms_image .
 ```
 
@@ -266,38 +229,34 @@ Similar to CPU base image the prebuilt GPU 'base' image is hosted at `awsdeeplea
 
 ```bash
 # Building base image and derived MMS image
-docker build -f Dockerfile.gpu.base  awsdeeplearningteam/mms_gpu_base
-docker build -f Dockerfile.gpu -t mms_image_gpu .
-```
-
-```bash
-# Building derived  MMS image with pre-built base image
 docker build -f Dockerfile.gpu -t mms_image_gpu .
 ```
 
 #### Running the MMS GPU Docker
 
 ```bash
-nvidia-docker run -itd -p 80:8080 --name mms -v /home/user/models/:/models mms_image_gpu:latest
+nvidia-docker run -itd -p 80:8080 -p 81:8081 --name mms -v /home/user/models/:/models mms_image_gpu
 ```
 
 This command starts the Docker instance in a detached mode and mounts `/home/user/models` of the host system into `/models` directory inside the Docker instance.
-Considering that you modified and copied `mms_app_gpu.conf` file into the models directory, before you ran the above `nvidia-docker` command, you would have this configuration file ready to use in the Docker instance.
+Considering that you modified and copied `config.properties` file into the models directory, before you ran the 
+above `nvidia-docker` command, you would have this configuration file ready to use in the Docker instance.
 
 ```bash
-nvidia-docker exec mms bash -c "mxnet-model-server start --mms-config /models/mms_app_gpu.conf"
+nvidia-docker exec mms bash -c "mxnet-model-server --start --mms-config /models/config.properties"
 ```
-You can change the gunicorn argument `--workers` to change utilization of GPU resources. Each worker will utilize one GPU device. Currently up to 4 workers are recommended to get optimal performance for CPU and this should be set to the `number of GPUs` in case of running MXNet Model Server on GPU instances.
 
 ### Testing the MMS Docker
 
-Now you can send a request to your server's [api-description endpoint](http://localhost/api-description) to see the list of MMS endpoints or [ping endpoint](http://localhost/ping) to check the health status of the MMS API. Remember to add the port if you used a custom one or the IP or DNS of your server if you configured it for that instead of localhost. Here are some handy test links for common configurations:
+Now you can send a request to your server's [api-description endpoint](http://localhost/api-description) to see the 
+list of MMS endpoints or [ping endpoint](http://localhost/ping) to check the health status of the MMS API. 
+Remember to add the port if you used a custom one or the IP or DNS of your server if you configured it for that instead 
+of localhost. Here are some handy test links for common configurations:
 
 * [http://localhost/api-description](http://localhost/api-description)
-* [http://localhost:8080/api-description](http://localhost/api-description)
 * [http://localhost/ping](http://localhost/ping)
 
-If `mms_app_gpu.conf` or `mms_app_cpu.conf` files are used as is, the following commands can be run to verify that the MXNet Model Server is running.
+If `config.properties` file is used as is, the following commands can be run to verify that the MXNet Model Server is running.
 
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
@@ -335,111 +294,43 @@ The predict endpoint will return a prediction response in JSON. It will look som
 }
 ```
 
-
 ## Description of Config File Settings
 
-**For mms_app_cpu.conf:**
+**For config.properties:**
 
-The system settings are stored in [mms_app_cpu.conf](mms_app_cpu.conf). You can modify these settings to use different models, or to apply other customized settings. The default settings were optimized for a c5.2xlarge instance.
+The system settings are stored in [config.properties](config.properties). You can modify these settings to use different models, or to apply other customized settings. 
 
 Notes on a couple of the parameters:
 
-* **models** - the model used when setting up service. By default it uses Squeezenet V1.1, change this argument to use customized model.
-* **worker-class** - the type of Gunicorn worker processes. We configure by default to `gevent` which is a type of async worker process. Options are described in the [Gunicorn docs](http://docs.gunicorn.org/en/stable/settings.html#worker-class).
-* **workers** - the number of Gunicorn workers which gets started. We recommend setting number of workers equal to number of vCPUs in the instance you are using. A detailed discussion of experiments and results can be found [here](../docs/optimised_config.md), if it is left 'optional' MMS will automatically detect vCPUs and assign number of workers to the number of vCPUs. 
-* **limit-request-line** - this is a security-related configuration that limits the [length of the request URI](http://docs.gunicorn.org/en/stable/settings.html#limit-request-line). It is useful preventing DDoS attacks.
-* **num-gpu** - optional parameter for number of available GPUs user wants to use. MMS currently assigns each guinicorn worker a gpu-id
-in the range of 0 .. (num-gpu-1) in a round-robin fashion. **By default MMS uses all the available GPUs but this parameter can be configured if user want to use only few of them**. A discussion on how to set this parameter can be found [here](../docs/optimised_config.md)
+* **model_store** - The directory on the local host where models must reside for serving.
+* **management_address** - The address:port value on which the model server would serve control plane APIs such as "GET", "PUT", "DELETE" of "models"
+* **inference_address** - The address:port value on which the model server would serve data plane APIs such as predictions, ping and api-description
+* **load_models** - List of all the models in the `model_store` which should be loaded on startup
+* **number_of_netty_threads** - Number of threads present to handle the incoming requests. 
+* **max_workers** - 
+* **job_queue_size** - Number of requests that can be queued. This queue is shared across models.
+* **number_of_gpu** - Number of GPUs available for model server when serving inferences on GPU hosts
+* **keystore** - SSL Key Store
+* **keystore_pass** - SSL password
+* **keystore_type** - Store of cryptographic keys and certificates
+* **private_key_file** - Location of the private key file
+* **certificate_file** - Location of the certificate file
 
-```text
-    [MMS arguments]
-    --models
-    squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+in the range of 0 .. (num-gpu-1) in a round-robin fashion. **By default MMS uses all the available GPUs but this parameter can be configured if user want to use only few of them**.
 
-    --service
-    optional
-
-    --gen-api
-    optional
-
-    --log-file
-    optional
-
-    --log-rotation-time
-    optional
-
-    --log-level
-    optional
-
-    [Gunicorn arguments]
-    --bind
-    unix:/tmp/mms_app.sock
-
-    --workers
-    optional
-
-    ##Following option is used only for GPU and is present in mms_app_gpu.conf
-    --num-gpu	     
-     optional
-
-    --worker-class
-    gevent
-
-    --limit-request-line
-    0
-
-    [Nginx configurations]
-    server {
-        listen       8080;
-
-        location / {
-            proxy_pass http://unix:/tmp/mms_app.sock;
-        }
-    }
-
-    [MXNet environment variables]
-    OMP_NUM_THREADS=4
-```
-
-## Configuring SSL
-`THIS SECTION IS EXPERIMENTAL`
-
-To safely send traffic between the server and the client, you need to setup a secure sockets layer for nginx server.
-
-First of all, you need to get a SSL certificate. It includes a server certificate and a private key. Suppose you have generated the cert (or received one from a CA) and resulting two files are located at /etc/nginx/ssl/nginx.crt and /etc/nginx/ssl/nginx.key.
-
-Second step is to create a Docker container which exposes TCP port 443 for SSL:
-
-```bash
-docker run -itd --name mms -v /home/user/models/:/models -p 8080:443 -p 8081:80 mms_image:latest
-```
-
-Note that you expose both https and normal http ports.
-
-Third step is to modify nginx section of `mms_app.conf` file to add ssl settings:
-
-```text
-server {
-    listen       80;
-    listen       443 ssl;
-
-    ssl_certificate /etc/nginx/ssl/nginx.crt;
-    ssl_certificate_key /etc/nginx/ssl/nginx.key;
-
-    location / {
-        proxy_pass http://unix:/tmp/mms_app.sock;
-    }
-}
-```
-
-Now you can try both https://your_public_host_name:8080/ping or http://your_public_host_name:8081/ping to test the service.
-
-```bash
-curl -X GET https://your_public_host_name/ping
-```
-
-or
-
-```bash
-curl -X GET http://your_public_host_name/ping
+```properties
+# vmargs=-Xmx1g -XX:MaxDirectMemorySize=512m -Dlog4j.configuration=file:///opt/ml/conf/log4j.properties
+# model_store=/opt/ml/model
+# load_models=ALL
+# inference_address=http://0.0.0.0:8080
+# management_address=http://0.0.0.0:8081
+# number_of_netty_threads=0
+# max_workers=0
+# job_queue_size=1000
+# number_of_gpu=1
+# keystore=src/test/resources/keystore.p12
+# keystore_pass=changeit
+# keystore_type=PKCS12
+# private_key_file=src/test/resources/key.pem
+# certificate_file=src/test/resources/certs.pem
 ```

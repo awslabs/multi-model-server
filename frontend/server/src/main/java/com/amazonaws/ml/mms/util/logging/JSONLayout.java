@@ -13,8 +13,8 @@
 
 package com.amazonaws.ml.mms.util.logging;
 
+import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.util.JsonUtils;
-import java.util.List;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.spi.LoggingEvent;
 
@@ -26,10 +26,10 @@ public class JSONLayout extends PatternLayout {
         if (eventMessage == null) {
             return null;
         }
-        if (eventMessage instanceof List<?>) {
-            List<?> metrics = (List) event.getMessage();
-            return JsonUtils.GSON_PRETTY.toJson(metrics);
+        if (eventMessage instanceof Metric) {
+            Metric metric = (Metric) event.getMessage();
+            return JsonUtils.GSON_PRETTY.toJson(metric) + '\n';
         }
-        return eventMessage.toString();
+        return eventMessage.toString() + '\n';
     }
 }

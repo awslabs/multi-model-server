@@ -21,6 +21,7 @@ import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -162,20 +163,28 @@ public final class ModelManager {
                     int numScaled = 0;
                     for (Map.Entry<String, Model> m : models.entrySet()) {
                         numScaled += m.getValue().getMinWorkers();
-                        numWorking += wlm.getWorkers(m.getValue().getModelName()).size();
+                        numWorking += wlm.getNumRunningWorkers(m.getValue().getModelName());
                     }
 
                     if ((numWorking > 0) && (numWorking < numScaled)) {
-                        // TODO: Check if this status can be set to
-                        // HttpResponseStatus.PARTIAL_CONTENT
                         response = "Partial Healthy";
                     } else if ((numWorking == 0) && (numScaled > 0)) {
-                        // TODO: Check if this can be set to HttpResponseStatus.NOT_FOUND;
                         response = "Unhealthy";
                     }
-                    NettyUtils.sendJsonResponse(ctx, new StatusResponse(response));
+
+                    // TODO: Check if its OK to send other 2xx errors to ALB for "Partial Healthy"
+                    // and "Unhealthy"
+                    NettyUtils.sendJsonResponse(
+                            ctx, new StatusResponse(response), HttpResponseStatus.OK);
                 };
         wlm.scheduleAsync(r);
+    }
+
+    public boolean scaleRequestStatus(String modelName) {
+        Model model = ModelManager.getInstance().getModels().get(modelName);
+        int numWorkers = wlm.getNumRunningWorkers(modelName);
+
+        return model == null || model.getMinWorkers() <= numWorkers;
     }
 
     public void submitTask(Runnable runnable) {

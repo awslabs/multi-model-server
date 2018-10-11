@@ -74,6 +74,10 @@ public class WorkerThread implements Runnable {
 
     private WorkerLifeCycle lifeCycle;
 
+    public WorkerState getState() {
+        return state;
+    }
+
     public WorkerThread(
             ConfigManager configManager,
             EventLoopGroup backendEventGroup,

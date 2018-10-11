@@ -68,14 +68,32 @@ public class WorkLoadManager {
         return worker.isEmpty();
     }
 
+    public int getNumRunningWorkers(String modelName) {
+        int numWorking = 0;
+        List<WorkerThread> threads = workers.getOrDefault(modelName, null);
+
+        if (threads != null) {
+            for (WorkerThread thread : threads) {
+                if ((thread.getState() != WorkerState.WORKER_STOPPED)
+                        && (thread.getState() != WorkerState.WORKER_ERROR)
+                        && (thread.getState() != WorkerState.WORKER_TERMINATED)) {
+                    numWorking += 1;
+                }
+            }
+        }
+
+        return numWorking;
+    }
+
     public CompletableFuture<Boolean> modelChanged(Model model) {
         synchronized (model.getModelName()) {
+            CompletableFuture<Boolean> future = new CompletableFuture<>();
             int minWorker = model.getMinWorkers();
+            int maxWorker = model.getMaxWorkers();
             List<WorkerThread> threads;
             if (minWorker == 0) {
                 threads = workers.remove(model.getModelName());
                 if (threads == null) {
-                    CompletableFuture<Boolean> future = new CompletableFuture<>();
                     future.complete(Boolean.TRUE);
                     return future;
                 }
@@ -85,22 +103,21 @@ public class WorkLoadManager {
 
             int currentWorkers = threads.size();
             if (currentWorkers < minWorker) {
-                return addThreads(threads, model, minWorker - currentWorkers);
+                addThreads(threads, model, minWorker - currentWorkers, future);
             } else {
-                for (int i = currentWorkers - 1; i >= minWorker; --i) {
+                for (int i = currentWorkers - 1; i >= maxWorker; --i) {
+                    // TODO: kill unhealthy worker first.
                     WorkerThread thread = threads.remove(i);
                     thread.shutdown();
                 }
-                CompletableFuture<Boolean> future = new CompletableFuture<>();
                 future.complete(Boolean.TRUE);
-                return future;
             }
+            return future;
         }
     }
 
-    private CompletableFuture<Boolean> addThreads(
-            List<WorkerThread> threads, Model model, int count) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
+    private void addThreads(
+            List<WorkerThread> threads, Model model, int count, CompletableFuture<Boolean> future) {
         WorkerStateListener listener = new WorkerStateListener(future, count);
         int maxGpu = configManager.getNumberOfGpu();
         for (int i = 0; i < count; ++i) {
@@ -121,7 +138,6 @@ public class WorkLoadManager {
                 port++;
             }
         }
-        return future;
     }
 
     public void scheduleAsync(Runnable r) {

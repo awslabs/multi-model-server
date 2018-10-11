@@ -53,7 +53,7 @@ JMX_GRAPHS_GENERATOR_PLAN = 'graphsGenerator.jmx'
 MODEL_RESNET_18 = 'resnet-18'
 MODEL_SQUEEZE_NET = 'squeezenet'
 MODEL_LSTM_PTB = 'lstm_ptb'
-MODEL_NOOP = 'noop'
+MODEL_NOOP = 'noop-v1.0'
 
 
 MODEL_MAP = {

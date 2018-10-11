@@ -9,36 +9,32 @@ This model uses [MXNet Bucketing Module](https://mxnet.incubator.apache.org/how_
 ## Step 1 - Download the pre-trained LSTM model files, signature file and vocabulary dictionary file.
 
 ```bash
-mkdir lstm-model
-wget https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-symbol.json -P lstm-model
-wget https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-0100.params -P lstm-model
-wget https://s3.amazonaws.com/model-server/models/lstm_ptb/signature.json -P lstm-model
-wget https://s3.amazonaws.com/model-server/models/lstm_ptb/vocab_dict.txt -P lstm-model
-wget https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb_service.py
+cd mxnet-model-server/examples/lstm_ptb
+
+curl -O https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-symbol.json
+curl -O https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-0100.params
+curl -O https://s3.amazonaws.com/model-server/models/lstm_ptb/vocab_dict.txt
 ```
 
-## Step 2 - Check signature file
+## Step 2 - Create signature file
 
-Let's take a look at signature file:
+In this example, provided mxnet_vision_service.py template assume there is a `signature.json` file that describes input parameter and shape.
+
+Create a `signature.json` file as following:
 ```json
 {
   "inputs": [
     {
       "data_name": "data",
-      "data_shape": [1, 60]
+      "data_shape": [
+        1,
+        60
+      ]
     }
-  ],
-  "input_type": "application/json",
-  "outputs": [
-    {
-      "data_name": "softmax",
-      "data_shape": [1, 10000]
-    }
-  ],
-  "output_type": "application/json"
+  ]
 }
 ```
-Both input and output are of type application/json. Input data shape is (1, 60). For sequence to sequence models, the inputs can be variable length sequences. In the signature file the input shape should be set to the maximum length of the input sequence, which is the default bucket key. The bucket sizes are defined when training the model. In this example valid bucket sizes are 10, 20, 30, 40, 50 and 60. Default bucket key is the maximum value which is 60. Check [training details](https://github.com/apache/incubator-mxnet/blob/master/example/rnn/cudnn_lstm_bucketing.py) if you want to know more about the bucketing module in MXNet. Output shape is (1, 10000), since PTB data set contains 10,000 vocabularies.
+Input data shape is (1, 60). For sequence to sequence models, the inputs can be variable length sequences. In the signature file the input shape should be set to the maximum length of the input sequence, which is the default bucket key. The bucket sizes are defined when training the model. In this example valid bucket sizes are 10, 20, 30, 40, 50 and 60. Default bucket key is the maximum value which is 60. Check [training details](https://github.com/apache/incubator-mxnet/blob/master/example/rnn/cudnn_lstm_bucketing.py) if you want to know more about the bucketing module in MXNet.
 
 ## Step 3 - Check vocabulary dictionary file
 
@@ -46,34 +42,52 @@ Both input and output are of type application/json. Input data shape is (1, 60).
 
 ## Step 4 - Create custom service class
 
-Loading a NLP model in MXNet is a bit more complicated than vision models. We need to override `__init__`, `_preprocess`, `_inference` and `_postprocess` methods in a custom service class. Implementation details are in [lstm_ptb_service.py](lstm_ptb_service.py).
-
-## Step 5 - Export model files with mxnet-model-export CLI tool
-
-With model files together with signature and vocab_dict files in lstm-model folder, we are ready to export them to MMS model file.
+We provide custom service class template code in [template](../template) folder:
+1. [model_handler.py](../model_handler.py) - A generic based service class.
+2. [mxnet_utils](../mxnet_utils) - A python package that contains utility classes.
 
 ```bash
-mxnet-model-export --model-path lstm-model/ --model-name lstm_ptb --service-file-path lstm_ptb_service.py
+cd mxnet-model-server/examples
+
+cp template/model_handler.py lstm_ptb/
+cp -r template/mxnet_utils lstm_ptb/
 ```
 
-## Step 6 - Establish inference service
+In this example, we need to implement `preprocess`, `inference` and `postprocess` methods in a custom service class. Implementation details are in [lstm_ptb_service.py](lstm_ptb_service.py).
 
-lstm_ptb.model file is created by exporting model files. We also provided custom service script lstm_ptb_service.py. We are ready to establish the LSTM inference service:
+## Step 5 - Package the model with `model-archiver` CLI utility
+
+In this step, we package the following:
+1. pre-trained MXNet Model we downloaded in Step 1.
+2. '[signature.json](signature.json)' file we prepared in step 2.
+3. '[vocab_dict.txt](vocab_dict.txt)' file we prepared in step 3.
+4. custom model service files we prepared in step 4.
+
+We use `model-archiver` command line utility (CLI) provided by MMS.
+Install `model-archiver` in case you have not:
 
 ```bash
-mxnet-model-server --models lstm_ptb=lstm_ptb.model
+pip install model-archiver
 ```
-You will see the following outputs which means the service is successfully established:
+
+This tool creates a .mar file that will be provided to MMS for serving inference requests. In following command line, we specify 'lstm_ptb_service:handle' as model archive entry point.
 
 ```bash
-I1102 11:25:58 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/mxnet_model_server.py:__init__:75] Initialized model serving.
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: lstm_ptb_predict to Flask
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: ping to Flask
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/serving_frontend.py:add_endpoint:177] Adding endpoint: api-description to Flask
-I1102 11:25:59 4873 /Users/user/anaconda/lib/python2.7/site-packages/mxnet_model_server-0.1.1-py2.7.egg/mms/mxnet_model_server.py:start_model_serving:88] Service started at 127.0.0.1:8080
+cd mxnet-model-server/examples
+model-archiver --model-name lstm_ptb --model-path lstm_ptb --handler lstm_ptb_service:handle
 ```
 
-The endpoint is on localhost and port 8080. You can change them by passing --host and --port when establishing the service.
+## Step 6 - Start the Inference Service
+
+Start the inference service by providing the 'lstm_ptb.mar' file we created in Step 5.
+
+By default, the server is started on the localhost at port 8080.
+
+```bash
+cd mxnet-model-server
+
+mxnet-model-server --start --model-store examples --models lstm_ptb.mar
+```
 
 ## Test inference service
 
@@ -84,7 +98,7 @@ Since the entire range of vocabularies in the training set is only 10,000, you m
 The key value of application/json input is 'input_sentence'. This can be a different value and preprocess method in lstm_ptb_service.py needs to be modified respectively. 
 
 ```bash
-curl -X POST http://127.0.0.1:8080/lstm_ptb/predict -F "data=[{'input_sentence': 'on the exchange floor as soon as ual stopped trading we <unk> for a panic said one top floor trader'}]"
+curl -X POST http://127.0.0.1:8080/predictions/lstm_ptb -H "Content-Type: application/json" -d "[{'input_sentence': 'on the exchange floor as soon as ual stopped trading we <unk> for a panic said one top floor trader'}]"
 ```
 
 Prediction result will be:
@@ -98,7 +112,7 @@ Prediction result will be:
 Let's try another sentence:
 
 ```bash
-curl -X POST http://127.0.0.1:8080/lstm_ptb/predict -F "data=[{'input_sentence': 'while friday \'s debacle involved mainly professional traders rather than investors it left the market vulnerable to continued selling this morning traders said '}]"
+curl -X POST http://127.0.0.1:8080/predictions/lstm_ptb -H "Content-Type: application/json" -d "[{'input_sentence': 'while friday \'s debacle involved mainly professional traders rather than investors it left the market vulnerable to continued selling this morning traders said '}]"
 ```
 
 Prediction result will be:
@@ -112,4 +126,3 @@ Prediction result will be:
 References
 1. [How to use MXNet bucketing module](https://mxnet.incubator.apache.org/how_to/bucketing.html)
 2. [LSTM trained with PennTreeBank data set](https://github.com/apache/incubator-mxnet/tree/master/example/rnn)
-

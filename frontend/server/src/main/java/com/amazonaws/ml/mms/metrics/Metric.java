@@ -14,6 +14,7 @@ package com.amazonaws.ml.mms.metrics;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +45,15 @@ public class Metric {
 
     @SerializedName("HostName")
     private String hostName;
+
+    public Metric() {}
+
+    public Metric(String metricName, String value, String unit, Dimension... dimensions) {
+        this.metricName = metricName;
+        this.value = value;
+        this.unit = unit;
+        this.dimensions = Arrays.asList(dimensions);
+    }
 
     public String getHostName() {
         return hostName;

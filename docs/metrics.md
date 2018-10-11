@@ -1,100 +1,294 @@
 # Metrics on Model Server
 
 ## Contents of this Document
-* [Basic Logging](#basic-logging)
-* [CloudWatch Metrics](#cloudwatch-metrics)
+* [Introduction](#introduction)
+* [System metrics](#system-metrics)
+* [Formatting](#formatting)
+* [Custom Metrics API](#custom-metrics-api)
 
-MMS has built-in basic logging as well as integration with the AWS CloudWatch API for metrics and dashboards.
+## Introduction
+MMS collects system level metrics in regular intervals, and also provides an API for custom metrics to be collected. Metrics collected by metrics are logged and can be aggregated by metric agents.
+The system level metrics are collected every minute. Metrics defined by the custom service code, can be collected per request or a batch of requests. MMS logs these two sets of metrics to different log files.
+Metrics are collected by default at:
+* System metrics - log_directory/mms_metrics.log
+* Custom metrics - log directory/model_metrics.log
 
-The default behavior of `mxnet-model-server` is to generate local log files, in the current working directory.
-
-## Basic Logging
-There are four arguments for MMS that facilitate logging of the model serving and inference activity.
-
-1. **log-file**: optional, log file name. By default it is "mms_app.log". You may also specify a path and a custom file name such as `logs/squeezenet_inference`. This is the root file name that is used in file rotation.
-
-    Usage example to create logs in a `logs` folder and name them `squeezenet_inference`:
-
-    ```bash
-    mkdir logs
-    mxnet-model-server --models squeezenet=squeezenet_v1.1.model --log-file=logs/squeezenet_inference
-    ```
-
-1. **log-rotation-time**: optional, log rotation time. By default it is "1 H", which means one Hour. Valid format is "interval when", where _when_ can be "S", "M", "H", or "D". For a particular weekday use only "W0" - "W6". For midnight use only "midnight". When a file is rotated a timestamp is appended, for example, `squeezenet_inference` would look like `squeezenet_inference.2017-11-27_17-26` after log rotation. Check the [Python docs on logging handlers](https://docs.python.org/2/library/logging.handlers.html#logging.handlers.TimedRotatingFileHandler) for detailed information on values.
-
-1. **log-level**: optional, log level. By default it is INFO. Possible values are NOTEST, DEBUG, INFO, ERROR and CRITICAL. Check the [Python docs for logging levels](https://docs.python.org/2/library/logging.html#logging-levels) for more information.
-
-1. **metrics-write-to**: optional, metrics output destination. Can be `csv` or `cloudwatch`. By default, various metrics are collected and written to the default log file.
-
-    If the `csv` value is passed to this argument, the metrics are recorded every minute in separate CSV files in a metrics folder in the current directory as follows.
-
-    a) **mms_cpu.csv** - CPU load
-
-    b) **mms_errors.csv** - number of errors
-
-    c) **mms_memory.csv** - memory utilization
-
-    d) **mms_preprocess_latency.csv** - any custom pre-processing latency
-
-    e) **mms_disk.csv** - disk utilization
-
-    f) **mms_inference_latency.csv** - any inference latency
-
-    g) **mms_overall_latency.csv** - collective latency
-
-    h) **mms_requests.csv** - number of inference requests
-
-    If the `cloudwatch` value is passed, the above metrics will write to [AWS CloudWatch Service](https://aws.amazon.com/cloudwatch/). For information on configuration and setup is provided in the [CloudWatch Metrics](#cloudwatch-metrics) section.
+The location of log files and metric files can be configured at [log4j.properties](https://github.com/vrakesh/mxnet-model-server/blob/master/frontend/server/src/main/resources/log4j.properties) file.
 
 
-## CloudWatch Metrics
+## System Metrics
 
-AWS CloudWatch enables a web-based dashboard where engineers can monitor a service status in real time. Engineers can also create triggers to alert when certain thresholds are exceeded, enabling an effective and fast response to issues in production. MMS has implemented the CloudWatch API so that metrics that are collected can be published to CloudWatch.
-
-![cloudwatch dashboard](images/cw_dash_800.png)
-*Figure 1: Example CloudWatch dashboard with MMS metrics*
-
-For more information on CloudWatch:
-* [CloudWatch API Reference](http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/)
-* [CloudWatch User Guide](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/)
-
-### Setup CloudWatch with MMS
-
-Using the CloudWatch API feature in MMS requires you to have already [configured your AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html).
-
-Once the credentials are setup MMS will be able to send the metrics to your CloudWatch dashboard.
-
-### Usage Example
-
-```bash
-mxnet-model-server --models squeezenet=squeezenet_v1.1.model --metrics-write-to=cloudwatch
-```
-
-This will write metrics to CloudWatch every minute with namespace 'mxnet-model-server'.
-
-**Note**: If you are not setup properly for the CloudWatch API, MMS will provide a warning only when the server starts. Example warning:
-
-```bash
-UserWarning: Failed to connect to AWS CloudWatch, metrics will be written to log.
-
-Failure reason: You must specify a region.
-```
-
-### Supported MMS Metrics
-|	metric name	|	dimension	|	unit	|	semantics	|
+|	Metric Name	|	Dimension	|	Unit	|	Semantics	|
 |---|---|---|---|
-|	APIDescriptionTotal	|	host	|	count	|	total number of requests	|
 |	CPUUtilization	|	host	|	percentage	|	cpu utillization on host	|
 |	DiskAvailable	|	host	|	GB	|	disk available on host	|
 |	DiskUsed	|	host	|	GB	|	disk used on host	|
 |	DiskUtilization	|	host	|	percentage	|	disk used on host	|
-|	LatencyInference	|	host, model	|	ms (stats)	|	inference time	|
-|	LatencyOverall	|	host, model	|	ms (stats)	|	total time including inference, pre-, post-processing	|
-|	LatencyPreprocess	|	host, model	|	ms (stats)	|	preprocessing time	|
 |	MemoryAvailable	|	host	|	MB	|	memory available on host	|
 |	MemoryUsed	|	host	|	MB	|	memory used on host	|
 |	MemoryUtilization	|	host	|	percentage	|	memory used on host	|
-|	PingTotal	|	host	|	count	|	total number of requests	|
-|	Predict4XX	|	host, model	|	count	|	number of 5XX errors	|
-|	Predict5XX	|	host, model	|	count	|	number of 4XX errors	|
-|	PredictTotal	|	host, model	|	count	|	total number of requests (incl. errors)	|
+|	Requests2XX	|	host	|	count	|	total number of requests that responded in 200-300 range	|
+|	Requests4XX	|	host	|	count	|	total number of requests that responded in 400-500 range |
+|	Requests5XX	|	host	|	count	|	total number of requests that responded above 500 |
+
+
+## Formatting
+
+The metrics emitted into log files by default, is in a [StatsD](https://github.com/etsy/statsd) like format.
+
+```bash
+CPUUtilization.Percent:0.0|#Level:Host|#hostname:my_machine_name
+MemoryUsed.Megabytes:13840.328125|#Level:Host|#hostname:my_machine_name    
+```
+
+To enable metric logging in JSON format, we can modify the log formatter in [log4j.properties](https://github.com/vrakesh/mxnet-model-server/blob/master/frontend/server/src/main/resources/log4j.properties), This is explained in the logging [document](https://github.com/vrakesh/mxnet-model-server/blob/master/docs/logging.md).
+
+to enable JSON formatting for metrics change it to 
+
+```properties
+log4j.appender.mms_metrics.layout = com.amazonaws.ml.mms.util.logging.JSONLayout
+```
+
+Once enabled the format emitted to logs, will look as follows
+
+```json
+{ 
+  "MetricName": "DiskAvailable",
+  "Value": "108.15547180175781",
+  "Unit": "Gigabytes",
+  "Dimensions": [
+    { 
+      "Name": "Level",
+      "Value": "Host"
+    }
+  ],
+  "HostName": "my_machine_name"
+}
+{ 
+  "MetricName": "DiskUsage",
+  "Value": "124.13163757324219",
+  "Unit": "Gigabytes",
+  "Dimensions": [
+    {
+      "Name": "Level",
+      "Value": "Host"
+    }
+  ],
+  "HostName": "my_machine_name"
+}
+
+```
+
+## Custom Metrics API
+
+MMS enables the custom service code to emit metrics, that are then logged by the system
+
+The custom service code is provided with a [context](https://github.com/vrakesh/mxnet-model-server/blob/master/mms/context.py) of the current request.
+
+Which has metrics object.
+
+```python
+# Access context metrics as follows
+metrics = context.metrics
+```
+All metrics collected with in the context 
+
+### Creating dimension object(s)
+
+Dimensions for metrics can be defined as objects
+
+```python
+from mms.metrics import dimension
+
+# Dimensions are name value pairs
+dim1 = Dimension(name, value)
+dim2 = Dimension(some_name, some_value)
+.
+.
+.
+dimN= Dimension(name_n, value_n)
+
+```
+
+**NOTE:** Metric functions below accept a list of dimensions
+
+### Add generic metrics
+
+One can add metrics with generic units using the following function.
+
+Function API
+```python
+    def add_metric(name, value, idx=None, unit=None, dimensions=None):
+        """
+        Add a metric which is generic with custom metrics
+
+        Parameters
+        ----------
+        name : str
+            metric name
+        value: int, float
+            value of metric
+        idx: int
+            request_id index in batch
+        unit: str
+            unit of metric
+        dimensions: list
+            list of dimensions for the metric
+        """
+```
+
+```python
+# Add Distance as a metric
+# dimensions = [dim1, dim2, dim3, ..., dimN]
+# Assuming batch size is 1 for example
+metrics.add_metric('DistanceInKM', distance, 'km', dimensions)
+```
+
+
+### Add Time based metrics
+Time based metrics can be added by invoking the following method
+
+Function API
+```python
+    def add_time(name, value, idx=None, unit='ms', dimensions=None):
+        """
+        Add a time based metric like latency, default unit is 'ms'
+
+        Parameters
+        ----------
+        name : str
+            metric name
+        value: int
+            value of metric
+        idx: int
+            request_id index in batch
+        unit: str
+            unit of metric,  default here is ms, s is also accepted
+        dimensions: list
+            list of dimensions for the metric
+        """
+```
+
+Note that the default unit in this case is 'ms'
+
+**Supported units**: ['ms', 's']
+
+To add custom time based metrics
+
+```python
+# Add inference time
+# dimensions = [dim1, dim2, dim3, ..., dimN]
+# Assuming batch size  is 1 for example
+metrics.add_time('InferenceTime', end_time-start_time, None, 'ms', dimensions)
+```
+
+### Add Size based metrics
+Size based metrics can be added by invoking the following method
+
+Function API
+```python
+    def add_size(name, value, idx=None, unit='MB', dimensions=None):
+        """
+        Add a size based metric
+
+        Parameters
+        ----------
+        name : str
+            metric name
+        value: int, float
+            value of metric
+        idx: int
+            request_id index in batch
+        unit: str
+            unit of metric, default here is 'MB', 'kB', 'GB' also supported
+        dimensions: list
+            list of dimensions for the metric
+        """
+```
+
+Note that the default unit in this case is 'ms'
+
+**Supported units**: ['MB', 'kB', 'GB']
+
+To add custom size based metrics
+
+```python
+# Add Image size as a metric
+# dimensions = [dim1, dim2, dim3, ..., dimN]
+# Assuming batch size is 1 for example
+metrics.add_size('SizeOfImage', img_size, None, 'MB', dimensions)
+```
+
+### Add Percentage based metrics
+
+Percentage based metrics can be added by invoking the following method
+
+Function API
+```python
+    def add_percent(name, value, idx=None, dimensions=None):
+        """
+        Add a percentage based metric
+
+        Parameters
+        ----------
+        name : str
+            metric name
+        value: int, float
+            value of metric
+        idx: int
+            request_id index in batch
+        dimensions: list
+            list of dimensions for the metric
+        """
+```
+
+To add custom percentage based metrics
+
+```python
+# Add MemoryUtilization as a metric
+# dimensions = [dim1, dim2, dim3, ..., dimN]
+# Assuming batch size  is 1 for example
+metrics.add_percent('MemoryUtilization', utilization_percent, None, dimensions)
+```
+
+### Add Counter based metrics
+
+Percentage based metrics can be added by invoking the following method
+
+Function API
+```python
+    def add_counter(name, value, idx=None, dimensions=None):
+        """
+        Add a counter metric or increment an existing counter metric
+
+        Parameters
+        ----------
+        name : str
+            metric name
+        value: int
+            value of metric
+        idx: int
+            request_id index in batch
+        dimensions: list
+            list of dimensions for the metric
+        """
+```
+
+To create , increment and decrement counter based metrics we can use the following calls
+```python
+# Add Loop Count as a metric
+# dimensions = [dim1, dim2, dim3, ..., dimN]
+# Assuming batch size is 1 for example
+
+# Create a counter with name 'LoopCount' and dimensions, initial value
+metrics.add_counter('LoopCount', 1, None, dimensions)
+
+# Increment counter by 2 
+metrics.add_counter('LoopCount', 2 , None, dimensions)
+
+# Decrement counter by 1
+metrics.add_counter('LoopCount', -1, None, dimensions)
+
+# Final counter value in this case is 2
+
+```

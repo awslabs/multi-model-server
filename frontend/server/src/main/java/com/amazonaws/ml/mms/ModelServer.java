@@ -111,6 +111,10 @@ public class ModelServer {
         }
 
         ModelManager modelManager = ModelManager.getInstance();
+        int workers = configManager.getNumberOfGpu();
+        if (workers == 0) {
+            workers = Runtime.getRuntime().availableProcessors();
+        }
         if ("ALL".equalsIgnoreCase(loadModels)) {
             String modelStore = configManager.getModelStore();
             if (modelStore == null) {
@@ -141,7 +145,7 @@ public class ModelServer {
                         logger.debug("Loading models from model store: {}", file.getName());
 
                         ModelArchive archive = modelManager.registerModel(file.getName());
-                        modelManager.updateModel(archive.getModelName(), 1, 1);
+                        modelManager.updateModel(archive.getModelName(), workers, workers);
                     } catch (ModelException | IOException e) {
                         logger.warn("Failed to load model: " + file.getAbsolutePath(), e);
                     }
@@ -170,7 +174,7 @@ public class ModelServer {
 
                 ModelArchive archive =
                         modelManager.registerModel(url, modelName, null, null, 1, 100);
-                modelManager.updateModel(archive.getModelName(), 1, 1);
+                modelManager.updateModel(archive.getModelName(), workers, workers);
             } catch (ModelException | IOException e) {
                 logger.warn("Failed to load model: " + url, e);
             }

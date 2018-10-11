@@ -1,8 +1,17 @@
 # MMS REST API
 
-The REST API is built according to the [OpenAPI specification](https://en.wikipedia.org/wiki/OpenAPI_Specification). It is human readable and easy to integrate with a variety of applications. To that end, it interfaces with Swagger-generated client API code, so you can [very easily and automatically generate code](code_gen.md) for Java, Scala, C#, Javascript, [and more](https://swagger.io/swagger-codegen/).
+MMS use RESTful API for both inference and management calls. The API is compliance with [OpenAPI specification 3.0](https://swagger.io/specification/). User can easily generate client side code for Java, Scala, C#, Javascript use [swagger codegen](https://swagger.io/swagger-codegen/).
 
-## Endpoints
+When MMS startup, it start two web services:
+* [Inference API](inference_api.md)
+* [Management API](management_api.md)
+
+By default, MMS listening on 8080 port for Inference API and 8081 on Management API.
+Both API is only accessible from localhost. Please see [MMS Configuration](configuration.md) for how to enable access from remote host. 
+
+
+## Inference API
+
 
 After local server is up, there will be three built-in endpoints:
 

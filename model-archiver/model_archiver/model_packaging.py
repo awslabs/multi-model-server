@@ -32,7 +32,7 @@ def package_model(args, manifest):
         export_file_path = ModelExportUtils.check_mar_already_exists(model_name, export_file_path, args.force)
 
         # Step 2 : Check if any special handling is required for custom models like onnx models
-        t, files_to_exclude = ModelExportUtils.check_custom_model_types(model_path)
+        t, files_to_exclude = ModelExportUtils.check_custom_model_types(model_path, model_name)
         temp_files.extend(t)
 
         # Step 3 : Zip 'em all up

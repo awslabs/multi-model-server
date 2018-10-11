@@ -66,7 +66,7 @@ class ModelExportUtils(object):
         return export_file_path
 
     @staticmethod
-    def check_custom_model_types(model_path):
+    def check_custom_model_types(model_path, model_name=None):
         """
         This functions checks whether any special handling is required for custom model extensions such as
         .onnx, or in the future, for Tensorflow and PyTorch extensions.
@@ -79,7 +79,7 @@ class ModelExportUtils(object):
         files_set = set(os.listdir(model_path))
         onnx_file = ModelExportUtils.find_unique(files_set, ONNX_TYPE)
         if onnx_file is not None:
-            symbol_file, params_file = ModelExportUtils.convert_onnx_model(model_path, onnx_file)
+            symbol_file, params_file = ModelExportUtils.convert_onnx_model(model_path, onnx_file, model_name)
             files_to_exclude.append(onnx_file)
             temp_files.append(os.path.join(model_path, symbol_file))
             temp_files.append(os.path.join(model_path, params_file))
@@ -115,9 +115,10 @@ class ModelExportUtils(object):
             sys.exit(1)
 
     @staticmethod
-    def convert_onnx_model(model_path, onnx_file):
+    def convert_onnx_model(model_path, onnx_file, model_name):
         """
         Util to convert onnx model to MXNet model
+        :param model_name:
         :param model_path:
         :param onnx_file:
         :return:
@@ -135,7 +136,6 @@ class ModelExportUtils(object):
             sys.exit(1)
 
         from mxnet.contrib import onnx as onnx_mxnet
-        model_name = os.path.splitext(os.path.basename(onnx_file))[0]
         symbol_file = '%s-symbol.json' % model_name
         params_file = '%s-0000.params' % model_name
         signature_file = 'signature.json'
@@ -161,6 +161,7 @@ class ModelExportUtils(object):
         with open(os.path.join(model_path, signature_file), 'r') as f:
             data = json.loads(f.read())
             data['inputs'][0]['data_name'] = input_data[0][0]
+            data['inputs'][0]['data_shape'] = [int(i) for i in input_data[0][1]]
         with open(os.path.join(model_path, signature_file), 'w') as f:
             f.write(json.dumps(data, indent=2))
 

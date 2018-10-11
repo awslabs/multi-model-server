@@ -23,7 +23,7 @@ optional:
 -o : raw result tree output filename
 ```
 
-This will start `100` threads concurrently and each threads will simulate `20` requests. The aggregated report will be write to `./report/report.csv` and the JMeter logs will be write to
+This will start `100` threads concurrently and each threads will simulate `20` requests. The aggregated report will be written to `./report/report.csv` and the JMeter logs will be written to
 `./log/jmeter.log`.
 
 ## Prerequisite

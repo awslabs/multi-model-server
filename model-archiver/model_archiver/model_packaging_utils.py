@@ -34,9 +34,8 @@ ONNX_TYPE = '.onnx'
 
 class ModelExportUtils(object):
     """
-    Helper utils for Model Export tool.
+    Helper utils for Model Archiver tool.
     This class lists out all the methods such as validations for model archiving, ONNX model checking etc.
-    This is to keep the code in export_model.py clean and simple.
     """
 
     @staticmethod

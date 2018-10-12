@@ -9,17 +9,47 @@ Use the MMS Server CLI, or the pre-configured Docker images, to start a
 service that sets up HTTP endpoints to handle model inference requests.
 
 Detailed documentation and examples are provided in the `docs
-folder <docs/README.md>`__.
+folder <https://github.com/awslabs/mxnet-model-server/blob/master/docs/README.md>`__.
 
 Prerequisites
 -------------
 
-If you wish to use ONNX with MMS, you will need to first install a
-``protobuf`` compiler. This is not needed if you wish to serve MXNet
-models.
+* **java 8**: Required. MMS use java to serve HTTP requests. You must install java 8 (or later) and make sure java is on available in $PATH environment variable *before* installing MMS. If you have multiple java installed, you can use $JAVA_HOME environment vairable to control which java to use.
+* **mxnet**: `mxnet` will not be installed by default with MMS 1.0 any more. You have to install it manually if you use MxNet.
 
-`Instructions for installing MMS with
-ONNX <https://github.com/awslabs/mxnet-model-server#install-with-pip>`__.
+For ubuntu:
+```bash
+sudo apt-get install openjdk-8-jre-headless
+```
+
+For centos
+```bash
+sudo yum install java-1.8.0-openjdk
+```
+
+For Mac:
+```bash
+brew tap caskroom/versions
+brew update
+brew cask install java8
+```
+
+Install MxNet:
+```bash
+pip install mxnet
+```
+
+MXNet offers MKL pip packages that will be much faster when running on Intel hardware.
+To install mkl package for CPU:
+```bash
+pip install mxnet-mkl
+```
+
+or for GPU instance:
+
+```bash
+pip install mxnet-cu90-mkl
+```
 
 Installation
 ------------
@@ -59,8 +89,8 @@ Testing
 
 After installation, try out the MMS Quickstart for `Serving a
 Model <https://github.com/awslabs/mxnet-model-server/blob/master/README.md#serve-a-model>`__
-and `Exporting a
-Model <https://github.com/awslabs/mxnet-model-server/blob/master/README.md#export-a-model>`__.
+and `Create a
+Model Archive<https://github.com/awslabs/mxnet-model-server/blob/master/README.md#model-archive>`__.
 
 Help and Support
 ----------------

@@ -269,7 +269,7 @@ Your response, if the server is running should be:
 
 ## Predictions API
 
-MMS 1.0 support 0.4 style API calls, those APIs are deprecated, they will be removed in future release. See [Deprecated APIs](#deprecated-apis) for detail.
+MMS 1.0 support 0.4 style API calls, those APIs are deprecated, they will be removed in future release. See [Deprecated APIs](#deprecated-api) for detail.
 
 For each loaded model, user can make REST call to URI: /predictions/{model_name}
 
@@ -280,18 +280,21 @@ For each loaded model, user can make REST call to URI: /predictions/{model_name}
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
 
-curl -X POST http://localhost:8080/predictions/resnet-18 -F "data=@kitten.jpg"
+curl -X POST http://localhost:8080/predictions/resnet-18 -T kitten.jpg
 
 or:
 
-curl -X POST http://localhost:8080/predictions/resnet-18 -T kitten.jpg
+curl -X POST http://localhost:8080/predictions/resnet-18 -F "data=@kitten.jpg"
 ```
 
 The result was some JSON that told us our image likely held a tabby cat. The highest prediction was:
 
 ```json
-"class": "n02123045 tabby, tabby cat",
-"probability": 0.42514491081237793
+{
+    "class": "n02123045 tabby, tabby cat",
+    "probability": 0.42514491081237793,
+    ...
+}
 ```
 
 ## Deprecated API

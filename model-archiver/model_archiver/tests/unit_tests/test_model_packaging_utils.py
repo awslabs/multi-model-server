@@ -76,7 +76,7 @@ class TestExportModelUtils:
 
         def test_onnx_file_is_none(self, patches):
             patches.utils.find_unique.return_value = None
-            ModelExportUtils.check_custom_model_types(model_path=self.model_path)
+            ModelExportUtils.check_custom_model_types(model_path=self.model_path, model_name=None)
 
             patches.utils.find_unique.assert_called()
             patches.utils.convert_onnx_model.assert_not_called()
@@ -87,7 +87,7 @@ class TestExportModelUtils:
             patches.utils.convert_onnx_model.return_value = ('sym', 'param')
 
             temp, exclude = ModelExportUtils.check_custom_model_types(self.model_path)
-            patches.utils.convert_onnx_model.assert_called_once_with(self.model_path, onnx_file)
+            patches.utils.convert_onnx_model.assert_called_once_with(self.model_path, onnx_file, None)
 
             assert len(temp) == 2
             assert len(exclude) == 1

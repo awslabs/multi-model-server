@@ -122,6 +122,10 @@ public final class ConfigManager {
         if (models != null) {
             prop.setProperty(LOAD_MODELS, String.join(",", models));
         }
+
+        if (!prop.containsKey(NUMBER_OF_GPU)) {
+            prop.setProperty(NUMBER_OF_GPU, String.valueOf(getAvailableGpu()));
+        }
     }
 
     public boolean isDebug() {
@@ -316,6 +320,8 @@ public final class ConfigManager {
                 + System.getProperty("java.io.tmpdir")
                 + "\nConfig file: "
                 + prop.getProperty("mmsConfigFile")
+                + "\nNumber of GPU: "
+                + getNumberOfGpu()
                 + "\nModel Store: "
                 + getModelStore()
                 + "\nInitial Models: "
@@ -366,6 +372,24 @@ public final class ConfigManager {
             return null;
         }
         return getCanonicalPath(new File(path));
+    }
+
+    private static int getAvailableGpu() {
+        try {
+            Process process =
+                    Runtime.getRuntime().exec("nvidia-smi --query-gpu=index --format=csv");
+            int ret = process.waitFor();
+            if (ret != 0) {
+                return 0;
+            }
+            List<String> list = IOUtils.readLines(process.getInputStream(), StandardCharsets.UTF_8);
+            if (list.isEmpty() || !"index".equals(list.get(0))) {
+                throw new AssertionError("Unexpected nvidia-smi response.");
+            }
+            return list.size() - 1;
+        } catch (IOException | InterruptedException e) {
+            return 0;
+        }
     }
 
     public static final class Arguments {

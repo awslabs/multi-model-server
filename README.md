@@ -10,40 +10,52 @@ Apache MXNet Model Server (MMS) is a flexible and easy to use tool for serving d
 
 Use the MMS Server CLI, or the pre-configured Docker images, to start a service that sets up HTTP endpoints to handle model inference requests.
 
-A quick overview and examples for both serving and exporting are provided below. Detailed documentation and examples are provided in the [docs folder](docs/README.md).
+A quick overview and examples for both serving and packaging are provided below. Detailed documentation and examples are provided in the [docs folder](docs/README.md).
 
 ## Contents of this Document
 * [Quick Start](#quick-start)
 * [Serve a Model](#serve-a-model)
-* [Export a Model](#export-a-model)
+* [Export a Model](#model-archive)
 * [Other Features](#other-features)
 * [Contributing](#contributing)
 
 ## Other Relevant Documents
 * [Latest Version Docs](docs/README.md)
-* [v0.1.5 Docs](https://github.com/awslabs/mxnet-model-server/blob/v0.1.5/docs/README.md)
+* [v0.4.0 Docs](https://github.com/awslabs/mxnet-model-server/blob/v0.4.0/docs/README.md)
 ## Quick Start
 
 ### Install with pip
 
-If you plan to use the ONNX features, you will need to have the [protobuf compiler installed](https://github.com/onnx/onnx#installation).
+A minimal version of `model-archiver` will be installed with MMS as dependency. See [model-archiver](../model-archiver/docs/README.md) for more options and detail.
 
-To install MMS with ONNX support, make sure you have Python installed, then for Ubuntu run:
+MMS runtime depends on Python and java-8, please make sure install Python and java 8 (or later)  before install MMS.
 
+For ubuntu:
 ```bash
-sudo apt-get install protobuf-compiler libprotoc-dev
-pip install mxnet-model-server
+sudo apt-get install openjdk-8-jre-headless
 ```
 
-Or for Mac run:
+For centos
+```bash
+sudo yum install java-1.8.0-openjdk
+```
+
+For Mac:
+```bash
+brew tap caskroom/versions
+brew update
+brew cask install java8
+```
+
+MMS won't install mxnet engine by default, you can install mxnet-mkl or mxnet-cu90mkl based on your need.
 
 ```bash
-conda install -c conda-forge protobuf
-pip install mxnet-model-server
+pip install mxnet-mkl
+
+pip install -U mxnet-model-server
 ```
 
 See the [advanced installation](docs/install.md) page for more options and troubleshooting.
-
 
 ### Serve a Model
 
@@ -57,13 +69,12 @@ For this quick start, we'll skip over most of the features, but be sure to take 
 
 Here is an easy example for serving an object classification model:
 ```bash
-mxnet-model-server \
-  --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 With the command above executed, you have MMS running on your host, listening for inference requests.
 
-To test it out, you will need to open a new terminal window next to the one running MMS. Then you can use `curl` to download one of these [cute pictures of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and curl's `-o` flag will name it `kitten.jpg` for you. Then you will `curl` a `POST` to the MMS predict endpoint with the kitten's image.
+To test it out, you can open a new terminal window next to the one running MMS. Then you can use `curl` to download one of these [cute pictures of a kitten](https://www.google.com/search?q=cute+kitten&tbm=isch&hl=en&cr=&safe=images) and curl's `-o` flag will name it `kitten.jpg` for you. Then you will `curl` a `POST` to the MMS predict endpoint with the kitten's image.
 
 ![kitten](docs/images/kitten_small.jpg)
 
@@ -71,39 +82,36 @@ In the example below, we provide a shortcut for these steps.
 
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
-curl -X POST http://127.0.0.1:8080/squeezenet/predict -F "data=@kitten.jpg"
+curl -X POST http://127.0.0.1:8080/predictions/squeezenet -T kitten.jpg
 ```
 
 The predict endpoint will return a prediction response in JSON. It will look something like the following result:
 
+```json
+[
+  {
+    "class": "n02127052 lynx, catamount", 
+    "probability": 0.5721369385719299
+  }, 
+  {
+    "class": "n02124075 Egyptian cat", 
+    "probability": 0.4079437255859375
+  }, 
+  {
+    "class": "n02123045 tabby, tabby cat", 
+    "probability": 0.013694713823497295
+  }, 
+  {
+    "class": "n02123394 Persian cat", 
+    "probability": 0.004954110365360975
+  }, 
+  {
+    "class": "n02123159 tiger cat", 
+    "probability": 0.0012674571480602026
+  }
+]
 ```
-{
-  "prediction": [
-    [
-      {
-        "class": "n02124075 Egyptian cat",
-        "probability": 0.9408261179924011
-      },
-      {
-        "class": "n02127052 lynx, catamount",
-        "probability": 0.055966004729270935
-      },
-      {
-        "class": "n02123045 tabby, tabby cat",
-        "probability": 0.0025502564385533333
-      },
-      {
-        "class": "n02123159 tiger cat",
-        "probability": 0.00034320182749070227
-      },
-      {
-        "class": "n02123394 Persian cat",
-        "probability": 0.00026897044153884053
-      }
-    ]
-  ]
-}
-```
+
 You will see this result in the response to your `curl` call to the predict endpoint, and in the server logs in the terminal window running MMS. It's also being [logged locally with metrics](docs/metrics.md).
 
 Other models can be downloaded from the [model zoo](docs/model_zoo.md), so try out some of those as well.
@@ -111,48 +119,63 @@ Other models can be downloaded from the [model zoo](docs/model_zoo.md), so try o
 Now you've seen how easy it can be to serve a deep learning model with MMS! [Would you like to know more?](docs/server.md)
 
 
-### Export a Model
+### Package a model archive
 
-MMS enables you to package up all of your model artifacts into a single model archive, that you can then easily share or distribute. To export a model, follow these **two** steps:
+MMS enables you to package up all of your model artifacts into a single model archive, that you can then easily share or distribute. To package a model, follow these **three** steps:
 
-**1. Download Model Artifacts (if you don't have them handy)**
+**1. Download sample squeezenet modle artifacts (if you don't have them handy)**
 
-[Model-Artifacts.zip](https://s3.amazonaws.com/model-server/inputs/Model-Artifacts.zip) - 5 MB
+```bash
+mkdir squeezenet
+cd squeezenet
 
- Then extract the zip file to see the following model artifacts:
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-symbol.json
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-0000.params
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/signature.json
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/synset.txt
+```
+
+The downloaded model artifact files are:
 
 * **Model Definition** (json file) - contains the layers and overall structure of the neural network
 * **Model Params and Weights** (params file) - contains the parameters and the weights
 * **Model Signature** (json file) - defines the inputs and outputs that MMS is expecting to hand-off to the API
 * **assets** (text files) - auxiliary files that support model inference such as vocabularies, labels, etc. and vary depending on the model
 
-Further details on these files, custom services, and advanced exporting features can be found on the [Exporting Models for Use with MMS](docs/export.md) page in the [docs folder](docs).
+Further details on these files, custom services, and advanced exporting features can be found on the [Package Models for Use with MMS](../model-archiver/docs/README.md) page in the [docs folder](./model-archiver/docs).
 
-**2. Export Your Model**
+**2. Prepare your model custom service code**
 
-With the model artifacts available locally, you can use the `mxnet-model-export` CLI to generate a `.model` file that can be used to serve an inference API with MMS.
-
-Open your terminal and go to the folder that has the files you just downloaded.
-
-In this next step we'll run `mxnet-model-export` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+You can implement your own model customer service code as model archive entry point. Here we are going to use provided mxnet vision service template:
 
 ```bash
-mxnet-model-export --model-name squeezenet_v1.1 --model-path .
+cp -r mxnet-model-server/examples/template/* squeezemet/
+``` 
+
+**3. Package Your Model**
+
+With the model artifacts available locally, you can use the `model-archiver` CLI to generate a `.mar` file that can be used to serve an inference API with MMS.
+
+In this next step we'll run `model-archiver` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+
+**Note**: For mxnet models, `model-name` must match prefix of the symbol and param file name. 
+
+```bash
+model-archiver --model-name squeezenet_v1.1 --model-path squeezenet --handler mxnet_vision_service:handle
 ```
 
-This will output `squeezenet_v1.1.model` in the current working directory, and it assumes all of the model artifacts are also in the current working directory. Otherwise, instead of `.` you would use a path to the artifacts. This file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the Serve a Model tutorial above and try to run this model that you just exported!
+This will package all the model artifacts files in `squeezenet` directory and output `squeezenet_v1.1.mar` in the current working directory. This `.mar` file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the Serve a Model tutorial above and try to run this model that you just exported!
 
-To learn more about exporting, check out [MMS export documentation](docs/export.md)
+To learn more about exporting, check out [Model archiver documentation](../model-archiver/docs/README.md)
 
-## Production Deployments
+## Recommended production deployments
 
-When launched directly, MMS uses a standalone [Flask](http://flask.pocoo.org/) server.  This is handy for testing and development.
-But for production deployments, we recommend using [Gunicorn](http://gunicorn.org/) which should provide lower latency, higher throughput, and more efficient
-use of memory.
-
-This project includes Dockerfiles to build containers recommended for production deployments.  These containers demonstrate how to set up a production
-stack consisting of nginx, gunicorn, and MMS.
-The basic usage can be found on the [Docker readme](docker/README.md).
+* MMS doesn't provide authentication. You have to your own authentication proxy in front of MMS. 
+* MMS doesn't provide throttling, it's vulnerable to DDoS attack. It's recommended to running MMS behind a firewall.
+* MMS only allows localhost access by default, see [Network configuration](administration.md#network) for detail.
+* SSL is not enabled by default, see [Enable SSL](administration.md#enable_ssl) for detail.
+* MMS use a config.properties file to configure MMS's behavior, see [Manage MMS](administration.md) page for detail of how to configure MMS.
+* For better security, we recommend running MMS inside docker container. This project includes Dockerfiles to build containers recommended for production deployments. These containers demonstrate how to customize your own production MMS deployment. The basic usage can be found on the [Docker readme](docker/README.md).
 
 ## Other Features
 

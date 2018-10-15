@@ -57,11 +57,11 @@ if __name__ == '__main__':
     setup(
         name='model-archiver',
         version=version.strip() + 'b' + str(date.today()).replace('-', ''),
-        description='Model Export Tool is used for creating archives of trained neural net models that can be consumed '
+        description='Model Archiver is used for creating archives of trained neural net models that can be consumed '
                     'by MXNet-Model-Server inference',
         long_description=pypi_description(),
-        url='https://github.com/awslabs/mxnet-model-server/model_export/',
-        keywords='MXNet Model Server Serving Deep Learning Inference AI',
+        url='https://github.com/awslabs/mxnet-model-server/model-archiver/',
+        keywords='MXNet Model Archive Archiver MMS Server Serving Deep Learning Inference AI',
         packages=pkgs,
         install_requires=requirements,
         extras_require={

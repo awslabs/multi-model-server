@@ -55,6 +55,12 @@ public class InferenceRequestHandler extends HttpRequestHandler {
             String[] segments)
             throws ModelNotFoundException {
         switch (segments[1]) {
+            case "ping":
+                ModelManager.getInstance().workerStatus(ctx);
+                break;
+            case "api-description":
+                handleApiDescription(ctx);
+                break;
             case "invocations":
                 handleInvocations(ctx, req, decoder);
                 break;
@@ -161,6 +167,7 @@ public class InferenceRequestHandler extends HttpRequestHandler {
                 logger.trace("End of multipart items.");
             } finally {
                 form.cleanFiles();
+                form.destroy();
             }
         } else {
             byte[] content = NettyUtils.getBytes(req.content());

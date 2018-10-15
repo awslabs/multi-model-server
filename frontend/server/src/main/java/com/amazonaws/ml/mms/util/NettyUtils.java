@@ -14,6 +14,8 @@ package com.amazonaws.ml.mms.util;
 
 import com.amazonaws.ml.mms.http.ErrorResponse;
 import com.amazonaws.ml.mms.http.Session;
+import com.amazonaws.ml.mms.metrics.Dimension;
+import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.util.messages.InputParameter;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -65,7 +67,12 @@ public final class NettyUtils {
 
     private static final String REQUEST_ID = "x-request-id";
     private static final AttributeKey<Session> SESSION_KEY = AttributeKey.valueOf("session");
-    private static final String UDS_PREFIX = "/tmp/.mms.worker.";
+    private static final Dimension DIMENSION = new Dimension("Level", "Host");
+    private static final Metric REQUESTS_2_XX = new Metric("Requests2XX", "1", "Count", DIMENSION);
+    private static final Metric REQUESTS_4_XX = new Metric("Requests4XX", "1", "Count", DIMENSION);
+    private static final Metric REQUESTS_5_XX = new Metric("Requests5XX", "1", "Count", DIMENSION);
+    private static final org.apache.log4j.Logger loggerMmsMetrics =
+            org.apache.log4j.Logger.getLogger(ConfigManager.MMS_METRICS_LOGGER);
 
     private NettyUtils() {}
 
@@ -133,8 +140,16 @@ public final class NettyUtils {
             resp.headers().set(REQUEST_ID, session.getRequestId());
             logger.info(session.toString());
         }
+        int code = resp.status().code();
+        if (code >= 200 && code < 300) {
+            loggerMmsMetrics.info(REQUESTS_2_XX);
+        } else if (code >= 400 && code < 500) {
+            loggerMmsMetrics.info(REQUESTS_4_XX);
+        } else {
+            loggerMmsMetrics.info(REQUESTS_5_XX);
+        }
         HttpUtil.setContentLength(resp, resp.content().readableBytes());
-        if (!keepAlive || resp.status().code() >= 400) {
+        if (!keepAlive || code >= 400) {
             ChannelFuture f = channel.writeAndFlush(resp);
             f.addListener(ChannelFutureListener.CLOSE);
         } else {
@@ -192,7 +207,8 @@ public final class NettyUtils {
 
     public static SocketAddress getSocketAddress(int port) {
         if (Epoll.isAvailable() || KQueue.isAvailable()) {
-            return new DomainSocketAddress(UDS_PREFIX + port);
+            String uds = System.getProperty("java.io.tmpdir") + "/.mms.sock." + port;
+            return new DomainSocketAddress(uds);
         }
         return new InetSocketAddress("127.0.0.1", port);
     }

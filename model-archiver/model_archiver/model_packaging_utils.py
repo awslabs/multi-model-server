@@ -55,19 +55,18 @@ class ModelExportUtils(object):
 
         if os.path.exists(export_file):
             if overwrite:
-                logging.warning("%s already exists. It will be overwritten since --force/-f was specified", export_file)
-
+                logging.warning("Overwriting %s ...", export_file)
             else:
-                logging.error("%s already exists. Since no --force/-f was specified, it will not be overwritten. "
-                              "Exiting the program here. Specify --force/-f flag to overwrite the %s file. "
-                              "See -h/--help for more details", export_file, export_file)
+                logging.error("%s already exists.\n"
+                              "Please specify --force/-f option to overwrite the model archive output file.\n"
+                              "See -h/--help for more details.", export_file)
 
                 sys.exit(1)
 
         return export_file_path
 
     @staticmethod
-    def check_custom_model_types(model_path):
+    def check_custom_model_types(model_path, model_name=None):
         """
         This functions checks whether any special handling is required for custom model extensions such as
         .onnx, or in the future, for Tensorflow and PyTorch extensions.
@@ -80,7 +79,7 @@ class ModelExportUtils(object):
         files_set = set(os.listdir(model_path))
         onnx_file = ModelExportUtils.find_unique(files_set, ONNX_TYPE)
         if onnx_file is not None:
-            symbol_file, params_file = ModelExportUtils.convert_onnx_model(model_path, onnx_file)
+            symbol_file, params_file = ModelExportUtils.convert_onnx_model(model_path, onnx_file, model_name)
             files_to_exclude.append(onnx_file)
             temp_files.append(os.path.join(model_path, symbol_file))
             temp_files.append(os.path.join(model_path, params_file))
@@ -109,16 +108,17 @@ class ModelExportUtils(object):
                 '.onnx': ('.onnx', 'ONNX model file')
             }[suffix]
 
-            message = "model-export-tool expects only one %s file. Please supply the single %s file you wish to " \
-                      "export." % (params[0], params[1])
+            message = "model-archiver expects only one %s file in the folder.\n" \
+                      "Please supply the single %s file you wish to package." % (params[0], params[1])
 
             logging.error(message)
             sys.exit(1)
 
     @staticmethod
-    def convert_onnx_model(model_path, onnx_file):
+    def convert_onnx_model(model_path, onnx_file, model_name):
         """
         Util to convert onnx model to MXNet model
+        :param model_name:
         :param model_path:
         :param onnx_file:
         :return:
@@ -126,17 +126,16 @@ class ModelExportUtils(object):
         try:
             import mxnet as mx
         except ImportError:
-            logging.error("MXNet package is not installed. Run command : pip install mxnet to install it. ")
+            logging.error("MXNet package is not installed. Run command: pip install mxnet to install it. ")
             sys.exit(1)
 
         try:
             import onnx
         except ImportError:
-            logging.error("Onnx package is not installed. Run command : pip install mxnet to install it. ")
+            logging.error("Onnx package is not installed. Run command: pip install mxnet to install it. ")
             sys.exit(1)
 
         from mxnet.contrib import onnx as onnx_mxnet
-        model_name = os.path.splitext(os.path.basename(onnx_file))[0]
         symbol_file = '%s-symbol.json' % model_name
         params_file = '%s-0000.params' % model_name
         signature_file = 'signature.json'
@@ -162,6 +161,7 @@ class ModelExportUtils(object):
         with open(os.path.join(model_path, signature_file), 'r') as f:
             data = json.loads(f.read())
             data['inputs'][0]['data_name'] = input_data[0][0]
+            data['inputs'][0]['data_shape'] = [int(i) for i in input_data[0][1]]
         with open(os.path.join(model_path, signature_file), 'w') as f:
             f.write(json.dumps(data, indent=2))
 
@@ -237,11 +237,11 @@ class ModelExportUtils(object):
             # Filter files
             files[:] = [f for f in files if ModelExportUtils.file_filter(f, files_to_exclude)]
             for f in files:
-                ziph.write(os.path.join(root, f), f)
+                file_path = os.path.join(root, f)
+                ziph.write(file_path, os.path.relpath(file_path, path))
 
     @staticmethod
     def directory_filter(directory, unwanted_dirs):
-
         """
         This method weeds out unwanted hidden directories from the model archive .mar file
         :param directory:
@@ -257,7 +257,6 @@ class ModelExportUtils(object):
 
     @staticmethod
     def file_filter(current_file, files_to_exclude):
-
         """
         This method weeds out unwanted files
         :param current_file:
@@ -275,7 +274,6 @@ class ModelExportUtils(object):
 
     @staticmethod
     def check_model_name_regex_or_exit(model_name):
-
         """
         Method checks whether model name passes regex filter.
         If the regex Filter fails, the method exits.
@@ -284,7 +282,7 @@ class ModelExportUtils(object):
         """
         pattern = re.compile(r'[A-Za-z][A-Za-z0-9_\-.]+')
         if pattern.match(model_name) is None:
-
-            logging.error("Model name contains special characters. The allowed regular expression filter for model "
-                          "name is %s ", r'[A-Za-z][A-Za-z0-9_\-.]+')
+            logging.error("Model name contains special characters.\n"
+                          "The allowed regular expression filter for model "
+                          "name is: [A-Za-z][A-Za-z0-9_\\-.]+")
             sys.exit(1)

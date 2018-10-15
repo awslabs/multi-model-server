@@ -36,8 +36,11 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -55,6 +58,7 @@ public final class ConfigManager {
     private static final String MODEL_SERVER_HOME = "model_server_home";
     private static final String MODEL_STORE = "model_store";
     private static final String LOAD_MODELS = "load_models";
+    private static final String BLACKLIST_ENV_VARS = "blacklist_env_vars";
     private static final String NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
     private static final String MAX_WORKERS = "max_workers";
     private static final String JOB_QUEUE_SIZE = "job_queue_size";
@@ -67,7 +71,13 @@ public final class ConfigManager {
     private static final String CERTIFICATE_FILE = "certificate_file";
     private static final String PRIVATE_KEY_FILE = "private_key_file";
 
+    private Pattern blacklistPattern;
+
     private Properties prop;
+
+    public Pattern getBlacklistPattern() {
+        return blacklistPattern;
+    }
 
     public ConfigManager(Arguments args) {
         prop = new Properties();
@@ -103,9 +113,18 @@ public final class ConfigManager {
             System.setProperty("METRICS_LOCATION", "logs");
         }
 
+        String modelStore = args.getModelStore();
+        if (modelStore != null) {
+            prop.setProperty(MODEL_STORE, modelStore);
+        }
+
         String[] models = args.getModels();
         if (models != null) {
             prop.setProperty(LOAD_MODELS, String.join(",", models));
+        }
+
+        if (!prop.containsKey(NUMBER_OF_GPU)) {
+            prop.setProperty(NUMBER_OF_GPU, String.valueOf(getAvailableGpu()));
         }
     }
 
@@ -114,7 +133,7 @@ public final class ConfigManager {
                 || Boolean.parseBoolean(prop.getProperty(DEBUG, "false"));
     }
 
-    public URI getAddressProperty(String key, String defaultValue) {
+    private URI getAddressProperty(String key, String defaultValue) {
         String address = getProperty(key, defaultValue);
         try {
             URI uri = new URI(address);
@@ -185,8 +204,7 @@ public final class ConfigManager {
     }
 
     public String getModelStore() {
-        String mmsHome = getModelServerHome();
-        return getCanonicalPath(getProperty(MODEL_STORE, mmsHome + "/model"));
+        return getCanonicalPath(prop.getProperty(MODEL_STORE));
     }
 
     public String getLoadModels() {
@@ -284,13 +302,26 @@ public final class ConfigManager {
         return prop.getProperty(key, def);
     }
 
+    public void validateConfigurations() throws InvalidPropertiesFormatException {
+        String blacklistVars = prop.getProperty(BLACKLIST_ENV_VARS, "");
+        try {
+            blacklistPattern = Pattern.compile(blacklistVars);
+        } catch (PatternSyntaxException e) {
+            throw new InvalidPropertiesFormatException(e);
+        }
+    }
+
     public String dumpConfigurations() {
-        return "MMS Home: "
+        return "\nMMS Home: "
                 + getModelServerHome()
                 + "\nCurrent directory: "
                 + getCanonicalPath(".")
+                + "\nTemp directory: "
+                + System.getProperty("java.io.tmpdir")
                 + "\nConfig file: "
                 + prop.getProperty("mmsConfigFile")
+                + "\nNumber of GPU: "
+                + getNumberOfGpu()
                 + "\nModel Store: "
                 + getModelStore()
                 + "\nInitial Models: "
@@ -298,7 +329,9 @@ public final class ConfigManager {
                 + "\nLog dir: "
                 + getCanonicalPath(System.getProperty("LOG_LOCATION"))
                 + "\nMetrics dir: "
-                + getCanonicalPath(System.getProperty("METRICS_LOCATION"));
+                + getCanonicalPath(System.getProperty("METRICS_LOCATION"))
+                + "\nBlacklist Regex: "
+                + prop.getProperty(BLACKLIST_ENV_VARS, "");
     }
 
     void setProperty(String key, String value) {
@@ -314,11 +347,6 @@ public final class ConfigManager {
     }
 
     private File findMmsHome() {
-        File dir = new File("/mxnet-model-server");
-        if (dir.exists()) {
-            return dir;
-        }
-
         File cwd = new File(getCanonicalPath("."));
         File file = cwd;
         while (file != null) {
@@ -340,23 +368,53 @@ public final class ConfigManager {
     }
 
     private static String getCanonicalPath(String path) {
+        if (path == null) {
+            return null;
+        }
         return getCanonicalPath(new File(path));
+    }
+
+    private static int getAvailableGpu() {
+        try {
+            Process process =
+                    Runtime.getRuntime().exec("nvidia-smi --query-gpu=index --format=csv");
+            int ret = process.waitFor();
+            if (ret != 0) {
+                return 0;
+            }
+            List<String> list = IOUtils.readLines(process.getInputStream(), StandardCharsets.UTF_8);
+            if (list.isEmpty() || !"index".equals(list.get(0))) {
+                throw new AssertionError("Unexpected nvidia-smi response.");
+            }
+            return list.size() - 1;
+        } catch (IOException | InterruptedException e) {
+            return 0;
+        }
     }
 
     public static final class Arguments {
 
-        private String[] models;
         private String mmsConfigFile;
+        private String modelStore;
+        private String[] models;
 
         public Arguments() {}
 
         public Arguments(CommandLine cmd) {
-            models = cmd.getOptionValues("models");
             mmsConfigFile = cmd.getOptionValue("mms-config-file");
+            modelStore = cmd.getOptionValue("model-store");
+            models = cmd.getOptionValues("models");
         }
 
         public static Options getOptions() {
             Options options = new Options();
+            options.addOption(
+                    Option.builder("f")
+                            .longOpt("mms-config-file")
+                            .hasArg()
+                            .argName("MMS-CONFIG-FILE")
+                            .desc("Path to the configuration properties file.")
+                            .build());
             options.addOption(
                     Option.builder("m")
                             .longOpt("models")
@@ -365,21 +423,13 @@ public final class ConfigManager {
                             .desc("Models to be loaded at startup.")
                             .build());
             options.addOption(
-                    Option.builder("f")
-                            .longOpt("mms-config-file")
-                            .hasArg()
-                            .argName("MMS-CONFIG-FILE")
-                            .desc("Path to the configuration properties file.")
+                    Option.builder("s")
+                            .longOpt("model-store")
+                            .hasArgs()
+                            .argName("MODELS-STORE")
+                            .desc("Model store location where models can be loaded.")
                             .build());
             return options;
-        }
-
-        public String[] getModels() {
-            return models;
-        }
-
-        public void setModels(String[] models) {
-            this.models = models;
         }
 
         public String getMmsConfigFile() {
@@ -388,6 +438,22 @@ public final class ConfigManager {
 
         public void setMmsConfigFile(String mmsConfigFile) {
             this.mmsConfigFile = mmsConfigFile;
+        }
+
+        public String getModelStore() {
+            return modelStore;
+        }
+
+        public void setModelStore(String modelStore) {
+            this.modelStore = modelStore;
+        }
+
+        public String[] getModels() {
+            return models;
+        }
+
+        public void setModels(String[] models) {
+            this.models = models;
         }
     }
 }

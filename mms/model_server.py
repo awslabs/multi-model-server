@@ -24,7 +24,7 @@ def start():
         with open(pid_file, "r") as f:
             pid = int(f.readline())
 
-    if args.stop is True:
+    if args.stop:
         if pid is None:
             print("Model server is not currently running.")
         else:
@@ -33,6 +33,7 @@ def start():
                 for child in parent.children(recursive=True):
                     child.kill()
                 parent.kill()
+                print("Model server stopped.")
             except OSError:
                 print("Model server already stopped.")
             os.remove(pid_file)
@@ -56,7 +57,7 @@ def start():
                 print("--log-config file not found: {}".format(args.log_config))
                 exit(1)
 
-            cmd.append("-Dlog4j.configuration={}".format(args.log_config))
+            cmd.append("-Dlog4j.configuration=file://{}".format(args.log_config))
 
         tmp_dir = os.environ.get("TEMP")
         if tmp_dir:

@@ -53,11 +53,12 @@ def start():
         mms_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         cmd = [java, "-Dmodel_server_home={}".format(mms_home)]
         if args.log_config:
-            if not os.path.isfile(args.log_config):
-                print("--log-config file not found: {}".format(args.log_config))
+            log_config = os.path.realpath(args.log_config)
+            if not os.path.isfile(log_config):
+                print("--log-config file not found: {}".format(log_config))
                 exit(1)
 
-            cmd.append("-Dlog4j.configuration=file://{}".format(args.log_config))
+            cmd.append("-Dlog4j.configuration=file://{}".format(log_config))
 
         tmp_dir = os.environ.get("TEMP")
         if tmp_dir:

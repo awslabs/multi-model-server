@@ -5,7 +5,7 @@ In this example, we show how to create a service which classifies a review into 
 
 # Step by step to create service
 
-## Step 1 - Download the Gluon Char CNN model file, signature file, model parameter and classification labels file.
+## Step 1 - Download the Gluon Char CNN model file, signature file, model parameter and classification labels file to "/tmp/crepe"
 
 ```bash
 # Download the model file
@@ -19,6 +19,10 @@ $ wget https://s3.amazonaws.com/mms-char-cnn-files/signature.json
 
 # Download classification labels file
 $ wget https://s3.amazonaws.com/mms-char-cnn-files/synset.txt
+
+# Download the base service and the helper files
+$ wget https://s3.amazonaws.com/mms-char-cnn-files/gluon_base_service.py
+$ wget https://s3.amazonaws.com/mms-char-cnn-files/ndarray.py
 ```
 
 ## Step 2 - Look at the Gluon model/service  file
@@ -34,25 +38,31 @@ class GluonCrepe(HybridBlock):
       ## Define model below
       pass
 
-class CharacterCNNService(GluonImperativeBaseService):
-    """
+class CharacterCNNService(GluonBaseService):
+"""
     Gluon Character-level Convolution Service
     """
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        net = GluonCrepe()
-        super(CharacterCNNService, self).__init__(model_name, model_dir, manifest,net gpu)
+    def __init__(self):
+        super(CharacterCNNService, self).__init__()    
         # The 69 characters as specified in the paper
         self.ALPHABET = list("abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+ =<>()[]{}")
         # Map Alphabets to index
         self.ALPHABET_INDEX = {letter: index for index, letter in enumerate(self.ALPHABET)}
         # max-length in characters for one document
         self.FEATURE_LEN = 1014
+
+    def initialize(self, params):
+        self.net = GluonCrepe()
+        self.param_filename = "crepe_gluon_epoch6.params"
+        super(CharacterCNNService, self).initialize(params)
+        # Hybridize imperative model for best performance
         self.net.hybridize()
+
         # define _preprocess, _inference and _postprocess methods
 ```
 
 As shown, the Gluon model derives from the basic gluon hybrid block. Gluon hybrid blocks, provide performance of a symbolic model with a imperative model. More on Gluon, hybrid blocks [here](https://gluon.mxnet.io/chapter07_distributed-learning/hybridize.html).
-The fully defined service file can be found under [gluon_crepe.py](gluon_crepe.py), we define `_preprocess`, `_inference`, `_postprocess` methods in this file.
+The fully defined service file can be found under [gluon_crepe.py](gluon_crepe.py), we define `preprocess`, `inference`, `postprocess` methods in this file.
 
 ## Step 3 - Check signature file
 
@@ -90,7 +100,7 @@ The list of classes in synset.txt will be loaded by MMS as list of labels in inf
 With model file together with signature and  files in the model folder, we are ready to export them to MMS model file.
 
 ```bash
-mxnet-model-export --model-path /path/to/mode/folder --model-name character_cnn --service-file-path /path/to/model/folder/gluon_crepe.py
+model-archiver --model-name crepe -f --model-path /tmp/crepe/ --handler gluon_crepe:crepe_inference --runtime python --export-path /tmp
 ```
 
 A packaged model can be downloaded from [here.](https://s3.amazonaws.com/mms-char-cnn-files/character_cnn.model)
@@ -100,7 +110,7 @@ A packaged model can be downloaded from [here.](https://s3.amazonaws.com/mms-cha
 character_cnn.model file is created by exporting model files. We also defined custom service under gluon_crepe.py. We are ready to establish the Character-level CNN inference service:
 
 ```bash
-mxnet-model-server --models crepe=character_cnn.model
+mxnet-model-server --models crepe.mar --model-path /tmp
 ```
 
 The endpoint is on localhost and port 8080. You can change them by passing --host and --port when establishing the service.
@@ -121,7 +131,7 @@ Prediction result will be:
 
 ```json
 {
-  "prediction": [{"category":"Movies_and_TV"}]
+  "prediction": {"category":"Movies_and_TV"}
 }
 ```
 
@@ -135,7 +145,7 @@ Prediction result will be:
 
 ```json
 {
-  "prediction":[{"category":"CDs_and_Vinyl"}]
+  "prediction":{"category":"CDs_and_Vinyl"}
 }
 ```
 

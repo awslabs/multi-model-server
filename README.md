@@ -1,7 +1,7 @@
 Model Server for Apache MXNet
 =======
 
-| ubuntu/python-2.7 | ubuntu/python-3.5 |
+| ubuntu/python-2.7 | ubuntu/python-3.6 |
 |---------|---------|
 | ![Python3 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoicGZ6dXFmMU54UGxDaGsxUDhXclJLcFpHTnFMNld6cW5POVpNclc4Vm9BUWJNamZKMGdzbk1lOU92Z0VWQVZJTThsRUttOW8rUzgxZ2F0Ull1U1VkSHo0PSIsIml2UGFyYW1ldGVyU3BlYyI6IkJJaFc1QTEwRGhwUXY1dDgiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) | ![Python2 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiYVdIajEwVW9uZ3cvWkZqaHlaRGNUU2M0clE2aUVjelJranJoYTI3S1lHT3R5THJXdklzejU2UVM5NWlUTWdwaVVJalRwYi9GTnJ1aUxiRXIvTGhuQ2g0PSIsIml2UGFyYW1ldGVyU3BlYyI6IjArcHVCaFgvR1pTN1JoSG4iLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) |
 
@@ -22,34 +22,52 @@ A quick overview and examples for both serving and packaging are provided below.
 ## Other Relevant Documents
 * [Latest Version Docs](docs/README.md)
 * [v0.4.0 Docs](https://github.com/awslabs/mxnet-model-server/blob/v0.4.0/docs/README.md)
-## Quick Start
 
-### Install with pip
+## Quick Start
+### Pre-requisites
+Before proceeding further with this document, make sure you have the following.
+1. Python     - MXNet model server requires python to run the workers. 
+1. pip        - Pip is a python package management system.
+1. virtualenv (`optional`) - Virtualenv is used to create virtual python environments. You could install virtualenv after install pip as follows
+    ```bash
+    pip install virtualenv
+    ```
+    You could create a virtual environment as follows
+    ```bash
+    # Assuming we want to run python2.7 in /usr/local/bin/python2.7
+    virtualenv -p /usr/local/bin/python2.7 /tmp/pyenv2
+    # Enter this virtual environment as follows
+    source /tmp/pyenv2/bin/activate
+    ```
+1. Java 8     - MXNet Model Server requires Java 8 to start. You could install Java 8 as follows
+    For ubuntu:
+    ```bash
+    sudo apt-get install openjdk-8-jre-headless
+    ```
+    
+    For centos:
+    ```bash
+    sudo yum install java-1.8.0-openjdk
+    ```
+    
+    For Mac:
+    ```bash
+    brew tap caskroom/versions
+    brew update
+    brew cask install java8
+    ```
+
+### Installing MXNet Model Server with pip
 
 A minimal version of `model-archiver` will be installed with MMS as dependency. See [model-archiver](model-archiver/README.md) for more options and detail.
 
-MMS runtime depends on Python and java-8, please make sure install Python and java 8 (or later)  before install MMS.
+It's a good practice to run and install all python dependencies in virtual environments so as to have isolation of python environments and ease of dependency management. 
+We recommend installing and running MXNet Model Server in a virtual environment. 
 
-For ubuntu:
-```bash
-sudo apt-get install openjdk-8-jre-headless
-```
-
-For centos:
-```bash
-sudo yum install java-1.8.0-openjdk
-```
-
-For Mac:
-```bash
-brew tap caskroom/versions
-brew update
-brew cask install java8
-```
-
-MMS won't install mxnet engine by default, you can install mxnet-mkl or mxnet-cu90mkl based on your need.
+MMS won't install mxnet engine by default, you can install mxnet-mkl or mxnet-cu90mkl based on your need to run MXNet Model Server on CPU host or on GPU host.
 
 ```bash
+# Running MXNet Model Server on CPU hosts 
 pip install mxnet-mkl
 
 pip install -U mxnet-model-server
@@ -59,7 +77,7 @@ See the [advanced installation](docs/install.md) page for more options and troub
 
 ### Serve a Model
 
-Once installed, you can get MMS model serving up and running very quickly. Try out `--help` to see the kind of features that are available.
+Once installed, you can get MMS model server up and running very quickly. Try out `--help` to see all the CLI options available.
 
 ```bash
 mxnet-model-server --help
@@ -129,7 +147,7 @@ You would see an output specifying that the model-server running instance stoppe
 
 MMS enables you to package up all of your model artifacts into a single model archive, that you can then easily share or distribute. To package a model, follow these **three** steps:
 
-**1. Download sample squeezenet modle artifacts (if you don't have them handy)**
+**1. Download sample squeezenet model artifacts (if you don't have them handy)**
 
 ```bash
 mkdir squeezenet
@@ -176,7 +194,7 @@ To learn more about `model-archiver`, check out [Model archiver documentation](m
 
 ## Recommended production deployments
 
-* MMS doesn't provide authentication. You have to your own authentication proxy in front of MMS.
+* MMS doesn't provide authentication. You have to have your own authentication proxy in front of MMS.
 * MMS doesn't provide throttling, it's vulnerable to DDoS attack. It's recommended to running MMS behind a firewall.
 * MMS only allows localhost access by default, see [Network configuration](docs/configuration.md#configure-mms-listening-port) for detail.
 * SSL is not enabled by default, see [Enable SSL](docs/configuration.md#enable-ssl) for detail.

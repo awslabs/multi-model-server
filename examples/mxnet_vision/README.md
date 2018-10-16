@@ -70,7 +70,7 @@ In this pre-trained model, input name is 'data' and shape is '(1,3,224,224)'. Wh
 
 ## Step 3 - Prepare synset.txt with list of class names
 
-[synset.txt](synset.txt) is where we define list of all classes detected by the model. The list of classes in synset.txt will be loaded by MMS as list of labels in inference logic.
+[synset.txt](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/synset.txt) is where we define list of all classes detected by the model. The list of classes in synset.txt will be loaded by MMS as list of labels in inference logic.
 
 You can use `curl` to download it.
 ```bash
@@ -85,10 +85,10 @@ Alternatively, use following link to download:
 ## Step 4 - Create custom service class
 
 We provided custom service class template code in [template](../template) folder:
-1. [model_handler.py](../model_handler.py) - A generic based service class.
-2. [mxnet_model_service.py](../mxnet_model_service.py) - A MxNet base service class.
-3. [mxnet_vision_service.py](../mxnet_vision_service.py) - A MxNet Vision service class.
-4. [mxnet_utils](../mxnet_utils) - A python package that contains utility classes.
+1. [model_handler.py](../template/model_handler.py) - A generic based service class.
+2. [mxnet_model_service.py](../template/mxnet_model_service.py) - A MxNet base service class.
+3. [mxnet_vision_service.py](../template/mxnet_vision_service.py) - A MxNet Vision service class.
+4. [mxnet_utils](../template/mxnet_utils) - A python package that contains utility classes.
 
 In this example, you can simple copy them into mxnet_vision folder, as use provided mxnet_vision_service.py as user model archive entry point.
 
@@ -101,8 +101,8 @@ cp -r template/* mxnet_vision/
 
 In this step, we package the following:
 1. pre-trained MXNet Model we downloaded in Step 1.
-2. '[signature.json](signature.json)' file we prepared in step 2.
-3. '[synset.txt](synset.txt)' file we prepared in step 3.
+2. '[signature.json](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/signature.json)' file we prepared in step 2.
+3. '[synset.txt](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/synset.txt)' file we prepared in step 3.
 4. custom model service files we prepared in step 4.
 
 We use `model-archiver` command line utility (CLI) provided by MMS.

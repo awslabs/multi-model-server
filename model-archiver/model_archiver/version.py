@@ -8,7 +8,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 """
-This is the current version of Model Export Tool
+This is the current version of Model Archiver Tool
 """
 
 __version__ = '1.0'

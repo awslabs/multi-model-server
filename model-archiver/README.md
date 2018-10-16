@@ -2,34 +2,33 @@
 
 ## Contents of this Document
 * [Overview](#overview)
-* [MMS model-archiver CLI](#model-archiver-command-line-interface)
+* [Model Archiver CLI](#model-archiver-command-line-interface)
 * [Artifact Details](#artifact-details)
     * [MAR-INFO](#mar-inf)
     * [Model name](#model-name)
     * [Runtime](#runtime)
     * [Handler](#handler)
-* [Dependent and Nested models](#dependent-and-nested-models)
 
 ## Other Relevant Documents
-* [Model Archive Example](../examples/mxnet_vision.md)
-* [Packaging an ONNX Model](convert_from_onnx.md)
+* [Model Archive Example](../examples/mxnet_vision/README.md)
+* [Packaging an ONNX Model](docs/convert_from_onnx.md)
 
 ## Overview
 
 A key feature of MMS is the ability to package all model artifacts into a single model archive file. It is a separate command line interface (CLI), `model-archiver`, that can take model checkpoints and package them into a `.mar` file that can then be redistributed and served by anyone using MMS. It takes in the following model artifacts: a model composed of one or more files, the description of the model's inputs in the form of a signature file, a service file describing how to handle inputs and outputs, and other optional assets that may be required to serve the model. The CLI creates a `.mar` file that MMS's server CLI uses to serve the models.
 
-**Important**: Make sure you try the [Quick Start: Export a Model](../README.md#model-archive) tutorial for a short example of using `model-archiver`.
+**Important**: Make sure you try the [Quick Start: Creating a Model Archive](../README.md#create-a-model-archive) tutorial for a short example of using `model-archiver`.
 
 MMS support arbitrary models file. It's custom service code's responsibility to locate and load models files. Following information are required to create a standalone model archive:
 1. [Model name](#model-name)
 2. [Model path](#model-path)
 3. [Handler](#handler)
 
-## MMS Export Command Line Interface
+## Model Archiver Command Line Interface
 
 Now let's cover the details on using the CLI tool: `model-archiver`.
 
-Example usage with the squeezenet_v1.1 model you may have downloaded or exported in the [main README's](../README.md) examples:
+Example usage with the squeezenet_v1.1 model archive you may have downloaded or created in the [main README's](../README.md) examples:
 
 ```bash
 
@@ -88,7 +87,7 @@ A valid model name. The model name must begin with a letter of the alphabet, and
 
 ### Model path
 
-A folder that contains all necessary files that need to run inference code for the model. All the files and subfolders (except [excluded files](excluded-files)) will be packaged into `.mar` file.
+A folder that contains all necessary files that need to run inference code for the model. All the files and sub-folders (except [excluded files](#excluded-files)) will be packaged into `.mar` file.
 
 #### excluded files
 Follow type of file will be excluded during model archive packaging:
@@ -106,5 +105,5 @@ The function name is optional if provided python module follows one of predefine
 1. There is a `handle()` function available in the module
 2. The module contains only one Class and the class that contains a `handle()` function.
 
-Further details and specifications are found on the [custom service](custom_service.md) page.
+Further details and specifications are found on the [custom service](../docs/custom_service.md) page.
 

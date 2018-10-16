@@ -15,9 +15,7 @@ This tutorial covers the following:
 time, but are familiar with creating a neural network with MXNet or another framework, you may refer this 10 min Gluon crash-course: [Predict with a pre-trained model](http://gluon-crash-course.mxnet.io/predict.html).
 * **Gluon naming**. Fine-tuning pre-trained Gluon models requires some understanding of how the naming conventions work. Take a look at the [Naming of Gluon Parameter and Blocks](https://mxnet.incubator.apache.org/tutorials/gluon/naming.html) tutorial for more information.
 * **Basic MMS knowledge**. If you are using MMS for the first time, you should take advantage of the [MMS QuickStart tutorial](https://github.com/awslabs/mxnet-model-server#quick-start).
-* **MMS Custom Service knowledge.** Review the [Defining a Custom Service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/custom_service.md) documentation to understand how MMS implements custom pre and post-processing for models.
 * **MMS installed**. If you haven't already, [install MMS with pip](https://github.com/awslabs/mxnet-model-server/blob/master/docs/install.md#install-mms-with-pip) or [install MMS from source](https://github.com/awslabs/mxnet-model-server/blob/master/docs/install.md#install-mms-from-source-code). Either installation will also install MXNet.
-
 
 Refer to the [MXNet model zoo](https://mxnet.incubator.apache.org/api/python/gluon/model_zoo.html) documentation for examples of accessing other models.
 
@@ -33,25 +31,36 @@ To learn more about the differences between gluon and hybrid gluon models refer 
 ### Load and serve a pre-trained Gluon model
 Loading and serving a pre-trained Gluon model is the simplest of the three scenarios. These models don't require you to provide `symbols` and `params` files.
 
-While it is easy to access a model with a couple of lines of code, with MMS you will want to use a [MMS custom service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/custom_service.md) code pattern as follows:
+It is easy to access a model with a couple of lines of code. The following code snippet shows how to load and serve a pretrained Gluon model.
 
 ```python
-import mxnet
-from mms.model_service.gluon_vision_service import GluonVisionService
-
-class PretrainedAlexnetService(GluonVisionService):
+class PretrainedAlexnetService(GluonBaseService):
     """
     Pretrained alexnet Service
     """
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(PretrainedAlexnetService, self).__init__(model_name, model_dir, manifest,
-                                                   mxnet.gluon.model_zoo.vision.alexnet(pretrained=True),
-                                                   gpu)
+    def initialize(self, params):
+        self.net = mxnet.gluon.model_zoo.vision.alexnet(pretrained=True)
+        self.param_filename = "alexnet.params"
+        super(PretrainedAlexnetService, self).initialize(params)
 
-    def _postprocess(self, data):
+    def postprocess(self, data):
         idx = data.topk(k=5)[0]
-        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
-            float(data[0, int(i.asscalar())].asscalar())} for i in idx]
+        return [[{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
+                float(data[0, int(i.asscalar())].asscalar())} for i in idx]]
+
+
+svc = PretrainedAlexnetService()
+
+
+def pretrained_gluon_alexnet(data, context):
+    res = None
+    if not svc.initialized:
+        svc.initialize(context)
+
+    if data is not None:
+        res = svc.predict(data)
+
+    return res
 ```
 
 For an actual code implementation, refer to the custom-service code which uses the [pre-trained Alexnet](https://github.com/awslabs/mxnet-model-server/blob/master/examples/gluon_alexnet/gluon_pretrained_alexnet.py)
@@ -67,17 +76,17 @@ mkdir /tmp/models
 2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/blob/master/examples/gluon_alexnet/gluon_pretrained_alexnet.py)
 and other required artifacts to this folder
 ```bash
-cp gluon_pretrained_alexnet.py synset.txt signature.json /tmp/models
+cp ../template/gluon_base_service.py ../template/mxnet_utils/ndarray.py  gluon_pretrained_alexnet.py synset.txt signature.json /tmp/models/.
 ```
 3. Run the model-export tool on this folder.
 ```bash
-mxnet-model-export --model-name="pretrained-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_pretrained_alexnet.py"
+model-archiver --model-name alexnet --model-path /tmp/models --handler gluon_pretrained_alexnet:pretrained_gluon_alexnet --runtime python --export-path /tmp
 ```
-This creates a model-archive file `pretrained-alexnet.model`.
+This creates a model-archive file `/tmp/alexnet.mar`.
 
 4. You could run the server with this model file to serve the pre-trained alexnet.
 ```bash
-mxnet-model-server --models alexnet=pretrained-alexnet.model
+mxnet-model-server --start --models alexnet.mar --model-store /tmp
 ```
 5. Test your service
 ```bash
@@ -132,20 +141,34 @@ class GluonImperativeAlexNet(gluon.Block):
 
 The pre-process, inference and post-process steps are similar to the service code that we saw in the [above section](#load-and-serve-a-pre-trained-gluon-model).
 ```python
-import mxnet
-from mms.model_service.gluon_vision_service import GluonVisionService
-
-class ImperativeAlexnetService(GluonVisionService):
+class ImperativeAlexnetService(GluonBaseService):
     """
     Gluon alexnet Service
     """
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(ImperativeAlexnetService, self).__init__(model_name, model_dir, manifest, GluonImperativeAlexNet(), gpu)
 
-    def _postprocess(self, data):
+    def initialize(self, params):
+        self.net = GluonImperativeAlexNet()
+        self.param_filename = "alexnet.params"
+        super(ImperativeAlexnetService, self).initialize(params)
+
+    def postprocess(self, data):
         idx = data.topk(k=5)[0]
-        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability': float(data[0, int(i.asscalar())].asscalar())}
-                for i in idx]
+        return [[{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
+                 float(data[0, int(i.asscalar())].asscalar())} for i in idx]]
+
+
+svc = ImperativeAlexnetService()
+
+
+def imperative_gluon_alexnet_inf(data, context):
+    res = None
+    if not svc.initialized:
+        svc.initialize(context)
+
+    if data is not None:
+        res = svc.predict(data)
+
+    return res
 ```
 
 ### Test your imperative Gluon model service
@@ -159,7 +182,7 @@ mkdir /tmp/models
 2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_imperative_alexnet.py)
 and other required artifacts to this folder
 ```bash
-cp gluon_imperative_alexnet.py synset.txt signature.json /tmp/models
+cp ../template/gluon_base_service.py ../template/mxnet_utils/ndarray.py  gluon_imperative_alexnet.py synset.txt signature.json /tmp/models/.
 ```
 3. Download/copy the parameters to this `/tmp/models` directory. For this example, we have the parameters file in a S3 bucket.
 ```bash
@@ -168,13 +191,13 @@ mv alexnet.params /tmp/models
 ```
 4. Run the model-export tool on this folder.
 ```bash
-mxnet-model-export --model-name="imperative-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_imperative_alexnet.py"
+model-archiver --model-name alexnet --model-path /tmp/models --handler gluon_imperative_alexnet:imperative_gluon_alexnet_inf --runtime python --export-path /tmp
 ```
-This creates a model-archive file `imperative-alexnet.model`.
+This creates a model-archive file `/tmp/alexnet.mar`.
 
 5. You could run the server with this model file to serve the pre-trained alexnet.
 ```bash
-mxnet-model-server --models alexnet=imperative-alexnet.model
+mxnet-model-server --start --models alexnet.mar --model-store /tmp
 ```
 6. Test your service
 ```bash
@@ -233,19 +256,34 @@ class GluonHybridAlexNet(HybridBlock):
 We could use the same custom service code as in the above section,
 
 ```python
-class HybridAlexnetService(GluonVisionService):
+class HybridAlexnetService(GluonBaseService):
     """
     Gluon alexnet Service
     """
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(HybridAlexnetService, self).__init__(model_name, model_dir, manifest, GluonHybridAlexNet(), gpu)
+    def initialize(self, params):
+        self.net = GluonHybridAlexNet()
+        self.param_filename = "alexnet.params"
+        super(HybridAlexnetService, self).initialize(params)
         self.net.hybridize()
 
-    def _postprocess(self, data):
+    def postprocess(self, data):
         idx = data.topk(k=5)[0]
-        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
-            float(data[0, int(i.asscalar())].asscalar())} for i in idx]
+        return [[{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
+                 float(data[0, int(i.asscalar())].asscalar())} for i in idx]]
 
+
+svc = HybridAlexnetService()
+
+
+def hybrid_gluon_alexnet_inf(data, context):
+    res = None
+    if not svc.initialized:
+        svc.initialize(context)
+
+    if data is not None:
+        res = svc.predict(data)
+
+    return res
 ```
 Similar to imperative models, this model doesn't require `Symbols` as the call to `.hybridize()` compiles the neural net.
 This would store the `symbols` implicitly.
@@ -261,7 +299,7 @@ mkdir /tmp/models
 2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_imperative_alexnet.py)
 and other required artifacts to this folder
 ```bash
-cp gluon_hybrid_alexnet.py synset.txt signature.json /tmp/models
+cp ../template/gluon_base_service.py ../template/mxnet_utils/ndarray.py  gluon_hybrid_alexnet.py synset.txt signature.json /tmp/models/.
 ```
 3. Download/copy the parameters to this `/tmp/models` directory. For this example, we have the parameters file in a S3 bucket.
 ```bash
@@ -270,13 +308,13 @@ mv alexnet.params /tmp/models
 ```
 4. Run the model-export tool on this folder.
 ```bash
-mxnet-model-export --model-name="hybrid-alexnet" --model-path="/tmp/models" --service-file-path="/tmp/models/gluon_hybrid_alexnet.py"
+model-archiver --model-name alexnet --model-path /tmp/models --handler gluon_hybrid_alexnet:hybrid_gluon_alexnet_inf --runtime python --export-path /tmp
 ```
-This creates a model-archive file `hybrid-alexnet.model`.
+This creates a model-archive file `/tmp/alexnet.mar`.
 
 5. You could run the server with this model file to serve the pre-trained alexnet.
 ```bash
-mxnet-model-server --models alexnet=hybrid-alexnet.model
+mxnet-model-server --start --models alexnet.mar --model-store /tmp
 ```
 6. Test your service
 ```bash

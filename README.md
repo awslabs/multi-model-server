@@ -90,24 +90,24 @@ The predict endpoint will return a prediction response in JSON. It will look som
 ```json
 [
   {
-    "class": "n02127052 lynx, catamount", 
-    "probability": 0.5721369385719299
-  }, 
+    "probability": 0.8582232594490051,
+    "class": "n02124075 Egyptian cat"
+  },
   {
-    "class": "n02124075 Egyptian cat", 
-    "probability": 0.4079437255859375
-  }, 
+    "probability": 0.09159987419843674,
+    "class": "n02123045 tabby, tabby cat"
+  },
   {
-    "class": "n02123045 tabby, tabby cat", 
-    "probability": 0.013694713823497295
-  }, 
+    "probability": 0.0374876894056797,
+    "class": "n02123159 tiger cat"
+  },
   {
-    "class": "n02123394 Persian cat", 
-    "probability": 0.004954110365360975
-  }, 
+    "probability": 0.006165083032101393,
+    "class": "n02128385 leopard, Panthera pardus"
+  },
   {
-    "class": "n02123159 tiger cat", 
-    "probability": 0.0012674571480602026
+    "probability": 0.0031716004014015198,
+    "class": "n02127052 lynx, catamount"
   }
 ]
 ```
@@ -118,6 +118,12 @@ Other models can be downloaded from the [model zoo](docs/model_zoo.md), so try o
 
 Now you've seen how easy it can be to serve a deep learning model with MMS! [Would you like to know more?](docs/server.md)
 
+### Stopping the running model server
+To stop the current running model-server instance, you could run the following command
+```bash
+$ mxnet-model-server --stop
+```
+You would see an output specifying that the model-server running instance stopped.
 
 ### Create a Model Archive
 

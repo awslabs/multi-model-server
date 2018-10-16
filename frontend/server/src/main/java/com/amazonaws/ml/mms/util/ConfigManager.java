@@ -319,19 +319,23 @@ public final class ConfigManager {
                 + "\nTemp directory: "
                 + System.getProperty("java.io.tmpdir")
                 + "\nConfig file: "
-                + prop.getProperty("mmsConfigFile")
-                + "\nNumber of GPU: "
+                + prop.getProperty("mmsConfigFile", "N/A")
+                + "\nInference address: "
+                + getInferenceAddress().toString()
+                + "\nManagement address: "
+                + getManagementAddress().toString()
+                + "\nNumber of GPUs: "
                 + getNumberOfGpu()
                 + "\nModel Store: "
-                + getModelStore()
+                + (getModelStore() == null ? "N/A" : getModelStore())
                 + "\nInitial Models: "
-                + getLoadModels()
+                + (getLoadModels() == null ? "N/A" : getLoadModels())
                 + "\nLog dir: "
                 + getCanonicalPath(System.getProperty("LOG_LOCATION"))
                 + "\nMetrics dir: "
                 + getCanonicalPath(System.getProperty("METRICS_LOCATION"))
                 + "\nBlacklist Regex: "
-                + prop.getProperty(BLACKLIST_ENV_VARS, "");
+                + prop.getProperty(BLACKLIST_ENV_VARS, "N/A");
     }
 
     void setProperty(String key, String value) {

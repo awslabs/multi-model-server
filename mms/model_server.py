@@ -56,7 +56,7 @@ def start():
                 print("--log-config file not found: {}".format(args.log_config))
                 exit(1)
 
-            cmd.append("-Dlog4j.configuration={}".format(args.log_config))
+            cmd.append("-Dlog4j.configuration=file://{}".format(args.log_config))
 
         tmp_dir = os.environ.get("TEMP")
         if tmp_dir:

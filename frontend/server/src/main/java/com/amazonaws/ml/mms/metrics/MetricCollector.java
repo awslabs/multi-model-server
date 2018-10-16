@@ -44,7 +44,7 @@ public class MetricCollector implements Runnable {
         try {
             // Collect System level Metrics
             String[] args = new String[2];
-            args[0] = "python";
+            args[0] = configManager.getPythonExecutable();
             args[1] = "mms/metrics/metric_collector.py";
             File workingDir = new File(configManager.getModelServerHome());
 

@@ -15,6 +15,7 @@ from collections import namedtuple
 from model_archiver.model_packaging_utils import ModelExportUtils
 from model_archiver.manifest_components.engine import EngineType
 from model_archiver.manifest_components.manifest import RuntimeType
+from model_archiver.model_archiver_error import ModelArchiverError
 
 
 # noinspection PyClassHasNoInit
@@ -55,7 +56,7 @@ class TestExportModelUtils:
         def test_export_file_already_exists_with_override_false(self, patches):
             patches.path_exists.return_value = True
 
-            with pytest.raises(SystemExit):
+            with pytest.raises(ModelArchiverError):
                 ModelExportUtils.check_mar_already_exists('some-model', None, False)
 
             patches.path_exists.assert_called_once_with('/Users/Piyush/some-model.mar')
@@ -71,12 +72,12 @@ class TestExportModelUtils:
             patch = Patches(mocker.patch('model_archiver.model_packaging_utils.ModelExportUtils'),
                             mocker.patch('os.listdir'))
 
-            patch.listdir.return_value = set(['a', 'b', 'c'])
+            patch.listdir.return_value = {'a', 'b', 'c'}
             return patch
 
         def test_onnx_file_is_none(self, patches):
             patches.utils.find_unique.return_value = None
-            ModelExportUtils.check_custom_model_types(model_path=self.model_path)
+            ModelExportUtils.check_custom_model_types(model_path=self.model_path, model_name=None)
 
             patches.utils.find_unique.assert_called()
             patches.utils.convert_onnx_model.assert_not_called()
@@ -87,7 +88,7 @@ class TestExportModelUtils:
             patches.utils.convert_onnx_model.return_value = ('sym', 'param')
 
             temp, exclude = ModelExportUtils.check_custom_model_types(self.model_path)
-            patches.utils.convert_onnx_model.assert_called_once_with(self.model_path, onnx_file)
+            patches.utils.convert_onnx_model.assert_called_once_with(self.model_path, onnx_file, None)
 
             assert len(temp) == 2
             assert len(exclude) == 1
@@ -113,7 +114,7 @@ class TestExportModelUtils:
         def test_with_exit(self):
             files = ['a.onnx', 'b.onnx', 'c.txt']
             suffix = '.onnx'
-            with pytest.raises(SystemExit):
+            with pytest.raises(ModelArchiverError):
                 ModelExportUtils.find_unique(files, suffix)
 
     # noinspection PyClassHasNoInit
@@ -177,20 +178,20 @@ class TestExportModelUtils:
     class TestModelNameRegEx:
 
         def test_regex_pass(self):
-            model_names = ['my-awesome-model', 'Aa.model', 'aA.model', 'a1234.model','a-A-A.model']
+            model_names = ['my-awesome-model', 'Aa.model', 'a', 'aA.model', 'a1234.model', 'a-A-A.model']
             for m in model_names:
                 ModelExportUtils.check_model_name_regex_or_exit(m)
 
         def test_regex_fail(self):
-            model_names = ['123.abc', '12-model-a.model', '##.model', '-.model']
+            model_names = ['abc%', '123.abc', '12-model-a.model', '##.model', '-.model']
             for m in model_names:
-                with pytest.raises(SystemExit):
+                with pytest.raises(ModelArchiverError):
                     ModelExportUtils.check_model_name_regex_or_exit(m)
 
     # noinspection PyClassHasNoInit
     class TestFileFilter:
 
-        files_to_exclude = set(['abc.onnx'])
+        files_to_exclude = {'abc.onnx'}
 
         def test_with_return_false(self):
             assert ModelExportUtils.file_filter('abc.onnx', self.files_to_exclude) is False

@@ -29,7 +29,7 @@ class ArgParser(object):
         """
         parser = argparse.ArgumentParser(prog='mxnet-model-server', description='MXNet Model Server')
 
-        sub_parse = parser.add_mutually_exclusive_group(required=True)
+        sub_parse = parser.add_mutually_exclusive_group(required=False)
         sub_parse.add_argument('--start', action='store_true', help='Start the model-server')
         sub_parse.add_argument('--stop', action='store_true', help='Stop the model-server')
 

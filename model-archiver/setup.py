@@ -25,7 +25,7 @@
 # $ twine upload dist/*
 
 """
-Setup.py for the model export tool package
+Setup.py for the model-archiver tool
 """
 
 from datetime import date

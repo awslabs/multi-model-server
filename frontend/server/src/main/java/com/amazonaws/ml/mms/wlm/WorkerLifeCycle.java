@@ -12,6 +12,7 @@
  */
 package com.amazonaws.ml.mms.wlm;
 
+import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
@@ -85,7 +86,12 @@ public class WorkerLifeCycle {
 
         SocketAddress address = NettyUtils.getSocketAddress(port);
         String[] args = new String[6];
-        args[0] = model.getModelArchive().getManifest().getRuntime().getValue();
+        Manifest.RuntimeType runtime = model.getModelArchive().getManifest().getRuntime();
+        if (runtime == Manifest.RuntimeType.PYTHON) {
+            args[0] = configManager.getPythonExecutable();
+        } else {
+            args[0] = runtime.getValue();
+        }
         args[1] = new File(workingDir, "mms/model_service_worker.py").getAbsolutePath();
         args[4] = "--sock-type";
 

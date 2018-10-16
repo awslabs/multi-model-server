@@ -149,7 +149,7 @@ Further details on these files, custom services, and advanced `model-archiver` f
 You can implement your own model customer service code as model archive entry point. Here we are going to use provided mxnet vision service template:
 
 ```bash
-cp -r mxnet-model-server/examples/template/* squeezemet/
+cp -r mxnet-model-server/examples/template/* squeezenet/
 ``` 
 
 **3. Package Your Model**

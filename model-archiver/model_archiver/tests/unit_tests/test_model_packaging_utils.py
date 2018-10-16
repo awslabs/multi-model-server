@@ -72,7 +72,7 @@ class TestExportModelUtils:
             patch = Patches(mocker.patch('model_archiver.model_packaging_utils.ModelExportUtils'),
                             mocker.patch('os.listdir'))
 
-            patch.listdir.return_value = set(['a', 'b', 'c'])
+            patch.listdir.return_value = {'a', 'b', 'c'}
             return patch
 
         def test_onnx_file_is_none(self, patches):
@@ -178,12 +178,12 @@ class TestExportModelUtils:
     class TestModelNameRegEx:
 
         def test_regex_pass(self):
-            model_names = ['my-awesome-model', 'Aa.model', 'aA.model', 'a1234.model','a-A-A.model']
+            model_names = ['my-awesome-model', 'Aa.model', 'a', 'aA.model', 'a1234.model', 'a-A-A.model']
             for m in model_names:
                 ModelExportUtils.check_model_name_regex_or_exit(m)
 
         def test_regex_fail(self):
-            model_names = ['123.abc', '12-model-a.model', '##.model', '-.model']
+            model_names = ['abc%', '123.abc', '12-model-a.model', '##.model', '-.model']
             for m in model_names:
                 with pytest.raises(ModelArchiverError):
                     ModelExportUtils.check_model_name_regex_or_exit(m)
@@ -191,7 +191,7 @@ class TestExportModelUtils:
     # noinspection PyClassHasNoInit
     class TestFileFilter:
 
-        files_to_exclude = set(['abc.onnx'])
+        files_to_exclude = {'abc.onnx'}
 
         def test_with_return_false(self):
             assert ModelExportUtils.file_filter('abc.onnx', self.files_to_exclude) is False

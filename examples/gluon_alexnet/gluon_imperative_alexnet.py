@@ -10,7 +10,7 @@
 
 from mxnet import gluon
 from mxnet.gluon import nn
-from mms.model_service.gluon_vision_service import GluonVisionService
+from gluon_base_service import GluonBaseService
 
 """
 MMS examples for loading Gluon Imperative models
@@ -57,14 +57,37 @@ class GluonImperativeAlexNet(gluon.Block):
         return x
 
 
-class ImperativeAlexnetService(GluonVisionService):
+class ImperativeAlexnetService(GluonBaseService):
     """
     Gluon alexnet Service
     """
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        super(ImperativeAlexnetService, self).__init__(model_name, model_dir, manifest, GluonImperativeAlexNet(), gpu)
 
-    def _postprocess(self, data):
+    def initialize(self, params):
+        self.net = GluonImperativeAlexNet()
+        self.param_filename = "alexnet.params"
+        super(ImperativeAlexnetService, self).initialize(params)
+
+    def postprocess(self, data):
         idx = data.topk(k=5)[0]
-        return [{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
-                float(data[0, int(i.asscalar())].asscalar())} for i in idx]
+        return [[{'class': (self.labels[int(i.asscalar())]).split()[1], 'probability':
+                 float(data[0, int(i.asscalar())].asscalar())} for i in idx]]
+
+
+svc = ImperativeAlexnetService()
+
+
+def imperative_gluon_alexnet_inf(data, context):
+    """
+    Handler registered for inference
+    :param data:
+    :param context:
+    :return:
+    """
+    res = None
+    if not svc.initialized:
+        svc.initialize(context)
+
+    if data is not None:
+        res = svc.predict(data)
+
+    return res

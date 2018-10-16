@@ -57,6 +57,6 @@ class TestModelPackaging:
         patches.export_utils.zip.return_value = None
 
         package_model(self.args, ModelExportUtils.generate_manifest_json(self.args))
-        patches.export_utils.check_model_name_regex_or_exit.assert_called()
+        patches.export_utils.validate_inputs.assert_called()
         patches.export_utils.zip.assert_called()
         patches.export_utils.clean_temp_files.assert_called()

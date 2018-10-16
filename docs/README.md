@@ -2,7 +2,7 @@
 
 ## Basic Features
 * [Serving Quick Start](../README.md#serve-a-model) - Basic server usage tutorial
-* [Model archive Quick Start](../README.md#model-archive) - Tutorial that shows you how to package a model archive file.
+* [Model archive Quick Start](../README.md#create-a-model-archive) - Tutorial that shows you how to package a model archive file.
 * [Installation](install.md) - Installation procedures and troubleshooting
 * [Serving Models](server.md) - Explains how to use `mxnet-model-server`.
   * [REST API](rest_api.md) - Specification on the API endpoint for MMS
@@ -13,6 +13,7 @@
 * [Metrics](metrics.md) - How to configure metrics
 
 ## Advanced Features
+* [Advanced settings](configuration.md) - Describes advanced MMS configurations.
 * [Custom Model Service](custom_service.md) - Describes how to develop custom inference services.
 * [Unit Tests](../mms/tests/README.md) - Housekeeping unit tests for MMS
 * [Benchmark](../benchmarks/README.md) - Use JMeter to run MMS through the paces and collect benchmark data

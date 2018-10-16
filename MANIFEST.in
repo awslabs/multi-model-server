@@ -1,4 +1,2 @@
 include mms/frontend/model-server.jar
 include PyPiDescription.rst
-exclude client_sdk_gen.py
-exclude export_model.py

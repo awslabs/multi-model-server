@@ -24,7 +24,7 @@ def start():
         with open(pid_file, "r") as f:
             pid = int(f.readline())
 
-    if args.stop is True:
+    if args.stop:
         if pid is None:
             print("Model server is not currently running.")
         else:
@@ -33,6 +33,7 @@ def start():
                 for child in parent.children(recursive=True):
                     child.kill()
                 parent.kill()
+                print("Model server stopped.")
             except OSError:
                 print("Model server already stopped.")
             os.remove(pid_file)
@@ -52,11 +53,12 @@ def start():
         mms_home = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         cmd = [java, "-Dmodel_server_home={}".format(mms_home)]
         if args.log_config:
-            if not os.path.isfile(args.log_config):
-                print("--log-config file not found: {}".format(args.log_config))
+            log_config = os.path.realpath(args.log_config)
+            if not os.path.isfile(log_config):
+                print("--log-config file not found: {}".format(log_config))
                 exit(1)
 
-            cmd.append("-Dlog4j.configuration={}".format(args.log_config))
+            cmd.append("-Dlog4j.configuration=file://{}".format(log_config))
 
         tmp_dir = os.environ.get("TEMP")
         if tmp_dir:

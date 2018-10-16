@@ -8,7 +8,13 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 """
-This is the current version of Model Archiver Tool
+Model Archiver Error
 """
 
-__version__ = '1.0'
+
+class ModelArchiverError(Exception):
+    """
+    Error for Model Archiver module
+    """
+    def __init__(self, message):
+        super(ModelArchiverError, self).__init__(message)

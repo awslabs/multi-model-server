@@ -43,8 +43,8 @@ Input data shape is (1, 60). For sequence to sequence models, the inputs can be 
 ## Step 4 - Create custom service class
 
 We provide custom service class template code in [template](../template) folder:
-1. [model_handler.py](../model_handler.py) - A generic based service class.
-2. [mxnet_utils](../mxnet_utils) - A python package that contains utility classes.
+1. [model_handler.py](../template/model_handler.py) - A generic based service class.
+2. [mxnet_utils](../template/mxnet_utils) - A python package that contains utility classes.
 
 ```bash
 cd mxnet-model-server/examples

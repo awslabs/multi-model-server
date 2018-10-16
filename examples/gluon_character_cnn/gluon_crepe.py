@@ -8,13 +8,12 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import mxnet
 from mxnet.gluon import nn
 from mxnet.gluon.block import HybridBlock
-from mms.model_service.mxnet_model_service import GluonImperativeBaseService
+from gluon_base_service import GluonBaseService
 import numpy as np
+import ast
 from mxnet import nd
-import os
 
 
 class GluonCrepe(HybridBlock):
@@ -50,28 +49,34 @@ class GluonCrepe(HybridBlock):
         return x
 
 
-class CharacterCNNService(GluonImperativeBaseService):
+class CharacterCNNService(GluonBaseService):
     """
     Gluon Character-level Convolution Service
     """
-    def __init__(self, model_name, model_dir, manifest, gpu=None):
-        net = GluonCrepe()
-        super(CharacterCNNService, self).__init__(model_name, model_dir, manifest,net, gpu)
+    def __init__(self):
+        super(CharacterCNNService, self).__init__()
         # The 69 characters as specified in the paper
         self.ALPHABET = list("abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+ =<>()[]{}")
         # Map Alphabets to index
         self.ALPHABET_INDEX = {letter: index for index, letter in enumerate(self.ALPHABET)}
         # max-length in characters for one document
         self.FEATURE_LEN = 1014
+
+    def initialize(self, params):
+        self.net = GluonCrepe()
+        self.param_filename = "crepe_gluon_epoch6.params"
+        super(CharacterCNNService, self).initialize(params)
         # Hybridize imperative model for best performance
         self.net.hybridize()
 
-    def _preprocess(self, data):
+    def preprocess(self, data):
         """
         Pre-process text to a encode it to a form, that gives spatial information to the CNN
         """
         # build the text from the request
-        text = '{}|{}'.format(data[0][0]['review_title'], data[0][0]['review'])
+        if data[0].get('data') is not None:
+            data = ast.literal_eval(data[0].get('data').decode('utf-8'))
+        text = '{}|{}'.format(data[0].get('review_title'), data[0].get('review'))
 
         encoded = np.zeros([len(self.ALPHABET), self.FEATURE_LEN], dtype='float32')
         review = text.lower()[:self.FEATURE_LEN-1:-1]
@@ -84,12 +89,27 @@ class CharacterCNNService(GluonImperativeBaseService):
             i += 1
         return nd.array([encoded], ctx=self.ctx)
 
-    def _inference(self, data):
+    def inference(self, data):
         # Call forward/hybrid_forward
         output = self.net(data)
         return output.softmax()
 
-    def _postprocess(self, data):
+    def postprocess(self, data):
         # Post process and output the most likely category
         predicted = self.labels[np.argmax(data[0].asnumpy())]
         return [{'category': predicted}]
+
+
+svc = CharacterCNNService()
+
+
+def crepe_inference(data, context):
+    res = ""
+    if not svc.initialized:
+        svc.initialize(context)
+
+    if data is not None:
+        res = svc.predict(data)
+
+    return res
+

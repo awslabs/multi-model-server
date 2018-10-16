@@ -15,7 +15,7 @@ A quick overview and examples for both serving and packaging are provided below.
 ## Contents of this Document
 * [Quick Start](#quick-start)
 * [Serve a Model](#serve-a-model)
-* [Export a Model](#model-archive)
+* [Create a Model Archive](#create-a-model-archive)
 * [Other Features](#other-features)
 * [Contributing](#contributing)
 
@@ -26,7 +26,7 @@ A quick overview and examples for both serving and packaging are provided below.
 
 ### Install with pip
 
-A minimal version of `model-archiver` will be installed with MMS as dependency. See [model-archiver](../model-archiver/docs/README.md) for more options and detail.
+A minimal version of `model-archiver` will be installed with MMS as dependency. See [model-archiver](model-archiver/README.md) for more options and detail.
 
 MMS runtime depends on Python and java-8, please make sure install Python and java 8 (or later)  before install MMS.
 
@@ -35,7 +35,7 @@ For ubuntu:
 sudo apt-get install openjdk-8-jre-headless
 ```
 
-For centos
+For centos:
 ```bash
 sudo yum install java-1.8.0-openjdk
 ```
@@ -90,24 +90,24 @@ The predict endpoint will return a prediction response in JSON. It will look som
 ```json
 [
   {
-    "class": "n02127052 lynx, catamount", 
-    "probability": 0.5721369385719299
-  }, 
+    "probability": 0.8582232594490051,
+    "class": "n02124075 Egyptian cat"
+  },
   {
-    "class": "n02124075 Egyptian cat", 
-    "probability": 0.4079437255859375
-  }, 
+    "probability": 0.09159987419843674,
+    "class": "n02123045 tabby, tabby cat"
+  },
   {
-    "class": "n02123045 tabby, tabby cat", 
-    "probability": 0.013694713823497295
-  }, 
+    "probability": 0.0374876894056797,
+    "class": "n02123159 tiger cat"
+  },
   {
-    "class": "n02123394 Persian cat", 
-    "probability": 0.004954110365360975
-  }, 
+    "probability": 0.006165083032101393,
+    "class": "n02128385 leopard, Panthera pardus"
+  },
   {
-    "class": "n02123159 tiger cat", 
-    "probability": 0.0012674571480602026
+    "probability": 0.0031716004014015198,
+    "class": "n02127052 lynx, catamount"
   }
 ]
 ```
@@ -118,8 +118,14 @@ Other models can be downloaded from the [model zoo](docs/model_zoo.md), so try o
 
 Now you've seen how easy it can be to serve a deep learning model with MMS! [Would you like to know more?](docs/server.md)
 
+### Stopping the running model server
+To stop the current running model-server instance, you could run the following command
+```bash
+$ mxnet-model-server --stop
+```
+You would see an output specifying that the model-server running instance stopped.
 
-### Package a model archive
+### Create a Model Archive
 
 MMS enables you to package up all of your model artifacts into a single model archive, that you can then easily share or distribute. To package a model, follow these **three** steps:
 
@@ -142,14 +148,14 @@ The downloaded model artifact files are:
 * **Model Signature** (json file) - defines the inputs and outputs that MMS is expecting to hand-off to the API
 * **assets** (text files) - auxiliary files that support model inference such as vocabularies, labels, etc. and vary depending on the model
 
-Further details on these files, custom services, and advanced exporting features can be found on the [Package Models for Use with MMS](../model-archiver/docs/README.md) page in the [docs folder](./model-archiver/docs).
+Further details on these files, custom services, and advanced `model-archiver` features can be found on the [Package Models for Use with MMS](model-archiver/README.md) page.
 
 **2. Prepare your model custom service code**
 
 You can implement your own model customer service code as model archive entry point. Here we are going to use provided mxnet vision service template:
 
 ```bash
-cp -r mxnet-model-server/examples/template/* squeezemet/
+cp -r mxnet-model-server/examples/template/* squeezenet/
 ``` 
 
 **3. Package Your Model**
@@ -164,17 +170,17 @@ In this next step we'll run `model-archiver` and tell it our model's prefix is `
 model-archiver --model-name squeezenet_v1.1 --model-path squeezenet --handler mxnet_vision_service:handle
 ```
 
-This will package all the model artifacts files in `squeezenet` directory and output `squeezenet_v1.1.mar` in the current working directory. This `.mar` file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the Serve a Model tutorial above and try to run this model that you just exported!
+This will package all the model artifacts files in `squeezenet` directory and output `squeezenet_v1.1.mar` in the current working directory. This `.mar` file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the Serve a Model tutorial above and try to run this model archive that you just created!
 
-To learn more about exporting, check out [Model archiver documentation](../model-archiver/docs/README.md)
+To learn more about `model-archiver`, check out [Model archiver documentation](model-archiver/README.md)
 
 ## Recommended production deployments
 
-* MMS doesn't provide authentication. You have to your own authentication proxy in front of MMS. 
+* MMS doesn't provide authentication. You have to your own authentication proxy in front of MMS.
 * MMS doesn't provide throttling, it's vulnerable to DDoS attack. It's recommended to running MMS behind a firewall.
-* MMS only allows localhost access by default, see [Network configuration](administration.md#network) for detail.
-* SSL is not enabled by default, see [Enable SSL](administration.md#enable_ssl) for detail.
-* MMS use a config.properties file to configure MMS's behavior, see [Manage MMS](administration.md) page for detail of how to configure MMS.
+* MMS only allows localhost access by default, see [Network configuration](docs/configuration.md#configure-mms-listening-port) for detail.
+* SSL is not enabled by default, see [Enable SSL](docs/configuration.md#enable-ssl) for detail.
+* MMS use a config.properties file to configure MMS's behavior, see [Manage MMS](docs/configuration.md) page for detail of how to configure MMS.
 * For better security, we recommend running MMS inside docker container. This project includes Dockerfiles to build containers recommended for production deployments. These containers demonstrate how to customize your own production MMS deployment. The basic usage can be found on the [Docker readme](docker/README.md).
 
 ## Other Features

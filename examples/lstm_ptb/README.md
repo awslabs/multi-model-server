@@ -6,7 +6,7 @@ This model uses [MXNet Bucketing Module](https://mxnet.incubator.apache.org/how_
 
 # Step by step to create service
 
-## Step 1 - Download the pre-trained LSTM model files, signature file and vocabulary dictionary file.
+## Step 1 - Download the pre-trained LSTM model files, signature file and vocabulary dictionary file
 
 ```bash
 cd mxnet-model-server/examples/lstm_ptb
@@ -14,13 +14,17 @@ cd mxnet-model-server/examples/lstm_ptb
 curl -O https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-symbol.json
 curl -O https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-0100.params
 curl -O https://s3.amazonaws.com/model-server/models/lstm_ptb/vocab_dict.txt
+curl -O https://s3.amazonaws.com/model-server/models/lstm_ptb/signature.json
 ```
 
-## Step 2 - Create signature file
+## Step 2 - Verify signature file
 
 In this example, provided mxnet_vision_service.py template assume there is a `signature.json` file that describes input parameter and shape.
 
-Create a `signature.json` file as following:
+After [Step 1](#step-1---download-the-pre-trained-lstm-model-files,-signature-file-and-vocabulary-dictionary-file) there should be a signature file in the lstm_ptb folder. Verify that this file exists before proceeding further.
+
+The signature file looks as follows.
+
 ```json
 {
   "inputs": [
@@ -29,12 +33,14 @@ Create a `signature.json` file as following:
       "data_shape": [
         1,
         60
-      ]
+      ],
+     ...
     }
   ]
 }
 ```
-Input data shape is (1, 60). For sequence to sequence models, the inputs can be variable length sequences. In the signature file the input shape should be set to the maximum length of the input sequence, which is the default bucket key. The bucket sizes are defined when training the model. In this example valid bucket sizes are 10, 20, 30, 40, 50 and 60. Default bucket key is the maximum value which is 60. Check [training details](https://github.com/apache/incubator-mxnet/blob/master/example/rnn/cudnn_lstm_bucketing.py) if you want to know more about the bucketing module in MXNet.
+Input data shape is (1, 60). For sequence to sequence models, the inputs can be variable length sequences. In the signature file the input shape should be set to the maximum length of the input sequence, which is the default bucket key. The bucket sizes are defined when training the model. In this example valid bucket sizes are 10, 20, 30, 40, 50 and 60. Default bucket key is the maximum value which is 60. 
+Check [bucketing module tutorials](https://mxnet.incubator.apache.org/faq/bucketing.html) if you want to know more about the bucketing module in MXNet.
 
 ## Step 3 - Check vocabulary dictionary file
 
@@ -42,15 +48,15 @@ Input data shape is (1, 60). For sequence to sequence models, the inputs can be 
 
 ## Step 4 - Create custom service class
 
-We provide custom service class template code in [template](../template) folder:
-1. [model_handler.py](../template/model_handler.py) - A generic based service class.
-2. [mxnet_utils](../template/mxnet_utils) - A python package that contains utility classes.
+We provide custom service class template code in [model_service_template](../model_service_template) folder:
+1. [model_handler.py](../model_service_template/model_handler.py) - A generic based service class.
+2. [mxnet_utils](../model_service_template/mxnet_utils) - A python package that contains utility classes.
 
 ```bash
 cd mxnet-model-server/examples
 
-cp template/model_handler.py lstm_ptb/
-cp -r template/mxnet_utils lstm_ptb/
+cp model_service_template/model_handler.py lstm_ptb/
+cp -r model_service_template/mxnet_utils lstm_ptb/
 ```
 
 In this example, we need to implement `preprocess`, `inference` and `postprocess` methods in a custom service class. Implementation details are in [lstm_ptb_service.py](lstm_ptb_service.py).

@@ -126,6 +126,11 @@ public final class ConfigManager {
         if (!prop.containsKey(NUMBER_OF_GPU)) {
             prop.setProperty(NUMBER_OF_GPU, String.valueOf(getAvailableGpu()));
         }
+
+        String pythonExecutable = args.getPythonExecutable();
+        if (pythonExecutable != null) {
+            prop.setProperty("PYTHON_EXECUTABLE", pythonExecutable);
+        }
     }
 
     public boolean isDebug() {
@@ -201,6 +206,10 @@ public final class ConfigManager {
         }
         mmsHome = getCanonicalPath(dir);
         return mmsHome;
+    }
+
+    public String getPythonExecutable() {
+        return prop.getProperty("PYTHON_EXECUTABLE", "python");
     }
 
     public String getModelStore() {
@@ -399,6 +408,7 @@ public final class ConfigManager {
     public static final class Arguments {
 
         private String mmsConfigFile;
+        private String pythonExecutable;
         private String modelStore;
         private String[] models;
 
@@ -406,6 +416,7 @@ public final class ConfigManager {
 
         public Arguments(CommandLine cmd) {
             mmsConfigFile = cmd.getOptionValue("mms-config-file");
+            pythonExecutable = cmd.getOptionValue("python");
             modelStore = cmd.getOptionValue("model-store");
             models = cmd.getOptionValues("models");
         }
@@ -420,6 +431,13 @@ public final class ConfigManager {
                             .desc("Path to the configuration properties file.")
                             .build());
             options.addOption(
+                    Option.builder("e")
+                            .longOpt("python")
+                            .hasArg()
+                            .argName("PYTHON")
+                            .desc("Python runtime executable path.")
+                            .build());
+            options.addOption(
                     Option.builder("m")
                             .longOpt("models")
                             .hasArgs()
@@ -429,7 +447,7 @@ public final class ConfigManager {
             options.addOption(
                     Option.builder("s")
                             .longOpt("model-store")
-                            .hasArgs()
+                            .hasArg()
                             .argName("MODELS-STORE")
                             .desc("Model store location where models can be loaded.")
                             .build());
@@ -438,6 +456,10 @@ public final class ConfigManager {
 
         public String getMmsConfigFile() {
             return mmsConfigFile;
+        }
+
+        public String getPythonExecutable() {
+            return pythonExecutable;
         }
 
         public void setMmsConfigFile(String mmsConfigFile) {

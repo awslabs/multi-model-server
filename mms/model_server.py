@@ -4,6 +4,7 @@ File to define the entry point to Model Server
 
 import os
 import subprocess
+import sys
 import tempfile
 from builtins import str
 
@@ -80,6 +81,10 @@ def start():
 
         cmd.append("-jar")
         cmd.append("{}/mms/frontend/model-server.jar".format(mms_home))
+
+        # model-server.jar command line parameters
+        cmd.append("--python")
+        cmd.append(sys.executable)
 
         if args.mms_config:
             cmd.append("-f")

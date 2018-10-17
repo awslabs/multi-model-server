@@ -18,38 +18,42 @@ Prerequisites
 * **mxnet**: `mxnet` will not be installed by default with MMS 1.0 any more. You have to install it manually if you use MxNet.
 
 For ubuntu:
-```bash
-sudo apt-get install openjdk-8-jre-headless
-```
+::
+
+    sudo apt-get install openjdk-8-jre-headless
+
 
 For centos
-```bash
-sudo yum install java-1.8.0-openjdk
-```
+::
+
+    sudo yum install java-1.8.0-openjdk
+
 
 For Mac:
-```bash
-brew tap caskroom/versions
-brew update
-brew cask install java8
-```
+::
+
+    brew tap caskroom/versions
+    brew update
+    brew cask install java8
+
 
 Install MxNet:
-```bash
-pip install mxnet
-```
+::
+
+    pip install mxnet
 
 MXNet offers MKL pip packages that will be much faster when running on Intel hardware.
 To install mkl package for CPU:
-```bash
-pip install mxnet-mkl
-```
+::
+
+    pip install mxnet-mkl
 
 or for GPU instance:
 
-```bash
-pip install mxnet-cu90-mkl
-```
+::
+
+    pip install mxnet-cu90-mkl
+
 
 Installation
 ------------
@@ -87,10 +91,10 @@ You can check the latest source code as follows:
 Testing
 -------
 
-After installation, try out the MMS Quickstart for `Serving a
-Model <https://github.com/awslabs/mxnet-model-server/blob/master/README.md#serve-a-model>`__
-and `Create a
-Model Archive<https://github.com/awslabs/mxnet-model-server/blob/master/README.md#model-archive>`__.
+After installation, try out the MMS Quickstart for
+
+- `Serving a Model <https://github.com/awslabs/mxnet-model-server/blob/master/README.md#serve-a-model>`__
+- `Create a Model Archive <https://github.com/awslabs/mxnet-model-server/blob/master/README.md#model-archive>`__.
 
 Help and Support
 ----------------

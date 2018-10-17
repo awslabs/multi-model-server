@@ -183,6 +183,18 @@ public final class ConfigManager {
         return getIntProperty(NUMBER_OF_GPU, 0);
     }
 
+    public int getDefaultWorkers() {
+        if (isDebug()) {
+            return 1;
+        }
+
+        int workers = getNumberOfGpu();
+        if (workers == 0) {
+            workers = Runtime.getRuntime().availableProcessors();
+        }
+        return workers;
+    }
+
     public int getMetricTimeInterval() {
         return getIntProperty(METRIC_TIME_INTERVAL, 60);
     }

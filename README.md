@@ -87,7 +87,7 @@ For this quick start, we'll skip over most of the features, but be sure to take 
 
 Here is an easy example for serving an object classification model:
 ```bash
-mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+mxnet-model-server --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 With the command above executed, you have MMS running on your host, listening for inference requests.

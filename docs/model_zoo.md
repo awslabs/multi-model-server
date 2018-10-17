@@ -31,9 +31,8 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 | [ResNet-50v2](#resnet-50v2) | Image Classification | ImageNet | ONNX | 98 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet50v2.mar) |
 | [ResNet-101v2](#resnet-101v2) | Image Classification | ImageNet | ONNX | 171 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet101v2.mar) |
 | [ResNet-152v2](#resnet-152v2) | Image Classification | ImageNet | ONNX | 231 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet152v2.mar) |
-| [SqueezeNet](#squeezenet) | Image Classification | ImageNet | ONNX | 5 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet.mar) |
+| [SqueezeNet_v1.1](#squeezenet_v1.1_onnx) | Image Classification | ImageNet | ONNX | 5 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet.mar) |
 | [SqueezeNet v1.1](#squeezenet_v1.1) | Image Classification | ImageNet | MXNet | 5 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar) |
-| [SqueezeNet v1.1](#squeezenet_v1.1) | Image Classification | ImageNet | ONNX | 5 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet_v1.1.mar) |
 | [VGG16](#vgg16) | Image Classification | ImageNet | MXNet | 490 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/vgg16.mar) |
 | [VGG16](#vgg16_onnx) | Image Classification | ImageNet | ONNX | 527 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg16.mar) |
 | [VGG16_bn](#vgg16_bn_onnx) | Image Classification | ImageNet | ONNX | 527 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg16_bn.mar) |
@@ -86,7 +85,7 @@ pip install numpy
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models arcface=https://s3.amazonaws.com/model-server/model_archive_1.0/arcface-resnet100.mar
+mxnet-model-server --start --models arcface=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-arcface-resnet100.mar
 ```
 
 * **Get two test images**:
@@ -511,23 +510,6 @@ mxnet-model-server --start --models resnet152-v2=https://s3.amazonaws.com/model-
 curl -X POST http://127.0.0.1:8080/predictions/resnet152-v2 -T kitten.jpg
 ```
 
-## <a name="squeezenet"></a>SqueezeNet
-* **Type**: Image classification trained on ImageNet (imported from ONNX)
-
-* **Reference**: [Iandola, et al.](https://arxiv.org/pdf/1602.07360v4.pdf)
-
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
-
-* **Start Server**:
-```bash
-mxnet-model-server --start --models onnx-squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet.mar
-```
-
-* **Run Prediction**:
-```bash
-curl -X POST http://127.0.0.1:8080/predictions/onnx-squeezenet -T kitten.jpg
-```
-
 ## <a name="squeezenet_v1.1"></a>SqueezeNet v1.1
 * **Type**: Image classification trained on ImageNet
 
@@ -545,7 +527,7 @@ mxnet-model-server --start --models squeezenet_v1.1=https://s3.amazonaws.com/mod
 curl -X POST http://127.0.0.1:8080/predictions/squeezenet_v1.1 -T kitten.jpg
 ```
 
-## <a name="squeezenet_v1.1"></a>SqueezeNet v1.1 (from ONNX model zoo)
+## <a name="squeezenet_v1.1_onnx"></a>SqueezeNet v1.1 (from ONNX model zoo)
 * **Type**: Image classification trained on ImageNet (imported from ONNX)
 
 * **Reference**: [Iandola, et al.](https://arxiv.org/pdf/1602.07360v4.pdf)
@@ -554,12 +536,12 @@ curl -X POST http://127.0.0.1:8080/predictions/squeezenet_v1.1 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models onnx-squeezenet_v1.1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet_v1.1.mar
+mxnet-model-server --start --models onnx-squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet.mar
 ```
 
 * **Run Prediction**:
 ```bash
-curl -X POST http://127.0.0.1:8080/predictions/onnx-squeezenet_v1.1 -T kitten.jpg
+curl -X POST http://127.0.0.1:8080/predictions/onnx-squeezenet -T kitten.jpg
 ```
 
 

@@ -76,7 +76,7 @@ mkdir /tmp/models
 2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/blob/master/examples/gluon_alexnet/gluon_pretrained_alexnet.py)
 and other required artifacts to this folder
 ```bash
-cp ../template/gluon_base_service.py ../template/mxnet_utils/ndarray.py  gluon_pretrained_alexnet.py synset.txt signature.json /tmp/models/.
+cp ../model_service_template/gluon_base_service.py ../model_service_template/mxnet_utils/ndarray.py  gluon_pretrained_alexnet.py synset.txt signature.json /tmp/models/.
 ```
 3. Run the model-export tool on this folder.
 ```bash
@@ -182,7 +182,7 @@ mkdir /tmp/models
 2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_imperative_alexnet.py)
 and other required artifacts to this folder
 ```bash
-cp ../template/gluon_base_service.py ../template/mxnet_utils/ndarray.py  gluon_imperative_alexnet.py synset.txt signature.json /tmp/models/.
+cp ../model_service_template/gluon_base_service.py ../model_service_template/mxnet_utils/ndarray.py  gluon_imperative_alexnet.py synset.txt signature.json /tmp/models/.
 ```
 3. Download/copy the parameters to this `/tmp/models` directory. For this example, we have the parameters file in a S3 bucket.
 ```bash
@@ -299,7 +299,7 @@ mkdir /tmp/models
 2. Copy the [example code](https://github.com/awslabs/mxnet-model-server/examples/gluon_alexnet/gluon_imperative_alexnet.py)
 and other required artifacts to this folder
 ```bash
-cp ../template/gluon_base_service.py ../template/mxnet_utils/ndarray.py  gluon_hybrid_alexnet.py synset.txt signature.json /tmp/models/.
+cp ../model_service_template/gluon_base_service.py ../model_service_template/mxnet_utils/ndarray.py  gluon_hybrid_alexnet.py synset.txt signature.json /tmp/models/.
 ```
 3. Download/copy the parameters to this `/tmp/models` directory. For this example, we have the parameters file in a S3 bucket.
 ```bash

@@ -66,7 +66,7 @@ You can implement your own model customer service code as model archive entry po
 ```bash
 cd mxnet-model-server/examples
 
-cp -r template/* onnx-squeezenet/
+cp -r model_service_template/* onnx-squeezenet/
 ```
 
 The mxnet_vision_service.py assume there is a signature.json file that describes input parameter name and shape. You can download example from: [signature file](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/onnx-squeezenet/signature.json).

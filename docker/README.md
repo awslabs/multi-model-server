@@ -30,16 +30,17 @@ Running MXNet Model Server with Docker in two steps:
 This will download the MMS Docker image and run its default configuration, serving a Squeezenet model.
 
 ```bash
-docker run -itd --name mms -p 80:8080 awsdeeplearningteam/mms_cpu mxnet-model-server start --mms-config /mxnet_model_server/mms_app_cpu.conf
+docker run -itd --name mms -p 80:8080 -p 81:8081 awsdeeplearningteam/mms_cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
-With the `-p` flag, we're setting it up so you can run inference on your host computer's port: `80`.
+With the `-p` flag, we're setting it up so you can run inference on your host computer's port: `80` 
+and you can run other control plane API's on your host computer's port : `81`
 
 **Step 2: Test inference.**
 
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
-curl -X POST http://127.0.0.1/squeezenet/predict -F "data=@kitten.jpg"
+curl -X POST http://127.0.0.1/predictions/squeezenet -T @kitten.jpg
 ```
 
 After fetching this image of a kitten and posting it to the `predict` endpoint, you should see a response similar to the following:
@@ -68,8 +69,7 @@ In the Quickstart section, you launched a Docker image with MMS serving the Sque
 
 ### Using MMS and Docker with a Shared Volume
 
-For the purpose of loading different models and retrieving logs from MMS you will setup a shared volume with the Docker image.
-
+For the purpose of loading different models and/or running the container with a different configuration MMS you will setup a shared volume with the Docker image.
 
 **Step 1: Create a folder to share with the Docker container.**
 
@@ -81,50 +81,31 @@ mkdir /tmp/models
 
 **Step 2: Download the configuration template.**
 
-To run a different model in the Docker image, you need to provide it a new configuration file.
-
-Download the template for a CPU or a GPU config and place it in the `models` folder you just created:
-* [mms_app_cpu.conf](mms_app_cpu.conf)
-* [mms_app_gpu.conf](mms_app_gpu.conf)
+Download the template `config.properties` and place it in the `models` folder you just created:
+* [config.properties](config.properties)
 
 **Step 3: Modify the configuration template.**
 
-Edit the file you downloaded, `mms_app_*pu.conf`. It will have the following section for `MMS Arguments`:
+Edit the file you downloaded, `config.properties`. 
 
-```
-[MMS Arguments]
---models
-squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
-
---service
-optional
-
---gen-api
-optional
-
---log-file
-optional
-
---log-rotation-time
-optional
-
---log-level
-optional
+```properties
+# vmargs=-Xmx1g -XX:MaxDirectMemorySize=512m -Dlog4j.configuration=file:///opt/ml/conf/log4j.properties
+model_store=/models
+# load_models=ALL
+inference_address=http://0.0.0.0:8080
+management_address=http://0.0.0.0:8081
+# number_of_netty_threads=0
+# max_workers=0
+# job_queue_size=1000
+# number_of_gpu=1
+# keystore=src/test/resources/keystore.p12
+# keystore_pass=changeit
+# keystore_type=PKCS12
+# private_key_file=src/test/resources/key.pem
+# certificate_file=src/test/resources/certs.pem
 ```
 
-To change the model, you will update the `--models` argument. This uses MMS's flexible handling of the model file locations, so that the model can reside at a URL, or on your local file system.
-
-Change `--models` to use the following `resnet-18` model:
-
-```
-resnet-18=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
-```
-
-You may also download the model and use the shared file path, but specify the path from within the Docker container.
-
-```
-resnet-18=/models/resnet-18.model
-```
+Modify the configuration file to suite your configuration needs before running the model server.
 
 Save the file.
 
@@ -133,22 +114,18 @@ Save the file.
 When you run the following command, the `-v` argument and path values of `/tmp/models/:/models` will map the `models` folder you created (assuming it was in ) with a folder inside the Docker container. MMS will then be able to use the local model file.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -v /tmp/models/:/models awsdeeplearningteam/mms_cpu
+docker run -itd --name mms -p 80:8080 -p 81:8081 -v /tmp/models/:/models awsdeeplearningteam/mms_cpu mxnet-model-server --start --mms-config /models/config.properties --models resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
 ```
 
-**Step 5: Start MMS.**
-You also need to start MMS in the container. In the Quickstart, we did this as all one command, but here you are doing it as a second step.
+**NOTE**: If you modify the inference_address or the management_address in the configuration file, accordingly modify the 
+ports exposed by docker as well.
+
+**Step 5: Test inference.**
+
+You will upload the same kitten image as before, but this time you will request the `predictions/resnet` API endpoint.
 
 ```bash
-docker exec mms bash -c "mxnet-model-server start --mms-config /models/mms_app_cpu.conf"
-```
-
-**Step 6: Test inference.**
-
-You will upload the same kitten image as before, but this time you will request the `resnet-18/predict` API endpoint.
-
-```bash
-curl -X POST http://127.0.0.1/resnet-18/predict -F "data=@kitten.jpg"
+curl -X POST http://127.0.0.1/predictions/resnet -T @kitten.jpg
 ```
 
 Given that this is a different model, the same image yields a different inference result which will be something similar to the following:

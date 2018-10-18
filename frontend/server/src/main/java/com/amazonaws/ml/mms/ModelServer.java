@@ -111,10 +111,7 @@ public class ModelServer {
         }
 
         ModelManager modelManager = ModelManager.getInstance();
-        int workers = configManager.getNumberOfGpu();
-        if (workers == 0) {
-            workers = Runtime.getRuntime().availableProcessors();
-        }
+        int workers = configManager.getDefaultWorkers();
         if ("ALL".equalsIgnoreCase(loadModels)) {
             String modelStore = configManager.getModelStore();
             if (modelStore == null) {

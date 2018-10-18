@@ -14,7 +14,7 @@ at runtime.
 """
 
 import argparse
-
+import os
 from .manifest_components.manifest import RuntimeType
 
 
@@ -69,6 +69,7 @@ class ArgParser(object):
         parser_export.add_argument('--export-path',
                                    required=False,
                                    type=str,
+                                   default=os.getcwd(),
                                    help='Path where the exported .mar file will be saved. This is an optional '
                                         'parameter. If --export-path is not specified, the file will be saved in the '
                                         'current working directory. ')

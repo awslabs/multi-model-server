@@ -24,6 +24,8 @@ brew update
 brew cask install java8
 ```
 
+You can also download and install [Oracle JDK](https://www.oracle.com/technetwork/java/javase/overview/index.html) manually if you have trouble with above commands.
+
 * **MxNet**: Recommended. MMS won't install `mxnet` by default. MxNet is required for most of examples in this project. MMS won't install mxnet engine by default, you can install mxnet-mkl or mxnet-cu90mkl based on your need. And you can also choose specific version of mxnet if you want.
 
 ```bash
@@ -107,3 +109,4 @@ pip install -U -e .
 | Issue | Solution |
 |---|---|
 |java not found, please make sure JAVA_HOME is set properly. | Make sure java is installed. java is on the $PATH or $JAVA_HOME is set properly. |
+|Your PYTHONPATH points to a site-packages dir for Python 3.x but you are running Python 2.x! | You do one of following: <ul><li>use virtualenv</li><li>unset PYTHONPATH</li><li>set PYTHONPATH properly</li></ul> |

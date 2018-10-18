@@ -27,14 +27,14 @@ Running MXNet Model Server with Docker in two steps:
 
 **Step 1: Run the Docker image.**
 
-This will download the MMS Docker image and run its default configuration, serving a Squeezenet model.
+This will download the MMS Docker image and run its default configuration, serving a SqueezeNet model.
 
 ```bash
 docker run -itd --name mms -p 80:8080 -p 81:8081 awsdeeplearningteam/mms_cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
-With the `-p` flag, we're setting it up so you can run inference on your host computer's port: `80` 
-and you can run other control plane API's on your host computer's port : `81`
+With the `-p` flag, we're setting it up so you can run the Predict API on your host computer's port `80`. This maps to the Docker image's port `8080`.
+It will run the Management API on your host computer's port `81`. This maps to the Docker image's port `8081`.
 
 **Step 2: Test inference.**
 
@@ -57,7 +57,7 @@ After fetching this image of a kitten and posting it to the `predict` endpoint, 
 
 ### Cleaning Up
 
-Now that you have tested it out, you can stop the Docker container. The following command with stop the server and delete the container, but retain the Docker image for trying out other models and configurations next.
+Now that you have tested it out, you may stop the Docker container. The following command will stop the server and delete the container. It will retain the Docker image for trying out other models and configurations later.
 
 ```bash
 docker rm -f mms
@@ -65,11 +65,14 @@ docker rm -f mms
 
 ## Configuring MMS with Docker
 
-In the Quickstart section, you launched a Docker image with MMS serving the Squeezenet model. Now you will learn how to configure MMS with Docker to run other models, as well as how to collect MMS logs, and optimize your MMS with Docker images.
+In the Quickstart section, you launched a Docker image with MMS serving the SqueezeNet model.
+Now you will learn how to configure MMS with Docker to run other models.
+You will also learn how to collect MMS logs, and optimize MMS with Docker images.
 
 ### Using MMS and Docker with a Shared Volume
 
-For the purpose of loading different models and/or running the container with a different configuration MMS you will setup a shared volume with the Docker image.
+You may sometimes want to load different models with a different configuration.
+Setting up a shared volume with the Docker image is the recommended way to handle this.
 
 **Step 1: Create a folder to share with the Docker container.**
 
@@ -86,7 +89,7 @@ Download the template `config.properties` and place it in the `models` folder yo
 
 **Step 3: Modify the configuration template.**
 
-Edit the file you downloaded, `config.properties`. 
+Edit the file you downloaded, `config.properties`.
 
 ```properties
 # vmargs=-Xmx1g -XX:MaxDirectMemorySize=512m -Dlog4j.configuration=file:///opt/ml/conf/log4j.properties
@@ -111,14 +114,15 @@ Save the file.
 
 **Step 4: Run MMS with Docker using a shared volume.**
 
-When you run the following command, the `-v` argument and path values of `/tmp/models/:/models` will map the `models` folder you created (assuming it was in ) with a folder inside the Docker container. MMS will then be able to use the local model file.
+When you run the following command, the `-v` argument and path values of `/tmp/models/:/models` will map the Docker image's `models` folder to your local `/tmp/models` folder.
+MMS will then be able to use the local model file.
 
 ```bash
 docker run -itd --name mms -p 80:8080 -p 81:8081 -v /tmp/models/:/models awsdeeplearningteam/mms_cpu mxnet-model-server --start --mms-config /models/config.properties --models resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
 ```
 
-**NOTE**: If you modify the inference_address or the management_address in the configuration file, accordingly modify the 
-ports exposed by docker as well.
+**NOTE**: If you modify the inference_address or the management_address in the configuration file,
+you must modify the ports exposed by Docker as well.
 
 **Step 5: Test inference.**
 
@@ -141,7 +145,11 @@ Given that this is a different model, the same image yields a different inferenc
 ...
 ```
 
-Now that you have tried the default inference using Squeezenet and configuring inference to the resnet-18 model you are ready to try some other more advanced settings.
+## Conclusion
+
+You have tried the default Predictions API settings using a SqueezeNet model. 
+You then configured your Predictions API endpoints to also serve a ResNet-18 model.
+Now you are ready to try some other more **advanced settings** such as:
 
 * GPU inference
 * MMS settings

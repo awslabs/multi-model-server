@@ -8,16 +8,17 @@
     * [Model name](#model-name)
     * [Runtime](#runtime)
     * [Handler](#handler)
+* [Quick Start: Creating a Model Archive](#creating-a-model-archive)
 
 ## Other Relevant Documents
-* [Model Archive Example](../examples/mxnet_vision/README.md)
+* [Model Archive Examples](../examples/README.md)
 * [Packaging an ONNX Model](docs/convert_from_onnx.md)
 
 ## Overview
 
 A key feature of MMS is the ability to package all model artifacts into a single model archive file. It is a separate command line interface (CLI), `model-archiver`, that can take model checkpoints and package them into a `.mar` file that can then be redistributed and served by anyone using MMS. It takes in the following model artifacts: a model composed of one or more files, the description of the model's inputs in the form of a signature file, a service file describing how to handle inputs and outputs, and other optional assets that may be required to serve the model. The CLI creates a `.mar` file that MMS's server CLI uses to serve the models.
 
-**Important**: Make sure you try the [Quick Start: Creating a Model Archive](../README.md#create-a-model-archive) tutorial for a short example of using `model-archiver`.
+**Important**: Make sure you try the [Quick Start: Creating a Model Archive](#creating-a-model-archive) tutorial for a short example of using `model-archiver`.
 
 MMS support arbitrary models file. It's custom service code's responsibility to locate and load models files. Following information are required to create a standalone model archive:
 1. [Model name](#model-name)
@@ -107,3 +108,55 @@ The function name is optional if provided python module follows one of predefine
 
 Further details and specifications are found on the [custom service](../docs/custom_service.md) page.
 
+
+## Creating a Model Archive
+
+**1. Download these sample SqueezeNet model artifacts (if you don't have them handy)**
+
+```bash
+mkdir squeezenet
+
+curl -o squeezenet https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-symbol.json
+curl -o squeezenet https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-0000.params
+curl -o squeezenet https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/signature.json
+curl -o squeezenet https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/synset.txt
+```
+
+The downloaded model artifact files are:
+
+* **Model Definition** (json file) - contains the layers and overall structure of the neural network.
+* **Model Params and Weights** (params file) - contains the parameters and the weights.
+* **Model Signature** (json file) - defines the inputs and outputs that MMS is expecting to hand-off to the API.
+* **assets** (text files) - auxiliary files that support model inference such as vocabularies, labels, etc. These vary depending on the model.
+
+Further details on these files, custom services, and advanced `model-archiver` features can be found on the [Package Models for Use with MMS](model-archiver/README.md) page.
+
+**2. Download the model archiver source**
+```bash
+git clone http://https://github.com/awslabs/mxnet-model-server.git
+```
+
+**3. Prepare your model custom service code**
+
+You can implement your own model customer service code as model archive entry point.
+Here we are going to use the MXNet vision service `model_service_template`.
+This template is one of several provided with MMS.
+Download the template and place it in your `squeezenet` folder.
+
+```bash
+cp -r mxnet-model-server/examples/model_service_template/* squeezenet/
+```
+
+**4. Package your model**
+
+With the model artifacts available locally, you can use the `model-archiver` CLI to generate a `.mar` file that can be used to serve an inference API with MMS.
+
+In this next step we'll run `model-archiver` and tell it our model's prefix is `squeezenet_v1.1` with the `model-name` argument. Then we're giving it the `model-path` to the model's assets.
+
+**Note**: For mxnet models, `model-name` must match prefix of the symbol and param file name.
+
+```bash
+model-archiver --model-name squeezenet_v1.1 --model-path squeezenet --handler mxnet_vision_service:handle
+```
+
+This will package all the model artifacts files in `squeezenet` directory and output `squeezenet_v1.1.mar` in the current working directory. This `.mar` file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the [Serve a Model tutorial](../README#serve-a-model) and try to run this model archive that you just created!

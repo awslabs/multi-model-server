@@ -39,7 +39,7 @@ Save the file.
 When you run the following command, the `-v` argument and path values of `/tmp/models/:/models` will map the `models` folder you created (assuming it was in ) with a folder inside the Docker container. MMS will then be able to use the local model file.
 
 ```bash
-nvidia-docker run -itd --name mms -p 80:8080  -p 81:8081 -v /tmp/models/:/models awsdeeplearningteam/mms_gpu mxnet-model-server --start --mms-config /models/config.properties --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+nvidia-docker run -itd --name mms -p 80:8080  -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mms_gpu mxnet-model-server --start --mms-config /models/config.properties --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
 **Step 5: Test inference.**
@@ -112,17 +112,17 @@ docker attach mms
 
 Run the MMS Docker image without starting the Model Server:
 ```bash
-docker run -itd --name mms -p 80:8080 -p 81:8081 awsdeeplearningteam/mms_cpu /bin/bash
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mms_cpu /bin/bash
 ```
 
 Start MMS in the Docker container (CPU config):
 ```bash
-docker exec mms bash -c mxnet-model-server --start --mms-config /home/model-server/config.properties
+docker exec mms mxnet-model-server --start --mms-config /home/model-server/config.properties
 ```
 
 Start MMS in the Docker container using nvidia-docker command as follows. :
 ```bash
-nvidia-docker exec mms bash -c mxnet-model-server --start --mms-config /home/model-server/config.properties
+nvidia-docker exec mxnet-model-server --start --mms-config /home/model-server/config.properties
 ```
 
 **Note**: To use GPU configuration, modify the config.properties to reflect that the model-server should use GPUs.
@@ -137,12 +137,12 @@ number_of_gpu=8
 
 Stop MMS.
 ```bash
-docker exec mms bash -c mxnet-model-server --stop
+docker exec mms mxnet-model-server --stop
 ```
 
 Get MMS help.
 ```bash
-docker exec mms bash -c mxnet-model-server --help
+docker exec mms mxnet-model-server --help
 ```
 
 Refer [Docker CLI](https://docs.docker.com/engine/reference/commandline/run/) to understand each parameter.
@@ -235,7 +235,7 @@ docker build -f Dockerfile.gpu -t mms_image_gpu .
 #### Running the MMS GPU Docker
 
 ```bash
-nvidia-docker run -itd -p 80:8080 -p 81:8081 --name mms -v /home/user/models/:/models mms_image_gpu
+nvidia-docker run -itd -p 80:8080 -p 8081:8081 --name mms -v /home/user/models/:/models mms_image_gpu /bin/bash
 ```
 
 This command starts the Docker instance in a detached mode and mounts `/home/user/models` of the host system into `/models` directory inside the Docker instance.
@@ -243,7 +243,7 @@ Considering that you modified and copied `config.properties` file into the model
 above `nvidia-docker` command, you would have this configuration file ready to use in the Docker instance.
 
 ```bash
-nvidia-docker exec mms bash -c "mxnet-model-server --start --mms-config /models/config.properties"
+nvidia-docker exec mms mxnet-model-server --start --mms-config /models/config.properties
 ```
 
 ### Testing the MMS Docker

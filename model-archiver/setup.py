@@ -60,6 +60,8 @@ if __name__ == '__main__':
         description='Model Archiver is used for creating archives of trained neural net models that can be consumed '
                     'by MXNet-Model-Server inference',
         long_description=pypi_description(),
+        author='MXNet SDK team',
+        author_email='noreply@amazon.com',
         url='https://github.com/awslabs/mxnet-model-server/model-archiver/',
         keywords='MXNet Model Archive Archiver MMS Server Serving Deep Learning Inference AI',
         packages=pkgs,

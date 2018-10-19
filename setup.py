@@ -38,6 +38,8 @@ from shutil import copyfile, rmtree
 import setuptools.command.build_py
 from setuptools import setup, find_packages, Command
 
+import mms
+
 pkgs = find_packages()
 source_server_file = os.path.abspath('frontend/server/build/libs/server-1.0.jar')
 dest_file_name = os.path.abspath('mms/frontend/model-server.jar')
@@ -53,8 +55,11 @@ def pypi_description():
 
 def detect_model_server_version():
     sys.path.append(os.path.abspath("mms"))
-    import mms
-    return mms.__version__
+    if "--release" in sys.argv:
+        sys.argv.remove("--release")
+        return mms.__version__.strip() + '.' + str(date.today()).replace('-', '')
+
+    return mms.__version__.strip() + 'b' + str(date.today()).replace('-', '')
 
 
 class BuildFrontEnd(Command):
@@ -111,14 +116,13 @@ class BuildPy(setuptools.command.build_py.build_py):
 
 
 if __name__ == '__main__':
-    opt_set = set(sys.argv)
     version = detect_model_server_version()
 
     requirements = ['Pillow', 'psutil', 'future', 'model-archiver']
 
     setup(
         name='mxnet-model-server',
-        version=version.strip() + 'b' + str(date.today()).replace('-', ''),
+        version=version,
         description='Model Server for Apache MXNet is a tool for serving neural net models for inference',
         author='MXNet SDK team',
         author_email='noreply@amazon.com',

@@ -129,7 +129,7 @@ curl http://localhost:8081/models/noop
   "modelName": "noop",
   "modelVersion": "snapshot",
   "modelUrl": "noop.mar",
-  "engine": "MxNet",
+  "engine": "MXNet",
   "runtime": "python",
   "minWorkers": 1,
   "maxWorkers": 1,

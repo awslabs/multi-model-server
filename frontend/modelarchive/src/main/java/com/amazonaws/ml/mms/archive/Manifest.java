@@ -216,8 +216,8 @@ public class Manifest {
     }
 
     public enum EngineType {
-        @SerializedName("MxNet")
-        MX_NET("MxNet");
+        @SerializedName("MXNet")
+        MX_NET("MXNet");
 
         String value;
 

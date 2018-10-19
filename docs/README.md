@@ -20,6 +20,6 @@
 
 ## Example Projects
 * [MMS on Fargate, Serverless Inference](mms_on_fargate.md) - The project which illustrates the step-by-step process to launch MMS as a managed inference production service, on ECS Fargate.
-* [MxNet Vision Service](../examples/mxnet_vision/README.md) - An example MMS project for a MxNet Image Classification model. The project takes JPEG image as input for inference.
+* [MXNet Vision Service](../examples/mxnet_vision/README.md) - An example MMS project for a MXNet Image Classification model. The project takes JPEG image as input for inference.
 * [LSTM](../examples/lstm_ptb/README.md) - An example MMS project for a recurrent neural network (RNN) using long short-term memory (LSTM). The project takes JSON inputs for inference against a model trained with a specific vocabulary.
 * [Object Detection](../examples/ssd/README.md) - An example MMS project that uses a pretrained Single Shot Multi Object Detection (SSD) model that takes image inputs and infers the types and locations of several classes of objects.

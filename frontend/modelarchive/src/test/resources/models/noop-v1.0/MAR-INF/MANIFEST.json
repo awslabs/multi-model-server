@@ -12,7 +12,7 @@
     "handler": "noop_service:handle"
   },
   "publisher": {
-    "author": "MxNet sdk team",
+    "author": "MXNet SDK team",
     "email": "noreply@amazon.com"
   }
 }

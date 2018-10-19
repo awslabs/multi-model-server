@@ -17,10 +17,6 @@ phases:
       - pip install -U -e .[mxnet]
       - cd model-archiver/ && pip install -U -e . && cd ../
 
-  pre_build:
-    commands:
-        - $NIGHTLYBRANCH
-
   build:
     commands:
       - frontend/gradlew -p frontend build

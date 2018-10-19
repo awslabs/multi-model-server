@@ -30,11 +30,11 @@ Running MXNet Model Server with Docker in two steps:
 This will download the MMS Docker image and run its default configuration, serving a SqueezeNet model.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 81:8081 awsdeeplearningteam/mms_cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mms_cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
 With the `-p` flag, we're setting it up so you can run the Predict API on your host computer's port `80`. This maps to the Docker image's port `8080`.
-It will run the Management API on your host computer's port `81`. This maps to the Docker image's port `8081`.
+It will run the Management API on your host computer's port `8081`. This maps to the Docker image's port `8081`.
 
 **Step 2: Test inference.**
 
@@ -118,7 +118,7 @@ When you run the following command, the `-v` argument and path values of `/tmp/m
 MMS will then be able to use the local model file.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 81:8081 -v /tmp/models/:/models awsdeeplearningteam/mms_cpu mxnet-model-server --start --mms-config /models/config.properties --models resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
+docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mms_cpu mxnet-model-server --start --mms-config /models/config.properties --models resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
 ```
 
 **NOTE**: If you modify the inference_address or the management_address in the configuration file,

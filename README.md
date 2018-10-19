@@ -30,6 +30,7 @@ Before proceeding further with this document, make sure you have the following p
 1. Python     - MXNet model server requires python to run the workers.
 1. pip        - Pip is a python package management system.
 1. Java 8     - MXNet Model Server requires Java 8 to start. You have the following options for installing Java 8:
+
     For Ubuntu:
     ```bash
     sudo apt-get install openjdk-8-jre-headless
@@ -52,19 +53,23 @@ Before proceeding further with this document, make sure you have the following p
 #### Setup
 
 **Step 1:** Setup a Virtual Environment
+
 We recommend installing and running MXNet Model Server in a virtual environment. It's a good practice to run and install all of the Python dependencies in virtual environments. This will provide isolation of the dependencies and ease dependency management.
 
-One option is to use Virtualenv. This is used to create virtual Python environments. You may install and activate a `virtualenv` for Python 2.7 as follows:
-    ```bash
-    pip install virtualenv
-    ```
-    Then create a virtual environment:
-    ```bash
-    # Assuming we want to run python2.7 in /usr/local/bin/python2.7
-    virtualenv -p /usr/local/bin/python2.7 /tmp/pyenv2
-    # Enter this virtual environment as follows
-    source /tmp/pyenv2/bin/activate
-    ```
+One option is to use Virtualenv. This is used to create virtual Python environments. You may install and activate a virtualenv for Python 2.7 as follows:
+
+```bash
+pip install virtualenv
+```
+
+Then create a virtual environment:
+```bash
+# Assuming we want to run python2.7 in /usr/local/bin/python2.7
+virtualenv -p /usr/local/bin/python2.7 /tmp/pyenv2
+# Enter this virtual environment as follows
+source /tmp/pyenv2/bin/activate
+```
+
 Refer to the [Virtualenv documentation](https://virtualenv.pypa.io/en/stable/) for further information.
 
 **Step 2:** Install MXNet
@@ -106,7 +111,7 @@ For this quick start, we'll skip over most of the features, but be sure to take 
 
 Here is an easy example for serving an object classification model:
 ```bash
-mxnet-model-server --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 With the command above executed, you have MMS running on your host, listening for inference requests.

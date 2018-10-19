@@ -120,6 +120,8 @@ if __name__ == '__main__':
         name='mxnet-model-server',
         version=version.strip() + 'b' + str(date.today()).replace('-', ''),
         description='Model Server for Apache MXNet is a tool for serving neural net models for inference',
+        author='MXNet SDK team',
+        author_email='noreply@amazon.com',
         long_description=pypi_description(),
         url='https://github.com/awslabs/mxnet-model-server',
         keywords='MXNet Model Server Serving Deep Learning Inference AI',
@@ -130,9 +132,9 @@ if __name__ == '__main__':
         },
         install_requires=requirements,
         extras_require={
-            'mxnet-mkl': ['mxnet-mkl==1.2.0'],
-            'mxnet-cu90mkl': ['mxnet-cu90mkl==1.2.0'],
-            'mxnet': ['mxnet==1.2'],
+            'mxnet-mkl': ['mxnet-mkl'],
+            'mxnet-cu90mkl': ['mxnet-cu90mkl'],
+            'mxnet': ['mxnet'],
         },
         entry_points={
             'console_scripts': [

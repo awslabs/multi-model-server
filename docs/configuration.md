@@ -64,7 +64,7 @@ MMS doesn't support authentication natively. To avoid unauthorized access, MMS o
 * inference_address: inference API binding address, default: http://127.0.0.1:8080
 * management_address: management API binding address, default: http://127.0.0.1:8081
 
-Here is a couple of examples:
+Here are a couple of examples:
 ```properties
 # bind inference API to all network interfaces with SSL enabled
 inference_address=https://0.0.0.0:8443

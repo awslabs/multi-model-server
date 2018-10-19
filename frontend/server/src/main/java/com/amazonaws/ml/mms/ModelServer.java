@@ -33,7 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -51,7 +51,7 @@ public class ModelServer {
     private Logger logger = LoggerFactory.getLogger(ModelServer.class);
 
     private ServerGroups serverGroups;
-    private List<ChannelFuture> futures;
+    private List<ChannelFuture> futures = new ArrayList<>(2);
     private AtomicBoolean stopped = new AtomicBoolean(false);
 
     private ConfigManager configManager;
@@ -62,8 +62,7 @@ public class ModelServer {
         serverGroups = new ServerGroups(configManager);
     }
 
-    public static void main(String[] args)
-            throws InterruptedException, IOException, GeneralSecurityException {
+    public static void main(String[] args) {
         Options options = ConfigManager.Arguments.getOptions();
         try {
             DefaultParser parser = new DefaultParser();
@@ -81,6 +80,9 @@ public class ModelServer {
             formatter.setLeftPadding(1);
             formatter.setWidth(120);
             formatter.printHelp(e.getMessage(), options);
+        } catch (Throwable t) {
+            t.printStackTrace(); // NOPMD
+        } finally {
             System.exit(1); // NOPMD
         }
     }
@@ -98,7 +100,6 @@ public class ModelServer {
             serverGroups.shutdown(true);
             logger.info("Model server stopped.");
         }
-        Runtime.getRuntime().halt(-1); // NOPMD
     }
 
     private void initModelStore() {
@@ -200,7 +201,16 @@ public class ModelServer {
         }
         b.childHandler(new ServerInitializer(sslCtx, management));
 
-        ChannelFuture future = b.bind(address.getHost(), address.getPort()).sync();
+        ChannelFuture future;
+        try {
+            future = b.bind(address.getHost(), address.getPort()).sync();
+        } catch (Exception e) {
+            // https://github.com/netty/netty/issues/2597
+            if (e instanceof IOException) {
+                throw new IOException("Failed to bind to address: " + address, e);
+            }
+            throw e;
+        }
         future.addListener(
                 (ChannelFutureListener)
                         f -> {
@@ -255,12 +265,11 @@ public class ModelServer {
         Class<? extends ServerChannel> channelClass = NettyUtils.getServerChannel();
         logger.info("Initialize servers with: {}.", channelClass.getSimpleName());
 
-        futures =
-                Arrays.asList(
-                        initializeServer(
-                                inferenceAddress, false, serverGroup, workerGroup, channelClass),
-                        initializeServer(
-                                managementAddress, true, serverGroup, workerGroup, channelClass));
+        futures.clear();
+        futures.add(
+                initializeServer(inferenceAddress, false, serverGroup, workerGroup, channelClass));
+        futures.add(
+                initializeServer(managementAddress, true, serverGroup, workerGroup, channelClass));
 
         return futures;
     }

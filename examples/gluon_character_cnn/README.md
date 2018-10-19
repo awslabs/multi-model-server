@@ -9,20 +9,20 @@ In this example, we show how to create a service which classifies a review into 
 
 ```bash
 # Download the model file
-$ wget https://s3.amazonaws.com/mms-char-cnn-files/gluon_crepe.py
+wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/gluon_crepe.py
 
 # Download the parameters
-$ wget https://s3.amazonaws.com/mms-char-cnn-files/crepe_gluon_epoch6.params
+wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/crepe_gluon_epoch6.params
 
 # Download the signature file
-$ wget https://s3.amazonaws.com/mms-char-cnn-files/signature.json
+wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/signature.json
 
 # Download classification labels file
-$ wget https://s3.amazonaws.com/mms-char-cnn-files/synset.txt
+wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/synset.txt
 
 # Download the base service and the helper files
-$ wget https://s3.amazonaws.com/mms-char-cnn-files/gluon_base_service.py
-$ wget https://s3.amazonaws.com/mms-char-cnn-files/ndarray.py
+wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/gluon_base_service.py
+wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/ndarray.py
 ```
 
 ## Step 2 - Look at the Gluon model/service  file
@@ -103,14 +103,14 @@ With model file together with signature and  files in the model folder, we are r
 model-archiver --model-name crepe -f --model-path /tmp/crepe/ --handler gluon_crepe:crepe_inference --runtime python --export-path /tmp
 ```
 
-A packaged model can be downloaded from [here.](https://s3.amazonaws.com/mms-char-cnn-files/character_cnn.model)
+A packaged model can be downloaded from [here.](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/crepe.mar)
 
 ## Step 6 - Establish inference service
 
 character_cnn.model file is created by exporting model files. We also defined custom service under gluon_crepe.py. We are ready to establish the Character-level CNN inference service:
 
 ```bash
-mxnet-model-server --models crepe.mar --model-path /tmp
+mxnet-model-server --models crepe.mar --model-store /tmp
 ```
 
 The endpoint is on localhost and port 8080. You can change them by passing --host and --port when establishing the service.

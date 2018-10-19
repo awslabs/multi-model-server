@@ -26,9 +26,19 @@ MMS 1.0 made following changes for pip installation package:
 See more detail: [Install MMS](install.md)
 
 ## Command line interface
-MMS 1.0 made some parameter changes in `mxnet-model-server` command line tool. The old command line parameters won't work any more.
+MMS 1.0 made some parameter changes in `mxnet-model-server` command line tool. Following old command line parameters won't work any more:
 
-Please see [Command Line Interface](server.md#command-line-interface)
+* --service, See [Register model](management_api.md#register-a-model) for how to override service entry-point.
+* --gen-api, See [API description](inference_api#api-description) for how to generate your swagger client code.
+* --port, See [Configure MMS listening port](configuration.md#configure-mms-listening-port) for how to configure port.
+* --host, See [Configure MMS listening port](configuration.md#configure-mms-listening-port) for how to bind to specific network interface.
+* --gpu, See [Config properties](configuration.md#other-properties) for how to limit number of GPUs.
+* --log-file, See [Logging](#logging) section for how to configure logging.
+* --log-rotation-time, See [Logging](#logging) section for how to configure logging.
+* --log-level, See [Logging](#logging) section for how to configure logging.
+* --metrics-write-to, See [Metrics](#metrics) section for how to configure metrics.
+
+Please see [Command Line Interface](server.md#command-line-interface) for new parameters.
 
 ## API
 You can continue to use MMS 0.4 inference API in MMS 1.0. However they are deprecated. Please migrate to new [inference API](inference_api.md)

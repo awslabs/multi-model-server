@@ -130,9 +130,9 @@ if __name__ == '__main__':
         },
         install_requires=requirements,
         extras_require={
-            'mxnet-mkl': ['mxnet-mkl==1.2.0'],
-            'mxnet-cu90mkl': ['mxnet-cu90mkl==1.2.0'],
-            'mxnet': ['mxnet==1.2'],
+            'mxnet-mkl': ['mxnet-mkl'],
+            'mxnet-cu90mkl': ['mxnet-cu90mkl'],
+            'mxnet': ['mxnet'],
         },
         entry_points={
             'console_scripts': [

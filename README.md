@@ -92,7 +92,7 @@ pip install mxnet-cu92mkl
 **Step 3:** Install or Upgrade MMS as follows:
 
 ```bash
-pip install -U mxnet-model-server
+pip install -U mxnet-model-server --pre
 ```
 
 **Notes:**

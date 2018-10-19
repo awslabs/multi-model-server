@@ -191,7 +191,7 @@ public class WorkerLifeCycle {
                         continue;
                     }
 
-                    if ("MxNet worker started.".equals(result)) {
+                    if ("MXNet worker started.".equals(result)) {
                         lifeCycle.setSuccess(true);
                     } else if (result.startsWith("[PID]")) {
                         lifeCycle.setPid(Integer.parseInt(result.substring("[PID]".length())));

@@ -256,7 +256,7 @@ public final class Exporter {
                             .longOpt("engine")
                             .hasArg()
                             .argName("engine")
-                            .desc("The ML framework for your model, default MxNet")
+                            .desc("The ML framework for your model, default MXNet")
                             .build());
             options.addOption(
                     Option.builder("s")

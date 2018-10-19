@@ -140,10 +140,10 @@ There are no default required arguments to start the server
 ### Custom Services
 
 This topic is covered in much more detail on the [custom service documentation page](custom_service.md), but let's talk about how you start up your MMS server using a custom service and why you might want one.
-Let's say you have a model named `super-fancy-net.mar` that can detect a lot of things, but you want an API endpoint that detects only hotdogs. You would use a name that makes sense for it, such as the "not-hot-dog" API. In this case we might invoke MMS like this:
+Let's say you have a model named `super-fancy-net.mar` in `/models` folder, which can detect a lot of things, but you want an API endpoint that detects only hotdogs. You would use a name that makes sense for it, such as the "not-hot-dog" API. In this case we might invoke MMS like this:
 
 ```bash
-mxnet-model-server --models not-hot-dog=super-fancy-net.mar
+mxnet-model-server --start  --model-store /models --models not-hot-dog=super-fancy-net.mar
 ```
 
 This would serve a prediction endpoint at `predictions/not-hot-dog/` and run your custom service code in the archive, the manifest in archive would point to the entry point.
@@ -153,13 +153,13 @@ This would serve a prediction endpoint at `predictions/not-hot-dog/` and run you
 Example multiple model usage:
 
 ```bash
-mxnet-model-server --models name=model_location name2=model_location2
+mxnet-model-server --start --model-store /models --models name=model_location name2=model_location2
 ```
 
 Here's an example for running the resnet-18 and the vgg16 models using local model files.
 
 ```bash
-mxnet-model-server --models resnet-18=file://models/resnet-18.mar squeezenet=file://models/squeezenet_v1.1.mar
+mxnet-model-server --start --model-store /models --models resnet-18=resnet-18.mar squeezenet=squeezenet_v1.1.mar
 ```
 
 If you don't have the model files locally, then you can call MMS using URLs to the model files.

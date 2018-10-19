@@ -35,7 +35,7 @@ def start():
                     child.kill()
                 parent.kill()
                 print("Model server stopped.")
-            except OSError:
+            except (OSError, psutil.Error):
                 print("Model server already stopped.")
             os.remove(pid_file)
     else:

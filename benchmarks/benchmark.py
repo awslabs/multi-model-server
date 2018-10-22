@@ -88,6 +88,7 @@ AGGREGATE_REPORT_CSV_LABELS_MAP = {
     'aggregate_report_rate': 'Throughput',
     'average': 'Average',
     'aggregate_report_median': 'Median',
+    'aggregate_report_90%_line': 'aggregate_report_90_line',
     'aggregate_report_99%_line': 'aggregate_report_99_line',
     'aggregate_report_error%': 'aggregate_report_error'
 

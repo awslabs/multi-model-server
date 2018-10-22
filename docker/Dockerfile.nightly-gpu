@@ -16,8 +16,8 @@ RUN apt-get update && \
     && curl -O https://bootstrap.pypa.io/get-pip.py \
     && python get-pip.py
 
-RUN pip install --no-cache-dir mxnet-model-server \
-    && pip install --no-cache-dir mxnet-cu92mkl==1.3.0.post0
+RUN pip install --no-cache-dir --pre mxnet-model-server \
+    && pip install --no-cache-dir mxnet-cu92mkl
 
 RUN useradd -m model-server \
     && mkdir -p /home/model-server/tmp

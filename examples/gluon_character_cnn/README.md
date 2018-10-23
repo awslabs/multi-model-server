@@ -9,20 +9,20 @@ In this example, we show how to create a service which classifies a review into 
 
 ```bash
 # Download the model file
-wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/gluon_crepe.py
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/gluon_crepe.py
 
 # Download the parameters
-wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/crepe_gluon_epoch6.params
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/crepe_gluon_epoch6.params
 
 # Download the signature file
-wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/signature.json
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/signature.json
 
 # Download classification labels file
-wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/synset.txt
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/synset.txt
 
 # Download the base service and the helper files
-wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/gluon_base_service.py
-wget https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/ndarray.py
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/gluon_base_service.py
+curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/ndarray.py
 ```
 
 ## Step 2 - Look at the Gluon model/service  file

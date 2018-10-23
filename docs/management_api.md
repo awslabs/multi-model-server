@@ -16,17 +16,17 @@ Similar as [Inference API](inference_api.md), Management API also provide a [API
 ### Register a model
 
 `POST /models`
-* model_url - Model archive download url. support:
-    * local model archive (.mar), the file must be directly in model_store folder.
-    * local model directory, the directory must be directly in model_store foler. This option can avoid MMS extracting .mar file to temporary folder, which will improve load time and reduce disk space usage.
-    * HTTP(s) protocol. MMS can download .mar files from internet.
-* model_name - Name of the model. This name will be used as {model_name} in other API as path. If this parameter is not present, modelName in MANIFEST.json will be used.
-* handler - Inference handler entry-point. This value will override handler in MANIFEST.json if present.
-* runtime - Runtime for the model custom service code. This value will override runtime in MANIFEST.json if present. Default PYTHON.
-* batch_size - Inference batch size, default: 1.
-* max_batch_delay - Maximum delay for batch aggregation, default: 100 millisecnonds.
-* initial_worker - Number of initial workers to create, default: 0.",
-* synchronous - Decides whether creation of worker synchronous or not, default: false.
+* model_url - Model archive download url. Supports the following locations:
+    * a local model archive (.mar); the file must be directly in model_store folder.
+    * a local model directory; the directory must be directly in model_store folder. This option can avoid MMS extracting .mar file to temporary folder, which will improve load time and reduce disk space usage.
+    * a URI using the HTTP(s) protocol. MMS can download .mar files from the Internet.
+* model_name - the name of the model; this name will be used as {model_name} in other API as path. If this parameter is not present, modelName in MANIFEST.json will be used.
+* handler - the inference handler entry-point. This value will override `handler` in MANIFEST.json if present.
+* runtime - the runtime for the model custom service code. This value will override runtime in MANIFEST.json if present. The default value is `PYTHON`.
+* batch_size - the inference batch size. The default value is `1`.
+* max_batch_delay - the maximum delay for batch aggregation. The default value is 100 milliseconds.
+* initial_worker - the number of initial workers to create. The default value is `0`. MMS will not run inference until there is at least one work assigned.
+* synchronous - whether or not the creation of worker is synchronous. The default value is false. MMS will create new workers without waiting for acknowledgement that the previous worker is online.
 
 ```bash
 curl -X POST "http://localhost:8081/models?url=https%3A%2F%2Fs3.amazonaws.com%2Fmodel-server%2Fmodels%2Fsqueezenet_v1.1%2Fsqueezenet_v1.1.model"
@@ -74,13 +74,14 @@ curl -v -X POST "http://localhost:8081/models?url=https%3A%2F%2Fs3.amazonaws.com
 ### Scale workers
 
 `PUT /models/{model_name}`
-* min_worker - optional minimum number of worker processes. MMS will trying maintain min_worker of workers for specified model, default 1.
-* max_worker - optional maximum number of worker processes. MMS will make no more than max_worker of workers for specified model, default to min_worker.
-* number_gpu - optional number of GPU worker processes to create, default 0. If number_pgu exceed, rest of workers will be running on CPU.
-* synchronous - Decides whether the call is synchronous or not, default: false.
-* timeout - Waiting up to the specified wait time if necessary for a worker to complete all pending requests. Use 0 to terminate backend worker process immediately. Use -1 for wait infinitely.", default -1. **Note**, not implemented yet.
+* min_worker - (optional) the minimum number of worker processes. MMS will try to maintain this minimum for specified model. The default value is `1`.
+* max_worker - (optional) the maximum number of worker processes. MMS will make no more that this number of workers for the specified model. The default is the same as the setting for `min_worker`.
+* number_gpu - (optional) the number of GPU worker processes to create. The default value is `0`. If number_gpu exceeds the number of available GPUs, the rest of workers will run on CPU.
+* synchronous - whether or not the call is synchronous. The default value is `false`.
+* timeout - the specified wait time for a worker to complete all pending requests. If exceeded, the work process will be terminated. Use `0` to terminate the backend worker process immediately. Use `-1` to wait infinitely. The default value is `-1`. 
+**Note:** not implemented yet.
 
-User can use scale worker API to dynamically adjust number of workers to better serve different inference request load.
+Use the Scale Worker API to dynamically adjust the number of workers to better serve different inference request loads.
 
 There are two different flavour of this API, synchronous vs asynchronous.
 
@@ -116,11 +117,11 @@ curl -v -X PUT "http://localhost:8081/models/noop?min_worker=3&synchronous=true"
 }
 ```
 
-### Describe modle
+### Describe model
 
 `GET /models/{model_name}`
 
-User can use describe model API to get detail runtime status of a model:
+Use the Describe Model API to get detail runtime status of a model:
 
 ```bash
 curl http://localhost:8081/models/noop
@@ -151,7 +152,7 @@ curl http://localhost:8081/models/noop
 
 `DELETE /models/{model_name}`
 
-User can unregister a model to free up system resources:
+Use the Unregister Model API to free up system resources:
 
 ```bash
 curl -X DELETE http://localhost:8081/models/noop
@@ -164,10 +165,10 @@ curl -X DELETE http://localhost:8081/models/noop
 ### List models
 
 `GET /models`
-* limit - optional integer query parameter to specify the maximum number of items to return. Default is 100.
-* next_page_token - optional query parameter to query for next page, this value was return by earlier API call.
+* limit - (optional) the maximum number of items to return. It is passed as a query parameter. The default value is `100`.
+* next_page_token - (optional) queries for next page. It is passed as a query parameter. This value is return by a previous API call.
 
-User can use this API to query current registered models:
+Use the Models API to query current registered models:
 
 ```bash
 curl "http://localhost:8081/models"
@@ -198,18 +199,18 @@ curl "http://localhost:8081/models?limit=2&next_page_token=2"
 
 `OPTIONS /`
 
-To view a full list of inference and management API, you can use following command:
+To view a full list of inference and management APIs, you can use following command:
 
 ```bash
-# To view all inference API:
+# To view all inference APIs:
 curl -X OPTIONS http://localhost:8080
 
-# To view all management API:
+# To view all management APIs:
 curl -X OPTIONS http://localhost:8081
 ```
 
 The out is OpenAPI 3.0.1 json format. You use it to generate client code, see [swagger codegen](https://swagger.io/swagger-codegen/) for detail.
 
-See example output:
+Example outputs of the Inference and Management APIs:
 * [Inference API description output](../frontend/server/src/test/resources/inference_open_api.json)
 * [Management API description output](../frontend/server/src/test/resources/management_open_api.json)

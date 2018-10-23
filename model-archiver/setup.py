@@ -43,23 +43,28 @@ def pypi_description():
         return df.read()
 
 
-def detect_packaging_tool_version():
+def detect_model_archiver_version():
+    if "--release" in sys.argv:
+        sys.argv.remove("--release")
+        # pylint: disable = relative-import
+        return model_archiver.__version__.strip() + '.' + str(date.today()).replace('-', '')
+
     # pylint: disable = relative-import
-    return model_archiver.__version__
+    return model_archiver.__version__.strip() + 'b' + str(date.today()).replace('-', '')
 
 
 if __name__ == '__main__':
-    opt_set = set(sys.argv)
-    version = detect_packaging_tool_version()
-
+    version = detect_model_archiver_version()
     requirements = ['future', 'enum34']
 
     setup(
         name='model-archiver',
-        version=version.strip() + 'b' + str(date.today()).replace('-', ''),
+        version=version,
         description='Model Archiver is used for creating archives of trained neural net models that can be consumed '
                     'by MXNet-Model-Server inference',
         long_description=pypi_description(),
+        author='MXNet SDK team',
+        author_email='noreply@amazon.com',
         url='https://github.com/awslabs/mxnet-model-server/model-archiver/',
         keywords='MXNet Model Archive Archiver MMS Server Serving Deep Learning Inference AI',
         packages=pkgs,

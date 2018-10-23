@@ -10,6 +10,7 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 | --- | --- | --- | --- | --- | --- |
 | [AlexNet](#alexnet) | Image Classification | ImageNet | ONNX | 233 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/alexnet.mar) |
 | [ArcFace-ResNet100](#arcface-resnet100_onnx) | Face Recognition | Refined MS-Celeb1M | ONNX | 236.4 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-arcface-resnet100.mar) |
+| [Character-level Convolutional Networks for Text Classification](#crepe) | Text Classification | [Amazon Product Data](http://jmcauley.ucsd.edu/data/amazon/) | Gluon | 40 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/crepe.mar) |
 | [CaffeNet](#caffenet) | Image Classification | ImageNet | MXNet | 216 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/caffenet/caffenet.mar) |
 | [FERPlus](#ferplus_onnx) | Emotion Detection | FER2013 | ONNX | 35MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/FERPlus.mar) |
 | [Inception v1](#inception_v1) | Image Classification | ImageNet | ONNX | 27 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-inception_v1.mar) |
@@ -116,6 +117,23 @@ mxnet-model-server --start --models caffenet=https://s3.amazonaws.com/model-serv
 * **Run Prediction**:
 ```bash
 curl -X POST http://127.0.0.1:8080/predictions/caffenet -T kitten.jpg
+```
+
+## <a name="crepe"></a>Character-level Convolutional Networks for text Classification
+* **Type**: Character-level Convolutional network for text classification trained on [Amazon Product Data](http://jmcauley.ucsd.edu/data/amazon/).
+
+* **Reference**: [R. He, J. McAuley et al.](https://arxiv.org/abs/1602.01585), [J. McAuley, C. Targett, J. Shi, A. van den Hengel et al.](https://arxiv.org/abs/1506.04757) 
+
+* **Model Service**: [gluon_crepe.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/gluon_character_cnn/gluon_crepe.py)
+
+* **Start Server**:
+```bash
+mxnet-model-server --start --models crepe=https://s3.amazonaws.com/model-server/model_archive_1.0/crepe.mar
+```
+
+* **Run Prediction**:
+```bash
+curl -X POST http://127.0.0.1:8080/crepe/predict -F "data=[{'review_title':'Inception is the best','review': 'great direction and story'}]"
 ```
 
 ## <a name="duc-resnet101_onnx"></a>DUC-ResNet101 (from ONNX model zoo)

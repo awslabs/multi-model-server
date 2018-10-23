@@ -21,7 +21,7 @@ conda install -c conda-forge protobuf numpy
 pip install model-archiver[onnx]
 ```
 
-MxNet is also required for conversion. You can choose different flavor is mxnet:
+MXNet is also required for conversion. You can choose different flavor is mxnet:
 
 ```bash
 pip install mxnet

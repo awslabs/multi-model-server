@@ -26,19 +26,19 @@ MMS 1.0 made following changes for pip installation package:
 See more detail: [Install MMS](install.md)
 
 ## Command line interface
-MMS 1.0 made some parameter changes in `mxnet-model-server` command line tool. Following old command line parameters won't work any more:
+MMS 1.0 made some parameter changes in `mxnet-model-server` command line tool. The following command line parameters from previous versions will no longer function:
 
 * --service, See [Register model](management_api.md#register-a-model) for how to override service entry-point.
 * --gen-api, See [API description](inference_api#api-description) for how to generate your swagger client code.
-* --port, See [Configure MMS listening port](configuration.md#configure-mms-listening-port) for how to configure port.
+* --port, See [Configure MMS listening port](configuration.md#configure-mms-listening-port) for how to configure MMS listening ports.
 * --host, See [Configure MMS listening port](configuration.md#configure-mms-listening-port) for how to bind to specific network interface.
-* --gpu, See [Config properties](configuration.md#other-properties) for how to limit number of GPUs.
-* --log-file, See [Logging](#logging) section for how to configure logging.
-* --log-rotation-time, See [Logging](#logging) section for how to configure logging.
-* --log-level, See [Logging](#logging) section for how to configure logging.
-* --metrics-write-to, See [Metrics](#metrics) section for how to configure metrics.
+* --gpu, See [Config properties](configuration.md#other-properties) for how to limit the number of GPUs.
+* --log-file, See [Logging](#logging) for how to specify a log file.
+* --log-rotation-time, See [Logging](#logging) for how to configure log rotation.
+* --log-level, See [Logging](#logging) for how to configure log level.
+* --metrics-write-to, See [Metrics](#metrics) for how to configure metrics.
 
-Please see [Command Line Interface](server.md#command-line-interface) for new parameters.
+For further information on the parameters' updates, please see the [Command Line Interface](server.md#command-line-interface) section of the server documentation.
 
 ## API
 You can continue to use MMS 0.4 inference API in MMS 1.0. However they are deprecated. Please migrate to new [inference API](inference_api.md)
@@ -64,7 +64,7 @@ See [model-archiver](../model-archiver/README.md) for more detail.
 MMS docker image makes it easier for you to serve a model. In 0.4 release, MMS require a configuration file (mms_app_cpu.conf or mms_app_gpu.conf) to start MMS in docker container. The old conf file format is no longer supported. To make it simple, MMS no longer requires the --mms-config parameter, the default configuration should work for most of use cases. MMS will start automatically while docker container starts:
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mms_cpu
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu
 ```
 
 After docker container started, you can use [Management API](management_api.md) to load models for inference.

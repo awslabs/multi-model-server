@@ -26,7 +26,7 @@ brew cask install java8
 
 You can also download and install [Oracle JDK](https://www.oracle.com/technetwork/java/javase/overview/index.html) manually if you have trouble with above commands.
 
-* **MxNet**: Recommended. MMS won't install `mxnet` by default. MxNet is required for most of examples in this project. MMS won't install mxnet engine by default, you can install mxnet-mkl or mxnet-cu90mkl based on your need. And you can also choose specific version of mxnet if you want.
+* **MXNet**: Recommended. MMS won't install `mxnet` by default. MXNet is required for most of examples in this project. MMS won't install mxnet engine by default, you can install mxnet-mkl or mxnet-cu90mkl based on your need. And you can also choose specific version of mxnet if you want.
 
 ```bash
 pip install mxnet-mkl

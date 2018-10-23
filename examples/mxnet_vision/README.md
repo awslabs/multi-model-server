@@ -1,8 +1,8 @@
-# MxNet Vision Service
+# MXNet Vision Service
 
 In this example, we show how to use a pre-trained MXNet model to performing real time Image Classification with MMS
 
-We choose squeezenet in this example: [Iandola, et al.](https://arxiv.org/pdf/1602.07360v4.pdf). But the same should work for other MxNet Image Classification models.
+We choose squeezenet in this example: [Iandola, et al.](https://arxiv.org/pdf/1602.07360v4.pdf). But the same should work for other MXNet Image Classification models.
 
 The inference service would return the response in the json format.
 
@@ -86,8 +86,8 @@ Alternatively, use following link to download:
 
 We provided custom service class template code in [model_service_template](../model_service_template) folder:
 1. [model_handler.py](../model_service_template/model_handler.py) - A generic based service class.
-2. [mxnet_model_service.py](../model_service_template/mxnet_model_service.py) - A MxNet base service class.
-3. [mxnet_vision_service.py](../model_service_template/mxnet_vision_service.py) - A MxNet Vision service class.
+2. [mxnet_model_service.py](../model_service_template/mxnet_model_service.py) - A MXNet base service class.
+3. [mxnet_vision_service.py](../model_service_template/mxnet_vision_service.py) - A MXNet Vision service class.
 4. [mxnet_utils](../model_service_template/mxnet_utils) - A python package that contains utility classes.
 
 In this example, you can simple copy them into mxnet_vision folder, as use provided mxnet_vision_service.py as user model archive entry point.

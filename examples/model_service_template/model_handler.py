@@ -82,5 +82,5 @@ class ModelHandler(object):
         except Exception as e:
             logging.error(e, exc_info=True)
             request_processor = context.request_processor
-            request_processor.report_status(500, "Unknown inference error: " + str(e))
-            return ["Inference error"] * self._batch_size
+            request_processor.report_status(500, "Unknown inference error")
+            return [str(e)] * self._batch_size

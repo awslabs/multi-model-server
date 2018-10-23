@@ -126,7 +126,7 @@ class MXNetModelServiceWorker(object):
 
         self.sock.listen(1)
         logging.info("[PID]%d", os.getpid())
-        logging.info("MxNet worker started.")
+        logging.info("MXNet worker started.")
 
         while True:
             (cl_socket, _) = self.sock.accept()

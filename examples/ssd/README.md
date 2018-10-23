@@ -101,8 +101,8 @@ Alternatively, use following link to download:
 
 We provided custom service class template code in [template](../template) folder:
 1. [model_handler.py](../template/model_handler.py) - A generic based service class.
-2. [mxnet_model_service.py](../template/mxnet_model_service.py) - A MxNet base service class.
-3. [mxnet_vision_service.py](../template/mxnet_vision_service.py) - A MxNet Vision service class.
+2. [mxnet_model_service.py](../template/mxnet_model_service.py) - A MXNet base service class.
+3. [mxnet_vision_service.py](../template/mxnet_vision_service.py) - A MXNet Vision service class.
 4. [mxnet_utils](../template/mxnet_utils) - A python package that contains utility classes.
 
 In this example, you can simple copy them into ssd folder, as use provided mxnet_vision_service.py as user model archive entry point.

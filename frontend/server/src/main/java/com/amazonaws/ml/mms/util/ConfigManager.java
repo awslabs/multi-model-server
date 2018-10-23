@@ -123,9 +123,12 @@ public final class ConfigManager {
             prop.setProperty(LOAD_MODELS, String.join(",", models));
         }
 
-        if (!prop.containsKey(NUMBER_OF_GPU)) {
-            prop.setProperty(NUMBER_OF_GPU, String.valueOf(getAvailableGpu()));
-        }
+        prop.setProperty(
+                NUMBER_OF_GPU,
+                String.valueOf(
+                        Integer.min(
+                                getAvailableGpu(),
+                                getIntProperty(NUMBER_OF_GPU, Integer.MAX_VALUE))));
 
         String pythonExecutable = args.getPythonExecutable();
         if (pythonExecutable != null) {

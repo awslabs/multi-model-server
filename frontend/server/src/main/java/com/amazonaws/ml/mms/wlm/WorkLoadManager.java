@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class WorkLoadManager {
 
@@ -32,12 +33,14 @@ public class WorkLoadManager {
 
     private ConfigManager configManager;
     private EventLoopGroup backendGroup;
-    private int port = 9000;
-    private int gpuCounter;
+    private AtomicInteger port;
+    private AtomicInteger gpuCounter;
 
     public WorkLoadManager(ConfigManager configManager, EventLoopGroup backendGroup) {
         this.configManager = configManager;
         this.backendGroup = backendGroup;
+        this.port = new AtomicInteger(9000);
+        this.gpuCounter = new AtomicInteger(0);
         threadPool = Executors.newCachedThreadPool();
         workers = new ConcurrentHashMap<>();
     }
@@ -122,21 +125,23 @@ public class WorkLoadManager {
         int maxGpu = configManager.getNumberOfGpu();
         for (int i = 0; i < count; ++i) {
             int gpuId = -1;
+
             if (maxGpu > 0) {
-                gpuId = gpuCounter;
-                if (++gpuCounter >= maxGpu) {
-                    gpuCounter = 0;
-                }
+                gpuId = gpuCounter.accumulateAndGet(maxGpu, (prev, maxGpuId) -> ++prev % maxGpuId);
             }
+
             BatchAggregator aggregator = new BatchAggregator(model);
             WorkerThread thread =
                     new WorkerThread(
-                            configManager, backendGroup, port, gpuId, model, aggregator, listener);
+                            configManager,
+                            backendGroup,
+                            configManager.isDebug() ? port.get() : port.getAndIncrement(),
+                            gpuId,
+                            model,
+                            aggregator,
+                            listener);
             threads.add(thread);
             threadPool.submit(thread);
-            if (!configManager.isDebug()) {
-                port++;
-            }
         }
     }
 

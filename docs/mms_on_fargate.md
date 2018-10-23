@@ -39,7 +39,7 @@ Let the show begin...
 With the current release of [MMS, 1.0](https://github.com/awslabs/mxnet-model-server/releases/tag/v1.0.0), 
 Official pre-configured, optimized container images of MMS are provided on [Docker hub](https://hub.docker.com).
 
-* [awsdeeplearningteam/mms_cpu](https://hub.docker.com/r/awsdeeplearningteam/mms_cpu/)
+* [awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu/)
 
 In our article we are going to use the official CPU container image.
 

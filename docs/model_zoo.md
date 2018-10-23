@@ -73,7 +73,9 @@ curl -X POST http://127.0.0.1:8080/predictions/alexnet -T kitten.jpg
 
 * **Reference**: [Deng et al.](https://arxiv.org/abs/1801.07698)
 
-* **Model Service**: [arcface_service.py](https://s3.amazonaws.com/model-server/scripts/arcface_service.py)
+* **Model Service**:
+    * [arcface_service.py](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/onnx-arcface-resnet100/arcface_service.py)
+    * [mtcnn_detector.py](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/onnx-arcface-resnet100/mtcnn_detector.py)
 
 * **Install dependencies**:
 ```bash
@@ -141,7 +143,9 @@ curl -X POST http://127.0.0.1:8080/crepe/predict -F "data=[{'review_title':'Ince
 
 * **Reference**: [Wang et al.](https://arxiv.org/abs/1702.08502)
 
-* **Model Service**: [duc_service.py](https://s3.amazonaws.com/mxnet-model-server/onnx-duc/duc_service.py)
+* **Model Service**:
+    * [duc_service.py](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/onnx-duc/duc_service.py)
+    * [cityscapes_labels.py](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/onnx-duc/cityscapes_labels.py)
 
 * **Install dependencies**:
 ```bash
@@ -176,7 +180,7 @@ python duc-inference.py city1.jpg
 
 * **Reference**: [Barsoum et al.](https://arxiv.org/abs/1608.01041)
 
-* **Model Service**: [emotion_detection_service.py](https://s3.amazonaws.com/model-server/scripts/emotion_detection_service.py)
+* **Model Service**: [emotion_detection_service.py](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/FERPlus/emotion_detection_service.py)
 
 * **Start Server**:
 ```bash

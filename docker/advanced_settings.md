@@ -39,7 +39,7 @@ Save the file.
 When you run the following command, the `-v` argument and path values of `/tmp/models/:/models` will map the `models` folder you created (assuming it was in ) with a folder inside the Docker container. MMS will then be able to use the local model file.
 
 ```bash
-nvidia-docker run -itd --name mms -p 80:8080  -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mms_gpu mxnet-model-server --start --mms-config /models/config.properties --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+nvidia-docker run -itd --name mms -p 80:8080  -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-gpu mxnet-model-server --start --mms-config /models/config.properties --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
 **Step 5: Test inference.**
@@ -67,12 +67,12 @@ Given that this is a different model, the same image yields a different inferenc
 
 Manually pull the MMS Docker CPU image:
 ```bash
-docker pull awsdeeplearningteam/mms_cpu
+docker pull awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu
 ```
 
 Manually pull the MMS Docker GPU image:
 ```bash
-docker pull awsdeeplearningteam/mms_gpu
+docker pull awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-gpu
 ```
 
 List your Docker images:
@@ -92,12 +92,12 @@ docker rm -f mms
 
 Delete the MMS Docker GPU image:
 ```bash
-docker rmi awsdeeplearningteam/mms_gpu
+docker rmi awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-gpu
 ```
 
 Delete the MMS Docker GPU image:
 ```bash
-docker rmi awsdeeplearningteam/mms_cpu
+docker rmi awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu
 ```
 
 Output the recent logs to console.
@@ -112,7 +112,7 @@ docker attach mms
 
 Run the MMS Docker image without starting the Model Server:
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mms_cpu /bin/bash
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu /bin/bash
 ```
 
 Start MMS in the Docker container (CPU config):
@@ -153,8 +153,8 @@ Refer [Docker CLI](https://docs.docker.com/engine/reference/commandline/run/) to
 ### Docker Hub
 
 Docker images are available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam):
-* [CPU](https://hub.docker.com/r/awsdeeplearningteam/mms_cpu/)
-* [GPU](https://hub.docker.com/r/awsdeeplearningteam/mms_gpu/)
+* [CPU](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu/)
+* [GPU](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-gpu/)
 ### Building a MMS Docker Image from Scratch
 The following are the steps to build a container image from scratch.
 
@@ -200,18 +200,12 @@ The first step is to create an [EC2 instance](https://aws.amazon.com/ec2/).
 
 There are separate `Dockerfile` configuration files for CPU and GPU. They are named `Dockerfile.cpu` and `Dockerfile.gpu` respectively.
 
-The images are layered in two parts.
+The container image consists of MXNet, Java, MMS and all related python libraries.
 
-1. Base Image - Consists of ubuntu dependenices, gunicorn gevent.
-2. MMS Image - Consists of MXNet, MMS and all related python libraries, built on top of the base image
-
-We can build both images, or use prebuilt base image (Hosted on Docker Hub as `awsdeeplearningteam/mms_cpu_base)` and build MMS on top of it.
-
-By default, Docker expects a Dockerfile, so you'll make a copy leaving the original .cpu file as a backup. If you would like to use a GPU instead, follow the separate GPU Build Step further below.
-The next command will build the Docker image. The `-t` flag and following value will give the image the tag `mms_image`, however you can specify `mms_image:v0.11` or whatever you want for your tag. If you use just `mms_image`, it will be assigned the default `latest` tag, and be runnable with `mms_image:latest`.
+We can build the MXNet Model Server image based on the Dockerfile as follows:  
 
 ```bash
-# Building base image and derived MMS image
+# Building the MMS CPU image
 docker build -f Dockerfile.cpu -t mms_image .
 ```
 
@@ -225,17 +219,15 @@ You need to install [nvidia-docker plugin](https://github.com/NVIDIA/nvidia-dock
 
 Once you install `nvidia-docker`, run following commands (for info modifying the tag, see the CPU section above):
 
-Similar to CPU base image the prebuilt GPU 'base' image is hosted at `awsdeeplearningteam/mms_gpu_base` (under Docker hub)
-
 ```bash
-# Building base image and derived MMS image
+# Building the MMS GPU image
 docker build -f Dockerfile.gpu -t mms_image_gpu .
 ```
 
 #### Running the MMS GPU Docker
 
 ```bash
-nvidia-docker run -itd -p 80:8080 -p 8081:8081 --name mms -v /home/user/models/:/models mms_image_gpu /bin/bash
+nvidia-docker run -itd -p 80:8080 8081:8081 --name mms -v /home/user/models/:/models mms_image_gpu /bin/bash
 ```
 
 This command starts the Docker instance in a detached mode and mounts `/home/user/models` of the host system into `/models` directory inside the Docker instance.

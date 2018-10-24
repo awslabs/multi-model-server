@@ -1,26 +1,29 @@
+[comment]: <> (All the references in this file should be actual links because this file would be used by docker hub. DO NOT use relative links or section tagging.)
+
 # Using Containers with MXNet Model Server
 
 MXNet Model Server (MMS) can be used with any container service. In this guide, you will learn how to run MMS with Docker.
 
 ## Contents of this Document
-* [Quickstart](#quickstart)
-* [Configuring MMS with Docker](#configuring-mms-with-docker)
+* [Quickstart](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#quickstart)
+* [Available pre-built continers](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#available-pre-built-continers)
+* [Configuring MMS with Docker](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#configuring-mms-with-docker)
 
 
 ## Other Relevant Documents
-* [Advanced Settings](advanced_settings.md)
-    * [GPU Inference](advanced_settings.md#gpu-inference)
-    * [Reference Commands](advanced_settings.md#reference-commands)
-    * [Docker Details](advanced_settings.md#docker-details)
-    * [Description of Config File Settings](advanced_settings.md#description-of-config-file-settings)
-    * [Configuring SSL](advanced_settings.md#configuring-ssl)
-* [Launch MMS as a managed inference service on AWS Fargate](../docs/mms_on_fargate.md)
-    * [Introduction to published containers](../docs/mms_on_fargate.md#familiarize-yourself-with-our-containers)
-    * [Creating a AWS Fargate task to server SqueezeNet V1.1](../docs/mms_on_fargate.md#create-a-aws-faragte-task-to-serve-squeezenet-model)
-    * [Creating an Load Balancer](../docs/mms_on_fargate.md#create-a-load-balancer)
-    * [Creating an AWS ECS Service](../docs/mms_on_fargate.md#creating-an-ecs-service-to-launch-our-aws-fargate-task)
-    * [Testing your service](../docs/mms_on_fargate.md#test-your-service)
-    * [Build custom MMS containers images to serve your Deep learning models](../docs/mms_on_fargate.md#customize-the-containers-to-server-your-custom-deep-learning-models)
+* [Advanced Settings](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md)
+    * [GPU Inference](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#gpu-inference)
+    * [Reference Commands](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#reference-commands)
+    * [Docker Details](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#docker-details)
+    * [Description of Config File Settings](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#description-of-config-file-settings)
+    * [Configuring SSL](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#configuring-ssl)
+* [Launch MMS as a managed inference service on AWS Fargate](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md)
+    * [Introduction to published containers](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#familiarize-yourself-with-our-containers)
+    * [Creating a AWS Fargate task to server SqueezeNet V1.1](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#create-a-aws-faragte-task-to-serve-squeezenet-model)
+    * [Creating an Load Balancer](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#create-a-load-balancer)
+    * [Creating an AWS ECS Service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#creating-an-ecs-service-to-launch-our-aws-fargate-task)
+    * [Testing your service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#test-your-service)
+    * [Build custom MMS containers images to serve your Deep learning models](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#customize-the-containers-to-server-your-custom-deep-learning-models)
 
 ## Quickstart
 Running MXNet Model Server with Docker in two steps:
@@ -63,6 +66,49 @@ Now that you have tested it out, you may stop the Docker container. The followin
 docker rm -f mms
 ```
 
+## Available pre-built continers
+We have 5 containers tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/).
+1. *latest*: This will be the same as `mxnet-model-server:1.0.0-mxnet-cpu`. This tag will be available after an official release.
+2. *1.0.0-mxnet-cpu*: This will be the official CPU container based on the [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu). This tag will be available after an official 1.0 release.
+3. *1.0.0-mxnet-gpu*: This will be the official GPU container based on the [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu). This tag will be available after an official 1.0 release.
+4. *nightly-mxnet-cpu*: This will be the official CPU container which is built based on the nightly release of MMS pip package. This will be built from [Dockerfile.nightly-cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-cpu).
+5. *nightly-mxnet-gpu*: This will be the official GPU container which is built based on the nightly release of MMS pip package. This will be built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-gpu).
+
+To pull the a particular container, run the following command
+
+#### Pulling the latest tag:
+Docker pull by default pulls the latest tag. This tag isn't available until after an official release. 
+```bash
+docker pull awsdeeplearningteam/mxnet-model-server # This gets the latest release which is the same as 1.0.0-mxnet-cpu
+``` 
+
+#### Pulling the `1.0.0-mxnet-cpu` tag:
+To pull a official 1.0 MMS CPU container run the following command. This tag isn't available until after an official release. 
+```bash
+docker pull awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu 
+``` 
+
+#### Pulling the `1.0.0-mxnet-gpu` tag:
+To pull a official 1.0 MMS GPU container run the following command. This tag isn't available until after an official release. 
+```bash
+docker pull awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-gpu 
+``` 
+
+#### Pulling the `nightly-mxnet-cpu` tag:
+To pull a official latest 1.0 MMS CPU container run the following command. This track the pre-release version of MMS.
+We do not recommend running this container in production setup.
+```bash
+docker pull awsdeeplearningteam/mxnet-model-server:nightly-mxnet-cpu
+``` 
+
+#### Pulling the `nightly-mxnet-gpu` tag:
+To pull a official latest 1.0 MMS GPU container run the following command. This track the pre-release version of MMS.
+We do not recommend running this container in production setup.
+```bash
+docker pull awsdeeplearningteam/mxnet-model-server:nightly-mxnet-gpu
+``` 
+
+
 ## Configuring MMS with Docker
 
 In the Quickstart section, you launched a Docker image with MMS serving the SqueezeNet model.
@@ -85,7 +131,7 @@ mkdir /tmp/models
 **Step 2: Download the configuration template.**
 
 Download the template `config.properties` and place it in the `models` folder you just created:
-* [config.properties](config.properties)
+* [config.properties](https://github.com/awslabs/mxnet-model-server/blob/master/docker/config.properties)
 
 **Step 3: Modify the configuration template.**
 
@@ -155,4 +201,4 @@ Now you are ready to try some other more **advanced settings** such as:
 * MMS settings
 * Optimizing inference with gunicorn configurations
 
-Next Step: [Advanced Settings](advanced_settings.md)
+Next Step: [Advanced Settings](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md)

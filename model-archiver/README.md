@@ -159,4 +159,4 @@ In this next step we'll run `model-archiver` and tell it our model's prefix is `
 model-archiver --model-name squeezenet_v1.1 --model-path squeezenet --handler mxnet_vision_service:handle
 ```
 
-This will package all the model artifacts files in `squeezenet` directory and output `squeezenet_v1.1.mar` in the current working directory. This `.mar` file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the [Serve a Model tutorial](../README#serve-a-model) and try to run this model archive that you just created!
+This will package all the model artifacts files in `squeezenet` directory and output `squeezenet_v1.1.mar` in the current working directory. This `.mar` file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the [Serve a Model tutorial](../README.md#serve-a-model) and try to run this model archive that you just created!

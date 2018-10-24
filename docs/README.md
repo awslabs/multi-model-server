@@ -2,7 +2,7 @@
 
 ## Basic Features
 * [Serving Quick Start](../README.md#serve-a-model) - Basic server usage tutorial
-* [Model Archive Quick Start](../model-archive/README.md#creating-a-model-archive) - Tutorial that shows you how to package a model archive file.
+* [Model Archive Quick Start](../model-archiver#creating-a-model-archive) - Tutorial that shows you how to package a model archive file.
 * [Installation](install.md) - Installation procedures and troubleshooting
 * [Serving Models](server.md) - Explains how to use `mxnet-model-server`.
   * [REST API](rest_api.md) - Specification on the API endpoint for MMS

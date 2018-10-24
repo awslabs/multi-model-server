@@ -1,4 +1,4 @@
-[comment]: <> (All the references in this file should be actual links because this file would be used by docker hub. DO NOT use relative links or section tagging.)
+[//]: # "All the references in this file should be actual links because this file would be used by docker hub. DO NOT use relative links or section tagging."
 
 # Using Containers with MXNet Model Server
 

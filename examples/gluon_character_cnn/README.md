@@ -125,7 +125,7 @@ The key values of application/json input are 'review_title', 'review'. This can 
 Let's take up a movie, review
 
 ```bash
-$ curl -X POST http://127.0.0.1:8080/crepe/predict -F "data=[{'review_title':'Inception is the best','review': 'great direction and story'}]"
+curl -X POST http://127.0.0.1:8080/predictions/crepe -F "data=[{\"review_title\":\"Inception is the best\",\"review\": \"great direction and story\"}]"
 ```
 Prediction result will be:
 
@@ -138,7 +138,7 @@ Prediction result will be:
 Let's try another review, this time for a music album.
 
 ```bash
-$ curl -X POST http://127.0.0.1:8080/crepe/predict -F "data=[{'review_title':'fantastic quality','review': 'quality sound playback'}]"
+curl -X POST http://127.0.0.1:8080/predictions/crepe -F "data=[{\"review_title\":\"fantastic quality\",\"review\": \"quality sound playback\"}]"
 ```
 
 Prediction result will be:

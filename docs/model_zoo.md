@@ -135,7 +135,7 @@ mxnet-model-server --start --models crepe=https://s3.amazonaws.com/model-server/
 
 * **Run Prediction**:
 ```bash
-curl -X POST http://127.0.0.1:8080/crepe/predict -F "data=[{'review_title':'Inception is the best','review': 'great direction and story'}]"
+curl -X POST http://127.0.0.1:8080/predictions/crepe -F "data=[{\"review_title\":\"Inception is the best\",\"review\": \"great direction and story\"}]"
 ```
 
 ## <a name="duc-resnet101_onnx"></a>DUC-ResNet101 (from ONNX model zoo)
@@ -248,7 +248,7 @@ mxnet-model-server --start --models lstm_ptb=https://s3.amazonaws.com/model-serv
 
 * **Run Prediction**:
 ```bash
-curl -X POST http://127.0.0.1:8080/predictions/lstm_ptb -H "Content-Type: application/json" -d "[{'input_sentence': 'on the exchange floor as soon as ual stopped trading we <unk> for a panic said one top floor trader'}]"
+curl -X POST http://127.0.0.1:8080/predictions/lstm_ptb -H "Content-Type: application/json" -d '[{"input_sentence": "on the exchange floor as soon as ual stopped trading we <unk> for a panic said one top floor trader"}]'
 ```
 
 ## <a name="mobilenetv2-1.0_onnx"></a>MobileNetv2-1.0 (from ONNX model zoo)

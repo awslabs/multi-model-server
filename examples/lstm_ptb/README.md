@@ -104,7 +104,7 @@ Since the entire range of vocabularies in the training set is only 10,000, you m
 The key value of application/json input is 'input_sentence'. This can be a different value and preprocess method in lstm_ptb_service.py needs to be modified respectively. 
 
 ```bash
-curl -X POST http://127.0.0.1:8080/predictions/lstm_ptb -H "Content-Type: application/json" -d "[{'input_sentence': 'on the exchange floor as soon as ual stopped trading we <unk> for a panic said one top floor trader'}]"
+curl -X POST http://127.0.0.1:8080/predictions/lstm_ptb -H "Content-Type: application/json" -d '[{"input_sentence": "on the exchange floor as soon as ual stopped trading we <unk> for a panic said one top floor trader"}]'
 ```
 
 Prediction result will be:
@@ -118,7 +118,7 @@ Prediction result will be:
 Let's try another sentence:
 
 ```bash
-curl -X POST http://127.0.0.1:8080/predictions/lstm_ptb -H "Content-Type: application/json" -d "[{'input_sentence': 'while friday \'s debacle involved mainly professional traders rather than investors it left the market vulnerable to continued selling this morning traders said '}]"
+curl -X POST http://127.0.0.1:8080/predictions/lstm_ptb -H "Content-Type: application/json" -d '[{"input_sentence": "while friday '\''s debacle involved mainly professional traders rather than investors it left the market vulnerable to continued selling this morning traders said "}]'
 ```
 
 Prediction result will be:

@@ -101,7 +101,7 @@ curl -O https://s3.amazonaws.com/model-server/inputs/arcface-input2.jpg
 
 * **Run Prediction**:
 ```bash
-curl -X POST http://127.0.0.1:8080/predictions/alexnet -F "img1=@arcface-input1.jpeg" -F "img2=@arcface-input2.jpeg"
+curl -X POST http://127.0.0.1:8080/predictions/arcface -F "img1=@arcface-input1.jpeg" -F "img2=@arcface-input2.jpeg"
 ```
 
 ## <a name="caffenet"></a>CaffeNet

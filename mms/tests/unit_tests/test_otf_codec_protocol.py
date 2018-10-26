@@ -90,7 +90,7 @@ class TestOtfCodecHandler:
             b"\xFF\xFF\xFF\xFF",
             b"\x00\x00\x00\x0a", b"input_name",
             b"\x00\x00\x00\x0F", b"application/json",
-            b"\x00\x00\x00\x0F", b"{'data':'value'}",
+            b"\x00\x00\x00\x0F", b'{"data":"value"}',
             b"\xFF\xFF\xFF\xFF",  # end of parameters
             b"\xFF\xFF\xFF\xFF"  # end of batch
         ]

@@ -11,7 +11,6 @@
 """
 OTF Codec
 """
-import ast
 import json
 import logging
 import struct
@@ -265,7 +264,7 @@ def _retrieve_input_data(conn):
     value = _retrieve_buffer(conn, length)
 
     if content_type == "application/json":
-        model_input["value"] = ast.literal_eval(value.decode())
+        model_input["value"] = json.loads(value.decode())
     elif content_type.startswith("text"):
         model_input["value"] = value.decode()
     else:

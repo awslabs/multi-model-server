@@ -129,7 +129,6 @@ The downloaded model artifact files are:
 * **Model Signature** (json file) - defines the inputs and outputs that MMS is expecting to hand-off to the API.
 * **assets** (text files) - auxiliary files that support model inference such as vocabularies, labels, etc. These vary depending on the model.
 
-Further details on these files, custom services, and advanced `model-archiver` features can be found on the [Package Models for Use with MMS](model-archiver/README.md) page.
 
 **2. Download the model archiver source**
 ```bash

@@ -55,7 +55,7 @@ def detect_model_archiver_version():
 
 if __name__ == '__main__':
     version = detect_model_archiver_version()
-    requirements = ['future', 'enum34']
+    requirements = ['future', 'enum-compat']
 
     setup(
         name='model-archiver',

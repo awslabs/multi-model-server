@@ -61,7 +61,11 @@ public class WorkerLifeCycle {
             pythonPath.append(System.getenv("PYTHONPATH")).append(File.pathSeparatorChar);
         }
 
-        pythonPath.append(modelPath).append(File.pathSeparatorChar).append(cwd);
+        pythonPath.append(modelPath);
+
+        if (!cwd.contains("site-package")) {
+            pythonPath.append(File.pathSeparatorChar).append(cwd);
+        }
 
         environment.put("PYTHONPATH", pythonPath.toString());
 

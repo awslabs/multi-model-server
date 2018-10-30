@@ -92,8 +92,11 @@ pip install mxnet-cu92mkl
 **Step 3:** Install or Upgrade MMS as follows:
 
 ```bash
-pip install -U mxnet-model-server
+# Install latest released version of mxnet-model-server 
+pip install mxnet-model-server
 ```
+
+To upgrade from a previous version of `mxnet-model-server`, please refer [migration reference](docs/migration.md) document.
 
 **Notes:**
 * A minimal version of `model-archiver` will be installed with MMS as dependency. See [model-archiver](model-archiver/README.md) for more options and details.

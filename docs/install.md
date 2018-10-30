@@ -48,13 +48,13 @@ pip install mxnet-cu90-mkl
 To install MMS for the first time, install Python, then run the following command:
 
 ```bash
-pip install mxnet-model-server --pre
+pip install mxnet-model-server
 ```
 
 To upgrade from a previous version of MMS, run:
 
 ```bash
-pip install -U mxnet-model-server --pre
+pip install -U mxnet-model-server
 ```
 
 ## Install MMS from Source Code

@@ -50,14 +50,14 @@ public class MetricCollector implements Runnable {
 
             String pythonPath = System.getenv("PYTHONPATH");
             String pythonEnv;
-            if (pythonPath == null || pythonPath.isEmpty()) {
+            if ((pythonPath == null || pythonPath.isEmpty())
+                    && (!workingDir.getAbsolutePath().contains("site-package"))) {
                 pythonEnv = "PYTHONPATH=" + workingDir.getAbsolutePath();
             } else {
-                pythonEnv =
-                        "PYTHONPATH="
-                                + pythonPath
-                                + File.pathSeparatorChar
-                                + workingDir.getAbsolutePath();
+                pythonEnv = "PYTHONPATH=" + pythonPath;
+                if (!workingDir.getAbsolutePath().contains("site-package")) {
+                    pythonEnv += File.pathSeparatorChar + workingDir.getAbsolutePath(); // NOPMD
+                }
             }
             // sbin added for macs for python sysctl pythonpath
             StringBuilder path = new StringBuilder();

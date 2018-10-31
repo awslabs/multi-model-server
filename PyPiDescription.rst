@@ -52,7 +52,7 @@ or for GPU instance:
 
 ::
 
-    pip install mxnet-cu90-mkl
+    pip install mxnet-cu92mkl
 
 
 Installation

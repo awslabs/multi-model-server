@@ -188,7 +188,8 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         # Start MMS
         docker = 'nvidia-docker' if pargs.gpus else 'docker'
         container = 'mms_benchmark_gpu' if pargs.gpus else 'mms_benchmark_cpu'
-        docker_path = 'piyushghai/mms_netty_gpu:latest' if pargs.gpus else 'vamshidhardk/mms_netty'
+        docker_path = 'awsdeeplearningteam/mxnet-model-server:nightly-mxnet-gpu' \
+            if pargs.gpus else 'awsdeeplearningteam/mxnet-model-server:nightly-mxnet-cpu'
         if pargs.docker:
             container = 'mms_benchmark_{}'.format(pargs.docker[0].split('/')[1])
             docker_path = pargs.docker[0]

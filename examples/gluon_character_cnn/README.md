@@ -107,7 +107,7 @@ A packaged model can be downloaded from [here.](https://s3.amazonaws.com/model-s
 
 ## Step 6 - Establish inference service
 
-character_cnn.model file is created by exporting model files. We also defined custom service under gluon_crepe.py. We are ready to establish the Character-level CNN inference service:
+`crepe.mar` file is created by exporting model files. We also defined custom service under gluon_crepe.py. We are ready to establish the Character-level CNN inference service:
 
 ```bash
 mxnet-model-server --models crepe.mar --model-store /tmp

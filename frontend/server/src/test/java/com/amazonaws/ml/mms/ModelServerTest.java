@@ -96,7 +96,8 @@ public class ModelServerTest {
 
     @BeforeSuite
     public void beforeSuite() throws InterruptedException, IOException, GeneralSecurityException {
-        configManager = new ConfigManager(new ConfigManager.Arguments());
+        ConfigManager.init(new ConfigManager.Arguments());
+        configManager = ConfigManager.getInstance();
 
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
 

@@ -53,7 +53,8 @@ public final class Cts {
     }
 
     private void startTest() {
-        ConfigManager configManager = new ConfigManager(new ConfigManager.Arguments());
+        ConfigManager.init(new ConfigManager.Arguments());
+        ConfigManager configManager = ConfigManager.getInstance();
         ModelServer server = new ModelServer(configManager);
 
         Logger logger = LoggerFactory.getLogger(Cts.class);

@@ -43,6 +43,7 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
@@ -148,12 +149,40 @@ public final class NettyUtils {
         } else {
             loggerMmsMetrics.info(REQUESTS_5_XX);
         }
+
+        ConfigManager configManager = ConfigManager.getInstance();
+        String allowedOrigin = configManager.getCorsAllowedOrigin();
+        String allowedMethods = configManager.getCorsAllowedMethods();
+        String allowedHeaders = configManager.getCorsAllowedHeaders();
+
+        HttpHeaders headers = resp.headers();
+        if (allowedOrigin != null
+                && !allowedOrigin.isEmpty()
+                && !headers.contains(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN)) {
+            headers.set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, allowedOrigin);
+        }
+        if (allowedMethods != null
+                && !allowedMethods.isEmpty()
+                && !headers.contains(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS)) {
+            headers.set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, allowedMethods);
+        }
+        if (allowedHeaders != null
+                && !allowedHeaders.isEmpty()
+                && !headers.contains(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS)) {
+            headers.set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, allowedHeaders);
+        }
+
+        // Add cache-control headers to avoid browser cache response
+        headers.set("Pragma", "no-cache");
+        headers.set("Cache-Control", "no-cache; no-store, must-revalidate, private");
+        headers.set("Expires", "Thu, 01 Jan 1970 00:00:00 UTC");
+
         HttpUtil.setContentLength(resp, resp.content().readableBytes());
         if (!keepAlive || code >= 400) {
             ChannelFuture f = channel.writeAndFlush(resp);
             f.addListener(ChannelFutureListener.CLOSE);
         } else {
-            resp.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+            headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
             channel.writeAndFlush(resp);
         }
     }

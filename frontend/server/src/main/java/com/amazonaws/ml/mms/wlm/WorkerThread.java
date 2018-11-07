@@ -102,7 +102,12 @@ public class WorkerThread implements Runnable {
     @Override
     public void run() {
         currentThread = Thread.currentThread();
-        currentThread.setName("BackendWorker-" + port);
+        currentThread.setName(
+                "W-"
+                        + port
+                        + '-'
+                        + model.getModelName()
+                                .substring(0, Math.min(model.getModelName().length(), 25)));
         BaseModelRequest req = null;
         try {
             connect();

@@ -58,44 +58,20 @@ class CharacterCNNService(GluonBaseService):
         # Hybridize imperative model for best performance
         self.net.hybridize()
 
-        # define _preprocess, _inference and _postprocess methods
+        # define preprocess, inference and postprocess methods
 ```
 
 As shown, the Gluon model derives from the basic gluon hybrid block. Gluon hybrid blocks, provide performance of a symbolic model with a imperative model. More on Gluon, hybrid blocks [here](https://gluon.mxnet.io/chapter07_distributed-learning/hybridize.html).
 The fully defined service file can be found under [gluon_crepe.py](gluon_crepe.py), we define `preprocess`, `inference`, `postprocess` methods in this file.
 
-## Step 3 - Check signature file
-
-Let's take a look at signature file:
-```json
-{
-  "inputs": [
-    {
-      "data_name": "data",
-      "data_shape": [1,1014]
-    }
-  ],
-  "input_type": "application/json",
-  "outputs": [
-    {
-      "data_name": "softmax",
-      "data_shape": [0, 7]
-    }
-  ],
-  "output_type": "application/json"
-}
-
-```
-The input size is, limited to 1014, characters as mentioned in the paper. The output is of shape [0,7] as we classify the reviews into seven product categories. Both the input and output are passed on as 'application/json' based text content.
-
-# Step 4 - Prepare synset.txt with list of class names
+# Step 3 - Prepare synset.txt with list of class names
 
 [synset.txt](synset.txt) is where we define list of all classes detected by the model. The pre-trained Character-level CNN model used in the example is trained to detect 7 classes including Books, CDs_and_Vinyl, Movies_and_TV and more. See synset.txt file for list of all classes.
 
 The list of classes in synset.txt will be loaded by MMS as list of labels in inference logic.
 
 
-## Step 5 - Export model files with mxnet-model-export CLI tool
+## Step 4 - Export model files with mxnet-model-export CLI tool
 
 With model file together with signature and  files in the model folder, we are ready to export them to MMS model file.
 
@@ -105,9 +81,9 @@ model-archiver --model-name crepe -f --model-path /tmp/crepe/ --handler gluon_cr
 
 A packaged model can be downloaded from [here.](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/crepe.mar)
 
-## Step 6 - Establish inference service
+## Step 5 - Establish inference service
 
-character_cnn.model file is created by exporting model files. We also defined custom service under gluon_crepe.py. We are ready to establish the Character-level CNN inference service:
+`crepe.mar` file is created by exporting model files. We also defined custom service under gluon_crepe.py. We are ready to establish the Character-level CNN inference service:
 
 ```bash
 mxnet-model-server --models crepe.mar --model-store /tmp

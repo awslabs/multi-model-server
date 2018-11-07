@@ -51,7 +51,8 @@ public class ConfigManagerTest {
     public void test() throws IOException, GeneralSecurityException {
         ConfigManager.Arguments args = new ConfigManager.Arguments();
         args.setModels(new String[] {"noop_v0.1"});
-        ConfigManager configManager = new ConfigManager(args);
+        ConfigManager.init(args);
+        ConfigManager configManager = ConfigManager.getInstance();
         configManager.setProperty("keystore", "src/test/resources/keystore.p12");
         Dimension dimension;
         List<Metric> metrics = new ArrayList<>();

@@ -50,13 +50,13 @@ class GluonBaseService(object):
         self.ctx = mx.cpu() if gpu_id is None else mx.gpu(gpu_id)
 
         if self.param_filename is not None:
-            parm_file_path = os.path.join(model_dir + "/" + self.param_filename)
-            if not os.path.isfile(parm_file_path):
-                raise OSError("Parameter file not found {}".format(parm_file_path))
-            self.net.load_params(parm_file_path, self.ctx)
+            param_file_path = os.path.join(model_dir, self.param_filename)
+            if not os.path.isfile(param_file_path):
+                raise OSError("Parameter file not found {}".format(param_file_path))
+            self.net.load_parameters(param_file_path, self.ctx)
 
-        synset_file = os.path.join(model_dir + "/synset.txt")
-        signature_file_path = os.path.join(model_dir + "/signature.json")
+        synset_file = os.path.join(model_dir, "synset.txt")
+        signature_file_path = os.path.join(model_dir, "signature.json")
 
         if not os.path.isfile(signature_file_path):
             raise OSError("Signature file not found {}".format(signature_file_path))

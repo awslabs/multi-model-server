@@ -3,6 +3,7 @@ File to define the entry point to Model Server
 """
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -101,6 +102,12 @@ def start():
         if args.models:
             cmd.append("-m")
             cmd.extend(args.models)
+            if not args.model_store:
+                pattern = re.compile(r"(.+=)?http(s)?://.+", re.IGNORECASE)
+                for model_url in args.models:
+                    if not pattern.match(model_url) and model_url != "ALL":
+                        print("--model-store is required to load model locally.")
+                        exit(1)
 
         try:
             process = subprocess.Popen(cmd)

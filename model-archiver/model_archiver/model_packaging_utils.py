@@ -69,6 +69,7 @@ class ModelExportUtils(object):
         This functions checks whether any special handling is required for custom model extensions such as
         .onnx, or in the future, for Tensorflow and PyTorch extensions.
         :param model_path:
+        :param model_name:
         :return:
         """
         temp_files = []  # List of temp files added to handle custom models
@@ -288,7 +289,7 @@ class ModelExportUtils(object):
         if current_file in files_to_exclude:
             return False
 
-        elif current_file.endswith(('.pyc', '.DS_Store')):
+        elif current_file.endswith(('.pyc', '.DS_Store', '.mar')):
             return False
 
         return True

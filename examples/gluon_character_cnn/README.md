@@ -119,8 +119,17 @@ Prediction result will be:
 
 ```json
 {
-  "prediction": {"category":"Movies_and_TV"}
-}
+  "confidence": {
+    "Clothing_Shoes_and_Jewelry": 0.004,
+    "Home_and_Kitchen": 0.001,
+    "Sports_and_Outdoors": 0.001,
+    "CDs_and_Vinyl": 0.038,
+    "Movies_and_TV": 0.59,
+    "Cell_Phones_and_Accessories": 0.0,
+    "Books": 0.362
+  },
+  "predicted": "Movies_and_TV"
+ }
 ```
 
 Let's try another review, this time for a music album.
@@ -133,7 +142,16 @@ Prediction result will be:
 
 ```json
 {
-  "prediction":{"category":"CDs_and_Vinyl"}
+  "confidence": {
+    "Clothing_Shoes_and_Jewelry": 0.028,
+    "Home_and_Kitchen": 0.012,
+    "Sports_and_Outdoors": 0.028,
+    "CDs_and_Vinyl": 0.727,
+    "Movies_and_TV": 0.118,
+    "Cell_Phones_and_Accessories": 0.068,
+    "Books": 0.015
+  },
+  "predicted": "CDs_and_Vinyl"
 }
 ```
 

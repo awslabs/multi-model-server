@@ -63,7 +63,7 @@ public class WorkerLifeCycle {
 
         pythonPath.append(modelPath);
 
-        if (!cwd.contains("site-package")) {
+        if (!cwd.contains("site-packages") && !cwd.contains("dist-packages")) {
             pythonPath.append(File.pathSeparatorChar).append(cwd);
         }
 

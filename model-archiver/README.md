@@ -132,7 +132,7 @@ The downloaded model artifact files are:
 
 **2. Download the model archiver source**
 ```bash
-git clone http://https://github.com/awslabs/mxnet-model-server.git
+git clone https://github.com/awslabs/mxnet-model-server.git
 ```
 
 **3. Prepare your model custom service code**

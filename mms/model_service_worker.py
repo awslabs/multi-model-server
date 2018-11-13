@@ -75,9 +75,9 @@ class MXNetModelServiceWorker(object):
         :param load_model_request:
         :return:
         """
-        model_dir = load_model_request["modelPath"].decode()
-        model_name = load_model_request["modelName"].decode()
-        handler = load_model_request["handler"].decode()
+        model_dir = load_model_request["modelPath"].decode("utf-8")
+        model_name = load_model_request["modelName"].decode("utf-8")
+        handler = load_model_request["handler"].decode("utf-8")
         batch_size = None
         if "batchSize" in load_model_request:
             batch_size = int(load_model_request["batchSize"])

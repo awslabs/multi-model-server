@@ -65,6 +65,10 @@ public final class ConfigManager {
     private static final String NUMBER_OF_GPU = "number_of_gpu";
     private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
 
+    private static final String CORS_ALLOWED_ORIGIN = "cors_allowed_origin";
+    private static final String CORS_ALLOWED_METHODS = "cors_allowed_methods";
+    private static final String CORS_ALLOWED_HEADERS = "cors_allowed_headers";
+
     private static final String KEYSTORE = "keystore";
     private static final String KEYSTORE_PASS = "keystore_pass";
     private static final String KEYSTORE_TYPE = "keystore_type";
@@ -75,11 +79,9 @@ public final class ConfigManager {
 
     private Properties prop;
 
-    public Pattern getBlacklistPattern() {
-        return blacklistPattern;
-    }
+    private static ConfigManager instance;
 
-    public ConfigManager(Arguments args) {
+    private ConfigManager(Arguments args) {
         prop = new Properties();
 
         String filePath = System.getenv("MMS_CONFIG_FILE");
@@ -134,6 +136,14 @@ public final class ConfigManager {
         if (pythonExecutable != null) {
             prop.setProperty("PYTHON_EXECUTABLE", pythonExecutable);
         }
+    }
+
+    public static void init(Arguments args) {
+        instance = new ConfigManager(args);
+    }
+
+    public static ConfigManager getInstance() {
+        return instance;
     }
 
     public boolean isDebug() {
@@ -233,6 +243,22 @@ public final class ConfigManager {
 
     public String getLoadModels() {
         return prop.getProperty(LOAD_MODELS);
+    }
+
+    public Pattern getBlacklistPattern() {
+        return blacklistPattern;
+    }
+
+    public String getCorsAllowedOrigin() {
+        return prop.getProperty(CORS_ALLOWED_ORIGIN);
+    }
+
+    public String getCorsAllowedMethods() {
+        return prop.getProperty(CORS_ALLOWED_METHODS);
+    }
+
+    public String getCorsAllowedHeaders() {
+        return prop.getProperty(CORS_ALLOWED_HEADERS);
     }
 
     public SslContext getSslContext() throws IOException, GeneralSecurityException {

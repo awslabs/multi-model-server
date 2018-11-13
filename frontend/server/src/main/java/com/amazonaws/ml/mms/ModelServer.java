@@ -68,8 +68,9 @@ public class ModelServer {
             DefaultParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args, null, false);
             ConfigManager.Arguments arguments = new ConfigManager.Arguments(cmd);
+            ConfigManager.init(arguments);
 
-            ConfigManager configManager = new ConfigManager(arguments);
+            ConfigManager configManager = ConfigManager.getInstance();
 
             InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
             new ModelServer(configManager).startAndWait();

@@ -121,6 +121,23 @@ keystore_pass=changeit
 keystore_type=PKCS12
 ```
 
+### Configure Cross-Origin Resource Sharing (CORS)
+CORS is a mechanism that uses additional HTTP headers to tell a browser to let a
+web application running at one origin (domain) have permission to access selected
+resources from a server at a different origin.
+
+CORS is disabled by default. Configure following properties in config.properties file to enable CORS:
+
+```properties
+# cors_allowed_origin is required to enable CORS, use '*' or your domain name 
+cors_allowed_origin=https://yourdomain.com
+# required if you want to use preflight request 
+cors_allowed_methods=GET, POST, PUT, OPTIONS
+# required if the request has an Access-Control-Request-Headers header 
+cors_allowed_headers=X-Custom-Header
+```
+
+
 ### Restrict backend worker to access environment variable
 
 Environment variable may contains sensitive information like AWS credentials. Backend worker will execute arbitrary model's custom code, which may expose security risk. MMS provides a `blacklist_env_vars` property which allows user to restrict which environment variable can be accessed by backend worker.

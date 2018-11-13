@@ -11,7 +11,7 @@
 """
 Metric class for model server
 """
-import datetime
+import time
 import socket
 from collections import OrderedDict
 
@@ -77,11 +77,12 @@ class Metric(object):
     def __str__(self):
         dims = ",".join([str(d) for d in self.dimensions])
         if self.request_id:
-            return "{}.{}:{}|#{}|#hostname:{},{}".format(
-                self.name, self.unit, self.value, dims, socket.gethostname(), self.request_id)
+            return "{}.{}:{}|#{}|#hostname:{},{},{}".format(
+                self.name, self.unit, self.value, dims, socket.gethostname(),
+                int(time.time()), self.request_id)
 
-        return "{}.{}:{}|#{}|#hostname:{}".format(
-            self.name, self.unit, self.value, dims, socket.gethostname())
+        return "{}.{}:{}|#{}|#hostname:{},{}".format(
+            self.name, self.unit, self.value, dims, socket.gethostname(), int(time.time()))
 
     def to_dict(self):
         """
@@ -89,6 +90,6 @@ class Metric(object):
         """
         return OrderedDict({'MetricName': self.name, 'Value': self.value, 'Unit': self.unit,
                             'Dimensions': self.dimensions,
-                            'Timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                            'Timestamp': int(time.time()),
                             'HostName': socket.gethostname(),
                             'RequestId': self.request_id})

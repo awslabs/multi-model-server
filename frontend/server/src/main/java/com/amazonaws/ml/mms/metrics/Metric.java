@@ -23,7 +23,7 @@ public class Metric {
 
     private static final Pattern PATTERN =
             Pattern.compile(
-                    "\\s*(\\w+)\\.(\\w+):([0-9\\-,.]+)\\|#([^|]*)\\|#hostname:([^,]+)(,(.+))?");
+                    "\\s*(\\w+)\\.(\\w+):([0-9\\-,.]+)\\|#([^|]*)\\|#hostname:([^,]+)(,(.+))(,(.+))?");
 
     @SerializedName("MetricName")
     private String metricName;
@@ -123,7 +123,8 @@ public class Metric {
         metric.setUnit(matcher.group(2));
         metric.setValue(matcher.group(3));
         metric.setHostName(matcher.group(5));
-        metric.setRequestId(matcher.group(7));
+        metric.setTimestamp(matcher.group(7));
+        metric.setRequestId(matcher.group(8));
         String dimensions = matcher.group(4);
         if (dimensions != null) {
             String[] dimension = dimensions.split(",");
@@ -157,6 +158,7 @@ public class Metric {
         if (requestId != null) {
             sb.append(",requestID:").append(requestId);
         }
+        sb.append(",timestamp:").append(timestamp);
         return sb.toString();
     }
 }

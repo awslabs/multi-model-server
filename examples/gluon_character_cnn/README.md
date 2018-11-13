@@ -5,24 +5,17 @@ In this example, we show how to create a service which classifies a review into 
 
 # Step by step to create service
 
-## Step 1 - Download the Gluon Char CNN model file, signature file, model parameter and classification labels file to "/tmp/crepe"
+## Step 1 - Download the Gluon Char CNN model file, model parameter and classification labels file to "/tmp/crepe"
 
 ```bash
 # Download the model file
-curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/gluon_crepe.py
+curl -O https://raw.githubusercontent.com/awslabs/mxnet-model-server/master/examples/gluon_character_cnn/gluon_crepe.py
 
 # Download the parameters
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/crepe_gluon_epoch6.params
 
-# Download the signature file
-curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/signature.json
-
 # Download classification labels file
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/synset.txt
-
-# Download the base service and the helper files
-curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/gluon_base_service.py
-curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/ndarray.py
 ```
 
 ## Step 2 - Look at the Gluon model/service  file
@@ -38,31 +31,50 @@ class GluonCrepe(HybridBlock):
       ## Define model below
       pass
 
-class CharacterCNNService(GluonBaseService):
-"""
+class CharacterCNNService(object):
+    """
     Gluon Character-level Convolution Service
     """
+
     def __init__(self):
-        super(CharacterCNNService, self).__init__()    
         # The 69 characters as specified in the paper
         self.ALPHABET = list("abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+ =<>()[]{}")
         # Map Alphabets to index
         self.ALPHABET_INDEX = {letter: index for index, letter in enumerate(self.ALPHABET)}
         # max-length in characters for one document
         self.FEATURE_LEN = 1014
+        self.initialized = False
 
     def initialize(self, params):
         self.net = GluonCrepe()
         self.param_filename = "crepe_gluon_epoch6.params"
-        super(CharacterCNNService, self).initialize(params)
-        # Hybridize imperative model for best performance
-        self.net.hybridize()
+        self.model_name = params.manifest["model"]["modelName"]
+
+        gpu_id = params.system_properties.get("gpu_id")
+        model_dir = params.system_properties.get("model_dir")
+
+        synset_file = os.path.join(model_dir, "synset.txt")
+        param_file_path = os.path.join(model_dir, self.param_filename)
+        if not os.path.isfile(param_file_path):
+            raise OSError("Parameter file not found {}".format(param_file_path))
+        if not os.path.isfile(synset_file):
+            raise OSError("synset file not available {}".format(synset_file))
+
+        self.ctx = mx.cpu() if gpu_id is None else mx.gpu(gpu_id)
+
+        self.net.load_parameters(param_file_path, self.ctx)
+
+        self.labels = [line.strip() for line in open(synset_file).readlines()]
+        self.initialized = True
+        self.net.hybridize(static_shape=True, static_alloc=True)
 
         # define preprocess, inference and postprocess methods
 ```
 
 As shown, the Gluon model derives from the basic gluon hybrid block. Gluon hybrid blocks, provide performance of a symbolic model with a imperative model. More on Gluon, hybrid blocks [here](https://gluon.mxnet.io/chapter07_distributed-learning/hybridize.html).
 The fully defined service file can be found under [gluon_crepe.py](gluon_crepe.py), we define `preprocess`, `inference`, `postprocess` methods in this file.
+
+The input size is, limited to 1014, characters as mentioned in the paper. The output is of shape [0,7] as we classify the reviews into seven product categories. Both the input and output are passed on as 'application/json' based text content.
 
 # Step 3 - Prepare synset.txt with list of class names
 
@@ -107,8 +119,17 @@ Prediction result will be:
 
 ```json
 {
-  "prediction": {"category":"Movies_and_TV"}
-}
+  "confidence": {
+    "Clothing_Shoes_and_Jewelry": 0.004,
+    "Home_and_Kitchen": 0.001,
+    "Sports_and_Outdoors": 0.001,
+    "CDs_and_Vinyl": 0.038,
+    "Movies_and_TV": 0.59,
+    "Cell_Phones_and_Accessories": 0.0,
+    "Books": 0.362
+  },
+  "predicted": "Movies_and_TV"
+ }
 ```
 
 Let's try another review, this time for a music album.
@@ -121,10 +142,20 @@ Prediction result will be:
 
 ```json
 {
-  "prediction":{"category":"CDs_and_Vinyl"}
+  "confidence": {
+    "Clothing_Shoes_and_Jewelry": 0.028,
+    "Home_and_Kitchen": 0.012,
+    "Sports_and_Outdoors": 0.028,
+    "CDs_and_Vinyl": 0.727,
+    "Movies_and_TV": 0.118,
+    "Cell_Phones_and_Accessories": 0.068,
+    "Books": 0.015
+  },
+  "predicted": "CDs_and_Vinyl"
 }
 ```
 
 References
 1. [Character-level CNN](https://papers.nips.cc/paper/5782-character-level-convolutional-networks-for-text-classification.pdf)
-2. [How to train Character-level CNN on gluon](https://github.com/ThomasDelteil/CNN_NLP_MXNet)
+2. [How to train Character-level CNN on gluon](https://github.com/ThomasDelteil/TextClassificationCNNs_MXNet)
+3. [Web Demo of Character-level CNN on gluon](https://thomasdelteil.github.io/TextClassificationCNNs_MXNet/)

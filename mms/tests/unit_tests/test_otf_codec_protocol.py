@@ -1,3 +1,5 @@
+# coding=utf-8
+
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
@@ -8,6 +10,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+
 """
 On The Fly Codec tester
 """
@@ -17,6 +20,7 @@ from collections import namedtuple
 import pytest
 
 import mms.protocol.otf_message_handler as codec
+from builtins import bytes
 
 
 @pytest.fixture()
@@ -104,7 +108,7 @@ class TestOtfCodecHandler:
             "requestId": b"request_id", "headers": [], "parameters": [
                 {"name": "input_name",
                  "contentType": "text/plain",
-                 "value": "text_value"
+                 "value": u"text_value测试"
                  }
             ]
         }]
@@ -115,7 +119,7 @@ class TestOtfCodecHandler:
             b"\xFF\xFF\xFF\xFF",
             b"\x00\x00\x00\x0a", b"input_name",
             b"\x00\x00\x00\x0a", b"text/plain",
-            b"\x00\x00\x00\x0a", b"text_value",
+            b"\x00\x00\x00\x0a", bytes(u"text_value测试", "utf-8"),
             b"\xFF\xFF\xFF\xFF",  # end of parameters
             b"\xFF\xFF\xFF\xFF"  # end of batch
         ]

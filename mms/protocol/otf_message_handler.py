@@ -107,7 +107,7 @@ def create_load_model_response(code, message):
     msg = bytearray()
     msg += struct.pack('!i', code)
 
-    buf = message.encode()
+    buf = message.encode("utf-8")
     msg += struct.pack('!i', len(buf))
     msg += buf
     msg += struct.pack('!i', -1)  # no predictions
@@ -254,19 +254,19 @@ def _retrieve_input_data(conn):
         return None
 
     model_input = dict()
-    model_input["name"] = _retrieve_buffer(conn, length).decode()
+    model_input["name"] = _retrieve_buffer(conn, length).decode("utf-8")
 
     length = _retrieve_int(conn)
-    content_type = _retrieve_buffer(conn, length).decode()
+    content_type = _retrieve_buffer(conn, length).decode("utf-8")
     model_input["contentType"] = content_type
 
     length = _retrieve_int(conn)
     value = _retrieve_buffer(conn, length)
 
     if content_type == "application/json":
-        model_input["value"] = json.loads(value.decode())
+        model_input["value"] = json.loads(value.decode("utf-8"))
     elif content_type.startswith("text"):
-        model_input["value"] = value.decode()
+        model_input["value"] = value.decode("utf-8")
     else:
         model_input["value"] = value
 

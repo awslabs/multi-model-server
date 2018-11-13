@@ -116,7 +116,7 @@ class ModelService(object):
         if input_type == "application/json":
             # user might not send content in HTTP request
             if isinstance(form_data, (bytes, bytearray)):
-                form_data = ast.literal_eval(form_data.decode())
+                form_data = ast.literal_eval(form_data.decode("utf-8"))
 
         input_data.append(form_data)
 

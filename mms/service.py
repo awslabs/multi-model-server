@@ -63,7 +63,7 @@ class Service(object):
 
         input_batch = []
         for batch_idx, request_batch in enumerate(batch):
-            req_id = request_batch.get('requestId').decode()
+            req_id = request_batch.get('requestId').decode("utf-8")
             parameters = request_batch['parameters']
 
             model_in = dict()

@@ -26,15 +26,19 @@ public class QLogLayout extends PatternLayout {
             return null;
         }
         if (eventMessage instanceof Metric) {
+            String marketPlace = System.getenv("REALM");
             StringBuilder stringBuilder = new StringBuilder();
             Metric metric = (Metric) eventMessage;
             stringBuilder.append("HostName=").append(metric.getHostName());
             if (metric.getRequestId() != null) {
                 stringBuilder.append("\nRequestId=").append(metric.getRequestId());
             }
-            stringBuilder.append("\nTimeStamp=").append(metric.getTimestamp());
+            if (marketPlace != null) {
+                stringBuilder.append("\nMarketplace=").append(marketPlace);
+            }
+            stringBuilder.append("\nStartTime=").append(metric.getTimestamp());
             stringBuilder
-                    .append("\nMetrics=")
+                    .append("\nProgram=MXNetModelServer\nMetrics=")
                     .append(metric.getMetricName())
                     .append('=')
                     .append(metric.getValue())

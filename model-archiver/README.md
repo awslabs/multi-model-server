@@ -16,11 +16,11 @@
 
 ## Overview
 
-A key feature of MMS is the ability to package all model artifacts into a single model archive file. It is a separate command line interface (CLI), `model-archiver`, that can take model checkpoints and package them into a `.mar` file that can then be redistributed and served by anyone using MMS. It takes in the following model artifacts: a model composed of one or more files, the description of the model's inputs in the form of a signature file, a service file describing how to handle inputs and outputs, and other optional assets that may be required to serve the model. The CLI creates a `.mar` file that MMS's server CLI uses to serve the models.
+A key feature of MMS is the ability to package all model artifacts into a single model archive file. It is a separate command line interface (CLI), `model-archiver`, that can take model checkpoints and package them into a `.mar` file. This file can then be redistributed and served by anyone using MMS. It takes in the following model artifacts: a model composed of one or more files, the description of the model's inputs in the form of a signature file, a service file describing how to handle inputs and outputs, and other optional assets that may be required to serve the model. The CLI creates a `.mar` file that MMS's server CLI uses to serve the models.
 
 **Important**: Make sure you try the [Quick Start: Creating a Model Archive](#creating-a-model-archive) tutorial for a short example of using `model-archiver`.
 
-MMS support arbitrary models file. It's custom service code's responsibility to locate and load models files. Following information are required to create a standalone model archive:
+MMS can support any arbitrary model file. It is the custom service code's responsibility to locate and load the model files. The following information is required to create a standalone model archive:
 1. [Model name](#model-name)
 2. [Model path](#model-path)
 3. [Handler](#handler)
@@ -29,7 +29,7 @@ MMS support arbitrary models file. It's custom service code's responsibility to 
 
 Now let's cover the details on using the CLI tool: `model-archiver`.
 
-Example usage with the squeezenet_v1.1 model archive you may have downloaded or created in the [main README's](../README.md) examples:
+Here is an example usage with the squeezenet_v1.1 model archive which you can download or create by following the example in the [main README](../README.md):
 
 ```bash
 
@@ -76,35 +76,35 @@ optional arguments:
 ## Artifact Details
 
 ### MAR-INF
-**MAR-INF** is reserved folder name that will be used inside `.mar` file. This folder contains model archive metadata files. User should avoid using **MAR-INF** in the model path.
+**MAR-INF** is a reserved folder name that will be used inside `.mar` file. This folder contains the model archive metadata files. Users should avoid using **MAR-INF** in their model path.
 
 ### Runtime
 
 ### Model name
 
-A valid model name. The model name must begin with a letter of the alphabet, and can only contains letters, digits, underscore (_), dash (-) and dot (.)
+A valid model name must begin with a letter of the alphabet and can only contains letters, digits, underscores (_), dashes (-) and periods (.).
 
-**Note**: The model name can be override when register model with [Register Model API](../ docs/management_api.md#register-a-model).
+**Note**: The model name can be override when register model with [Register Model API](../docs/management_api.md#register-a-model).
 
 ### Model path
 
-A folder that contains all necessary files that need to run inference code for the model. All the files and sub-folders (except [excluded files](#excluded-files)) will be packaged into `.mar` file.
+A folder that contains all necessary files needed to run inference code for the model. All the files and sub-folders (except [excluded files](#excluded-files)) will be packaged into the `.mar` file.
 
 #### excluded files
-Follow type of file will be excluded during model archive packaging:
+The following types of file will be excluded during model archive packaging:
 1. hidden files
 2. Mac system files: __MACOSX and .DS_Store
-3. MANIFEST.json file
+3. MANIFEST.json
 4. python compiled byte code (.pyc) files and cache folder __pycache__
 
 ### handler
 
-A handler is an python entry point that MMS can invoke to executes inference code. The format of a Python handler is:
+A handler is a python entry point that MMS can invoke to execute inference code. The format of a Python handler is:
 * python_module_name[:function_name] (for example: lstm-service:handle).
 
-The function name is optional if provided python module follows one of predefined convention:
+The function name is optional if the provided python module follows one of predefined conventions:
 1. There is a `handle()` function available in the module
-2. The module contains only one Class and the class that contains a `handle()` function.
+2. The module contains only one Class and that class contains a `handle()` function.
 
 Further details and specifications are found on the [custom service](../docs/custom_service.md) page.
 
@@ -137,7 +137,7 @@ git clone https://github.com/awslabs/mxnet-model-server.git
 
 **3. Prepare your model custom service code**
 
-You can implement your own model customer service code as model archive entry point.
+You can implement your own model customer service code with a model archive entry point.
 Here we are going to use the MXNet vision service `model_service_template`.
 This template is one of several provided with MMS.
 Download the template and place it in your `squeezenet` folder.
@@ -158,4 +158,4 @@ In this next step we'll run `model-archiver` and tell it our model's prefix is `
 model-archiver --model-name squeezenet_v1.1 --model-path squeezenet --handler mxnet_vision_service:handle
 ```
 
-This will package all the model artifacts files in `squeezenet` directory and output `squeezenet_v1.1.mar` in the current working directory. This `.mar` file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the [Serve a Model tutorial](../README.md#serve-a-model) and try to run this model archive that you just created!
+This will package all the model artifacts files located in the `squeezenet` directory and output `squeezenet_v1.1.mar` in the current working directory. This `.mar` file is all you need to run MMS, serving inference requests for a simple image recognition API. Go back to the [Serve a Model tutorial](../README.md#serve-a-model) and try to run this model archive that you just created!

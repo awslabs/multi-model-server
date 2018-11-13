@@ -84,7 +84,7 @@ optional arguments:
 
 A valid model name must begin with a letter of the alphabet and can only contains letters, digits, underscores (_), dashes (-) and periods (.).
 
-**Note**: The model name can be override when register model with [Register Model API](../docs/management_api.md#register-a-model).
+**Note**: The model name can be overridden when you register the model with [Register Model API](../docs/management_api.md#register-a-model).
 
 ### Model path
 

@@ -38,7 +38,7 @@ public class ConfigManagerTest {
         metric.setMetricName(metricName);
         metric.setRequestId(requestId);
         metric.setUnit("Milliseconds");
-        metric.setTimestamp("2014-05-23 03:40");
+        metric.setTimestamp("1542157988");
         Dimension dimension = new Dimension();
         dimension.setName("Level");
         dimension.setValue("Model");

@@ -69,9 +69,28 @@ public final class NettyUtils {
     private static final String REQUEST_ID = "x-request-id";
     private static final AttributeKey<Session> SESSION_KEY = AttributeKey.valueOf("session");
     private static final Dimension DIMENSION = new Dimension("Level", "Host");
-    private static final Metric REQUESTS_2_XX = new Metric("Requests2XX", "1", "Count", DIMENSION);
-    private static final Metric REQUESTS_4_XX = new Metric("Requests4XX", "1", "Count", DIMENSION);
-    private static final Metric REQUESTS_5_XX = new Metric("Requests5XX", "1", "Count", DIMENSION);
+    private static final Metric REQUESTS_2_XX =
+            new Metric(
+                    "Requests2XX",
+                    "1",
+                    "Count",
+                    ConfigManager.getInstance().getHostName(),
+                    DIMENSION);
+    private static final Metric REQUESTS_4_XX =
+            new Metric(
+                    "Requests4XX",
+                    "1",
+                    "Count",
+                    ConfigManager.getInstance().getHostName(),
+                    DIMENSION);
+    private static final Metric REQUESTS_5_XX =
+            new Metric(
+                    "Requests5XX",
+                    "1",
+                    "Count",
+                    ConfigManager.getInstance().getHostName(),
+                    DIMENSION);
+
     private static final org.apache.log4j.Logger loggerMmsMetrics =
             org.apache.log4j.Logger.getLogger(ConfigManager.MMS_METRICS_LOGGER);
 
@@ -135,6 +154,8 @@ public final class NettyUtils {
         // Send the response and close the connection if necessary.
         Channel channel = ctx.channel();
         Session session = channel.attr(SESSION_KEY).getAndSet(null);
+
+        ConfigManager configManager = ConfigManager.getInstance();
         if (session != null) {
             // session might be recycled if channel is closed already.
             session.setCode(resp.status().code());
@@ -150,7 +171,6 @@ public final class NettyUtils {
             loggerMmsMetrics.info(REQUESTS_5_XX);
         }
 
-        ConfigManager configManager = ConfigManager.getInstance();
         String allowedOrigin = configManager.getCorsAllowedOrigin();
         String allowedMethods = configManager.getCorsAllowedMethods();
         String allowedHeaders = configManager.getCorsAllowedHeaders();

@@ -16,7 +16,9 @@ A quick overview and examples for both serving and packaging are provided below.
 * [Quick Start](#quick-start)
 * [Serve a Model](#serve-a-model)
 * [Other Features](#other-features)
+* [External demos powered by MMS](#external-demos-powered-by-mms)
 * [Contributing](#contributing)
+
 
 ## Other Relevant Documents
 * [Latest Version Docs](docs/README.md)

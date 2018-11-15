@@ -190,7 +190,7 @@ Browse over to the [Docs readme](docs/README.md) for the full index of documenta
 
 ## External demos powered by MMS
 
-Here are some examples demos of deep learning applications, powered by MMS:
+Here are some example demos of deep learning applications, powered by MMS:
 
  |  |   |
 |:------:|:-----------:|

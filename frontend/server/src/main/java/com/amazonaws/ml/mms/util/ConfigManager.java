@@ -19,8 +19,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyException;
@@ -81,6 +83,8 @@ public final class ConfigManager {
 
     private static ConfigManager instance;
 
+    private String hostName;
+
     private ConfigManager(Arguments args) {
         prop = new Properties();
 
@@ -136,6 +140,17 @@ public final class ConfigManager {
         if (pythonExecutable != null) {
             prop.setProperty("PYTHON_EXECUTABLE", pythonExecutable);
         }
+
+        try {
+            InetAddress ip = InetAddress.getLocalHost();
+            hostName = ip.getHostName();
+        } catch (UnknownHostException e) {
+            hostName = "Unknown";
+        }
+    }
+
+    public String getHostName() {
+        return hostName;
     }
 
     public static void init(Arguments args) {

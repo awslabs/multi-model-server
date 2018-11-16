@@ -23,7 +23,7 @@ public class Metric {
 
     private static final Pattern PATTERN =
             Pattern.compile(
-                    "\\s*(\\w+)\\.(\\w+):([0-9\\-,.]+)\\|#([^|]*)\\|#hostname:([^,]+),([^,]+)(,(.*))?");
+                    "\\s*(\\w+)\\.(\\w+):([0-9\\-,.e]+)\\|#([^|]*)\\|#hostname:([^,]+),([^,]+)(,(.*))?");
 
     @SerializedName("MetricName")
     private String metricName;

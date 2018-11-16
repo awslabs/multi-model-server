@@ -17,11 +17,13 @@ import json
 import logging
 import os
 import sys
+import uuid
 from abc import ABCMeta, abstractmethod
 
 from builtins import str
 
-from mms.service import Service
+from mms.metrics.metrics_store import MetricsStore
+from mms.service import Service, emit_metrics
 
 
 class ModelLoaderFactory(object):
@@ -96,6 +98,8 @@ class MmsModelLoader(ModelLoader):
         """
         logging.debug("Loading model - working dir: %s", os.getcwd())
 
+        # TODO: Request ID is not given. UUID is a temp UUID.
+        metrics = MetricsStore(uuid.uuid4(), model_name)
         manifest_file = os.path.join(model_dir, "MAR-INF/MANIFEST.json")
         manifest = None
         if os.path.exists(manifest_file):
@@ -117,6 +121,7 @@ class MmsModelLoader(ModelLoader):
             entry_point = getattr(module, function_name)
             service = Service(model_name, model_dir, manifest, entry_point, gpu_id, batch_size)
 
+            service.context.metrics = metrics
             # initialize model at load time
             entry_point(None, service.context)
         else:
@@ -140,6 +145,7 @@ class MmsModelLoader(ModelLoader):
                 except Exception:
                     sys.exc_clear()
 
+        emit_metrics(metrics.store)
         return service
 
 

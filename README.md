@@ -16,7 +16,9 @@ A quick overview and examples for both serving and packaging are provided below.
 * [Quick Start](#quick-start)
 * [Serve a Model](#serve-a-model)
 * [Other Features](#other-features)
+* [External demos powered by MMS](#external-demos-powered-by-mms)
 * [Contributing](#contributing)
+
 
 ## Other Relevant Documents
 * [Latest Version Docs](docs/README.md)
@@ -187,6 +189,15 @@ To package a model, check out [model archiver documentation](model-archiver/READ
 ## Other Features
 
 Browse over to the [Docs readme](docs/README.md) for the full index of documentation. This includes more examples, how to customize the API service, API endpoint details, and more.
+
+## External demos powered by MMS
+
+Here are some example demos of deep learning applications, powered by MMS:
+
+ |  |   |
+|:------:|:-----------:|
+| [Product Review Classification](https://thomasdelteil.github.io/TextClassificationCNNs_MXNet/) <img width="325" alt="demo4" src="https://user-images.githubusercontent.com/3716307/48382335-6099ae00-e695-11e8-8110-f692b9ecb831.png"> |[Visual Search](https://thomasdelteil.github.io/VisualSearch_MXNet/) <img width="325" alt="demo1" src="https://user-images.githubusercontent.com/3716307/48382332-6099ae00-e695-11e8-9fdd-17b5e7d6d0ec.png">|
+| [Facial Emotion Recognition](https://thomasdelteil.github.io/FacialEmotionRecognition_MXNet/) <img width="325" alt="demo2" src="https://user-images.githubusercontent.com/3716307/48382333-6099ae00-e695-11e8-8bc6-e2c7dce3527c.png"> |[Neural Style Transfer](https://thomasdelteil.github.io/NeuralStyleTransfer_MXNet/) <img width="325" alt="demo3" src="https://user-images.githubusercontent.com/3716307/48382334-6099ae00-e695-11e8-904a-0906cc0797bc.png"> |
 
 ## Contributing
 

@@ -16,7 +16,7 @@ Similar as [Inference API](inference_api.md), Management API also provide a [API
 ### Register a model
 
 `POST /models`
-* model_url - Model archive download url. Supports the following locations:
+* url - Model archive download url. Supports the following locations:
     * a local model archive (.mar); the file must be directly in model_store folder.
     * a local model directory; the directory must be directly in model_store folder. This option can avoid MMS extracting .mar file to temporary folder, which will improve load time and reduce disk space usage.
     * a URI using the HTTP(s) protocol. MMS can download .mar files from the Internet.
@@ -25,7 +25,7 @@ Similar as [Inference API](inference_api.md), Management API also provide a [API
 * runtime - the runtime for the model custom service code. This value will override runtime in MANIFEST.json if present. The default value is `PYTHON`.
 * batch_size - the inference batch size. The default value is `1`.
 * max_batch_delay - the maximum delay for batch aggregation. The default value is 100 milliseconds.
-* initial_worker - the number of initial workers to create. The default value is `0`. MMS will not run inference until there is at least one work assigned.
+* initial_workers - the number of initial workers to create. The default value is `0`. MMS will not run inference until there is at least one work assigned.
 * synchronous - whether or not the creation of worker is synchronous. The default value is false. MMS will create new workers without waiting for acknowledgement that the previous worker is online.
 
 ```bash
@@ -41,7 +41,7 @@ User may want to create workers while register, creating initial workers may tak
 The asynchronous call will return before trying to create workers with HTTP code 202:
 
 ```bash
-curl -v -X POST "http://localhost:8081/models?url=https%3A%2F%2Fs3.amazonaws.com%2Fmodel-server%2Fmodels%2Fsqueezenet_v1.1%2Fsqueezenet_v1.1.model&initial_workers=1&synchronous=true"
+curl -v -X POST "http://localhost:8081/models?initial_workers=1&synchronous=false&url=https%3A%2F%2Fs3.amazonaws.com%2Fmodel-server%2Fmodels%2Fsqueezenet_v1.1%2Fsqueezenet_v1.1.model"
 
 < HTTP/1.1 202 Accepted
 < content-type: application/json
@@ -57,7 +57,7 @@ curl -v -X POST "http://localhost:8081/models?url=https%3A%2F%2Fs3.amazonaws.com
 The synchronous call will return after all workers has be adjusted with HTTP code 200.
 
 ```bash
-curl -v -X POST "http://localhost:8081/models?url=https%3A%2F%2Fs3.amazonaws.com%2Fmodel-server%2Fmodels%2Fsqueezenet_v1.1%2Fsqueezenet_v1.1.model&initial_workers=1&synchronous=true"
+curl -v -X POST "http://localhost:8081/models?initial_workers=1&synchronous=true&url=https%3A%2F%2Fs3.amazonaws.com%2Fmodel-server%2Fmodels%2Fsqueezenet_v1.1%2Fsqueezenet_v1.1.model"
 
 < HTTP/1.1 200 OK
 < content-type: application/json

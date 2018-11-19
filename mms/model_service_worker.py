@@ -23,6 +23,7 @@ import sys
 from mms.arg_parser import ArgParser
 from mms.model_loader import ModelLoaderFactory
 from mms.protocol.otf_message_handler import retrieve_msg, create_load_model_response
+from mms.service import emit_metrics
 
 MAX_FAILURE_THRESHOLD = 5
 SOCKET_ACCEPT_TIMEOUT = 30.0
@@ -110,6 +111,9 @@ class MXNetModelServiceWorker(object):
                 cl_socket.send(resp)
             else:
                 raise ValueError("Received unknown command: {}".format(cmd))
+
+            if service is not None and service.context is not None and service.context.metrics is not None:
+                emit_metrics(service.context.metrics.store)
 
     def run_server(self):
         """

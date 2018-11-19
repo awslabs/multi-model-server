@@ -111,7 +111,6 @@ class Service(object):
 
         duration = int((time.time() - start_time) * 1000)
         metrics.add_time(PREDICTION_METRIC, duration)
-        emit_metrics(metrics.store)
 
         return create_predict_response(ret, req_id_map, "Prediction success", 200)
 

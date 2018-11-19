@@ -165,6 +165,7 @@ class TestHandleConnection:
         patches.retrieve_msg.side_effect = [(b"L", ""), (b"I", ""), (b"U", "")]
         model_service_worker.load_model = Mock()
         service = Mock()
+        service.context = None
         model_service_worker.load_model.return_value = (service, "", 200)
         cl_socket = Mock()
 

@@ -23,7 +23,7 @@ from abc import ABCMeta, abstractmethod
 from builtins import str
 
 from mms.metrics.metrics_store import MetricsStore
-from mms.service import Service, emit_metrics
+from mms.service import Service
 
 
 class ModelLoaderFactory(object):
@@ -145,7 +145,6 @@ class MmsModelLoader(ModelLoader):
                 except Exception:
                     sys.exc_clear()
 
-        emit_metrics(metrics.store)
         return service
 
 

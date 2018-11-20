@@ -100,16 +100,16 @@ Alternatively, use following link to download:
 ## Step 4 - Create custom service class
 
 We provided custom service class template code in [template](../template) folder:
-1. [model_handler.py](../template/model_handler.py) - A generic based service class.
-2. [mxnet_model_service.py](../template/mxnet_model_service.py) - A MXNet base service class.
-3. [mxnet_vision_service.py](../template/mxnet_vision_service.py) - A MXNet Vision service class.
-4. [mxnet_utils](../template/mxnet_utils) - A python package that contains utility classes.
+1. [model_handler.py](../model_service_template/model_handler.py) - A generic based service class.
+2. [mxnet_model_service.py](../model_service_template/mxnet_model_service.py) - A MXNet base service class.
+3. [mxnet_vision_service.py](../model_service_template/mxnet_vision_service.py) - A MXNet Vision service class.
+4. [mxnet_utils](../model_service_template/mxnet_utils) - A python package that contains utility classes.
 
 In this example, you can simple copy them into ssd folder, as use provided mxnet_vision_service.py as user model archive entry point.
 
 ```bash
 cd mxnet-model-server/examples
-cp -r template/* ssd/
+cp -r model_service_template/* ssd/
 ```
 
 In this example, we extend `MXNetVisionService`, provided by MMS for vision inference use-cases, and reuse its input image preprocess functionality to resize and transform the image shape. We only add custom pre-processing and post-processing steps. See [ssd_service.py](ssd_service.py) for more details on how to extend the base service and add custom pre-processing and post-processing.

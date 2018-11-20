@@ -122,7 +122,8 @@ class GluonBaseService(object):
         list of NDArray
             Inference output.
         """
-        output = self.net(data)
+        model_input = data.as_in_context(self.ctx)
+        output = self.net(model_input)
         return output.softmax()
 
     def postprocess(self, data):

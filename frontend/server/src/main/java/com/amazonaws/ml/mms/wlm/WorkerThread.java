@@ -12,6 +12,8 @@
  */
 package com.amazonaws.ml.mms.wlm;
 
+import com.amazonaws.ml.mms.metrics.Dimension;
+import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.codec.ModelRequestEncoder;
@@ -43,6 +45,10 @@ import org.slf4j.LoggerFactory;
 public class WorkerThread implements Runnable {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
+    private static final org.apache.log4j.Logger loggerMmsMetrics =
+            org.apache.log4j.Logger.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+
+    private Metric workerLoadTime;
 
     private static final int[] BACK_OFF = {
         0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597
@@ -97,6 +103,17 @@ public class WorkerThread implements Runnable {
         startTime = System.currentTimeMillis();
         lifeCycle = new WorkerLifeCycle(configManager, model);
         replies = new ArrayBlockingQueue<>(1);
+        workerLoadTime =
+                new Metric(
+                        "W-"
+                                + this.port
+                                + '-'
+                                + model.getModelName()
+                                        .substring(0, Math.min(model.getModelName().length(), 25)),
+                        String.valueOf(System.currentTimeMillis()),
+                        "ms",
+                        ConfigManager.getInstance().getHostName(),
+                        new Dimension("Level", "Host"));
     }
 
     @Override
@@ -288,8 +305,16 @@ public class WorkerThread implements Runnable {
 
     void setState(WorkerState newState) {
         listener.notifyChangeState(model.getModelName(), newState);
+        long timeTaken = System.currentTimeMillis() - startTime;
         if (state != WorkerState.WORKER_TERMINATED) {
             this.state = newState;
+        }
+
+        if (state == WorkerState.WORKER_MODEL_LOADED) {
+            workerLoadTime.setValue(String.valueOf(timeTaken));
+            workerLoadTime.setTimestamp(
+                    String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
+            loggerMmsMetrics.info(workerLoadTime);
         }
     }
 

@@ -8,6 +8,9 @@ In this example, we show how to create a service which classifies a review into 
 ## Step 1 - Download the Gluon Char CNN model file, model parameter and classification labels file to "/tmp/crepe"
 
 ```bash
+# Create a model directory
+mkdir /tmp/crepe
+
 # Download the model file
 curl -O https://raw.githubusercontent.com/awslabs/mxnet-model-server/master/examples/gluon_character_cnn/gluon_crepe.py
 
@@ -16,6 +19,9 @@ curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-cha
 
 # Download classification labels file
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/synset.txt
+
+# Move required files to the following folder
+mv crepe_gluon_epoch6.params gluon_crepe.py synset.txt /tmp/crepe
 ```
 
 ## Step 2 - Look at the Gluon model/service  file

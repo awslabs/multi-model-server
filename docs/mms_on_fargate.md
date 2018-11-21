@@ -55,7 +55,7 @@ When you want to launch and host your custom model, you will have to update this
 In this tutorial, we will be use the squeezenet model from the following S3 link.
 
 ```
-https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 Since MMS can consume model files from S3 buckets, we wouldn't need to bake the containers with the actual model files.
@@ -65,19 +65,19 @@ And the answer is very simple, you just need to set the following
 [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint):
 
 ```bash
-mxnet-model-server --start --models https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+mxnet-model-server --start --models https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
-You will now have a running container serving squeezenet model. 
+You will now have a running container serving squeezenet model.
 
 At this point, you are ready to start creating actual task definition.
 
 **Note**: To start multiple models with the model-server, you could run the following command with multiple model names
 ```bash
 # Example, following command starts model server with Resnet-18 and Squeezenet V1 models
-$ mxnet-model-server --start --models https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
+$ mxnet-model-server --start --models https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
 
-```  
+```
 
 
 ## Create an AWS Fargate task to serve SqueezeNet model

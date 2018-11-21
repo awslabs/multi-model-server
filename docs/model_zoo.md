@@ -155,7 +155,7 @@ pip install pillow
 
 * **Start Server**:
 ```bash
-mxnet-model-server --models duc=https://s3.amazonaws.com/mxnet-model-server/onnx-duc/ResNet_DUC_HDC.model
+mxnet-model-server --models duc=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-duc.mar
 ```
 
 * **Get the test image**:

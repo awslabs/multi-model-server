@@ -95,7 +95,7 @@ Now start the server:
 ```bash
 cd mxnet-model-server
 
-mxnet-model-server --start --model-store examples --models squeezenet=squeezenet_v1.1.mar
+mxnet-model-server --start --model-store examples --models squeezenet=onnx-squeezenet.mar
 ```
 
 After your server starts, you can use the following command to see the prediction results.

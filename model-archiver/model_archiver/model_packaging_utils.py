@@ -125,7 +125,7 @@ class ModelExportUtils(object):
         try:
             import onnx
         except ImportError:
-            raise ModelArchiverError("Onnx package is not installed. Run command: pip install mxnet to install it.")
+            raise ModelArchiverError("Onnx package is not installed. Run command: pip install onnx to install it.")
 
         symbol_file = '%s-symbol.json' % model_name
         params_file = '%s-0000.params' % model_name

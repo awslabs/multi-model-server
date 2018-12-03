@@ -34,7 +34,7 @@ The next section, showcases an example custom service.
 ## Example Custom Service file
 
 ```python
-# customer service file
+# custom service file
 
 # model_handler.py
 
@@ -119,4 +119,4 @@ model-archiver --model-name <model-name> --handler model_handler:handle --export
 
 This will create file ```<model-name>.mar``` in the directory ```<output-dir>```
 
-This will create a model archive with the custom handler, for python3 runtime. the ```--runtime``` parameter enables usage of specific python version at runtime, by default it uses the default python distribution of the system.
+This will create a model archive with the custom handler, for python3 runtime. The ```--runtime``` parameter enables usage of specific python version at runtime, by default it uses the default python distribution of the system.

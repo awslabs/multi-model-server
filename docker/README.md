@@ -43,7 +43,7 @@ It will run the Management API on your host computer's port `8081`. This maps to
 
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
-curl -X POST http://127.0.0.1/predictions/squeezenet -T @kitten.jpg
+curl -X POST http://127.0.0.1/predictions/squeezenet -T kitten.jpg
 ```
 
 After fetching this image of a kitten and posting it to the `predict` endpoint, you should see a response similar to the following:

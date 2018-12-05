@@ -130,7 +130,7 @@ public class WorkerThread implements Runnable {
             connect();
 
             while (isRunning()) {
-                req = aggregator.getRequest(workerId);
+                req = aggregator.getRequest(workerId, state);
 
                 backendChannel.writeAndFlush(req).sync();
 

@@ -36,49 +36,33 @@ public class BatchAggregator {
         jobs = new LinkedHashMap<>();
     }
 
-    public BaseModelRequest getRequest(String threadName) throws InterruptedException {
+    public BaseModelRequest getRequest(String threadName, WorkerState state)
+            throws InterruptedException {
         jobs.clear();
 
-        // first job is a blocking call;
-        Job job = model.nextJob(threadName);
-        if (job.isControlCmd()) {
-            RequestInput input = job.getPayload();
-            int gpuId = -1;
-            String gpu = input.getStringParameter("gpu");
-            if (gpu != null) {
-                gpuId = Integer.parseInt(gpu);
-            }
-            return new ModelLoadModelRequest(model, gpuId);
-        }
-
-        jobs.put(job.getJobId(), job);
-
-        logger.trace("get first job: {}", job.getJobId());
-
-        long maxBatchDelay = model.getMaxBatchDelay();
-        int size = model.getBatchSize() - 1;
-        long begin = System.currentTimeMillis();
-        for (int i = 0; i < size; ++i) {
-            // Only data should be consumed here.
-            job = model.nextJob(Model.DEFAULT_DATA_QUEUE, maxBatchDelay);
-            if (job == null) {
-                break;
-            }
-            jobs.put(job.getJobId(), job);
-            long end = System.currentTimeMillis();
-            maxBatchDelay -= end - begin;
-            begin = end;
-            if (maxBatchDelay <= 0) {
-                break;
-            }
-        }
-
-        logger.trace("sending jobs, size: {}", jobs.size());
-
         ModelInferenceRequest req = new ModelInferenceRequest(model.getModelName());
+
+        model.pollBatch(
+                threadName, (state == WorkerState.WORKER_MODEL_LOADED) ? 0 : Long.MAX_VALUE, jobs);
+
         for (Job j : jobs.values()) {
-            j.setScheduled();
-            req.addRequest(j.getPayload());
+            if (j.isControlCmd()) {
+                if (jobs.size() > 1) {
+                    throw new IllegalStateException(
+                            "Received more than 1 control command. "
+                                    + "Control messages should be processed/retrieved one at a time.");
+                }
+                RequestInput input = j.getPayload();
+                int gpuId = -1;
+                String gpu = input.getStringParameter("gpu");
+                if (gpu != null) {
+                    gpuId = Integer.parseInt(gpu);
+                }
+                return new ModelLoadModelRequest(model, gpuId);
+            } else {
+                j.setScheduled();
+                req.addRequest(j.getPayload());
+            }
         }
         return req;
     }

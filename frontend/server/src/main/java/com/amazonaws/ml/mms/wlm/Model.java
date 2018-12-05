@@ -14,21 +14,27 @@ package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import java.io.File;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Model {
 
     public static final String DEFAULT_DATA_QUEUE = "DATA_QUEUE";
+    private static final Logger logger = LoggerFactory.getLogger(Model.class);
 
     private ModelArchive modelArchive;
     private int minWorkers;
     private int maxWorkers;
     private int batchSize;
     private int maxBatchDelay;
+
     // Total number of subsequent inference request failures
     private AtomicInteger failedInfReqs;
 
@@ -116,19 +122,50 @@ public class Model {
         jobsDb.get(DEFAULT_DATA_QUEUE).addFirst(job);
     }
 
-    public Job nextJob(String threadId) throws InterruptedException {
-        return nextJob(threadId, Long.MAX_VALUE);
-    }
+    public void pollBatch(String threadId, long waitTime, Map<String, Job> jobsRepo)
+            throws InterruptedException {
+        if (jobsRepo == null || threadId == null || threadId.isEmpty()) {
+            throw new IllegalArgumentException("Invalid input given provided");
+        }
 
-    public Job nextJob(String threadId, long timeoutMillis) throws InterruptedException {
-        LinkedBlockingDeque<Job> jobs = jobsDb.get(threadId);
-        if (jobs != null && !jobs.isEmpty()) {
-            Job j = jobs.poll();
+        if (!jobsRepo.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "The jobs repo provided contains stale jobs. Clear them!!");
+        }
+
+        LinkedBlockingDeque<Job> jobsQueue = jobsDb.get(threadId);
+        if (jobsQueue != null && !jobsQueue.isEmpty()) {
+            Job j = jobsQueue.poll(waitTime, TimeUnit.MILLISECONDS);
             if (j != null) {
-                return j;
+                jobsRepo.put(j.getJobId(), j);
+                return;
             }
         }
-        return jobsDb.get(DEFAULT_DATA_QUEUE).poll(timeoutMillis, TimeUnit.MILLISECONDS);
+
+        synchronized (this) {
+            long maxDelay = maxBatchDelay;
+            jobsQueue = jobsDb.get(DEFAULT_DATA_QUEUE);
+
+            Job j = jobsQueue.poll(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            logger.trace("get first job: {}", Objects.requireNonNull(j).getJobId());
+
+            jobsRepo.put(j.getJobId(), j);
+            long begin = System.currentTimeMillis();
+            for (int i = 0; i < batchSize - 1; ++i) {
+                j = jobsQueue.poll(maxDelay, TimeUnit.MILLISECONDS);
+                if (j == null) {
+                    break;
+                }
+                long end = System.currentTimeMillis();
+                maxDelay -= end - begin;
+                begin = end;
+                jobsRepo.put(j.getJobId(), j);
+                if (maxDelay <= 0) {
+                    break;
+                }
+            }
+            logger.trace("sending jobs, size: {}", jobsRepo.size());
+        }
     }
 
     public int incrFailedInfReqs() {

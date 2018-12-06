@@ -21,7 +21,7 @@ Similar as [Inference API](inference_api.md), Management API also provide a [API
     * a local model directory; the directory must be directly in model_store folder. This option can avoid MMS extracting .mar file to temporary folder, which will improve load time and reduce disk space usage.
     * a URI using the HTTP(s) protocol. MMS can download .mar files from the Internet.
 * model_name - the name of the model; this name will be used as {model_name} in other API as path. If this parameter is not present, modelName in MANIFEST.json will be used.
-* handler - the inference handler entry-point. This value will override `handler` in MANIFEST.json if present.
+* handler - the inference handler entry-point. This value will override `handler` in MANIFEST.json if present. **NOTE: Make sure that the given `handler` is in the `PYTHONPATH`. The format of handler is `module_name:method_name`.**
 * runtime - the runtime for the model custom service code. This value will override runtime in MANIFEST.json if present. The default value is `PYTHON`.
 * batch_size - the inference batch size. The default value is `1`.
 * max_batch_delay - the maximum delay for batch aggregation. The default value is 100 milliseconds.

@@ -1,5 +1,7 @@
 FROM nvidia/cuda:9.2-cudnn7-runtime-ubuntu18.04
 
+ENV PYTHONUNBUFFERED TRUE
+
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \

@@ -17,6 +17,7 @@ Communication message format: binary encoding
 
 import logging
 import os
+import platform
 import socket
 import sys
 
@@ -37,6 +38,10 @@ class MXNetModelServiceWorker(object):
     def __init__(self, s_type=None, s_name=None, host_addr=None, port_num=None):
         if os.environ.get("OMP_NUM_THREADS") is None:
             os.environ["OMP_NUM_THREADS"] = "1"
+        if os.environ.get("MXNET_USE_OPERATOR_TUNING") is None:
+            # work around issue: https://github.com/apache/incubator-mxnet/issues/12255
+            os.environ["MXNET_USE_OPERATOR_TUNING"] = "0"
+
         self.sock_type = s_type
         if s_type == "unix":
             if s_name is None:
@@ -89,6 +94,9 @@ class MXNetModelServiceWorker(object):
 
         model_loader = ModelLoaderFactory.get_model_loader(model_dir)
         service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
+
+        logging.debug("Model %s loaded.", model_name)
+
         return service, "loaded model {}".format(model_name), 200
 
     def handle_connection(self, cl_socket):
@@ -131,6 +139,7 @@ class MXNetModelServiceWorker(object):
         self.sock.listen(1)
         logging.info("[PID]%d", os.getpid())
         logging.info("MXNet worker started.")
+        logging.info("Python runtime: %s", platform.python_version())
 
         while True:
             (cl_socket, _) = self.sock.accept()
@@ -142,8 +151,10 @@ class MXNetModelServiceWorker(object):
 
 
 if __name__ == "__main__":
-    # noinspection PyBroadException
+    sock_type = None
+    socket_name = None
 
+    # noinspection PyBroadException
     try:
         logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
         args = ArgParser.model_service_worker_args().parse_args()

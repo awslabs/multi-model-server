@@ -53,6 +53,15 @@ class Context(object):
     def metrics(self, metrics):
         self._metrics = metrics
 
+    def set_response_content_type(self, request_id, value):
+        self._request_processor.add_response_property(request_id, {'content-type': value})
+
+    def get_response_content_type(self, request_id):
+        response_headers = self._request_processor.get_response_header().get(request_id)
+        if response_headers is not None:
+            return response_headers.get('content-type')
+        return None
+
     def __eq__(self, other):
         return isinstance(other, Context) and self.__dict__ == other.__dict__
 
@@ -77,3 +86,6 @@ class RequestProcessor(object):
 
     def add_response_property(self, key, value):
         self._response_header[key] = value
+
+    def get_response_header(self):
+        return self._response_header

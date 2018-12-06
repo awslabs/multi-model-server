@@ -19,7 +19,7 @@ class TestService:
     manifest = "testmanifest"
     data = [
         {"requestId": b"123", "parameters": [
-            {"name": "xyz", "value": "abc", "contentType": ""}
+            {"name": "xyz", "value": "abc", "contentType": "text/csv"}
         ], "data": b""}
     ]
 
@@ -40,7 +40,8 @@ class TestService:
             service.retrieve_data_for_inference(None)
 
     def test_valid_req(self, service):
-        input_batch, req_to_id_map = service.retrieve_data_for_inference(self.data)
+        headers, input_batch, req_to_id_map = service.retrieve_data_for_inference(self.data)
+        assert headers.get(req_to_id_map[0]).get("xyz").get("content-type") == "text/csv"
         assert input_batch[0] == {"xyz": "abc"}
         assert req_to_id_map == {0: "123"}
 

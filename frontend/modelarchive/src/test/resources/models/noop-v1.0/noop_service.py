@@ -88,8 +88,8 @@ class NoopService(object):
             data = self.preprocess(data)
             data = self.inference(data)
             data = self.postprocess(data)
+            context.set_response_content_type(context.request_ids[0], "text/plain")
 
-            request_processor.add_response_property("Content-Type", "text/plain")
             content_type = request_processor.get_request_property("Content-Type")
             logging.debug("content_type: {}".format(content_type))
 

@@ -45,7 +45,7 @@ def retrieve_msg(conn):
     return cmd, msg
 
 
-def create_predict_response(ret, req_id_map, message, code):
+def create_predict_response(ret, req_id_map, message, code, context=None):
     """
     Create inference response.
 
@@ -67,8 +67,15 @@ def create_predict_response(ret, req_id_map, message, code):
         msg += struct.pack("!i", len(buf))
         msg += buf
 
-        # TODO: retrieve content_type from context
-        msg += struct.pack('!i', 0)  # content_type
+        if context is None:
+            msg += struct.pack('!i', 0)  # content_type
+        else:
+            content_type = context.get_response_content_type(req_id_map[idx])
+            if content_type is None or len(content_type) == 0:
+                msg += struct.pack('!i', 0)  # content_type
+            else:
+                msg += struct.pack('!i', len(content_type))
+                msg += content_type.encode('utf-8')
 
         if ret is None:
             buf = b"error"

@@ -169,7 +169,13 @@ public class WorkerThread implements Runnable {
                 req = null;
             }
         } catch (InterruptedException e) {
-            logger.debug("Backend worker thread interrupted.", e);
+            if (state == WorkerState.WORKER_SCALED_DOWN) {
+                logger.debug("Shutting down the thread .. Scaling down.");
+            } else {
+                logger.debug(
+                        "Backend worker monitoring thread interrupted or backend worker process died.",
+                        e);
+            }
         } catch (WorkerInitializationException e) {
             logger.error("Backend worker error", e);
         } catch (Throwable t) {
@@ -229,8 +235,8 @@ public class WorkerThread implements Runnable {
                             (ChannelFutureListener)
                                     future -> {
                                         latch.countDown();
-                                        logger.info("{} Worker disconnected.", getWorkerId());
-                                        running.set(false);
+                                        logger.info(
+                                                "{} Worker disconnected. {}", getWorkerId(), state);
                                         currentThread.interrupt();
                                     });
 
@@ -291,7 +297,7 @@ public class WorkerThread implements Runnable {
 
     public void shutdown() {
         running.set(false);
-        setState(WorkerState.WORKER_TERMINATED);
+        setState(WorkerState.WORKER_SCALED_DOWN);
         if (backendChannel != null) {
             backendChannel.close();
         }
@@ -305,11 +311,12 @@ public class WorkerThread implements Runnable {
 
     void setState(WorkerState newState) {
         listener.notifyChangeState(model.getModelName(), newState);
+        logger.debug("{} State change {} -> {}", currentThread.getName(), state, newState);
         long timeTaken = System.currentTimeMillis() - startTime;
-        if (state != WorkerState.WORKER_TERMINATED) {
+        if (state != WorkerState.WORKER_SCALED_DOWN) {
+            // Don't update the state if it was terminated on purpose.. Scaling in..
             this.state = newState;
         }
-
         if (state == WorkerState.WORKER_MODEL_LOADED) {
             workerLoadTime.setValue(String.valueOf(timeTaken));
             workerLoadTime.setTimestamp(
@@ -319,7 +326,8 @@ public class WorkerThread implements Runnable {
     }
 
     void retry() {
-        if (state == WorkerState.WORKER_TERMINATED) {
+        if (state == WorkerState.WORKER_SCALED_DOWN) {
+            logger.debug("Worker terminated due to scale-down call.");
             return;
         }
 

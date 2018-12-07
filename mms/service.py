@@ -17,7 +17,7 @@ import time
 from builtins import str
 
 import mms
-from mms.context import Context
+from mms.context import Context, RequestProcessor
 from mms.metrics.metrics_store import MetricsStore
 from mms.protocol.otf_message_handler import create_predict_response
 
@@ -60,20 +60,22 @@ class Service(object):
             raise ValueError("Received invalid inputs")
 
         req_to_id_map = {}
-
+        headers = dict()
         input_batch = []
         for batch_idx, request_batch in enumerate(batch):
             req_id = request_batch.get('requestId').decode("utf-8")
             parameters = request_batch['parameters']
+            model_in_headers = dict()
 
             model_in = dict()
             for parameter in parameters:
                 model_in.update({parameter["name"]: parameter["value"]})
-
+                model_in_headers.update({parameter["name"]: {"content-type": parameter["contentType"]}})
+            headers.update({req_id: model_in_headers})
             input_batch.append(model_in)
             req_to_id_map[batch_idx] = req_id
 
-        return input_batch, req_to_id_map
+        return headers, input_batch, req_to_id_map
 
     def predict(self, batch):
         """
@@ -85,9 +87,10 @@ class Service(object):
         :return:
 
         """
-        input_batch, req_id_map = Service.retrieve_data_for_inference(batch)
+        headers, input_batch, req_id_map = Service.retrieve_data_for_inference(batch)
 
         self.context.request_ids = req_id_map
+        self.context.request_processor = RequestProcessor(headers)
         metrics = MetricsStore(req_id_map, self.context.model_name)
         self.context.metrics = metrics
 
@@ -112,7 +115,7 @@ class Service(object):
         duration = int((time.time() - start_time) * 1000)
         metrics.add_time(PREDICTION_METRIC, duration)
 
-        return create_predict_response(ret, req_id_map, "Prediction success", 200)
+        return create_predict_response(ret, req_id_map, "Prediction success", 200, context=self.context)
 
 
 def emit_metrics(metrics):

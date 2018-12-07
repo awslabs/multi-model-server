@@ -14,12 +14,9 @@ package com.amazonaws.ml.mms.wlm;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class WorkerStateListener {
 
-    private static final Logger logger = LoggerFactory.getLogger(WorkerStateListener.class);
     private CompletableFuture<Boolean> future;
     private AtomicInteger count;
 
@@ -29,7 +26,6 @@ public class WorkerStateListener {
     }
 
     public void notifyChangeState(String modelName, WorkerState state) {
-        logger.info("{} worker state is: {}", modelName, state);
         // Update success and fail counts
         if (state == WorkerState.WORKER_MODEL_LOADED) {
             if (count.decrementAndGet() == 0) {

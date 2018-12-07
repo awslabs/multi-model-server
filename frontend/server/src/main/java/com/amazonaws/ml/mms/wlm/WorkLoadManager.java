@@ -79,7 +79,7 @@ public class WorkLoadManager {
             for (WorkerThread thread : threads) {
                 if ((thread.getState() != WorkerState.WORKER_STOPPED)
                         && (thread.getState() != WorkerState.WORKER_ERROR)
-                        && (thread.getState() != WorkerState.WORKER_TERMINATED)) {
+                        && (thread.getState() != WorkerState.WORKER_SCALED_DOWN)) {
                     numWorking += 1;
                 }
             }

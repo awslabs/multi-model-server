@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ public class Model {
     private int maxWorkers;
     private int batchSize;
     private int maxBatchDelay;
+    private ReentrantLock lock;
 
     // Total number of subsequent inference request failures
     private AtomicInteger failedInfReqs;
@@ -49,6 +51,7 @@ public class Model {
         // Always have a queue for data
         jobsDb.putIfAbsent(DEFAULT_DATA_QUEUE, new LinkedBlockingDeque<>(queueSize));
         failedInfReqs = new AtomicInteger(0);
+        lock = new ReentrantLock();
     }
 
     public String getModelName() {
@@ -142,7 +145,8 @@ public class Model {
             }
         }
 
-        synchronized (this) {
+        try {
+            lock.lockInterruptibly();
             long maxDelay = maxBatchDelay;
             jobsQueue = jobsDb.get(DEFAULT_DATA_QUEUE);
 
@@ -165,6 +169,8 @@ public class Model {
                 }
             }
             logger.trace("sending jobs, size: {}", jobsRepo.size());
+        } finally {
+            lock.unlock();
         }
     }
 

@@ -78,10 +78,9 @@ public final class OpenApiUtils {
         schema.addProperty("paths", new Schema("object"), true);
         MediaType mediaType = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
 
-        Response resp = new Response("200", "A openapi 3.0.1 descriptor.", mediaType);
-
         Operation operation = new Operation("apiDescription");
-        operation.addResponse(resp);
+        operation.addResponse(new Response("200", "A openapi 3.0.1 descriptor", mediaType));
+        operation.addResponse(new Response("500", "Internal Server Error", getErrorResponse()));
 
         Path path = new Path();
         if (legacy) {
@@ -99,10 +98,9 @@ public final class OpenApiUtils {
                 "status", new Schema("string", "Overall status of the Model Server."), true);
         MediaType mediaType = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
 
-        Response resp = new Response("200", "Model server status.", mediaType);
-
         Operation operation = new Operation("ping");
-        operation.addResponse(resp);
+        operation.addResponse(new Response("200", "Model server status", mediaType));
+        operation.addResponse(new Response("500", "Internal Server Error", getErrorResponse()));
 
         Path path = new Path();
         path.setGet(operation);
@@ -129,8 +127,15 @@ public final class OpenApiUtils {
         operation.setRequestBody(requestBody);
         operation.addParameter(new QueryParameter("model_name", "Name of model"));
 
-        Response resp = new Response("200", "OK");
-        operation.addResponse(resp);
+        MediaType error = getErrorResponse();
+        MediaType mediaType = new MediaType("*/*", schema);
+        operation.addResponse(new Response("200", "Model specific output data format", mediaType));
+        operation.addResponse(new Response("400", "Missing model_name parameter", error));
+        operation.addResponse(new Response("404", "Model not found", error));
+        operation.addResponse(new Response("500", "Internal Server Error", error));
+        operation.addResponse(
+                new Response("503", "No worker is available to serve request", error));
+
         operation.setDeprecated(true);
 
         Path path = new Path();
@@ -166,16 +171,20 @@ public final class OpenApiUtils {
                         "200",
                         "Output data format is defined by each model. Use OPTIONS method to get details for model output and output format.",
                         mediaType);
-
         post.addResponse(resp);
+
+        MediaType error = getErrorResponse();
+        post.addResponse(new Response("404", "Model not found", error));
+        post.addResponse(new Response("500", "Internal Server Error", error));
+        post.addResponse(new Response("503", "No worker is available to serve request", error));
 
         Operation options =
                 new Operation("predictionsApi", "Display details of per model input and output.");
         options.addParameter(new PathParameter("model_name", "Name of model."));
 
         mediaType = new MediaType("application/json", new Schema("object"));
-        resp = new Response("200", "OK", mediaType);
-        options.addResponse(resp);
+        options.addResponse(new Response("200", "OK", mediaType));
+        post.addResponse(new Response("500", "Internal Server Error", error));
 
         Path path = new Path();
         path.setPost(post);
@@ -200,12 +209,14 @@ public final class OpenApiUtils {
 
         schema = new Schema("string");
         schema.setFormat("binary");
+
         mediaType = new MediaType("*/*", schema);
-
-        Response resp =
-                new Response("200", "Output data format is defined by each model.", mediaType);
-
-        operation.addResponse(resp);
+        MediaType error = getErrorResponse();
+        operation.addResponse(new Response("200", "Model specific output data format", mediaType));
+        operation.addResponse(new Response("404", "Model not found", error));
+        operation.addResponse(new Response("500", "Internal Server Error", error));
+        operation.addResponse(
+                new Response("503", "No worker is available to serve request", error));
         operation.setDeprecated(true);
 
         Path path = new Path();
@@ -270,9 +281,8 @@ public final class OpenApiUtils {
         schema.addProperty("models", modelsProp, true);
         MediaType json = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
 
-        Response resp = new Response("200", "OK", json);
-
-        operation.addResponse(resp);
+        operation.addResponse(new Response("200", "OK", json));
+        operation.addResponse(new Response("500", "Internal Server Error", getErrorResponse()));
         return operation;
     }
 
@@ -334,24 +344,12 @@ public final class OpenApiUtils {
         MediaType status = getStatusResponse();
         MediaType error = getErrorResponse();
 
-        operation.addResponse(new Response("200", "Model registered.", status));
-        operation.addResponse(new Response("202", "Accepted.", status));
-        operation.addResponse(new Response("400", "Invalid model URL.", error));
-        operation.addResponse(new Response("400", "Missing modelName parameter.", error));
-        operation.addResponse(new Response("400", "Missing handler parameter.", error));
-        operation.addResponse(new Response("400", "Missing runtime parameter.", error));
-        operation.addResponse(
-                new Response(
-                        "400", "Invalid model archive file format, expecting a zip file.", error));
-        operation.addResponse(
-                new Response("400", "Unable to parse model archive manifest file.", error));
-        operation.addResponse(
-                new Response(
-                        "400",
-                        "Unable to open dependent files specified in manifest file.",
-                        error));
+        operation.addResponse(new Response("200", "Model registered", status));
+        operation.addResponse(new Response("202", "Accepted", status));
+        operation.addResponse(new Response("400", "Bad request", error));
         operation.addResponse(new Response("404", "Unable to download model archive", error));
-        operation.addResponse(new Response("503", "Model register failed.", error));
+        operation.addResponse(new Response("500", "Internal Server Error", error));
+        operation.addResponse(new Response("503", "Model register failed", error));
 
         return operation;
     }
@@ -382,9 +380,10 @@ public final class OpenApiUtils {
         MediaType status = getStatusResponse();
         MediaType error = getErrorResponse();
 
-        operation.addResponse(new Response("200", "Model unregistered.", status));
-        operation.addResponse(new Response("202", "Accepted.", status));
-        operation.addResponse(new Response("404", "Model not found.", error));
+        operation.addResponse(new Response("200", "Model unregistered", status));
+        operation.addResponse(new Response("202", "Accepted", status));
+        operation.addResponse(new Response("404", "Model not found", error));
+        operation.addResponse(new Response("500", "Internal Server Error", error));
 
         return operation;
     }
@@ -445,8 +444,8 @@ public final class OpenApiUtils {
 
         MediaType mediaType = new MediaType(HttpHeaderValues.APPLICATION_JSON.toString(), schema);
 
-        Response resp = new Response("200", "OK", mediaType);
-        operation.addResponse(resp);
+        operation.addResponse(new Response("200", "OK", mediaType));
+        operation.addResponse(new Response("500", "Internal Server Error", getErrorResponse()));
 
         return operation;
     }
@@ -485,10 +484,11 @@ public final class OpenApiUtils {
         MediaType status = getStatusResponse();
         MediaType error = getErrorResponse();
 
-        operation.addResponse(new Response("200", "Model workers updated.", status));
-        operation.addResponse(new Response("202", "Accepted.", status));
-        operation.addResponse(new Response("404", "Model not found.", error));
-        operation.addResponse(new Response("503", "Model workers scale failed.", error));
+        operation.addResponse(new Response("200", "Model workers updated", status));
+        operation.addResponse(new Response("202", "Accepted", status));
+        operation.addResponse(new Response("404", "Model not found", error));
+        operation.addResponse(new Response("500", "Internal Server Error", error));
+        operation.addResponse(new Response("503", "Model workers scale failed", error));
 
         return operation;
     }
@@ -496,8 +496,9 @@ public final class OpenApiUtils {
     private static Path getModelPath(String modelName) {
         Operation operation =
                 new Operation(modelName, "A predict entry point for model: " + modelName + '.');
-        Response resp = new Response("200", "OK");
-        operation.addResponse(resp);
+        operation.addResponse(new Response("200", "OK"));
+        operation.addResponse(new Response("500", "Internal Server Error", getErrorResponse()));
+
         Path path = new Path();
         path.setPost(operation);
         return path;

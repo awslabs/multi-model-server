@@ -12,7 +12,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "A openapi 3.0.1 descriptor.",
+            "description": "A openapi 3.0.1 descriptor",
             "content": {
               "application/json": {
                 "schema": {
@@ -31,6 +31,35 @@
                     },
                     "paths": {
                       "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
                     }
                   }
                 }
@@ -109,6 +138,35 @@
                         }
                       },
                       "description": "A list of registered models."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
                     }
                   }
                 }
@@ -205,7 +263,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Model registered.",
+            "description": "Model registered",
             "content": {
               "application/json": {
                 "schema": {
@@ -224,7 +282,7 @@
             }
           },
           "202": {
-            "description": "Accepted.",
+            "description": "Accepted",
             "content": {
               "application/json": {
                 "schema": {
@@ -243,7 +301,7 @@
             }
           },
           "400": {
-            "description": "Unable to open dependent files specified in manifest file.",
+            "description": "Bad request",
             "content": {
               "application/json": {
                 "schema": {
@@ -300,8 +358,37 @@
               }
             }
           },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
           "503": {
-            "description": "Model register failed.",
+            "description": "Model register failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -458,6 +545,35 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -527,7 +643,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Model workers updated.",
+            "description": "Model workers updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -546,7 +662,7 @@
             }
           },
           "202": {
-            "description": "Accepted.",
+            "description": "Accepted",
             "content": {
               "application/json": {
                 "schema": {
@@ -565,7 +681,36 @@
             }
           },
           "404": {
-            "description": "Model not found.",
+            "description": "Model not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
@@ -594,7 +739,7 @@
             }
           },
           "503": {
-            "description": "Model workers scale failed.",
+            "description": "Model workers scale failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -660,7 +805,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Model unregistered.",
+            "description": "Model unregistered",
             "content": {
               "application/json": {
                 "schema": {
@@ -679,7 +824,7 @@
             }
           },
           "202": {
-            "description": "Accepted.",
+            "description": "Accepted",
             "content": {
               "application/json": {
                 "schema": {
@@ -698,7 +843,36 @@
             }
           },
           "404": {
-            "description": "Model not found.",
+            "description": "Model not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {

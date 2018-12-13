@@ -18,7 +18,7 @@ import com.amazonaws.ml.mms.util.messages.ModelLoadModelRequest;
 import com.amazonaws.ml.mms.util.messages.ModelWorkerResponse;
 import com.amazonaws.ml.mms.util.messages.Predictions;
 import com.amazonaws.ml.mms.util.messages.RequestInput;
-import java.nio.charset.StandardCharsets;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -90,15 +90,7 @@ public class BatchAggregator {
                 if (j == null) {
                     throw new IllegalStateException("Unexpected job: " + reqId);
                 }
-                String err =
-                        "code"
-                                + ":"
-                                + message.getCode()
-                                + ","
-                                + "message"
-                                + ":"
-                                + message.getMessage();
-                j.response(err.getBytes(StandardCharsets.UTF_8), "application/json");
+                j.sendError(HttpResponseStatus.valueOf(message.getCode()), message.getMessage());
             }
             if (!jobs.isEmpty()) {
                 throw new IllegalStateException("Not all jobs get response.");
@@ -120,7 +112,7 @@ public class BatchAggregator {
                 if (job == null) {
                     logger.error("Unexpected job: " + requestId);
                 } else {
-                    job.sendError(error);
+                    job.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, error);
                 }
             }
             if (!jobs.isEmpty()) {
@@ -134,7 +126,7 @@ public class BatchAggregator {
                 Job job = jobs.remove(jobsId);
 
                 if (job.isControlCmd()) {
-                    job.sendError(error);
+                    job.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, error);
                 } else {
                     // Data message can be handled by other workers.
                     // If batch has gone past its batch max delay timer?

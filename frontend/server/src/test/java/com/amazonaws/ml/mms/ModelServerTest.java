@@ -84,6 +84,7 @@ public class ModelServerTest {
     private ConfigManager configManager;
     private ModelServer server;
     CountDownLatch latch;
+    HttpResponseStatus httpStatus;
     String result;
     HttpHeaders headers;
     private String listInferenceApisResult;
@@ -191,6 +192,7 @@ public class ModelServerTest {
         testRegisterModelInvalidPath();
         testScaleModelNotFound();
         testUnregisterModelNotFound();
+        testInvalidModel();
     }
 
     private void testRoot(Channel channel, String expected) throws InterruptedException {
@@ -729,6 +731,51 @@ public class ModelServerTest {
         Assert.assertEquals(resp.getMessage(), "Model not found: fake");
     }
 
+    private void testInvalidModel() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        httpStatus = null;
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=invalid&model_name=invalid&initial_workers=1&synchronous=true");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        Assert.assertEquals(
+                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Workers scaled")) + "\n");
+
+        channel.close();
+
+        channel = connect(configManager.getInferenceAddress());
+        Assert.assertNotNull(channel);
+
+        result = null;
+        latch = new CountDownLatch(1);
+        req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/invalid");
+        req.content().writeCharSequence("data=invalid_output", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers()
+                .set(
+                        HttpHeaderNames.CONTENT_TYPE,
+                        HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED);
+        channel.writeAndFlush(req);
+
+        latch.await();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(httpStatus.code(), HttpResponseStatus.SERVICE_UNAVAILABLE.code());
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.SERVICE_UNAVAILABLE.code());
+        Assert.assertEquals(resp.getMessage(), "Invalid model predict output");
+    }
+
     private void testMetricManager() throws JsonParseException, InterruptedException {
         MetricManager.scheduleMetrics(configManager);
         MetricManager metricManager = MetricManager.getInstance();
@@ -800,6 +847,7 @@ public class ModelServerTest {
 
         @Override
         public void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) {
+            httpStatus = msg.status();
             result = msg.content().toString(StandardCharsets.UTF_8);
             headers = msg.headers();
             latch.countDown();

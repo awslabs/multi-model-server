@@ -62,7 +62,8 @@ public final class ConfigManager {
     private static final String LOAD_MODELS = "load_models";
     private static final String BLACKLIST_ENV_VARS = "blacklist_env_vars";
     private static final String NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
-    private static final String MAX_WORKERS = "max_workers";
+    private static final String NETTY_CLIENT_THREADS = "netty_client_threads";
+    private static final String DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
     private static final String JOB_QUEUE_SIZE = "job_queue_size";
     private static final String NUMBER_OF_GPU = "number_of_gpu";
     private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
@@ -199,8 +200,8 @@ public final class ConfigManager {
         return getIntProperty(NUMBER_OF_NETTY_THREADS, 0);
     }
 
-    public int getMaxWorkers() {
-        return getIntProperty(MAX_WORKERS, Runtime.getRuntime().availableProcessors());
+    public int getNettyClientThreads() {
+        return getIntProperty(NETTY_CLIENT_THREADS, 0);
     }
 
     public int getJobQueueSize() {
@@ -216,7 +217,10 @@ public final class ConfigManager {
             return 1;
         }
 
-        int workers = getNumberOfGpu();
+        int workers = getIntProperty(DEFAULT_WORKERS_PER_MODEL, 0);
+        if (workers == 0) {
+            workers = getNumberOfGpu();
+        }
         if (workers == 0) {
             workers = Runtime.getRuntime().availableProcessors();
         }
@@ -377,20 +381,27 @@ public final class ConfigManager {
     }
 
     public String dumpConfigurations() {
+        Runtime runtime = Runtime.getRuntime();
         return "\nMMS Home: "
                 + getModelServerHome()
                 + "\nCurrent directory: "
                 + getCanonicalPath(".")
                 + "\nTemp directory: "
                 + System.getProperty("java.io.tmpdir")
+                + "\nNumber of GPUs: "
+                + getNumberOfGpu()
+                + "\nNumber of CPUs: "
+                + runtime.availableProcessors()
+                + "\nMax heap size: "
+                + (runtime.maxMemory() / 1024 / 1024)
+                + " M\nPython executable: "
+                + (getPythonExecutable() == null ? "N/A" : getPythonExecutable())
                 + "\nConfig file: "
                 + prop.getProperty("mmsConfigFile", "N/A")
                 + "\nInference address: "
                 + getInferenceAddress().toString()
                 + "\nManagement address: "
                 + getManagementAddress().toString()
-                + "\nNumber of GPUs: "
-                + getNumberOfGpu()
                 + "\nModel Store: "
                 + (getModelStore() == null ? "N/A" : getModelStore())
                 + "\nInitial Models: "
@@ -399,6 +410,12 @@ public final class ConfigManager {
                 + getCanonicalPath(System.getProperty("LOG_LOCATION"))
                 + "\nMetrics dir: "
                 + getCanonicalPath(System.getProperty("METRICS_LOCATION"))
+                + "\nNetty threads: "
+                + getNettyThreads()
+                + "\nNetty client threads: "
+                + getNettyClientThreads()
+                + "\nDefault workers per model: "
+                + getDefaultWorkers()
                 + "\nBlacklist Regex: "
                 + prop.getProperty(BLACKLIST_ENV_VARS, "N/A");
     }

@@ -12,7 +12,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "A openapi 3.0.1 descriptor.",
+            "description": "A openapi 3.0.1 descriptor",
             "content": {
               "application/json": {
                 "schema": {
@@ -31,6 +31,35 @@
                     },
                     "paths": {
                       "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
                     }
                   }
                 }
@@ -69,12 +98,99 @@
         },
         "responses": {
           "200": {
-            "description": "Output data format is defined by each model.",
+            "description": "Model specific output data format",
             "content": {
               "*/*": {
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Model not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No worker is available to serve request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
                 }
               }
             }
@@ -89,7 +205,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Model server status.",
+            "description": "Model server status",
             "content": {
               "application/json": {
                 "schema": {
@@ -101,6 +217,35 @@
                     "status": {
                       "type": "string",
                       "description": "Overall status of the Model Server."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
                     }
                   }
                 }
@@ -148,6 +293,93 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Model not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No worker is available to serve request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -185,7 +417,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "A openapi 3.0.1 descriptor.",
+            "description": "A openapi 3.0.1 descriptor",
             "content": {
               "application/json": {
                 "schema": {
@@ -204,6 +436,35 @@
                     },
                     "paths": {
                       "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
                     }
                   }
                 }
@@ -254,7 +515,143 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Model specific output data format",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "model_name": {
+                      "type": "string",
+                      "description": "Name of model"
+                    },
+                    "data": {
+                      "type": "string",
+                      "format": "binary",
+                      "description": "Inference input data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing model_name parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Model not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No worker is available to serve request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "deprecated": true

@@ -113,7 +113,7 @@ public class ModelServerTest {
             listManagementApisResult = IOUtils.toString(is, StandardCharsets.UTF_8.name());
         }
 
-        try (InputStream is = new FileInputStream("src/test/resources/describe_api.txt")) {
+        try (InputStream is = new FileInputStream("src/test/resources/describe_api.json")) {
             noopApiResult = IOUtils.toString(is, StandardCharsets.UTF_8.name());
         }
     }

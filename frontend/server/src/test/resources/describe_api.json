@@ -1,0 +1,50 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "RESTful API for: noop_v0.1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/prediction/noop_v0.1": {
+      "post": {
+        "description": "A predict entry point for model: noop_v0.1.",
+        "operationId": "noop_v0.1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

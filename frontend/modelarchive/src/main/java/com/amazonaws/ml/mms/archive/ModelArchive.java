@@ -315,6 +315,10 @@ public class ModelArchive {
             if (manifest.getRuntime() == null) {
                 throw new InvalidModelException("Runtime is not defined or invalid.");
             }
+
+            if (manifest.getEngine() != null && manifest.getEngine().getEngineName() == null) {
+                throw new InvalidModelException("engineName is required in <engine>.");
+            }
         } catch (InvalidModelException e) {
             clean();
             throw e;

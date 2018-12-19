@@ -323,7 +323,7 @@ public final class OpenApiUtils {
                         "Maximum delay for batch aggregation, default: 100."));
         operation.addParameter(
                 new QueryParameter(
-                        "initial_worker",
+                        "initial_workers",
                         "integer",
                         "0",
                         "Number of initial workers, default: 0."));

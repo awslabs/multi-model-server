@@ -242,7 +242,7 @@
           },
           {
             "in": "query",
-            "name": "initial_worker",
+            "name": "initial_workers",
             "description": "Number of initial workers, default: 0.",
             "required": false,
             "schema": {

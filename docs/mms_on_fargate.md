@@ -39,11 +39,17 @@ Let the show begin...
 With the current release of [MMS, 1.0](https://github.com/awslabs/mxnet-model-server/releases/tag/v1.0.0), 
 Official pre-configured, optimized container images of MMS are provided on [Docker hub](https://hub.docker.com).
 
-* [awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu/)
+* [awsdeeplearningteam/mxnet-model-server](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server)
 
+```bash
+docker pull awsdeeplearningteam/mxnet-model-server
+
+# for gpu image use following command:
+docker pull awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-gpu
+```
 In our article we are going to use the official CPU container image.
 
-One major constraint for using Fargate service is that there is currently no support for GPU on Fargate. 
+One major constraint for using Fargate service is that there is currently no support for GPU on Fargate.
 
 The model-server container comes with a configuration file pre-baked inside the container.
 It is highly recommended that you understand all the parameters of the MMS configuration file.

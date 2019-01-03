@@ -150,7 +150,8 @@ Environment variable may contains sensitive information like AWS credentials. Ba
 Most of those properties are designed for performance tuning. Adjusting those numbers will impact scalability and throughput.
 
 * number_of_netty_threads: number frontend netty thread, default: number of logical processors available to the JVM.
-* max_workers: number of backend netty thread, default: number frontend netty thread, default: number of logical processors available to the JVM.
+* netty_client_threads: number of backend netty thread, default: number of logical processors available to the JVM.
+* default_workers_per_model: number of workers to create for each model that loaded at startup time, default: available GPUs in system or number of logical processors available to the JVM.
 * job_queue_size: number inference jobs that frontend will queue before backend can serve, default 100.
 * number_of_gpu: max number of GPUs that MMS can use for inference, default: available GPUs in system.
 

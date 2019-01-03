@@ -10,8 +10,8 @@
 
 """`Gluon vision service` defines a Gluon base vision service
 """
-import mxnet
 import numpy as np
+import mxnet
 from mms.model_service.mxnet_model_service import GluonImperativeBaseService
 from mms.utils.mxnet import ndarray
 

@@ -191,6 +191,7 @@ public class ModelServerTest {
         testRegisterModelHttpError();
         testRegisterModelInvalidPath();
         testScaleModelNotFound();
+        testScaleModelFailure();
         testUnregisterModelNotFound();
         testInvalidModel();
     }
@@ -269,8 +270,8 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(
-                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Workers scaled")) + "\n");
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Workers scaled");
     }
 
     private void testScaleModel(Channel channel) throws InterruptedException {
@@ -731,6 +732,41 @@ public class ModelServerTest {
         Assert.assertEquals(resp.getMessage(), "Model not found: fake");
     }
 
+    private void testScaleModelFailure() throws InterruptedException {
+        Channel channel = connect(configManager.getManagementAddress());
+        Assert.assertNotNull(channel);
+
+        httpStatus = null;
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=init-error&model_name=init-error");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+
+        httpStatus = null;
+        result = null;
+        latch = new CountDownLatch(1);
+        req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.PUT,
+                        "/models/init-error?synchronous=true&min_worker=1");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        Assert.assertEquals(resp.getMessage(), "Failed to start workers");
+    }
+
     private void testInvalidModel() throws InterruptedException {
         Channel channel = connect(configManager.getManagementAddress());
         Assert.assertNotNull(channel);
@@ -746,8 +782,8 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(
-                result, JsonUtils.GSON_PRETTY.toJson(new StatusResponse("Workers scaled")) + "\n");
+        StatusResponse status = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(status.getStatus(), "Workers scaled");
 
         channel.close();
 
@@ -771,7 +807,7 @@ public class ModelServerTest {
 
         ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
 
-        Assert.assertEquals(httpStatus.code(), HttpResponseStatus.SERVICE_UNAVAILABLE.code());
+        Assert.assertEquals(httpStatus, HttpResponseStatus.SERVICE_UNAVAILABLE);
         Assert.assertEquals(resp.getCode(), HttpResponseStatus.SERVICE_UNAVAILABLE.code());
         Assert.assertEquals(resp.getMessage(), "Invalid model predict output");
     }

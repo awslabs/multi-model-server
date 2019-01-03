@@ -300,6 +300,25 @@
               }
             }
           },
+          "210": {
+            "description": "Partial Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Error type."
+                    }
+                  }
+                }
+              }
+            }
+          },
           "400": {
             "description": "Bad request",
             "content": {
@@ -330,7 +349,7 @@
             }
           },
           "404": {
-            "description": "Unable to download model archive",
+            "description": "Model not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -360,35 +379,6 @@
           },
           "500": {
             "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "code",
-                    "type",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "description": "Error code."
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type."
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Model register failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -680,6 +670,54 @@
               }
             }
           },
+          "210": {
+            "description": "Partial Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Error type."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "type",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "description": "Error code."
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message."
+                    }
+                  }
+                }
+              }
+            }
+          },
           "404": {
             "description": "Model not found",
             "content": {
@@ -711,35 +749,6 @@
           },
           "500": {
             "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "code",
-                    "type",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "description": "Error code."
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type."
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Model workers scale failed",
             "content": {
               "application/json": {
                 "schema": {

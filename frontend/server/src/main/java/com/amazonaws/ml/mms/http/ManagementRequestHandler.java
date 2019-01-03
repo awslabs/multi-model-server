@@ -255,27 +255,26 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         future.thenApply(
                         v -> {
                             boolean status = modelManager.scaleRequestStatus(modelName);
-                            String response = "Workers scaled";
-                            HttpResponseStatus httpCode = HttpResponseStatus.OK;
-
-                            if (!v) {
-                                response = "Workers scaling in progress";
-                                if (onError != null) {
-                                    onError.apply(null);
-                                    response = "Load failed... Deregistered model " + modelName;
+                            if (v) {
+                                if (status) {
+                                    NettyUtils.sendJsonResponse(
+                                            ctx,
+                                            new StatusResponse("Workers scaled"),
+                                            HttpResponseStatus.OK);
+                                } else {
+                                    NettyUtils.sendJsonResponse(
+                                            ctx,
+                                            new StatusResponse("Workers scaling in progress..."),
+                                            new HttpResponseStatus(210, "Partial Success"));
                                 }
+                            } else {
                                 NettyUtils.sendError(
                                         ctx,
-                                        HttpResponseStatus.NOT_FOUND,
-                                        new ModelNotFoundException(response));
-                            } else {
-                                if (!status) {
-                                    response = "Workers scaling in progress..";
-                                    httpCode = new HttpResponseStatus(210, "Partial Success");
+                                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                        new InternalServerException("Failed to start workers"));
+                                if (onError != null) {
+                                    onError.apply(null);
                                 }
-
-                                NettyUtils.sendJsonResponse(
-                                        ctx, new StatusResponse(response), httpCode);
                             }
                             return v;
                         })

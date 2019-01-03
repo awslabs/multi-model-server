@@ -11,8 +11,8 @@
 """
 NDArray utils
 """
-import mxnet as mx
 import numpy as np
+import mxnet as mx
 
 
 def top_probability(data, labels, top=5):

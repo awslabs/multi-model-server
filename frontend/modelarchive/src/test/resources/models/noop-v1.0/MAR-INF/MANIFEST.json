@@ -9,7 +9,7 @@
     "modelName": "noop",
     "description": "no operation model",
     "modelVersion": "1.0",
-    "handler": "noop_service:handle"
+    "handler": "service:handle"
   },
   "publisher": {
     "author": "MXNet SDK team",

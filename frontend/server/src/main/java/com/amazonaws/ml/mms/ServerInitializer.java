@@ -14,9 +14,9 @@ package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.http.InferenceRequestHandler;
 import com.amazonaws.ml.mms.http.ManagementRequestHandler;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslContext;
@@ -26,7 +26,7 @@ import io.netty.handler.ssl.SslContext;
  * {@link io.netty.channel.Channel} once it was registered to its {@link
  * io.netty.channel.EventLoop}.
  */
-public class ServerInitializer extends ChannelInitializer<SocketChannel> {
+public class ServerInitializer extends ChannelInitializer<Channel> {
 
     private final boolean managementServer;
     private SslContext sslCtx;
@@ -44,7 +44,7 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
 
     /** {@inheritDoc} */
     @Override
-    public void initChannel(SocketChannel ch) {
+    public void initChannel(Channel ch) {
         ChannelPipeline pipeline = ch.pipeline();
         if (sslCtx != null) {
             pipeline.addLast("ssl", sslCtx.newHandler(ch.alloc()));

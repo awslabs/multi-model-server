@@ -45,9 +45,9 @@ public class ServerGroups {
     public final void init() {
         allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
-        serverGroup = NettyUtils.newEventLoopGroup(2);
-        childGroup = NettyUtils.newEventLoopGroup(configManager.getNettyThreads());
-        backendGroup = NettyUtils.newEventLoopGroup(configManager.getNettyClientThreads());
+        serverGroup = Connector.newEventLoopGroup(2);
+        childGroup = Connector.newEventLoopGroup(configManager.getNettyThreads());
+        backendGroup = Connector.newEventLoopGroup(configManager.getNettyClientThreads());
     }
 
     public void shutdown(boolean graceful) {

@@ -16,7 +16,7 @@ import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.amazonaws.ml.mms.util.NettyUtils;
+import com.amazonaws.ml.mms.util.Connector;
 import com.amazonaws.ml.mms.util.ServerGroups;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import com.amazonaws.ml.mms.wlm.WorkLoadManager;
@@ -31,7 +31,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
@@ -181,13 +180,13 @@ public class ModelServer {
     }
 
     public ChannelFuture initializeServer(
-            URI address,
-            boolean management,
-            EventLoopGroup serverGroup,
-            EventLoopGroup workerGroup,
-            Class<? extends ServerChannel> channelClass)
+            Connector connector, EventLoopGroup serverGroup, EventLoopGroup workerGroup)
             throws InterruptedException, IOException, GeneralSecurityException {
-        final String purpose = management ? "Management" : "Inference";
+        final String purpose = connector.getPurpose();
+
+        Class<? extends ServerChannel> channelClass = connector.getServerChannel();
+        logger.info("Initialize {} server with: {}.", purpose, channelClass.getSimpleName());
+
         ServerBootstrap b = new ServerBootstrap();
         b.option(ChannelOption.SO_BACKLOG, 1024)
                 .channel(channelClass)
@@ -197,18 +196,18 @@ public class ModelServer {
         b.group(serverGroup, workerGroup);
 
         SslContext sslCtx = null;
-        if ("https".equalsIgnoreCase(address.getScheme())) {
+        if (connector.isSsl()) {
             sslCtx = configManager.getSslContext();
         }
-        b.childHandler(new ServerInitializer(sslCtx, management));
+        b.childHandler(new ServerInitializer(sslCtx, connector.isManagement()));
 
         ChannelFuture future;
         try {
-            future = b.bind(address.getHost(), address.getPort()).sync();
+            future = b.bind(connector.getSocketAddress()).sync();
         } catch (Exception e) {
             // https://github.com/netty/netty/issues/2597
             if (e instanceof IOException) {
-                throw new IOException("Failed to bind to address: " + address, e);
+                throw new IOException("Failed to bind to address: " + connector, e);
             }
             throw e;
         }
@@ -233,7 +232,7 @@ public class ModelServer {
                 (ChannelFutureListener)
                         listener -> logger.info("{} model server stopped.", purpose));
 
-        logger.info("{} API listening on port: {}", purpose, address.getPort());
+        logger.info("{} API bind to: {}", purpose, connector);
         return f;
     }
 
@@ -253,24 +252,21 @@ public class ModelServer {
 
         initModelStore();
 
-        URI inferenceAddress = configManager.getInferenceAddress();
-        URI managementAddress = configManager.getManagementAddress();
-        if (inferenceAddress.getPort() == managementAddress.getPort()) {
+        Connector inferenceConnector = configManager.getListener(false);
+        Connector managementConnector = configManager.getListener(true);
+        if (inferenceConnector.equals(managementConnector)) {
             throw new IllegalArgumentException(
                     "Inference port must differ from the management port");
         }
+        inferenceConnector.clean();
+        managementConnector.clean();
 
         EventLoopGroup serverGroup = serverGroups.getServerGroup();
         EventLoopGroup workerGroup = serverGroups.getChildGroup();
 
-        Class<? extends ServerChannel> channelClass = NettyUtils.getServerChannel();
-        logger.info("Initialize servers with: {}.", channelClass.getSimpleName());
-
         futures.clear();
-        futures.add(
-                initializeServer(inferenceAddress, false, serverGroup, workerGroup, channelClass));
-        futures.add(
-                initializeServer(managementAddress, true, serverGroup, workerGroup, channelClass));
+        futures.add(initializeServer(inferenceConnector, serverGroup, workerGroup));
+        futures.add(initializeServer(managementConnector, serverGroup, workerGroup));
 
         return futures;
     }

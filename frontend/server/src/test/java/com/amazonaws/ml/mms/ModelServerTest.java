@@ -20,6 +20,7 @@ import com.amazonaws.ml.mms.metrics.Dimension;
 import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.util.Connector;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.google.gson.JsonParseException;
 import io.netty.bootstrap.Bootstrap;
@@ -31,8 +32,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
@@ -59,9 +58,6 @@ import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -130,14 +126,15 @@ public class ModelServerTest {
         Channel channel = null;
         Channel managementChannel = null;
         for (int i = 0; i < 5; ++i) {
-            channel = connect(configManager.getInferenceAddress());
+            channel = connect(false);
             if (channel != null) {
                 break;
             }
             Thread.sleep(100);
         }
+
         for (int i = 0; i < 5; ++i) {
-            managementChannel = connect(configManager.getManagementAddress());
+            managementChannel = connect(true);
             if (managementChannel != null) {
                 break;
             }
@@ -443,7 +440,7 @@ public class ModelServerTest {
     }
 
     private void testInvalidRootRequest() throws InterruptedException {
-        Channel channel = connect(configManager.getInferenceAddress());
+        Channel channel = connect(false);
         Assert.assertNotNull(channel);
 
         HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/");
@@ -457,7 +454,7 @@ public class ModelServerTest {
     }
 
     private void testInvalidInferenceUri() throws InterruptedException {
-        Channel channel = connect(configManager.getInferenceAddress());
+        Channel channel = connect(false);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -472,7 +469,7 @@ public class ModelServerTest {
     }
 
     private void testInvalidDescribeModel() throws InterruptedException {
-        Channel channel = connect(configManager.getInferenceAddress());
+        Channel channel = connect(false);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -488,7 +485,7 @@ public class ModelServerTest {
     }
 
     private void testInvalidPredictionsUri() throws InterruptedException {
-        Channel channel = connect(configManager.getInferenceAddress());
+        Channel channel = connect(false);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -503,7 +500,7 @@ public class ModelServerTest {
     }
 
     private void testPredictionsModelNotFound() throws InterruptedException {
-        Channel channel = connect(configManager.getInferenceAddress());
+        Channel channel = connect(false);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -519,7 +516,7 @@ public class ModelServerTest {
     }
 
     private void testInvalidManagementUri() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -534,7 +531,7 @@ public class ModelServerTest {
     }
 
     private void testInvalidModelsMethod() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -549,7 +546,7 @@ public class ModelServerTest {
     }
 
     private void testInvalidModelMethod() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -564,7 +561,7 @@ public class ModelServerTest {
     }
 
     private void testDescribeModelNotFound() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -580,7 +577,7 @@ public class ModelServerTest {
     }
 
     private void testRegisterModelMissingUrl() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -595,7 +592,7 @@ public class ModelServerTest {
     }
 
     private void testRegisterModelInvalidRuntime() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -613,7 +610,7 @@ public class ModelServerTest {
     }
 
     private void testRegisterModelNotFound() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -629,7 +626,7 @@ public class ModelServerTest {
     }
 
     private void testRegisterModelMalformedUrl() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -647,7 +644,7 @@ public class ModelServerTest {
     }
 
     private void testRegisterModelConnectionFailed() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -667,7 +664,7 @@ public class ModelServerTest {
     }
 
     private void testRegisterModelHttpError() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -687,7 +684,7 @@ public class ModelServerTest {
     }
 
     private void testRegisterModelInvalidPath() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -703,7 +700,7 @@ public class ModelServerTest {
     }
 
     private void testScaleModelNotFound() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -718,7 +715,7 @@ public class ModelServerTest {
     }
 
     private void testUnregisterModelNotFound() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         HttpRequest req =
@@ -733,7 +730,7 @@ public class ModelServerTest {
     }
 
     private void testScaleModelFailure() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         httpStatus = null;
@@ -768,7 +765,7 @@ public class ModelServerTest {
     }
 
     private void testInvalidModel() throws InterruptedException {
-        Channel channel = connect(configManager.getManagementAddress());
+        Channel channel = connect(true);
         Assert.assertNotNull(channel);
 
         httpStatus = null;
@@ -787,7 +784,7 @@ public class ModelServerTest {
 
         channel.close();
 
-        channel = connect(configManager.getInferenceAddress());
+        channel = connect(false);
         Assert.assertNotNull(channel);
 
         result = null;
@@ -842,23 +839,25 @@ public class ModelServerTest {
         }
     }
 
-    private Channel connect(URI uri) {
+    private Channel connect(boolean management) {
         Logger logger = LoggerFactory.getLogger(ModelServerTest.class);
+
+        final Connector connector = configManager.getListener(management);
         try {
             Bootstrap b = new Bootstrap();
             final SslContext sslCtx =
                     SslContextBuilder.forClient()
                             .trustManager(InsecureTrustManagerFactory.INSTANCE)
                             .build();
-            b.group(new NioEventLoopGroup(1))
-                    .channel(NioSocketChannel.class)
+            b.group(Connector.newEventLoopGroup(1))
+                    .channel(connector.getClientChannel())
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                     .handler(
                             new ChannelInitializer<Channel>() {
                                 @Override
                                 public void initChannel(Channel ch) {
                                     ChannelPipeline p = ch.pipeline();
-                                    if (uri.getScheme().equalsIgnoreCase("https")) {
+                                    if (connector.isSsl()) {
                                         p.addLast(sslCtx.newHandler(ch.alloc()));
                                     }
                                     p.addLast(new ReadTimeoutHandler(30));
@@ -870,8 +869,7 @@ public class ModelServerTest {
                                 }
                             });
 
-            SocketAddress address = new InetSocketAddress("127.0.0.1", uri.getPort());
-            return b.connect(address).sync().channel();
+            return b.connect(connector.getSocketAddress()).sync().channel();
         } catch (Throwable t) {
             logger.warn("Connect error.", t);
         }

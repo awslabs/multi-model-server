@@ -15,7 +15,7 @@ package com.amazonaws.ml.mms.wlm;
 import com.amazonaws.ml.mms.metrics.Dimension;
 import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.amazonaws.ml.mms.util.NettyUtils;
+import com.amazonaws.ml.mms.util.Connector;
 import com.amazonaws.ml.mms.util.codec.ModelRequestEncoder;
 import com.amazonaws.ml.mms.util.codec.ModelResponseDecoder;
 import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
@@ -212,9 +212,10 @@ public class WorkerThread implements Runnable {
         final CountDownLatch latch = new CountDownLatch(1);
 
         try {
+            Connector connector = new Connector(port);
             Bootstrap b = new Bootstrap();
             b.group(backendEventGroup)
-                    .channel(NettyUtils.getClientChannel())
+                    .channel(connector.getClientChannel())
                     .handler(
                             new ChannelInitializer<Channel>() {
                                 @Override
@@ -226,7 +227,7 @@ public class WorkerThread implements Runnable {
                                 }
                             });
 
-            SocketAddress address = NettyUtils.getSocketAddress(port);
+            SocketAddress address = connector.getSocketAddress();
             logger.info("Connecting to: {}", address);
             backendChannel = b.connect(address).sync().channel();
             backendChannel

@@ -15,12 +15,10 @@ package com.amazonaws.ml.mms.wlm;
 import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.util.ConfigManager;
-import com.amazonaws.ml.mms.util.NettyUtils;
-import io.netty.channel.unix.DomainSocketAddress;
+import com.amazonaws.ml.mms.util.Connector;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +27,6 @@ import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +40,7 @@ public class WorkerLifeCycle {
     private Process process;
     private CountDownLatch latch;
     private boolean success;
-    private int port;
+    private Connector connector;
 
     public WorkerLifeCycle(ConfigManager configManager, Model model) {
         this.configManager = configManager;
@@ -88,7 +85,6 @@ public class WorkerLifeCycle {
             throw new WorkerInitializationException("Failed get MMS home directory", e);
         }
 
-        SocketAddress address = NettyUtils.getSocketAddress(port);
         String[] args = new String[6];
         Manifest.RuntimeType runtime = model.getModelArchive().getManifest().getRuntime();
         if (runtime == Manifest.RuntimeType.PYTHON) {
@@ -97,17 +93,10 @@ public class WorkerLifeCycle {
             args[0] = runtime.getValue();
         }
         args[1] = new File(workingDir, "mms/model_service_worker.py").getAbsolutePath();
-        args[4] = "--sock-type";
-
-        if (address instanceof DomainSocketAddress) {
-            args[5] = "unix";
-            args[2] = "--sock-name";
-            args[3] = ((DomainSocketAddress) address).path();
-        } else {
-            args[5] = "tcp";
-            args[2] = "--port";
-            args[3] = String.valueOf(port);
-        }
+        args[2] = "--sock-type";
+        args[3] = connector.getSocketType();
+        args[4] = connector.isUds() ? "--sock-name" : "--port";
+        args[5] = connector.getSocketPath();
 
         String[] envp = getEnvString(workingDir.getAbsolutePath(), modelPath.getAbsolutePath());
 
@@ -147,11 +136,7 @@ public class WorkerLifeCycle {
         if (process != null) {
             process.destroyForcibly();
             process = null;
-            SocketAddress address = NettyUtils.getSocketAddress(port);
-            if (address instanceof DomainSocketAddress) {
-                String path = ((DomainSocketAddress) address).path();
-                FileUtils.deleteQuietly(new File(path));
-            }
+            connector.clean();
         }
     }
 
@@ -169,7 +154,7 @@ public class WorkerLifeCycle {
     }
 
     private synchronized void setPort(int port) {
-        this.port = port;
+        connector = new Connector(port);
     }
 
     private static final class ReaderThread extends Thread {

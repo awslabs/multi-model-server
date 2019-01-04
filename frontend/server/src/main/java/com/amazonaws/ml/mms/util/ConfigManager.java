@@ -20,8 +20,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -64,10 +62,15 @@ public final class ConfigManager {
     private static final String MODEL_STORE = "model_store";
     private static final String LOAD_MODELS = "load_models";
     private static final String BLACKLIST_ENV_VARS = "blacklist_env_vars";
+    private static final String DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
+
+    // advanced parameters for performance tuning
     private static final String NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
     private static final String NETTY_CLIENT_THREADS = "netty_client_threads";
-    private static final String DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
+    private static final String USE_NATIVE_IO = "use_native_io";
+    private static final String IO_RATIO = "io_ratio";
     private static final String JOB_QUEUE_SIZE = "job_queue_size";
+
     private static final String NUMBER_OF_GPU = "number_of_gpu";
     private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
     private static final String ASYNC_LOGGING = "async_logging";
@@ -83,7 +86,6 @@ public final class ConfigManager {
     private static final String PRIVATE_KEY_FILE = "private_key_file";
 
     private Pattern blacklistPattern;
-
     private Properties prop;
 
     private static ConfigManager instance;
@@ -175,33 +177,14 @@ public final class ConfigManager {
                 || Boolean.parseBoolean(prop.getProperty(DEBUG, "false"));
     }
 
-    private URI getAddressProperty(String key, String defaultValue) {
-        String address = getProperty(key, defaultValue);
-        try {
-            URI uri = new URI(address);
-            String scheme = uri.getScheme() != null ? uri.getScheme() : "http";
-            String host = uri.getHost() != null ? uri.getHost() : "127.0.0.1";
-            int port;
-            if (uri.getPort() == -1) {
-                port = "https".equalsIgnoreCase(scheme) ? 443 : 80;
-            } else {
-                port = uri.getPort();
-            }
-            if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
-                throw new IllegalArgumentException("Unsupported protocol in address: " + address);
-            }
-            return new URI(scheme + "://" + host + ":" + port);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(String.format("Invalid address: %s", address), e);
+    public Connector getListener(boolean management) {
+        String binding;
+        if (management) {
+            binding = prop.getProperty(MANAGEMENT_ADDRESS, "http://127.0.0.1:8081");
+        } else {
+            binding = prop.getProperty(INFERENCE_ADDRESS, "http://127.0.0.1:8080");
         }
-    }
-
-    public URI getInferenceAddress() {
-        return getAddressProperty(INFERENCE_ADDRESS, "http://127.0.0.1:8080");
-    }
-
-    public URI getManagementAddress() {
-        return getAddressProperty(MANAGEMENT_ADDRESS, "http://127.0.0.1:8081");
+        return Connector.parse(binding, management);
     }
 
     public int getNettyThreads() {
@@ -407,9 +390,9 @@ public final class ConfigManager {
                 + "\nConfig file: "
                 + prop.getProperty("mmsConfigFile", "N/A")
                 + "\nInference address: "
-                + getInferenceAddress().toString()
+                + getListener(false)
                 + "\nManagement address: "
-                + getManagementAddress().toString()
+                + getListener(true)
                 + "\nModel Store: "
                 + (getModelStore() == null ? "N/A" : getModelStore())
                 + "\nInitial Models: "
@@ -426,6 +409,14 @@ public final class ConfigManager {
                 + getDefaultWorkers()
                 + "\nBlacklist Regex: "
                 + prop.getProperty(BLACKLIST_ENV_VARS, "N/A");
+    }
+
+    public boolean useNativeIo() {
+        return Boolean.parseBoolean(prop.getProperty(USE_NATIVE_IO, "true"));
+    }
+
+    public int getIoRatio() {
+        return getIntProperty(IO_RATIO, 50);
     }
 
     void setProperty(String key, String value) {

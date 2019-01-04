@@ -127,7 +127,7 @@ public final class NettyUtils {
 
     public static void sendJsonResponse(
             ChannelHandlerContext ctx, String json, HttpResponseStatus status) {
-        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, false);
         resp.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
         ByteBuf content = resp.content();
         content.writeCharSequence(json, CharsetUtil.UTF_8);
@@ -154,12 +154,13 @@ public final class NettyUtils {
         // Send the response and close the connection if necessary.
         Channel channel = ctx.channel();
         Session session = channel.attr(SESSION_KEY).getAndSet(null);
+        HttpHeaders headers = resp.headers();
 
         ConfigManager configManager = ConfigManager.getInstance();
         if (session != null) {
             // session might be recycled if channel is closed already.
             session.setCode(resp.status().code());
-            resp.headers().set(REQUEST_ID, session.getRequestId());
+            headers.set(REQUEST_ID, session.getRequestId());
             logger.info(session.toString());
         }
         int code = resp.status().code();
@@ -175,7 +176,6 @@ public final class NettyUtils {
         String allowedMethods = configManager.getCorsAllowedMethods();
         String allowedHeaders = configManager.getCorsAllowedHeaders();
 
-        HttpHeaders headers = resp.headers();
         if (allowedOrigin != null
                 && !allowedOrigin.isEmpty()
                 && !headers.contains(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN)) {

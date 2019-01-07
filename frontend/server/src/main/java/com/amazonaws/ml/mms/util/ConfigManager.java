@@ -47,6 +47,9 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Appender;
+import org.apache.log4j.AsyncAppender;
+import org.apache.log4j.Logger;
 
 public final class ConfigManager {
 
@@ -67,6 +70,7 @@ public final class ConfigManager {
     private static final String JOB_QUEUE_SIZE = "job_queue_size";
     private static final String NUMBER_OF_GPU = "number_of_gpu";
     private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
+    private static final String ASYNC_LOGGING = "async_logging";
 
     private static final String CORS_ALLOWED_ORIGIN = "cors_allowed_origin";
     private static final String CORS_ALLOWED_METHODS = "cors_allowed_methods";
@@ -147,6 +151,10 @@ public final class ConfigManager {
             hostName = ip.getHostName();
         } catch (UnknownHostException e) {
             hostName = "Unknown";
+        }
+
+        if (Boolean.parseBoolean(prop.getProperty(ASYNC_LOGGING))) {
+            enableAsyncLogging();
         }
     }
 
@@ -443,6 +451,33 @@ public final class ConfigManager {
             file = file.getParentFile();
         }
         return cwd;
+    }
+
+    private void enableAsyncLogging() {
+        enableAsyncLogging(Logger.getRootLogger());
+        enableAsyncLogging(Logger.getLogger(MODEL_METRICS_LOGGER));
+        enableAsyncLogging(Logger.getLogger(MODEL_LOGGER));
+        enableAsyncLogging(Logger.getLogger(MMS_METRICS_LOGGER));
+        enableAsyncLogging(Logger.getLogger("ACCESS_LOG"));
+        enableAsyncLogging(Logger.getLogger("com.amazonaws.ml.mms"));
+    }
+
+    private void enableAsyncLogging(Logger logger) {
+        AsyncAppender asyncAppender = new AsyncAppender();
+
+        @SuppressWarnings("unchecked")
+        Enumeration<Appender> en = logger.getAllAppenders();
+        while (en.hasMoreElements()) {
+            Appender appender = en.nextElement();
+            if (appender instanceof AsyncAppender) {
+                // already async
+                return;
+            }
+
+            logger.removeAppender(appender);
+            asyncAppender.addAppender(appender);
+        }
+        logger.addAppender(asyncAppender);
     }
 
     private static String getCanonicalPath(File file) {

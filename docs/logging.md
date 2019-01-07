@@ -81,7 +81,7 @@ model server with custom logs
 `config.properties` file as follows
 
 ```properties
-vmargs = -Dlog4j.configuration=file:///path/to/custom/log4j.properties
+vmargs=-Dlog4j.configuration=file:///path/to/custom/log4j.properties
 ```
 Then start the model server as follows
 ```bash
@@ -92,4 +92,14 @@ Alternatively, you could start the model server with the following command as we
 
 ```bash
 $ mxnet-model-server --start --log-config /path/to/custom/log4j.properties
+```
+
+# Enable asynchronous logging
+If your model is super lightweight and seeking for high throughput, you can consider enable asynchronous logging.
+Note that log output maybe delayed and latest log might be lost if MMS is terminated unexpectedly.
+asynchronous logging is disabled by default.
+To enable asynchronous logging, add following property in `config.properties`:
+ 
+```properties
+async_logging=true
 ```

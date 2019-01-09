@@ -26,6 +26,7 @@ def start():
         with open(pid_file, "r") as f:
             pid = int(f.readline())
 
+    # pylint: disable=too-many-nested-blocks
     if args.stop:
         if pid is None:
             print("Model server is not currently running.")
@@ -74,11 +75,20 @@ def start():
             if not os.path.isfile(args.mms_config):
                 print("--mms-config file not found: {}".format(args.mms_config))
                 exit(1)
+            mms_conf_file = args.mms_config
+        else:
+            mms_conf_file = "config.properties"
 
-            props = load_properties(args.mms_config)
+        if os.path.isfile(mms_conf_file):
+            props = load_properties(mms_conf_file)
             vm_args = props.get("vmargs")
             if vm_args:
-                cmd.extend(vm_args.split())
+                arg_list = vm_args.split()
+                if args.log_config:
+                    for word in arg_list[:]:
+                        if word.startswith("-Dlog4j.configuration="):
+                            arg_list.remove(word)
+                cmd.extend(arg_list)
 
         cmd.append("-jar")
         cmd.append("{}/mms/frontend/model-server.jar".format(mms_home))

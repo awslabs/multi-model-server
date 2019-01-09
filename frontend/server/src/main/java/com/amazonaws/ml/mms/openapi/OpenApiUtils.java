@@ -346,10 +346,10 @@ public final class OpenApiUtils {
 
         operation.addResponse(new Response("200", "Model registered", status));
         operation.addResponse(new Response("202", "Accepted", status));
+        operation.addResponse(new Response("210", "Partial Success", status));
         operation.addResponse(new Response("400", "Bad request", error));
-        operation.addResponse(new Response("404", "Unable to download model archive", error));
+        operation.addResponse(new Response("404", "Model not found", error));
         operation.addResponse(new Response("500", "Internal Server Error", error));
-        operation.addResponse(new Response("503", "Model register failed", error));
 
         return operation;
     }
@@ -486,9 +486,10 @@ public final class OpenApiUtils {
 
         operation.addResponse(new Response("200", "Model workers updated", status));
         operation.addResponse(new Response("202", "Accepted", status));
+        operation.addResponse(new Response("210", "Partial Success", status));
+        operation.addResponse(new Response("400", "Bad request", error));
         operation.addResponse(new Response("404", "Model not found", error));
         operation.addResponse(new Response("500", "Internal Server Error", error));
-        operation.addResponse(new Response("503", "Model workers scale failed", error));
 
         return operation;
     }

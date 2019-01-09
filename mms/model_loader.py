@@ -133,7 +133,7 @@ class MmsModelLoader(ModelLoader):
             model_service = model_class()
             handle = getattr(model_service, "handle")
             if handle is None:
-                raise ValueError("Expect handle method in class {}".format(str(model_class)),)
+                raise ValueError("Expect handle method in class {}".format(str(model_class)))
 
             service = Service(model_name, model_dir, manifest, model_service.handle, gpu_id, batch_size)
             initialize = getattr(model_service, "initialize")
@@ -141,9 +141,14 @@ class MmsModelLoader(ModelLoader):
                 # noinspection PyBroadException
                 try:
                     model_service.initialize(service.context)
-                # pylint: disable=broad-except
+                    # pylint: disable=broad-except
                 except Exception:
-                    sys.exc_clear()
+                    # noinspection PyBroadException
+                    try:
+                        sys.exc_clear()
+                        # pylint: disable=broad-except
+                    except Exception:
+                        pass
 
         return service
 

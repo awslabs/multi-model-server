@@ -15,8 +15,9 @@
 ## Advanced Features
 * [Advanced settings](configuration.md) - Describes advanced MMS configurations.
 * [Custom Model Service](custom_service.md) - Describes how to develop custom inference services.
-* [Unit Tests](../mms/tests/README.md) - Housekeeping unit tests for MMS
-* [Benchmark](../benchmarks/README.md) - Use JMeter to run MMS through the paces and collect benchmark data
+* [Unit Tests](../mms/tests/README.md) - Housekeeping unit tests for MMS.
+* [Benchmark](../benchmarks/README.md) - Use JMeter to run MMS through the paces and collect benchmark data.
+* [Model Serving with Amazon Elastic Inference](elastic_inference.md) - Run Model server on Elastic Inference enabled EC2 instances. 
 
 ## Example Projects
 * [MMS on Fargate, Serverless Inference](mms_on_fargate.md) - The project which illustrates the step-by-step process to launch MMS as a managed inference production service, on ECS Fargate.

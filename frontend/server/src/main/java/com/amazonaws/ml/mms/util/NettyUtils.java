@@ -189,6 +189,7 @@ public final class NettyUtils {
 
         HttpUtil.setContentLength(resp, resp.content().readableBytes());
         if (!keepAlive || code >= 400) {
+            headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
             ChannelFuture f = channel.writeAndFlush(resp);
             f.addListener(ChannelFutureListener.CLOSE);
         } else {

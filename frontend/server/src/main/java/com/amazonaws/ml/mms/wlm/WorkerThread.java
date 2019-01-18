@@ -32,8 +32,11 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.SocketAddress;
+import java.nio.channels.Channels;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -54,10 +57,9 @@ public class WorkerThread implements Runnable {
         0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597
     };
 
-    static final long WORKER_TIMEOUT = 2L;
+    static final long WORKER_TIMEOUT = ConfigManager.getInstance().isDebug() ? Long.MAX_VALUE : 2L;
     static final ModelRequestEncoder ENCODER = new ModelRequestEncoder();
 
-    private ConfigManager configManager;
     private EventLoopGroup backendEventGroup;
     private int port;
     private Model model;
@@ -75,10 +77,16 @@ public class WorkerThread implements Runnable {
     private long startTime;
     private Thread currentThread;
     private String workerId;
+    private String threadName;
+    private RandomAccessFile out;
+    private RandomAccessFile err;
+    private BaseModelRequest req;
 
     private WorkerState state;
 
     private WorkerLifeCycle lifeCycle;
+
+    private boolean serverThread;
 
     public WorkerState getState() {
         return state;
@@ -91,9 +99,10 @@ public class WorkerThread implements Runnable {
             int gpuId,
             Model model,
             BatchAggregator aggregator,
-            WorkerStateListener listener) {
+            WorkerStateListener listener,
+            int threadNumber,
+            boolean serverThread) {
         this.workerId = String.valueOf(port); // Unique across all workers.
-        this.configManager = configManager;
         this.backendEventGroup = backendEventGroup;
         this.port = port;
         this.model = model;
@@ -103,70 +112,108 @@ public class WorkerThread implements Runnable {
         startTime = System.currentTimeMillis();
         lifeCycle = new WorkerLifeCycle(configManager, model);
         replies = new ArrayBlockingQueue<>(1);
+        this.serverThread = serverThread;
+        this.threadName =
+                !serverThread
+                        ? "W-"
+                                + model.getModelName()
+                                        .substring(0, Math.min(model.getModelName().length(), 25))
+                                + '-'
+                                + threadNumber
+                        : "BackendServer-" + model.getModelName();
         workerLoadTime =
                 new Metric(
-                        "W-"
-                                + this.port
-                                + '-'
-                                + model.getModelName()
-                                        .substring(0, Math.min(model.getModelName().length(), 25)),
+                        threadName,
                         String.valueOf(System.currentTimeMillis()),
                         "ms",
                         ConfigManager.getInstance().getHostName(),
                         new Dimension("Level", "Host"));
     }
 
+    private void runWorker()
+            throws WorkerInitializationException, InterruptedException, FileNotFoundException {
+        while (isRunning()) {
+            req = aggregator.getRequest(backendChannel.id().asLongText(), state);
+
+            backendChannel.writeAndFlush(req).sync();
+
+            long begin = System.currentTimeMillis();
+
+            // TODO: Change this to configurable param
+            ModelWorkerResponse reply = replies.poll(WORKER_TIMEOUT, TimeUnit.MINUTES);
+
+            long duration = System.currentTimeMillis() - begin;
+            logger.info("Backend response time: {}", duration);
+
+            if (reply != null) {
+                aggregator.sendResponse(reply);
+            } else {
+                int val = model.incrFailedInfReqs();
+                logger.error("Number or consecutive unsuccessful inference {}", val);
+                throw new WorkerInitializationException(
+                        "Backend worker did not respond in given time");
+            }
+            switch (req.getCommand()) {
+                case PREDICT:
+                    model.resetFailedInfReqs();
+                    break;
+                case LOAD:
+                    if (reply.getCode() == 200) {
+                        setState(WorkerState.WORKER_MODEL_LOADED);
+                        String message = reply.getMessage();
+                        lifeCycle.setPid(
+                                Integer.parseInt(
+                                        message.substring(
+                                                message.indexOf("[PID]:") + 6, message.length())));
+                        this.out =
+                                new RandomAccessFile(
+                                        model.getModelDir().toString()
+                                                + '/'
+                                                + backendChannel.id().asLongText()
+                                                + "-stdout",
+                                        "rw");
+                        this.err =
+                                new RandomAccessFile(
+                                        model.getModelDir().toString()
+                                                + '/'
+                                                + backendChannel.id().asLongText()
+                                                + "-stderr",
+                                        "rw");
+
+                        lifeCycle.attachIOStreams(
+                                threadName,
+                                Channels.newInputStream(this.out.getChannel()),
+                                Channels.newInputStream(this.err.getChannel()));
+
+                        backoffIdx = 0;
+                    } else {
+                        setState(WorkerState.WORKER_ERROR);
+                    }
+                    break;
+                case UNLOAD:
+                case STATS:
+                default:
+                    break;
+            }
+            req = null;
+        }
+    }
+
     @Override
     public void run() {
         currentThread = Thread.currentThread();
-        currentThread.setName(
-                "W-"
-                        + port
-                        + '-'
-                        + model.getModelName()
-                                .substring(0, Math.min(model.getModelName().length(), 25)));
-        BaseModelRequest req = null;
+        currentThread.setName(threadName);
+
         try {
-            connect();
-
-            while (isRunning()) {
-                req = aggregator.getRequest(workerId, state);
-
-                backendChannel.writeAndFlush(req).sync();
-
-                // TODO: Change this to configurable param
-                long begin = System.currentTimeMillis();
-                ModelWorkerResponse reply = replies.poll(WORKER_TIMEOUT, TimeUnit.MINUTES);
-
-                long duration = System.currentTimeMillis() - begin;
-                logger.info("Backend response time: {}", duration);
-
-                if (reply != null) {
-                    aggregator.sendResponse(reply);
-                } else {
-                    int val = model.incrFailedInfReqs();
-                    logger.error("Number or consecutive unsuccessful inference {}", val);
-                    throw new WorkerInitializationException(
-                            "Backend worker did not respond in given time");
-                }
-                switch (req.getCommand()) {
-                    case PREDICT:
-                        model.resetFailedInfReqs();
-                        break;
-                    case LOAD:
-                        if (reply.getCode() == 200) {
-                            setState(WorkerState.WORKER_MODEL_LOADED);
-                            backoffIdx = 0;
-                        } else {
-                            setState(WorkerState.WORKER_ERROR);
-                        }
-                        break;
-                    case UNLOAD:
-                    case STATS:
-                    default:
-                        break;
-                }
-                req = null;
+            if (!serverThread) {
+                connect();
+                runWorker();
+            } else {
+                // TODO: Move this logic to a seperate ServerThread class
+                // This is server thread and shouldn't come out as long as process exists in CPU.
+                lifeCycle.startBackendServer(port);
+                setState(WorkerState.WORKER_MODEL_LOADED);
+                lifeCycle.getProcess().waitFor();
             }
         } catch (InterruptedException e) {
             if (state == WorkerState.WORKER_SCALED_DOWN) {
@@ -181,8 +228,10 @@ public class WorkerThread implements Runnable {
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);
         } finally {
-            if (req != null) {
+            if (!this.serverThread && req != null) {
                 aggregator.sendError(req, "Worker died.");
+            } else if (this.serverThread) {
+                model.setPort(-1);
             }
             setState(WorkerState.WORKER_STOPPED);
             lifeCycle.exit();
@@ -202,9 +251,10 @@ public class WorkerThread implements Runnable {
         this.memory = memory;
     }
 
-    private void connect() throws WorkerInitializationException, InterruptedException {
-        if (!configManager.isDebug()) {
-            lifeCycle.startWorker(port);
+    private void connect()
+            throws WorkerInitializationException, InterruptedException, FileNotFoundException {
+        if (!this.serverThread && (model.getPort() == -1)) {
+            throw new WorkerInitializationException("Backend server is not runniing");
         }
 
         String modelName = model.getModelName();
@@ -246,7 +296,6 @@ public class WorkerThread implements Runnable {
                     .addListener(
                             (ChannelFutureListener)
                                     future -> {
-                                        // TODO:
                                         // use gpu, batch size in load model command
                                         RequestInput input =
                                                 new RequestInput(UUID.randomUUID().toString());
@@ -262,7 +311,7 @@ public class WorkerThread implements Runnable {
                                                         modelName,
                                                         WorkerCommands.LOAD,
                                                         input);
-                                        model.addJob(workerId, job);
+                                        model.addJob(backendChannel.id().asLongText(), job);
                                         latch.countDown();
                                     });
 
@@ -300,13 +349,12 @@ public class WorkerThread implements Runnable {
         running.set(false);
         setState(WorkerState.WORKER_SCALED_DOWN);
         if (backendChannel != null) {
+            model.removeJobQueue(backendChannel.id().asLongText());
             backendChannel.close();
         }
         if (currentThread != null) {
             currentThread.interrupt();
             aggregator.sendError(null, "Worker scaled down.");
-
-            model.removeJobQueue(workerId);
         }
     }
 

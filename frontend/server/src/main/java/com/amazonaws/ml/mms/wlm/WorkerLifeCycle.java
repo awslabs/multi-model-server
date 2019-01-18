@@ -19,6 +19,7 @@ import com.amazonaws.ml.mms.util.Connector;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +28,8 @@ import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import com.amazonaws.ml.mms.util.NettyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +48,7 @@ public class WorkerLifeCycle {
     public WorkerLifeCycle(ConfigManager configManager, Model model) {
         this.configManager = configManager;
         this.model = model;
+        this.latch = new CountDownLatch(1);
     }
 
     private String[] getEnvString(String cwd, String modelPath) {
@@ -75,7 +79,13 @@ public class WorkerLifeCycle {
         return envList.toArray(new String[0]); // NOPMD
     }
 
-    public void startWorker(int port) throws WorkerInitializationException, InterruptedException {
+    public void attachIOStreams(String threadName, InputStream outStream, InputStream errStream) {
+        new ReaderThread(threadName, errStream, true, this).start();
+        new ReaderThread(threadName, outStream, false, this).start();
+    }
+
+    public void startBackendServer(int port)
+            throws WorkerInitializationException, InterruptedException {
         File workingDir = new File(configManager.getModelServerHome());
         File modelPath;
         setPort(port);
@@ -85,7 +95,7 @@ public class WorkerLifeCycle {
             throw new WorkerInitializationException("Failed get MMS home directory", e);
         }
 
-        String[] args = new String[6];
+        String[] args = new String[14];
         Manifest.RuntimeType runtime = model.getModelArchive().getManifest().getRuntime();
         if (runtime == Manifest.RuntimeType.PYTHON) {
             args[0] = configManager.getPythonExecutable();
@@ -97,23 +107,31 @@ public class WorkerLifeCycle {
         args[3] = connector.getSocketType();
         args[4] = connector.isUds() ? "--sock-name" : "--port";
         args[5] = connector.getSocketPath();
+        args[6] = "--handler";
+        args[7] = model.getModelArchive().getManifest().getModel().getHandler();
+
+        args[8] = "--model-path";
+        args[9] = model.getModelDir().getAbsolutePath();
+
+        args[10] = "--model-name";
+        args[11] = model.getModelName();
+
+        args[12] = "--pre-fork-init";
+        args[13] = model.getPreforkInit();
 
         String[] envp = getEnvString(workingDir.getAbsolutePath(), modelPath.getAbsolutePath());
 
         try {
-            latch = new CountDownLatch(1);
-
             synchronized (this) {
-                process = Runtime.getRuntime().exec(args, envp, modelPath);
-
                 String threadName =
                         "W-"
                                 + port
                                 + '-'
                                 + model.getModelName()
                                         .substring(0, Math.min(model.getModelName().length(), 25));
-                new ReaderThread(threadName, process.getErrorStream(), true, this).start();
-                new ReaderThread(threadName, process.getInputStream(), false, this).start();
+
+                process = Runtime.getRuntime().exec(args, envp, modelPath);
+                attachIOStreams(threadName, process.getInputStream(), process.getErrorStream());
             }
 
             if (latch.await(2, TimeUnit.MINUTES)) {
@@ -157,6 +175,10 @@ public class WorkerLifeCycle {
         connector = new Connector(port);
     }
 
+    public Process getProcess() {
+        return process;
+    }
+
     private static final class ReaderThread extends Thread {
 
         private InputStream is;
@@ -188,7 +210,7 @@ public class WorkerLifeCycle {
                     if ("MXNet worker started.".equals(result)) {
                         lifeCycle.setSuccess(true);
                     } else if (result.startsWith("[PID]")) {
-                        lifeCycle.setPid(Integer.parseInt(result.substring("[PID]".length())));
+                        lifeCycle.setPid(Integer.parseInt(result.substring("[PID] ".length())));
                     }
                     if (error) {
                         logger.warn(result);
@@ -197,6 +219,7 @@ public class WorkerLifeCycle {
                     }
                 }
             } finally {
+                logger.error("Couldn't create scanner - {}", getName());
                 lifeCycle.setSuccess(false);
             }
         }

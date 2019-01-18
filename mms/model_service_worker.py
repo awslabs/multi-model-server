@@ -17,8 +17,10 @@ Communication message format: binary encoding
 
 import logging
 import os
+import multiprocessing
 import platform
 import socket
+import atexit
 import sys
 
 from mms.arg_parser import ArgParser
@@ -31,11 +33,11 @@ SOCKET_ACCEPT_TIMEOUT = 30.0
 DEBUG = False
 
 
-class MXNetModelServiceWorker(object):
+class MXNetModelServiceWorker(multiprocessing.Process):
     """
     Backend worker to handle Model Server's python service code
     """
-    def __init__(self, s_type=None, s_name=None, host_addr=None, port_num=None):
+    def __init__(self, s_type=None, s_name=None, host_addr=None, port_num=None, model_req=None, prefork_init=False):
         if os.environ.get("OMP_NUM_THREADS") is None:
             os.environ["OMP_NUM_THREADS"] = "1"
         if os.environ.get("MXNET_USE_OPERATOR_TUNING") is None:
@@ -59,14 +61,17 @@ class MXNetModelServiceWorker(object):
                 raise ValueError("Wrong arguments passed. No socket port given.")
             self.port = port_num
         else:
-            raise ValueError("Incomplete data provided")
+            raise ValueError("Invalid socket type provided")
 
         logging.info("Listening on port: %s", s_name)
         socket_family = socket.AF_INET if s_type == "tcp" else socket.AF_UNIX
         self.sock = socket.socket(socket_family, socket.SOCK_STREAM)
+        self.pre_fork = prefork_init
+        self.service = None
+        self.model_meta_data = model_req
+        self.out = self.err = None
 
-    @staticmethod
-    def load_model(load_model_request):
+    def load_model(self, load_model_request=None):
         """
         Expected command
         {
@@ -81,10 +86,10 @@ class MXNetModelServiceWorker(object):
         :param load_model_request:
         :return:
         """
-        model_dir = load_model_request["modelPath"].decode("utf-8")
-        model_name = load_model_request["modelName"].decode("utf-8")
-        handler = load_model_request["handler"].decode("utf-8")
-        batch_size = None
+        model_dir = load_model_request["modelPath"]
+        model_name = load_model_request["modelName"]
+        handler = load_model_request["handler"]
+        batch_size = 1
         if "batchSize" in load_model_request:
             batch_size = int(load_model_request["batchSize"])
 
@@ -92,62 +97,101 @@ class MXNetModelServiceWorker(object):
         if "gpu" in load_model_request:
             gpu = int(load_model_request["gpu"])
 
-        model_loader = ModelLoaderFactory.get_model_loader(model_dir)
-        service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
+        if "ioFileDescriptor" in load_model_request:
+            io_fd = load_model_request.get("ioFileDescriptor")
+            self._create_io_files(model_dir, io_fd)
+
+        if self.service is None or self.pre_fork is False:
+            model_loader = ModelLoaderFactory.get_model_loader(model_dir)
+            self.service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
 
         logging.debug("Model %s loaded.", model_name)
+        return "loaded model {}. [PID]:{}".format(model_name, os.getpid()), 200
 
-        return service, "loaded model {}".format(model_name), 200
+    def _create_io_files(self, model_dir, io_fd):
+        self.out = model_dir + '/' + io_fd + "-stdout"
+        self.err = model_dir + '/' + io_fd + "-stderr"
+        try:
+            # TODO: This doesn't work for Windows!!
+            os.mkfifo(self.out)
+            os.mkfifo(self.err)
+        except:
+            pass
+
+    def _remap_io(self):
+        out_fd = open(self.out, "w")
+        err_fd = open(self.err, "w")
+        os.dup2(out_fd.fileno(), sys.stdout.fileno())
+        os.dup2(err_fd.fileno(), sys.stderr.fileno())
 
     def handle_connection(self, cl_socket):
         """
         Handle socket connection.
-
         :param cl_socket:
         :return:
         """
-        service = None
+        cl_socket.setblocking(True)
         while True:
             cmd, msg = retrieve_msg(cl_socket)
             if cmd == b'I':
-                resp = service.predict(msg)
+                resp = self.service.predict(msg)
                 cl_socket.send(resp)
             elif cmd == b'L':
-                service, result, code = self.load_model(msg)
+                result, code = self.load_model(msg)
                 resp = bytearray()
                 resp += create_load_model_response(code, result)
                 cl_socket.send(resp)
+                self._remap_io()
+                logging.info("[PID] %d", os.getpid())
             else:
                 raise ValueError("Received unknown command: {}".format(cmd))
 
-            if service is not None and service.context is not None and service.context.metrics is not None:
-                emit_metrics(service.context.metrics.store)
+            if self.service is not None and self.service.context is not None \
+                    and self.service.context.metrics is not None:
+                emit_metrics(self.service.context.metrics.store)
+
+    def start_worker(self, cl_socket):
+        try:
+            self.handle_connection(cl_socket)
+        except:  # pylint: disable=broad-except
+            logging.error("Backend worker process die.", exc_info=True)
+        finally:
+            try:
+                os.unlink(self.out)
+                os.unlink(self.err)
+            finally:
+                cl_socket.shutdown(socket.SHUT_RDWR)
+                cl_socket.close()
+                os._exit(1)
 
     def run_server(self):
         """
         Run the backend worker process and listen on a socket
         :return:
         """
-        if not DEBUG:
-            self.sock.settimeout(SOCKET_ACCEPT_TIMEOUT)
 
         if self.sock_type == "unix":
             self.sock.bind(self.sock_name)
         else:
             self.sock.bind((self.sock_name, int(self.port)))
 
-        self.sock.listen(1)
-        logging.info("[PID]%d", os.getpid())
+        self.sock.listen(128)
+        logging.info("[PID] %d", os.getpid())
         logging.info("MXNet worker started.")
         logging.info("Python runtime: %s", platform.python_version())
 
         while True:
-            (cl_socket, _) = self.sock.accept()
+            (cl_socket, address) = self.sock.accept()
+            if self.service is None and self.pre_fork is True:
+                # Lazy loading the models
+                self.load_model(model_req)
+
             # workaround error(35, 'Resource temporarily unavailable') on OSX
             cl_socket.setblocking(True)
 
             logging.info("Connection accepted: %s.", cl_socket.getsockname())
-            self.handle_connection(cl_socket)
+            p = multiprocessing.Process(target=self.start_worker, args=(cl_socket,))
+            p.start()
 
 
 if __name__ == "__main__":
@@ -162,13 +206,17 @@ if __name__ == "__main__":
     # noinspection PyBroadException
     try:
         logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
+        model_req = dict()
         args = ArgParser.model_service_worker_args().parse_args()
         socket_name = args.sock_name
         sock_type = args.sock_type
         host = args.host
         port = args.port
+        model_req["handler"] = args.handler
+        model_req["modelPath"] = args.model_path
+        model_req["modelName"] = args.model_name
 
-        worker = MXNetModelServiceWorker(sock_type, socket_name, host, port)
+        worker = MXNetModelServiceWorker(sock_type, socket_name, host, port, model_req, args.pre_fork_init)
         worker.run_server()
     except socket.timeout:
         logging.error("Backend worker did not receive connection in: %d", SOCKET_ACCEPT_TIMEOUT)

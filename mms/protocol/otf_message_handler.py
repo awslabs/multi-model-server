@@ -14,6 +14,7 @@ OTF Codec
 import json
 import logging
 import struct
+import os
 
 from builtins import bytearray
 from builtins import bytes
@@ -132,7 +133,7 @@ def _retrieve_buffer(conn, length):
         pkt = conn.recv(length)
         if len(pkt) == 0:
             logging.info("Frontend disconnected.")
-            exit(0)
+            os._exit(0)
 
         data += pkt
         length -= len(pkt)
@@ -161,15 +162,17 @@ def _retrieve_load_msg(conn):
     """
     msg = dict()
     length = _retrieve_int(conn)
-    msg["modelName"] = _retrieve_buffer(conn, length)
+    msg["modelName"] = _retrieve_buffer(conn, length).decode('utf-8')
     length = _retrieve_int(conn)
-    msg["modelPath"] = _retrieve_buffer(conn, length)
+    msg["modelPath"] = _retrieve_buffer(conn, length).decode('utf-8')
     msg["batchSize"] = _retrieve_int(conn)
     length = _retrieve_int(conn)
-    msg["handler"] = _retrieve_buffer(conn, length)
+    msg["handler"] = _retrieve_buffer(conn, length).decode('utf-8')
     gpu_id = _retrieve_int(conn)
     if gpu_id >= 0:
         msg["gpu"] = gpu_id
+    length = _retrieve_int(conn)
+    msg["ioFileDescriptor"] = _retrieve_buffer(conn, length).decode('utf-8')
 
     return msg
 

@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -142,9 +143,15 @@ public class ModelServer {
                     try {
                         logger.debug("Loading models from model store: {}", file.getName());
 
-                        ModelArchive archive = modelManager.registerModel(file.getName());
+                        ModelArchive archive =
+                                modelManager.registerModel(
+                                        file.getName(), configManager.getPreforkInit());
                         modelManager.updateModel(archive.getModelName(), workers, workers);
-                    } catch (ModelException | IOException e) {
+                    } catch (ModelException
+                            | IOException
+                            | InterruptedException
+                            | ExecutionException
+                            | TimeoutException e) {
                         logger.warn("Failed to load model: " + file.getAbsolutePath(), e);
                     }
                 }
@@ -171,9 +178,14 @@ public class ModelServer {
                 logger.info("Loading initial models: {}", url);
 
                 ModelArchive archive =
-                        modelManager.registerModel(url, modelName, null, null, 1, 100);
+                        modelManager.registerModel(
+                                url, modelName, null, null, 1, 100, configManager.getPreforkInit());
                 modelManager.updateModel(archive.getModelName(), workers, workers);
-            } catch (ModelException | IOException e) {
+            } catch (ModelException
+                    | IOException
+                    | InterruptedException
+                    | ExecutionException
+                    | TimeoutException e) {
                 logger.warn("Failed to load model: " + url, e);
             }
         }

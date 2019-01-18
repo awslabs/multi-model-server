@@ -21,6 +21,8 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +82,7 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
             FullHttpRequest req,
             QueryStringDecoder decoder,
             String[] segments)
-            throws ModelException;
+            throws ModelException, InterruptedException, ExecutionException, TimeoutException;
 
     protected abstract void handleApiDescription(ChannelHandlerContext ctx);
 

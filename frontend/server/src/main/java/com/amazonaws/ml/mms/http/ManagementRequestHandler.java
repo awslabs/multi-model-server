@@ -17,6 +17,7 @@ import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
+import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.Model;
 import com.amazonaws.ml.mms.wlm.ModelManager;
@@ -32,6 +33,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 /**
@@ -161,6 +164,9 @@ public class ManagementRequestHandler extends HttpRequestHandler {
 
         String modelName = NettyUtils.getParameter(decoder, "model_name", null);
         String runtime = NettyUtils.getParameter(decoder, "runtime", null);
+        String preforkInit =
+                NettyUtils.getParameter(
+                        decoder, "preforkInit", ConfigManager.getInstance().getPreforkInit());
         String handler = NettyUtils.getParameter(decoder, "handler", null);
         int batchSize = NettyUtils.getIntParameter(decoder, "batch_size", 1);
         int maxBatchDelay = NettyUtils.getIntParameter(decoder, "max_batch_delay", 100);
@@ -181,8 +187,14 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         try {
             archive =
                     modelManager.registerModel(
-                            modelUrl, modelName, runtimeType, handler, batchSize, maxBatchDelay);
-        } catch (IOException e) {
+                            modelUrl,
+                            modelName,
+                            runtimeType,
+                            handler,
+                            batchSize,
+                            maxBatchDelay,
+                            preforkInit);
+        } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
             throw new InternalServerException("Failed to save model: " + modelUrl, e);
         }
 

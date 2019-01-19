@@ -101,8 +101,8 @@ class ArgParser(object):
                             type=str,
                             help='Name of the model')
 
-        parser.add_argument('--pre-fork-init',
-                            dest="pre_fork_init",
+        parser.add_argument('--preload-model',
+                            dest="preload_model",
                             required=True,
                             type=ArgParser.str2bool,
                             help='Determines if initialization should occur before spawning/forking child process')

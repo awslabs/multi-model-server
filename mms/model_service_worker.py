@@ -37,7 +37,7 @@ class MXNetModelServiceWorker(multiprocessing.Process):
     """
     Backend worker to handle Model Server's python service code
     """
-    def __init__(self, s_type=None, s_name=None, host_addr=None, port_num=None, model_req=None, prefork_init=False):
+    def __init__(self, s_type=None, s_name=None, host_addr=None, port_num=None, model_req=None, preload_model=False):
         if os.environ.get("OMP_NUM_THREADS") is None:
             os.environ["OMP_NUM_THREADS"] = "1"
         if os.environ.get("MXNET_USE_OPERATOR_TUNING") is None:
@@ -66,7 +66,7 @@ class MXNetModelServiceWorker(multiprocessing.Process):
         logging.info("Listening on port: %s", s_name)
         socket_family = socket.AF_INET if s_type == "tcp" else socket.AF_UNIX
         self.sock = socket.socket(socket_family, socket.SOCK_STREAM)
-        self.pre_fork = prefork_init
+        self.preload = preload_model
         self.service = None
         self.model_meta_data = model_req
         self.out = self.err = None
@@ -101,7 +101,7 @@ class MXNetModelServiceWorker(multiprocessing.Process):
             io_fd = load_model_request.get("ioFileDescriptor")
             self._create_io_files(model_dir, io_fd)
 
-        if self.service is None or self.pre_fork is False:
+        if self.service is None or self.preload is False:
             model_loader = ModelLoaderFactory.get_model_loader(model_dir)
             self.service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
 
@@ -182,7 +182,7 @@ class MXNetModelServiceWorker(multiprocessing.Process):
 
         while True:
             (cl_socket, address) = self.sock.accept()
-            if self.service is None and self.pre_fork is True:
+            if self.service is None and self.preload is True:
                 # Lazy loading the models
                 self.load_model(model_req)
 
@@ -216,7 +216,7 @@ if __name__ == "__main__":
         model_req["modelPath"] = args.model_path
         model_req["modelName"] = args.model_name
 
-        worker = MXNetModelServiceWorker(sock_type, socket_name, host, port, model_req, args.pre_fork_init)
+        worker = MXNetModelServiceWorker(sock_type, socket_name, host, port, model_req, args.preload_model)
         worker.run_server()
     except socket.timeout:
         logging.error("Backend worker did not receive connection in: %d", SOCKET_ACCEPT_TIMEOUT)

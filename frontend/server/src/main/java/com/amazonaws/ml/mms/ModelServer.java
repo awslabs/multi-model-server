@@ -145,7 +145,7 @@ public class ModelServer {
 
                         ModelArchive archive =
                                 modelManager.registerModel(
-                                        file.getName(), configManager.getPreforkInit());
+                                        file.getName(), configManager.getPreloadModel());
                         modelManager.updateModel(archive.getModelName(), workers, workers);
                     } catch (ModelException
                             | IOException
@@ -179,7 +179,13 @@ public class ModelServer {
 
                 ModelArchive archive =
                         modelManager.registerModel(
-                                url, modelName, null, null, 1, 100, configManager.getPreforkInit());
+                                url,
+                                modelName,
+                                null,
+                                null,
+                                1,
+                                100,
+                                configManager.getPreloadModel());
                 modelManager.updateModel(archive.getModelName(), workers, workers);
             } catch (ModelException
                     | IOException

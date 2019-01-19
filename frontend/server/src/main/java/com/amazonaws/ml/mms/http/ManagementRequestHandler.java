@@ -164,9 +164,9 @@ public class ManagementRequestHandler extends HttpRequestHandler {
 
         String modelName = NettyUtils.getParameter(decoder, "model_name", null);
         String runtime = NettyUtils.getParameter(decoder, "runtime", null);
-        String preforkInit =
+        String preloadModel =
                 NettyUtils.getParameter(
-                        decoder, "preforkInit", ConfigManager.getInstance().getPreforkInit());
+                        decoder, "preload_model", ConfigManager.getInstance().getPreloadModel());
         String handler = NettyUtils.getParameter(decoder, "handler", null);
         int batchSize = NettyUtils.getIntParameter(decoder, "batch_size", 1);
         int maxBatchDelay = NettyUtils.getIntParameter(decoder, "max_batch_delay", 100);
@@ -193,7 +193,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                             handler,
                             batchSize,
                             maxBatchDelay,
-                            preforkInit);
+                            preloadModel);
         } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
             throw new InternalServerException("Failed to save model: " + modelUrl, e);
         }

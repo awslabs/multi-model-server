@@ -35,7 +35,7 @@ public class Model {
     private int maxWorkers;
     private int batchSize;
     private int maxBatchDelay;
-    private String preforkInit;
+    private String preloadModel;
 
     // Port on which the model server is running
 
@@ -50,7 +50,7 @@ public class Model {
     // Per worker thread job queue. This separates out the control queue from data queue
     private ConcurrentMap<String, LinkedBlockingDeque<Job>> jobsDb;
 
-    public Model(ModelArchive modelArchive, int queueSize, String prefork) {
+    public Model(ModelArchive modelArchive, int queueSize, String preloadModel) {
         this.modelArchive = modelArchive;
         batchSize = 1;
         maxBatchDelay = 100;
@@ -60,7 +60,7 @@ public class Model {
         failedInfReqs = new AtomicInteger(0);
         port = new AtomicInteger(-1);
         lock = new ReentrantLock();
-        preforkInit = prefork;
+        this.preloadModel = preloadModel;
     }
 
     public String getModelName() {
@@ -207,7 +207,7 @@ public class Model {
         this.serverThread = serverThread;
     }
 
-    public String getPreforkInit() {
-        return preforkInit;
+    public String preloadModel() {
+        return preloadModel;
     }
 }

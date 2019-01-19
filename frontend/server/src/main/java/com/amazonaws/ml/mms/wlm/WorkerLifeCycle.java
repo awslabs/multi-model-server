@@ -19,7 +19,6 @@ import com.amazonaws.ml.mms.util.Connector;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,8 +27,6 @@ import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-
-import com.amazonaws.ml.mms.util.NettyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,8 +113,8 @@ public class WorkerLifeCycle {
         args[10] = "--model-name";
         args[11] = model.getModelName();
 
-        args[12] = "--pre-fork-init";
-        args[13] = model.getPreforkInit();
+        args[12] = "--preload-model";
+        args[13] = model.preloadModel();
 
         String[] envp = getEnvString(workingDir.getAbsolutePath(), modelPath.getAbsolutePath());
 

@@ -77,7 +77,7 @@ public final class ModelManager {
             String handler,
             int batchSize,
             int maxBatchDelay,
-            String preforkInit)
+            String preloadModel)
             throws ModelException, IOException, InterruptedException, ExecutionException,
                     TimeoutException {
 
@@ -96,7 +96,7 @@ public final class ModelManager {
 
         archive.validate();
 
-        Model model = new Model(archive, configManager.getJobQueueSize(), preforkInit);
+        Model model = new Model(archive, configManager.getJobQueueSize(), preloadModel);
         model.setBatchSize(batchSize);
         model.setMaxBatchDelay(maxBatchDelay);
 

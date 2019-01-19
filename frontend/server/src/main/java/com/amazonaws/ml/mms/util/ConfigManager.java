@@ -58,7 +58,7 @@ public final class ConfigManager {
     private static final String DEBUG = "debug";
     private static final String INFERENCE_ADDRESS = "inference_address";
     private static final String MANAGEMENT_ADDRESS = "management_address";
-    private static final String PREFORK_INIT = "pre_fork_init";
+    private static final String PRELOAD_MODEL = "preload_model";
     private static final String MODEL_SERVER_HOME = "model_server_home";
     private static final String MODEL_STORE = "model_store";
     private static final String LOAD_MODELS = "load_models";
@@ -187,8 +187,9 @@ public final class ConfigManager {
         }
         return Connector.parse(binding, management);
     }
-    public String getPreforkInit() {
-        return getProperty(PREFORK_INIT, "false");
+
+    public String getPreloadModel() {
+        return getProperty(PRELOAD_MODEL, "false");
     }
 
     public int getNettyThreads() {
@@ -413,8 +414,8 @@ public final class ConfigManager {
                 + getDefaultWorkers()
                 + "\nBlacklist Regex: "
                 + prop.getProperty(BLACKLIST_ENV_VARS, "N/A")
-                + "\nPrefork Initialization: "
-                + prop.getProperty(PREFORK_INIT, "false");
+                + "\nPreload model: "
+                + prop.getProperty(PRELOAD_MODEL, "false");
     }
 
     public boolean useNativeIo() {

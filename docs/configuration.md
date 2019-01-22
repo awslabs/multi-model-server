@@ -158,6 +158,7 @@ Most of those properties are designed for performance tuning. Adjusting those nu
 * default_workers_per_model: number of workers to create for each model that loaded at startup time, default: available GPUs in system or number of logical processors available to the JVM.
 * job_queue_size: number inference jobs that frontend will queue before backend can serve, default 100.
 * async_logging: enable asynchronous logging for higher throughput, log output may be delayed if this is enabled, default: false.
+* default_response_timeout: Timeout, in minutes, used for model's backend workers before they are deemed unresponsive and rebooted. default: 2 minutes.  
 
 ### config.properties Example
 

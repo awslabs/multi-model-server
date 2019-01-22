@@ -63,6 +63,7 @@ public final class ConfigManager {
     private static final String LOAD_MODELS = "load_models";
     private static final String BLACKLIST_ENV_VARS = "blacklist_env_vars";
     private static final String DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
+    private static final String DEFAULT_RESPONSE_TIMEOUT = "default_response_timeout";
 
     // advanced parameters for performance tuning
     private static final String NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
@@ -146,6 +147,15 @@ public final class ConfigManager {
         String pythonExecutable = args.getPythonExecutable();
         if (pythonExecutable != null) {
             prop.setProperty("PYTHON_EXECUTABLE", pythonExecutable);
+        }
+
+        String defaultResponseTimeout = System.getenv("DEFAULT_RESPONSE_TIMEOUT");
+        if (defaultResponseTimeout == null) {
+            defaultResponseTimeout = args.getDefaultResponseTO();
+        }
+
+        if (defaultResponseTimeout != null) {
+            setDefaultResponseTimeout(defaultResponseTimeout);
         }
 
         try {
@@ -431,6 +441,14 @@ public final class ConfigManager {
         return Integer.parseInt(value);
     }
 
+    public String getDefaultResponseTimeout() {
+        return prop.getProperty(DEFAULT_RESPONSE_TIMEOUT, "2");
+    }
+
+    public void setDefaultResponseTimeout(String timeout) {
+        prop.setProperty(DEFAULT_RESPONSE_TIMEOUT, timeout);
+    }
+
     private File findMmsHome() {
         File cwd = new File(getCanonicalPath("."));
         File file = cwd;
@@ -510,6 +528,7 @@ public final class ConfigManager {
         private String pythonExecutable;
         private String modelStore;
         private String[] models;
+        private String defaultResponseTO;
 
         public Arguments() {}
 
@@ -518,6 +537,7 @@ public final class ConfigManager {
             pythonExecutable = cmd.getOptionValue("python");
             modelStore = cmd.getOptionValue("model-store");
             models = cmd.getOptionValues("models");
+            defaultResponseTO = cmd.getOptionValue("response-timeout");
         }
 
         public static Options getOptions() {
@@ -550,11 +570,22 @@ public final class ConfigManager {
                             .argName("MODELS-STORE")
                             .desc("Model store location where models can be loaded.")
                             .build());
+            options.addOption(
+                    Option.builder("t")
+                            .longOpt("response-timeout")
+                            .hasArg()
+                            .argName("RESPONSE-TIMEOUT")
+                            .desc("Model response timeout.")
+                            .build());
             return options;
         }
 
         public String getMmsConfigFile() {
             return mmsConfigFile;
+        }
+
+        public String getDefaultResponseTO() {
+            return defaultResponseTO;
         }
 
         public String getPythonExecutable() {

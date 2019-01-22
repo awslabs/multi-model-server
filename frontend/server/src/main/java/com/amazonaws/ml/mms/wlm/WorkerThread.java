@@ -118,6 +118,7 @@ public class WorkerThread implements Runnable {
 
     @Override
     public void run() {
+        int responseTimeout = model.getResponseTimeout();
         currentThread = Thread.currentThread();
         currentThread.setName(
                 "W-"
@@ -136,7 +137,7 @@ public class WorkerThread implements Runnable {
 
                 // TODO: Change this to configurable param
                 long begin = System.currentTimeMillis();
-                ModelWorkerResponse reply = replies.poll(WORKER_TIMEOUT, TimeUnit.MINUTES);
+                ModelWorkerResponse reply = replies.poll(responseTimeout, TimeUnit.MINUTES);
 
                 long duration = System.currentTimeMillis() - begin;
                 logger.info("Backend response time: {}", duration);

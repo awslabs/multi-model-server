@@ -171,7 +171,14 @@ public class ModelServer {
                 logger.info("Loading initial models: {}", url);
 
                 ModelArchive archive =
-                        modelManager.registerModel(url, modelName, null, null, 1, 100);
+                        modelManager.registerModel(
+                                url,
+                                modelName,
+                                null,
+                                null,
+                                1,
+                                100,
+                                Integer.parseInt(configManager.getDefaultResponseTimeout()));
                 modelManager.updateModel(archive.getModelName(), workers, workers);
             } catch (ModelException | IOException e) {
                 logger.warn("Failed to load model: " + url, e);

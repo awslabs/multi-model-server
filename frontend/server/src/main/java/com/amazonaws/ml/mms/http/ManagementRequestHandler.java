@@ -17,6 +17,7 @@ import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
+import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.Model;
 import com.amazonaws.ml.mms.wlm.ModelManager;
@@ -167,6 +168,10 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         int initialWorkers = NettyUtils.getIntParameter(decoder, "initial_workers", 0);
         boolean synchronous =
                 Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
+        String responseTimeout = NettyUtils.getParameter(decoder, "response_timeout", null);
+        if (responseTimeout == null) {
+            responseTimeout = ConfigManager.getInstance().getDefaultResponseTimeout();
+        }
         Manifest.RuntimeType runtimeType = null;
         if (runtime != null) {
             try {
@@ -181,7 +186,13 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         try {
             archive =
                     modelManager.registerModel(
-                            modelUrl, modelName, runtimeType, handler, batchSize, maxBatchDelay);
+                            modelUrl,
+                            modelName,
+                            runtimeType,
+                            handler,
+                            batchSize,
+                            maxBatchDelay,
+                            Integer.parseInt(responseTimeout));
         } catch (IOException e) {
             throw new InternalServerException("Failed to save model: " + modelUrl, e);
         }

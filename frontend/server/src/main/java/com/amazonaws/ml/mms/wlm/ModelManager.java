@@ -63,7 +63,14 @@ public final class ModelManager {
     }
 
     public ModelArchive registerModel(String url) throws ModelException, IOException {
-        return registerModel(url, null, null, null, 1, 100);
+        return registerModel(
+                url,
+                null,
+                null,
+                null,
+                1,
+                100,
+                Integer.parseInt(configManager.getDefaultResponseTimeout()));
     }
 
     public ModelArchive registerModel(
@@ -72,7 +79,8 @@ public final class ModelManager {
             Manifest.RuntimeType runtime,
             String handler,
             int batchSize,
-            int maxBatchDelay)
+            int maxBatchDelay,
+            int responseTimeout)
             throws ModelException, IOException {
 
         ModelArchive archive = ModelArchive.downloadModel(configManager.getModelStore(), url);
@@ -93,6 +101,7 @@ public final class ModelManager {
         Model model = new Model(archive, configManager.getJobQueueSize());
         model.setBatchSize(batchSize);
         model.setMaxBatchDelay(maxBatchDelay);
+        model.setResponseTimeout(responseTimeout);
         Model existingModel = models.putIfAbsent(modelName, model);
         if (existingModel != null) {
             // model already exists

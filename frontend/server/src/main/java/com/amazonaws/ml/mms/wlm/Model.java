@@ -36,6 +36,7 @@ public class Model {
     private int batchSize;
     private int maxBatchDelay;
     private ReentrantLock lock;
+    private int responseTimeout;
 
     // Total number of subsequent inference request failures
     private AtomicInteger failedInfReqs;
@@ -180,5 +181,13 @@ public class Model {
 
     public void resetFailedInfReqs() {
         failedInfReqs.set(0);
+    }
+
+    public int getResponseTimeout() {
+        return responseTimeout;
+    }
+
+    public void setResponseTimeout(int responseTimeout) {
+        this.responseTimeout = responseTimeout;
     }
 }

@@ -135,16 +135,16 @@ public class Manifest {
 
     public static final class Engine {
 
-        private EngineType engineName;
+        private String engineName;
         private String engineVersion;
 
         public Engine() {}
 
-        public EngineType getEngineName() {
+        public String getEngineName() {
             return engineName;
         }
 
-        public void setEngineName(EngineType engineName) {
+        public void setEngineName(String engineName) {
             this.engineName = engineName;
         }
 
@@ -212,30 +212,6 @@ public class Manifest {
 
         public void setHandler(String handler) {
             this.handler = handler;
-        }
-    }
-
-    public enum EngineType {
-        @SerializedName("MXNet")
-        MX_NET("MXNet");
-
-        String value;
-
-        EngineType(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public static EngineType fromValue(String value) {
-            for (EngineType engineType : values()) {
-                if (engineType.value.equals(value)) {
-                    return engineType;
-                }
-            }
-            throw new IllegalArgumentException("Invalid EngineType value: " + value);
         }
     }
 

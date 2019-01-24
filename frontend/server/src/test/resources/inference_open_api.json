@@ -11,7 +11,7 @@
         "operationId": "apiDescription",
         "parameters": [],
         "responses": {
-          "200": {
+          "2001": {
             "description": "A openapi 3.0.1 descriptor",
             "content": {
               "application/json": {

@@ -113,7 +113,7 @@ public class LegacyManifest {
             Object engineVersion = engine.get("MXNet");
             if (engineVersion instanceof Number) {
                 Manifest.Engine eng = new Manifest.Engine();
-                eng.setEngineName(Manifest.EngineType.MX_NET);
+                eng.setEngineName("MXNet");
                 eng.setEngineVersion(engineVersion.toString());
                 manifest.setEngine(eng);
             }

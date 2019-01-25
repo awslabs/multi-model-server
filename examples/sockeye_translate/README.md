@@ -10,18 +10,9 @@ Pull the latest Docker image:
 docker pull jwoo11/sockeye-serving
 ```
 
-Create a file called `config.properties` under `/tmp/models`. We'll use this directory as a bind mount:
-```properties
-vmargs=-Xmx128m -XX:-UseLargePages -XX:+UseG1GC -XX:MaxMetaspaceSize=32M -XX:MaxDirectMemorySize=10m -XX:+ExitOnOutOfMemoryError
-model_store=/models
-inference_address=http://0.0.0.0:8080
-management_address=http://0.0.0.0:8081
-```
-
 Start the server:
 ```bash
-docker run -itd --name mms -p 8080:8080  -p 8081:8081 -v /tmp/models/:/models jwoo11/sockeye-serving \
-    mxnet-model-server --start --mms-config /models/config.properties
+docker run -itd --name mms -p 8080:8080  -p 8081:8081 -v /tmp/models/:/models jwoo11/sockeye-serving serve
 ```
 
 Try making some requests using a remote model:
@@ -29,14 +20,8 @@ Try making some requests using a remote model:
 # URL of a remote machine translation model
 URL="https://www.dropbox.com/s/pk7hmp7a5zjcfcj/zh.mar?dl=1"
 
-until curl -X POST "http://localhost:8081/models?url=${URL}"
-do
-  echo "Waiting for initialization..."
-  sleep 1
-done
-
-# set the number of workers to 1
-curl -X PUT "http://localhost:8081/models/zh?min_worker=1"
+# load the model
+curl -X POST "http://localhost:8081/models?synchronous=true&initial_workers=1&url=${URL}"
 
 # show the status of the ZH model
 curl -X GET "http://localhost:8081/models/zh"
@@ -50,21 +35,19 @@ curl -X POST "http://localhost:8080/predictions/zh" -H "Content-Type: applicatio
 Download the example model archive file (MAR):
 * https://www.dropbox.com/s/pk7hmp7a5zjcfcj/zh.mar?dl=0
 
-Move the MAR file to `/tmp/models`. You'll still need `config.properties` to reside in the same directory. 
-
-Start the server as before. You may need to stop and remove the container from a previous run.
+Move the MAR file to `/tmp/models` and start the server as before.
+You may need to stop and remove the container from a previous run.
 
 Load the local model and try some requests. You'll have to unload the model first, if it's already loaded:
 ```bash
 curl -X DELETE "http://localhost:8081/models/zh"
-curl -X POST "http://localhost:8081/models?url=zh.mar"
-curl -X PUT "http://localhost:8081/models/zh?min_worker=1"
+curl -X POST "http://localhost:8081/models?initial_workers=1&url=zh.mar"
 ```
 
-It's also possible to use the extracted MAR file as the URL:
+It's also possible to use the extracted MAR as the URL:
 ```bash
 unzip -d /tmp/models/zh zh.mar
-curl -X POST "http://localhost:8081/models?url=zh"
+curl -X POST "http://localhost:8081/models?initial_workers=1&url=zh"
 ```
 
 For more information on MAR files and the built-in REST APIs, see:

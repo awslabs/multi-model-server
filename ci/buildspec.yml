@@ -33,6 +33,6 @@ artifacts:
   files:
     - dist/*.whl
     - model_archiver/dist/*.whl
-    - frontend/server/build/reports
-    - frontend/modelarchive/build/reports
-    - frontend/cts/build/reports
+    - frontend/server/build/reports/**/*
+    - frontend/modelarchive/build/reports/**/*
+    - frontend/cts/build/reports/**/*

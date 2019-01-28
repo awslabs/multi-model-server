@@ -83,7 +83,7 @@ class SockeyeService(ModelHandler):
 
     def __init__(self):
         super(SockeyeService, self).__init__()
-        self.basedir = '/models/zh'
+        self.basedir = '/opt/ml/model/zh'
         self.preprocessor = ChineseCharPreprocessor(os.path.join(self.basedir, 'bpe.codes.zh-en'),
                                                     os.path.join(self.basedir, 'scripts'),
                                                     os.path.join(self.basedir, 'scripts'))

@@ -26,7 +26,7 @@ RUN python3 -m venv venv && \
     pip install --no-cache-dir mxnet-model-server && \
     pip install -r requirements/sockeye-serving/requirements.txt
 
-COPY config/config.properties .
+COPY config/config.properties /home/model-server
 COPY scripts/mms/dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh && \

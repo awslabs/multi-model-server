@@ -22,7 +22,7 @@ unzip -d /tmp/models/zh zh.mar
 
 Start the server:
 ```bash
-docker run -itd --name mms -p 8080:8080 -p 8081:8081 -v /tmp/models/:/models jwoo11/sockeye-serving serve
+docker run -itd --name mms -p 8080:8080 -p 8081:8081 -v /tmp/models:/opt/ml/model jwoo11/sockeye-serving serve
 ```
 
 Now we can load the model using the management API provided by `mxnet-model-server`:

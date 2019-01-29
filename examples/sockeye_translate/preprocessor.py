@@ -79,6 +79,9 @@ class JoshuaPreprocessor(Preprocessor):
         self.tokenizer = os.path.join(moses_path, 'tokenizer.perl')
         self.cleaner = os.path.join(moses_path, 'remove-non-printing-char.perl')
 
+        for f in [self.normalizer, self.tokenizer, self.cleaner]:
+            os.chmod(f, 0o755)
+
     def run(self, text):
         text = self.unescape(text)
 
@@ -116,3 +119,17 @@ class ChineseCharPreprocessor(JoshuaPreprocessor):
         result = popen.stdout.strip()
 
         return self.bpe_encode(result)
+
+
+class Detokenizer():
+    def __init__(self, path):
+        self.de_bpe = re.compile('@@( |$)', re.IGNORECASE)
+        self.de_tok = path
+
+        os.chmod(self.de_tok, 0o755)
+
+    def run(self, text):
+        bpe_removed = re.sub(self.de_bpe, '', text.translation.strip())
+        popen = subprocess.run([self.de_tok, '-l', 'en'], input=bpe_removed, encoding='utf-8', stdout=subprocess.PIPE,
+                               env=os.environ)
+        return popen.stdout.strip()

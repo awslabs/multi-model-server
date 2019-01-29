@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import subprocess
 from contextlib import ExitStack
 
 from sockeye import arguments
@@ -12,7 +11,7 @@ from sockeye.output_handler import get_output_handler
 from sockeye.utils import check_condition, log_basic_info, determine_context
 
 from .model_handler import ModelHandler
-from .preprocessor import ChineseCharPreprocessor
+from .preprocessor import ChineseCharPreprocessor, Detokenizer
 
 
 def decode_bytes(data):
@@ -83,24 +82,33 @@ class SockeyeService(ModelHandler):
 
     def __init__(self):
         super(SockeyeService, self).__init__()
-        self.basedir = '/opt/ml/model/zh'
-        self.preprocessor = ChineseCharPreprocessor(os.path.join(self.basedir, 'bpe.codes.zh-en'),
-                                                    os.path.join(self.basedir, 'scripts'),
-                                                    os.path.join(self.basedir, 'scripts'))
+        self.basedir = None
+        self.postprocessor = None
+        self.preprocessor = None
         self.sentence_id = 0
-        self.sockeye_args_path = os.path.join(self.basedir, 'sockeye-args.txt')
         self.translator = None
 
     def initialize(self, context):
         super(SockeyeService, self).initialize(context)
 
-        device_ids = []
-        if 'gpu_id' in context.system_properties:
-            device_ids.append(context.system_properties['gpu_id'])
+        self.basedir = context.system_properties.get('model_dir')
+        self.preprocessor = ChineseCharPreprocessor(os.path.join(self.basedir, 'bpe.codes.zh-en'),
+                                                    os.path.join(self.basedir, 'scripts'),
+                                                    os.path.join(self.basedir, 'scripts'))
+        self.postprocessor = Detokenizer(os.path.join(self.basedir, 'scripts', 'detokenize.pl'))
 
         params = arguments.ConfigArgumentParser(description='Translate CLI')
         arguments.add_translate_cli_args(params)
-        sockeye_args = params.parse_args(read_sockeye_args(self.sockeye_args_path))
+
+        sockeye_args_path = os.path.join(self.basedir, 'sockeye-args.txt')
+        sockeye_args = params.parse_args(read_sockeye_args(sockeye_args_path))
+        # override models directory
+        sockeye_args.models = [self.basedir]
+
+        device_ids = []
+        if not sockeye_args.use_cpu:
+            if 'gpu_id' in context.system_properties and context.system_properties['gpu_id']:
+                device_ids.append(context.system_properties['gpu_id'])
 
         if sockeye_args.checkpoints is not None:
             check_condition(len(sockeye_args.checkpoints) == len(sockeye_args.models),
@@ -129,7 +137,7 @@ class SockeyeService(ModelHandler):
                                             sockeye_args.sure_align_threshold)
 
         with ExitStack() as exit_stack:
-            check_condition(len(device_ids) == 1, 'translate only supports single device for now')
+            check_condition(len(device_ids) <= 1, 'translate only supports single device for now')
             translator_ctx = determine_context(device_ids=device_ids,
                                                use_cpu=sockeye_args.use_cpu,
                                                disable_device_locking=sockeye_args.disable_device_locking,
@@ -177,7 +185,6 @@ class SockeyeService(ModelHandler):
                                                    store_beam=store_beam,
                                                    strip_unknown_words=sockeye_args.strip_unknown_words,
                                                    skip_topk=sockeye_args.skip_topk)
-        return
 
     def preprocess(self, batch):
         """
@@ -238,14 +245,8 @@ class SockeyeService(ModelHandler):
         logging.info('postprocess grabbed: %s' % outputs)
 
         res = []
-        de_bpe = re.compile('@@( |$)', re.IGNORECASE)
-        de_tok = os.path.join(self.basedir, 'scripts/detokenize.pl')
-
         for t in outputs:
-            bpe_removed = re.sub(de_bpe, '', t.translation.strip())
-            popen = subprocess.run([de_tok, '-l', 'en'], input=bpe_removed, encoding='utf-8', stdout=subprocess.PIPE,
-                                   env=os.environ)
-            output = popen.stdout.strip()
+            output = self.postprocessor.run(t)
             res.append({'translation': output})
         return res
 

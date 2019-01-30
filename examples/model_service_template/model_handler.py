@@ -74,9 +74,18 @@ class ModelHandler(object):
         """
 
         try:
+            preprocess_start = time.time()
             data = self.preprocess(data)
+            inference_start = time.time()
             data = self.inference(data)
+            postprocess_start = time.time()
             data = self.postprocess(data)
+            end_time = time.time()
+
+            metrics = context.metrics
+            metrics.add_time("PreprocessTime", round((inference_start - preprocess_start) * 1000, 2))
+            metrics.add_time("InferenceTime", round((postprocess_start - inference_start) * 1000, 2))
+            metrics.add_time("PostprocessTime", round((end_time - postprocess_start) * 1000, 2))
 
             return data
         except Exception as e:

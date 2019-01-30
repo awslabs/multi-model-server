@@ -70,9 +70,10 @@ if __name__ == '__main__':
         packages=pkgs,
         install_requires=requirements,
         extras_require={
-            'mxnet-mkl': ['mxnet-mkl==1.2.0'],
-            'mxnet-cu90mkl': ['mxnet-cu90mkl==1.2.0'],
-            'mxnet': ['mxnet==1.2'],
+            'mxnet-mkl': ['mxnet-mkl==1.3.1'],
+            'mxnet-cu90mkl': ['mxnet-cu90mkl==1.3.1'],
+            'mxnet-cu92mkl': ['mxnet-cu92mkl==1.3.1'],
+            'mxnet': ['mxnet==1.3.1'],
             'onnx': ['onnx==1.1.1']
         },
         entry_points={

@@ -12,6 +12,7 @@
 ModelHandler defines a base model handler.
 """
 import logging
+import time
 
 
 class ModelHandler(object):

@@ -50,21 +50,19 @@ JMX_MULTIPLE_MODELS_LOAD_PLAN = 'multipleModelsLoadPlan.jmx'
 JMX_GRAPHS_GENERATOR_PLAN = 'graphsGenerator.jmx'
 
 # Listing out the models tested
-MODEL_RESNET_50v1 = 'resnet-50v1'
+MODEL_RESNET_18 = 'resnet-18'
+MODEL_SQUEEZE_NET = 'squeezenet'
 MODEL_LSTM_PTB = 'lstm_ptb'
 MODEL_NOOP = 'noop-v1.0'
 
+
 MODEL_MAP = {
-    MODEL_RESNET_50v1: (JMX_IMAGE_INPUT_MODEL_PLAN,
-                        {'url': 'https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet50v1.mar',
-                         'model_name': MODEL_RESNET_50v1, 'input_filepath': 'kitten.jpg'}),
-    MODEL_LSTM_PTB: (JMX_TEXT_INPUT_MODEL_PLAN,
-                     {'url': 'https://s3.amazonaws.com/model-server/model_archive_1.0/lstm_ptb.mar',
-                      'model_name': MODEL_LSTM_PTB, 'data': 'lstm_ip.json'}),
-    MODEL_NOOP: (JMX_TEXT_INPUT_MODEL_PLAN,
-                 {'url': 'https://s3.amazonaws.com/model-server/models/noop/noop-v1.0.mar', 'model_name': MODEL_NOOP,
-                  'data': 'noop_ip.txt'})
+    MODEL_SQUEEZE_NET: (JMX_IMAGE_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model', 'model_name': MODEL_SQUEEZE_NET, 'input_filepath': 'kitten.jpg'}),
+    MODEL_RESNET_18: (JMX_IMAGE_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model', 'model_name': MODEL_RESNET_18, 'input_filepath': 'kitten.jpg'}),
+    MODEL_LSTM_PTB: (JMX_TEXT_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb.model', 'model_name': MODEL_LSTM_PTB, 'data': 'lstm_ip.json'}),
+    MODEL_NOOP: (JMX_TEXT_INPUT_MODEL_PLAN, {'url': 'https://s3.amazonaws.com/model-server/models/noop/noop-v1.0.mar', 'model_name': MODEL_NOOP, 'data': 'noop_ip.txt'})
 }
+
 
 # Mapping of which row is relevant for a given JMX Test Plan
 EXPERIMENT_RESULTS_MAP = {
@@ -75,6 +73,7 @@ EXPERIMENT_RESULTS_MAP = {
     JMX_CONCURRENT_SCALE_CALLS: ['Scale Up Model', 'Scale Down Model'],
     JMX_MULTIPLE_MODELS_LOAD_PLAN: ['Inference Request']
 }
+
 
 JMETER_RESULT_SETTINGS = {
     'jmeter.reportgenerator.overall_granularity': 1000,
@@ -95,23 +94,27 @@ AGGREGATE_REPORT_CSV_LABELS_MAP = {
 
 }
 
+
 CELLAR = '/home/ubuntu/.linuxbrew/Cellar/jmeter' if 'linux' in sys.platform else '/usr/local/Cellar/jmeter'
 JMETER_VERSION = os.listdir(CELLAR)[0]
 CMDRUNNER = '{}/{}/libexec/lib/ext/CMDRunner.jar'.format(CELLAR, JMETER_VERSION)
 JMETER = '{}/{}/libexec/bin/jmeter'.format(CELLAR, JMETER_VERSION)
-MMS_BASE = reduce(lambda val, func: func(val), (os.path.abspath(__file__),) + (os.path.dirname,) * 2)
+MMS_BASE = reduce(lambda val,func: func(val), (os.path.abspath(__file__),) + (os.path.dirname,) * 2)
 JMX_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jmx')
+CONFIG_PROP = os.path.join(MMS_BASE, 'benchmarks', 'config.properties')
 CONFIG_PROP_TEMPLATE = os.path.join(MMS_BASE, 'benchmarks', 'config_template.properties')
 
+DOCKER_MMS_BASE = "/mxnet-model-server"
+DOCKER_CONFIG_PROP = os.path.join(DOCKER_MMS_BASE, 'benchmarks', 'config.properties')
+
 # Commenting our NOOPs for now since there's a bug on MMS model loading for .mar files
-ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput'), (MODEL_RESNET_50v1, MODEL_NOOP, MODEL_LSTM_PTB)))
-# + [('multiple_models', MODEL_NOOP)]
-# + list(itertools.product(('load', 'repeated_scale_calls'), (MODEL_RESNET_50v1,))) \ To Add once
-# repeated_scale_calls is fixed
+ALL_BENCHMARKS = list(itertools.product(('latency', 'throughput'), (MODEL_RESNET_18,MODEL_NOOP, MODEL_LSTM_PTB)))
+               # + [('multiple_models', MODEL_NOOP)]
+               # + list(itertools.product(('load', 'repeated_scale_calls'), (MODEL_RESNET_18,))) \ To Add once
+               # repeated_scale_calls is fixed
 
 
 BENCHMARK_NAMES = ['latency', 'throughput']
-
 
 class ChDir:
     def __init__(self, path):
@@ -163,8 +166,6 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         shutil.rmtree(out_dir)
     os.makedirs(out_dir)
 
-    modify_config_props_for_mms(pargs, out_dir, jmeter_args["model_name"], jmeter_args["url"])
-
     protocol = 'http'
     hostname = '127.0.0.1'
     port = 8080
@@ -185,18 +186,25 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
             port = 80
     else:
         # Start MMS
-        docker_runtime = '--runtime=nvidia' if pargs.gpus else ''
+        docker = 'nvidia-docker' if pargs.gpus else 'docker'
+        container = 'mms_benchmark_gpu' if pargs.gpus else 'mms_benchmark_cpu'
         docker_path = 'awsdeeplearningteam/mxnet-model-server:nightly-mxnet-gpu' \
             if pargs.gpus else 'awsdeeplearningteam/mxnet-model-server:nightly-mxnet-cpu'
         if pargs.docker:
+            container = 'mms_benchmark_{}'.format(pargs.docker[0].split('/')[1])
             docker_path = pargs.docker[0]
-        run_process("docker rm -f mms")
-        run_process("docker pull {}".format(docker_path))
-        docker_run_call = "docker run {} --name mms -p 8080:8080 -p 8081:8081 -v {}:/mms -itd {}" \
-                          " mxnet-model-server --start --mms-config" \
-                          " /mms/config.properties".format(docker_runtime, out_dir, docker_path)
+        run_process("{} rm -f {}".format(docker, container))
+        docker_run_call = "{} run --name {} -p 8080:8080 -p 8081:8081 -v {}:{} -itd {}".format(docker, container, MMS_BASE, DOCKER_MMS_BASE, docker_path)
         run_process(docker_run_call)
-        time.sleep(5)  # wait for mms load model complete
+        run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && python setup.py bdist_wheel --universal && pip install --user -U -e .'".format(docker, container), shell=True)
+        run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && pip install --user -U -e .'".format(docker, container), shell=True)
+        run_process("{} start {}".format(docker, container))
+
+        docker_start_call = "{} exec {} mxnet-model-server --start --mms-config {}".format(docker, container, DOCKER_CONFIG_PROP)
+        docker_start = run_process(docker_start_call, wait=False)
+        time.sleep(3)
+        docker_start.kill()
+
 
     management_port = int(pargs.management[0]) if pargs.management else port + 1
 
@@ -206,8 +214,8 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         logfile = os.path.join(out_dir, 'jmeter.log')
         outfile = os.path.join(out_dir, 'out.csv')
         perfmon_file = os.path.join(out_dir, 'perfmon.csv')
-        graphs_dir = os.path.join(out_dir, 'graphs')
-        report_dir = os.path.join(out_dir, 'report')
+        graphsDir = os.path.join(out_dir, 'graphs')
+        reportDir = os.path.join(out_dir, 'report')
 
         # run jmeter
         run_jmeter_args = {
@@ -227,29 +235,27 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         run_jmeter_args.update(dict(zip(pargs.options[::2], pargs.options[1::2])))
         abs_jmx = jmx if os.path.isabs(jmx) else os.path.join(JMX_BASE, jmx)
         jmeter_args_str = ' '.join(sorted(['-J{}={}'.format(key, val) for key, val in run_jmeter_args.items()]))
-        jmeter_call = '{} -n -t {} {} -l {} -j {} -e -o {}'.format(JMETER, abs_jmx, jmeter_args_str, tmpfile, logfile,
-                                                                   report_dir)
+        jmeter_call = '{} -n -t {} {} -l {} -j {} -e -o {}'.format(JMETER, abs_jmx, jmeter_args_str, tmpfile, logfile, reportDir)
         run_process(jmeter_call)
 
         # run AggregateReport
-        ag_call = 'java -jar {} --tool Reporter --generate-csv {} --input-jtl {} --plugin-type AggregateReport'.format(
-            CMDRUNNER, outfile, tmpfile)
+        ag_call = 'java -jar {} --tool Reporter --generate-csv {} --input-jtl {} --plugin-type AggregateReport'.format(CMDRUNNER, outfile, tmpfile)
         run_process(ag_call)
 
         # Generate output graphs
-        g_logfile = os.path.join(out_dir, 'graph_jmeter.log')
+        gLogfile = os.path.join(out_dir, 'graph_jmeter.log')
         graphing_args = {
-            'raw_output': graphs_dir,
+            'raw_output': graphsDir,
             'jtl_input': tmpfile
         }
         graphing_args.update(JMETER_RESULT_SETTINGS)
         gjmx = os.path.join(JMX_BASE, JMX_GRAPHS_GENERATOR_PLAN)
         graphing_args_str = ' '.join(['-J{}={}'.format(key, val) for key, val in graphing_args.items()])
-        graphing_call = '{} -n -t {} {} -j {}'.format(JMETER, gjmx, graphing_args_str, g_logfile)
+        graphing_call = '{} -n -t {} {} -j {}'.format(JMETER, gjmx, graphing_args_str, gLogfile)
         run_process(graphing_call)
 
         print("Output available at {}".format(out_dir))
-        print("Report generated at {}".format(os.path.join(report_dir, 'index.html')))
+        print("Report generated at {}".format(os.path.join(reportDir, 'index.html')))
 
         data_frame = pd.read_csv(outfile, index_col=0)
         report = list()
@@ -272,9 +278,9 @@ def run_multi_benchmark(key, xs, *args, **kwargs):
     reports = dict()
     out_dirs = []
     for i, x in enumerate(xs):
-        print("Running value {}={} (value {}/{})".format(key, x, i + 1, len(xs)))
+        print("Running value {}={} (value {}/{})".format(key, x, i+1, len(xs)))
         kwargs[key] = x
-        sub_out_dir = os.path.join(out_dir, str(i + 1))
+        sub_out_dir = os.path.join(out_dir, str(i+1))
         out_dirs.append(sub_out_dir)
         report = run_single_benchmark(*args, out_dir=sub_out_dir, **kwargs)
         reports[x] = report
@@ -282,38 +288,37 @@ def run_multi_benchmark(key, xs, *args, **kwargs):
     # files
     merge_results = os.path.join(out_dir, 'merge-results.properties')
     joined = os.path.join(out_dir, 'joined.csv')
-    report_dir = os.path.join(out_dir, 'report')
+    reportDir = os.path.join(out_dir, 'report')
 
     # merge runs together
-    input_jtls = [os.path.join(out_dirs[i], 'output.jtl') for i in range(len(xs))]
+    inputJtls = [os.path.join(out_dirs[i], 'output.jtl') for i in range(len(xs))]
     prefixes = ["{} {}: ".format(key, x) for x in xs]
-    base_jtl = input_jtls[0]
-    base_prefix = prefixes[0]
-    for i in range(1, len(xs), 3):  # MergeResults only joins up to 4 at a time
+    baseJtl = inputJtls[0]
+    basePrefix = prefixes[0]
+    for i in range(1, len(xs), 3): # MergeResults only joins up to 4 at a time
         with open(merge_results, 'w') as f:
-            cur_input_jtls = [base_jtl] + input_jtls[i:i + 3]
-            cur_prefixes = [base_prefix] + prefixes[i:i + 3]
-            for j, (jtl, p) in enumerate(zip(cur_input_jtls, cur_prefixes)):
-                f.write("inputJtl{}={}\n".format(j + 1, jtl))
-                f.write("prefixLabel{}={}\n".format(j + 1, p))
+            curInputJtls = [baseJtl] + inputJtls[i:i+3]
+            curPrefixes = [basePrefix] + prefixes[i:i+3]
+            for j, (jtl, p) in enumerate(zip(curInputJtls, curPrefixes)):
+                f.write("inputJtl{}={}\n".format(j+1, jtl))
+                f.write("prefixLabel{}={}\n".format(j+1, p))
                 f.write("\n")
-        merge_call = "java -jar {} --tool Reporter --generate-csv joined.csv --input-jtl" \
-                     " {} --plugin-type MergeResults".format(CMDRUNNER, merge_results)
+        merge_call = 'java -jar {} --tool Reporter --generate-csv joined.csv --input-jtl {} --plugin-type MergeResults'.format(CMDRUNNER, merge_results)
         run_process(merge_call)
-        shutil.move('joined.csv', joined)  # MergeResults ignores path given and puts result into cwd
-        base_jtl = joined
-        base_prefix = ""
+        shutil.move('joined.csv', joined) # MergeResults ignores path given and puts result into cwd
+        baseJtl = joined
+        basePrefix = ""
 
     # build report
-    run_process('{} -g {} -o {}'.format(JMETER, joined, report_dir))
+    run_process('{} -g {} -o {}'.format(JMETER, joined, reportDir))
 
     print("Merged output available at {}".format(out_dir))
-    print("Merged report generated at {}".format(os.path.join(report_dir, 'index.html')))
+    print("Merged report generated at {}".format(os.path.join(reportDir, 'index.html')))
 
     return reports
 
 
-def parse_model():
+def parseModel():
     if benchmark_model in MODEL_MAP:
         plan, jmeter_args = MODEL_MAP[benchmark_model]
         for k, v in jmeter_args.items():
@@ -339,8 +344,7 @@ def decorate_metrics(data_frame, row_to_read):
     row_name = row_to_read.replace(' ', '_')
     for key, value in temp_dict.items():
         if key in AGGREGATE_REPORT_CSV_LABELS_MAP:
-            new_key = '{}_{}_{}_{}'.format(benchmark_name, benchmark_model, row_name,
-                                           AGGREGATE_REPORT_CSV_LABELS_MAP[key])
+            new_key = '{}_{}_{}_{}'.format(benchmark_name, benchmark_model, row_name, AGGREGATE_REPORT_CSV_LABELS_MAP[key])
             result[new_key] = value
     return result
 
@@ -355,7 +359,7 @@ class Benchmarks:
         """
         Performs a simple single benchmark that measures the model throughput on inference tasks
         """
-        plan, jmeter_args = parse_model()
+        plan, jmeter_args = parseModel()
         return run_single_benchmark(plan, jmeter_args)
 
     @staticmethod
@@ -363,7 +367,7 @@ class Benchmarks:
         """
         Performs a simple single benchmark that measures the model latency on inference tasks
         """
-        plan, jmeter_args = parse_model()
+        plan, jmeter_args = parseModel()
         return run_single_benchmark(plan, jmeter_args, threads=1)
 
     @staticmethod
@@ -378,7 +382,7 @@ class Benchmarks:
         """
         Benchmarks number of concurrent inference requests
         """
-        plan, jmeter_args = parse_model()
+        plan, jmeter_args = parseModel()
         plan = JMX_CONCURRENT_LOAD_PLAN
         jmeter_args['count'] = 8
         return run_single_benchmark(plan, jmeter_args)
@@ -388,7 +392,7 @@ class Benchmarks:
         """
         Benchmarks number of concurrent inference requests
         """
-        plan, jmeter_args = parse_model()
+        plan, jmeter_args = parseModel()
         plan = JMX_CONCURRENT_SCALE_CALLS
         jmeter_args['scale_up_workers'] = 16
         jmeter_args['scale_down_workers'] = 2
@@ -403,10 +407,10 @@ class Benchmarks:
         jmeter_args = {
             'url1': MODEL_MAP[MODEL_NOOP][1]['url'],
             'url2': MODEL_MAP[MODEL_LSTM_PTB][1]['url'],
-            'url3': MODEL_MAP[MODEL_RESNET_50v1][1]['url'],
+            'url3': MODEL_MAP[MODEL_RESNET_18][1]['url'],
             'model1_name': MODEL_MAP[MODEL_NOOP][1]['model_name'],
             'model2_name': MODEL_MAP[MODEL_LSTM_PTB][1]['model_name'],
-            'model3_name': MODEL_MAP[MODEL_RESNET_50v1][1]['model_name'],
+            'model3_name': MODEL_MAP[MODEL_RESNET_18][1]['model_name'],
             'data3': get_resource('kitten.jpg')
         }
         return run_single_benchmark(plan, jmeter_args)
@@ -416,8 +420,8 @@ class Benchmarks:
         """
         Benchmarks number of concurrent inference requests
         """
-        plan, jmeter_args = parse_model()
-        return run_multi_benchmark('threads', range(1, 3 * 5 + 1, 3), plan, jmeter_args)
+        plan, jmeter_args = parseModel()
+        return run_multi_benchmark('threads', range(1, 3*5+1, 3), plan, jmeter_args)
 
 
 def run_benchmark():
@@ -430,13 +434,13 @@ def run_benchmark():
         raise Exception("No benchmark benchmark_named {}".format(benchmark_name))
 
 
-def modify_config_props_for_mms(p_args, out_dir, model_name, model_url):
-    config_path = "{}/config.properties".format(out_dir)
-    shutil.copyfile(CONFIG_PROP_TEMPLATE, config_path)
-    with open(config_path, 'a') as f:
-        f.write("\nload_models={}={}".format(model_name, model_url))
-        if p_args.gpus:
-            f.write('\nnumber_of_gpu={}'.format(p_args.gpus[0]))
+def modify_config_props_for_mms(pargs):
+    shutil.copyfile(CONFIG_PROP_TEMPLATE, CONFIG_PROP)
+    with open(CONFIG_PROP, 'a') as f:
+        f.write('\nnumber_of_netty_threads=32')
+        f.write('\njob_queue_size=1000')
+        if pargs.gpus:
+            f.write('\nnumber_of_gpu={}'.format(pargs.gpus[0]))
 
 
 if __name__ == '__main__':
@@ -444,38 +448,26 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='mxnet-model-server-benchmarks', description='Benchmark MXNet Model Server')
 
     target = parser.add_mutually_exclusive_group(required=True)
-    target.add_argument('name', nargs='?', type=str, choices=benchmark_name_options,
-                        help='The name of the benchmark to run')
+    target.add_argument('name', nargs='?', type=str, choices=benchmark_name_options, help='The name of the benchmark to run')
     target.add_argument('-a', '--all', action='store_true', help='Run all benchmarks')
     target.add_argument('-s', '--suite', action='store_true', help='Run throughput and latency on a supplied model')
 
     model = parser.add_mutually_exclusive_group()
-    model.add_argument('-m', '--model', nargs=1, type=str, dest='model', default=[MODEL_RESNET_50v1],
-                       choices=MODEL_MAP.keys(),
-                       help='A preloaded model to run.  It defaults to {}'.format(MODEL_RESNET_50v1))
-    model.add_argument('-c', '--custom-model', nargs=1, type=str, dest='model',
-                       help='The path to a custom model to run.  The input argument must also be passed.'
-                            ' Currently broken')
+    model.add_argument('-m', '--model', nargs=1, type=str, dest='model', default=[MODEL_RESNET_18], choices=MODEL_MAP.keys(), help='A preloaded model to run.  It defaults to {}'.format(MODEL_RESNET_18))
+    model.add_argument('-c', '--custom-model', nargs=1, type=str, dest='model', help='The path to a custom model to run.  The input argument must also be passed. Currently broken')
 
     parser.add_argument('-d', '--docker', nargs=1, type=str, default=None, help='Docker hub path to use')
     parser.add_argument('-i', '--input', nargs=1, type=str, default=None, help='The input to feed to the test')
-    parser.add_argument('-g', '--gpus', nargs=1, type=int, default=None,
-                        help='Number of gpus.  Leave empty to run CPU only')
+    parser.add_argument('-g', '--gpus', nargs=1, type=int, default=None, help='Number of gpus.  Leave empty to run CPU only')
 
     parser.add_argument('-l', '--loops', nargs=1, type=int, default=[10], help='Number of loops to run')
     parser.add_argument('-t', '--threads', nargs=1, type=int, default=None, help='Number of jmeter threads to run')
     parser.add_argument('-w', '--workers', nargs=1, type=int, default=None, help='Number of MMS backend workers to use')
 
-    parser.add_argument('--mms', nargs=1, type=str,
-                        help='Target an already running instance of MMS instead of spinning up a docker container'
-                             ' of MMS.  Specify the target with the format address:port (for http)'
-                             ' or protocol://address:port')
-    parser.add_argument('--management-port', dest='management', nargs=1, type=str,
-                        help='When targeting a running MMS instance, specify the management port')
+    parser.add_argument('--mms', nargs=1, type=str, help='Target an already running instance of MMS instead of spinning up a docker container of MMS.  Specify the target with the format address:port (for http) or protocol://address:port')
+    parser.add_argument('--management-port', dest='management', nargs=1, type=str, help='When targeting a running MMS instance, specify the management port')
     parser.add_argument('-v', '--verbose', action='store_true', help='Display all output')
-    parser.add_argument('--options', nargs='*', default=[],
-                        help='Additional jmeter arguments.  It should follow the format of --options argname1 argval1'
-                             ' argname2 argval2 ...')
+    parser.add_argument('--options', nargs='*', default=[], help='Additional jmeter arguments.  It should follow the format of --options argname1 argval1 argname2 argval2 ...')
     pargs = parser.parse_args()
 
     if os.path.exists(OUT_DIR):
@@ -484,6 +476,8 @@ if __name__ == '__main__':
             os.makedirs(OUT_DIR)
     else:
         os.makedirs(OUT_DIR)
+
+    modify_config_props_for_mms(pargs)
 
     if pargs.suite:
         benchmark_model = pargs.model[0].lower()

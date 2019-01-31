@@ -32,6 +32,7 @@ To propose a model for inclusion, please submit a [pull request](https://github.
 | [ResNet-50v2](#resnet-50v2) | Image Classification | ImageNet | ONNX | 98 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet50v2.mar) |
 | [ResNet-101v2](#resnet-101v2) | Image Classification | ImageNet | ONNX | 171 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet101v2.mar) |
 | [ResNet-152v2](#resnet-152v2) | Image Classification | ImageNet | ONNX | 231 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet152v2.mar) |
+| [Shufflenet](#shufflenet) | Image Classification | ImageNet | ONNX | 8.1   MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/shufflenet.mar) |
 | [SqueezeNet_v1.1](#squeezenet_v1.1_onnx) | Image Classification | ImageNet | ONNX | 5 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet.mar) |
 | [SqueezeNet v1.1](#squeezenet_v1.1) | Image Classification | ImageNet | MXNet | 5 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar) |
 | [VGG16](#vgg16) | Image Classification | ImageNet | MXNet | 490 MB | [.mar](https://s3.amazonaws.com/model-server/model_archive_1.0/vgg16.mar) |
@@ -530,6 +531,23 @@ mxnet-model-server --start --models resnet152-v2=https://s3.amazonaws.com/model-
 * **Run Prediction**:
 ```bash
 curl -X POST http://127.0.0.1:8080/predictions/resnet152-v2 -T kitten.jpg
+```
+
+## <a name="Shufflenet"></a>Shufflenet_v2
+* **Type**: Image classification trained on ImageNet
+
+* **Reference**: [Zhang, et al.](https://arxiv.org/abs/1707.01083)
+
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+
+* **Start Server**:
+```bash
+mxnet-model-server --start --models shufflenet=https://s3.amazonaws.com/model-server/model_archive_1.0/shufflenet.mar
+```
+
+* **Run Prediction**:
+```bash
+curl -X POST http://127.0.0.1:8080/predictions/shufflenet -T kitten.jpg
 ```
 
 ## <a name="squeezenet_v1.1"></a>SqueezeNet v1.1

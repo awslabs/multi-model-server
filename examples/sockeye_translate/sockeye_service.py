@@ -2,7 +2,6 @@ import logging
 import os
 import re
 from contextlib import ExitStack
-
 from sockeye import arguments
 from sockeye import constants as const
 from sockeye import inference
@@ -83,6 +82,7 @@ class SockeyeService(ModelHandler):
     def __init__(self):
         super(SockeyeService, self).__init__()
         self.basedir = None
+        self.device_ids = []
         self.postprocessor = None
         self.preprocessor = None
         self.sentence_id = 0
@@ -105,10 +105,11 @@ class SockeyeService(ModelHandler):
         # override models directory
         sockeye_args.models = [self.basedir]
 
-        device_ids = []
-        if not sockeye_args.use_cpu:
-            if 'gpu_id' in context.system_properties and context.system_properties['gpu_id']:
-                device_ids.append(context.system_properties['gpu_id'])
+        if 'gpu_id' in context.system_properties:
+            self.device_ids.append(context.system_properties['gpu_id'])
+        else:
+            logging.warning('No gpu_id found in context')
+            self.device_ids.append(0)
 
         if sockeye_args.checkpoints is not None:
             check_condition(len(sockeye_args.checkpoints) == len(sockeye_args.models),
@@ -137,8 +138,8 @@ class SockeyeService(ModelHandler):
                                             sockeye_args.sure_align_threshold)
 
         with ExitStack() as exit_stack:
-            check_condition(len(device_ids) <= 1, 'translate only supports single device for now')
-            translator_ctx = determine_context(device_ids=device_ids,
+            check_condition(len(self.device_ids) == 1, 'translate only supports single device for now')
+            translator_ctx = determine_context(device_ids=self.device_ids,
                                                use_cpu=sockeye_args.use_cpu,
                                                disable_device_locking=sockeye_args.disable_device_locking,
                                                lock_dir=sockeye_args.lock_dir,

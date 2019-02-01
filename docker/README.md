@@ -33,7 +33,7 @@ Running MXNet Model Server with Docker in two steps:
 This will download the MMS Docker image and run its default configuration, serving a SqueezeNet model.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
 With the `-p` flag, we're setting it up so you can run the Predict API on your host computer's port `80`. This maps to the Docker image's port `8080`.
@@ -69,8 +69,8 @@ docker rm -f mms
 ## Available pre-built continers
 We have 5 containers tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/).
 1. *latest*: This will be the same as `mxnet-model-server:1.0.0-mxnet-cpu`. This tag will be available after an official release.
-2. *1.0.0-mxnet-cpu*: This will be the official CPU container based on the [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu). This tag will be available after an official 1.0 release.
-3. *1.0.0-mxnet-gpu*: This will be the official GPU container based on the [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu). This tag will be available after an official 1.0 release.
+2. *1.0.1-mxnet-cpu*: This will be the official CPU container based on the [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu). This tag will be available after an official 1.0 release.
+3. *1.0.1-mxnet-gpu*: This will be the official GPU container based on the [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu). This tag will be available after an official 1.0 release.
 4. *nightly-mxnet-cpu*: This will be the official CPU container which is built based on the nightly release of MMS pip package. This will be built from [Dockerfile.nightly-cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-cpu).
 5. *nightly-mxnet-gpu*: This will be the official GPU container which is built based on the nightly release of MMS pip package. This will be built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-gpu).
 
@@ -79,19 +79,19 @@ To pull the a particular container, run the following command
 #### Pulling the latest tag:
 Docker pull by default pulls the latest tag. This tag isn't available until after an official release. 
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server # This gets the latest release which is the same as 1.0.0-mxnet-cpu
+docker pull awsdeeplearningteam/mxnet-model-server # This gets the latest release which is the same as 1.0.1-mxnet-cpu
 ``` 
 
-#### Pulling the `1.0.0-mxnet-cpu` tag:
+#### Pulling the `1.0.1-mxnet-cpu` tag:
 To pull a official 1.0 MMS CPU container run the following command. This tag isn't available until after an official release. 
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu 
+docker pull awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu 
 ``` 
 
-#### Pulling the `1.0.0-mxnet-gpu` tag:
+#### Pulling the `1.0.1-mxnet-gpu` tag:
 To pull a official 1.0 MMS GPU container run the following command. This tag isn't available until after an official release. 
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-gpu 
+docker pull awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-gpu 
 ``` 
 
 #### Pulling the `nightly-mxnet-cpu` tag:
@@ -164,7 +164,7 @@ When you run the following command, the `-v` argument and path values of `/tmp/m
 MMS will then be able to use the local model file.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu mxnet-model-server --start --mms-config /models/config.properties --models resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
+docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu mxnet-model-server --start --mms-config /models/config.properties --models resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
 ```
 
 **NOTE**: If you modify the inference_address or the management_address in the configuration file,

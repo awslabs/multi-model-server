@@ -178,7 +178,7 @@ public class ModelServer {
                                 null,
                                 1,
                                 100,
-                                Integer.parseInt(configManager.getDefaultResponseTimeout()));
+                                configManager.getDefaultResponseTimeout());
                 modelManager.updateModel(archive.getModelName(), workers, workers);
             } catch (ModelException | IOException e) {
                 logger.warn("Failed to load model: " + url, e);

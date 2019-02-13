@@ -323,6 +323,12 @@ public final class OpenApiUtils {
                         "Maximum delay for batch aggregation, default: 100."));
         operation.addParameter(
                 new QueryParameter(
+                        "response_timeout",
+                        "integer",
+                        "2",
+                        "Maximum time, in minutes, the Model Server waits for a response from the model inference code, default: 2."));
+        operation.addParameter(
+                new QueryParameter(
                         "initial_workers",
                         "integer",
                         "0",

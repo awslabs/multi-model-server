@@ -64,13 +64,7 @@ public final class ModelManager {
 
     public ModelArchive registerModel(String url) throws ModelException, IOException {
         return registerModel(
-                url,
-                null,
-                null,
-                null,
-                1,
-                100,
-                Integer.parseInt(configManager.getDefaultResponseTimeout()));
+                url, null, null, null, 1, 100, configManager.getDefaultResponseTimeout());
     }
 
     public ModelArchive registerModel(

@@ -149,15 +149,6 @@ public final class ConfigManager {
             prop.setProperty("PYTHON_EXECUTABLE", pythonExecutable);
         }
 
-        String defaultResponseTimeout = System.getenv("DEFAULT_RESPONSE_TIMEOUT");
-        if (defaultResponseTimeout == null) {
-            defaultResponseTimeout = args.getDefaultResponseTO();
-        }
-
-        if (defaultResponseTimeout != null) {
-            setDefaultResponseTimeout(defaultResponseTimeout);
-        }
-
         try {
             InetAddress ip = InetAddress.getLocalHost();
             hostName = ip.getHostName();
@@ -441,12 +432,8 @@ public final class ConfigManager {
         return Integer.parseInt(value);
     }
 
-    public String getDefaultResponseTimeout() {
-        return prop.getProperty(DEFAULT_RESPONSE_TIMEOUT, "2");
-    }
-
-    public void setDefaultResponseTimeout(String timeout) {
-        prop.setProperty(DEFAULT_RESPONSE_TIMEOUT, timeout);
+    public int getDefaultResponseTimeout() {
+        return Integer.parseInt(prop.getProperty(DEFAULT_RESPONSE_TIMEOUT, "2"));
     }
 
     private File findMmsHome() {
@@ -528,7 +515,6 @@ public final class ConfigManager {
         private String pythonExecutable;
         private String modelStore;
         private String[] models;
-        private String defaultResponseTO;
 
         public Arguments() {}
 
@@ -537,7 +523,6 @@ public final class ConfigManager {
             pythonExecutable = cmd.getOptionValue("python");
             modelStore = cmd.getOptionValue("model-store");
             models = cmd.getOptionValues("models");
-            defaultResponseTO = cmd.getOptionValue("response-timeout");
         }
 
         public static Options getOptions() {
@@ -582,10 +567,6 @@ public final class ConfigManager {
 
         public String getMmsConfigFile() {
             return mmsConfigFile;
-        }
-
-        public String getDefaultResponseTO() {
-            return defaultResponseTO;
         }
 
         public String getPythonExecutable() {

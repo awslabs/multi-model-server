@@ -168,8 +168,9 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         int initialWorkers = NettyUtils.getIntParameter(decoder, "initial_workers", 0);
         boolean synchronous =
                 Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
-        String responseTimeout = NettyUtils.getParameter(decoder, "response_timeout", null);
-        if (responseTimeout == null) {
+        int responseTimeout =
+                Integer.parseInt(NettyUtils.getParameter(decoder, "response_timeout", "-1"));
+        if (responseTimeout == -1) {
             responseTimeout = ConfigManager.getInstance().getDefaultResponseTimeout();
         }
         Manifest.RuntimeType runtimeType = null;
@@ -192,7 +193,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                             handler,
                             batchSize,
                             maxBatchDelay,
-                            Integer.parseInt(responseTimeout));
+                            responseTimeout);
         } catch (IOException e) {
             throw new InternalServerException("Failed to save model: " + modelUrl, e);
         }

@@ -46,6 +46,10 @@ public class RequestInput {
         this.headers = headers;
     }
 
+    public void updateHeaders(String key, String val) {
+        headers.put(key, val);
+    }
+
     public List<InputParameter> getParameters() {
         return parameters;
     }

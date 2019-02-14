@@ -154,6 +154,10 @@ public class InferenceRequestHandler extends HttpRequestHandler {
         }
 
         CharSequence contentType = HttpUtil.getMimeType(req);
+        for (Map.Entry<String, String> entry : req.headers().entries()) {
+            inputData.updateHeaders(entry.getKey(), entry.getValue());
+        }
+
         if (HttpPostRequestDecoder.isMultipart(req)
                 || HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.contentEqualsIgnoreCase(
                         contentType)) {

@@ -28,7 +28,6 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMessage;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
@@ -41,9 +40,7 @@ import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,42 +234,6 @@ public final class NettyUtils {
         } catch (NumberFormatException e) {
             return def;
         }
-    }
-
-    public static Map<String, String> getAcceptHeader(HttpMessage message) {
-        HashMap<String, String> acceptMap = new HashMap<>();
-        String acceptValue = message.headers().get(HttpHeaderNames.ACCEPT);
-        String acceptEncoding = message.headers().get(HttpHeaderNames.ACCEPT_ENCODING);
-        String acceptCharset = message.headers().get(HttpHeaderNames.ACCEPT_CHARSET);
-        String acceptLanguage = message.headers().get(HttpHeaderNames.ACCEPT_LANGUAGE);
-        String acceptRanges = message.headers().get(HttpHeaderNames.ACCEPT_RANGES);
-        String acceptPatch = message.headers().get(HttpHeaderNames.ACCEPT_PATCH);
-
-        if (acceptValue != null) {
-            acceptMap.put(HttpHeaderNames.ACCEPT.toString(), acceptValue);
-        }
-
-        if (acceptEncoding != null) {
-            acceptMap.put(HttpHeaderNames.ACCEPT_ENCODING.toString(), acceptEncoding);
-        }
-
-        if (acceptCharset != null) {
-            acceptMap.put(HttpHeaderNames.ACCEPT_CHARSET.toString(), acceptCharset);
-        }
-
-        if (acceptLanguage != null) {
-            acceptMap.put(HttpHeaderNames.ACCEPT_LANGUAGE.toString(), acceptLanguage);
-        }
-
-        if (acceptRanges != null) {
-            acceptMap.put(HttpHeaderNames.ACCEPT_RANGES.toString(), acceptRanges);
-        }
-
-        if (acceptPatch != null) {
-            acceptMap.put(HttpHeaderNames.ACCEPT_PATCH.toString(), acceptPatch);
-        }
-
-        return acceptMap;
     }
 
     public static InputParameter getFormData(InterfaceHttpData data) {

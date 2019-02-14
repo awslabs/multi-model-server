@@ -154,7 +154,9 @@ public class InferenceRequestHandler extends HttpRequestHandler {
         }
 
         CharSequence contentType = HttpUtil.getMimeType(req);
-        Map<String, String> acceptMap = NettyUtils.getAcceptHeader(req);
+        for (Map.Entry<String, String> entry : req.headers().entries()) {
+            inputData.updateHeaders(entry.getKey(), entry.getValue());
+        }
 
         if (HttpPostRequestDecoder.isMultipart(req)
                 || HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED.contentEqualsIgnoreCase(
@@ -173,7 +175,6 @@ public class InferenceRequestHandler extends HttpRequestHandler {
             }
         } else {
             byte[] content = NettyUtils.getBytes(req.content());
-            inputData.setHeaders(acceptMap);
             inputData.addParameter(new InputParameter("body", content, contentType));
         }
         return inputData;

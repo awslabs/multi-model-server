@@ -33,7 +33,7 @@ Running MXNet Model Server with Docker in two steps:
 This will download the MMS Docker image and run its default configuration, serving a SqueezeNet model.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 With the `-p` flag, we're setting it up so you can run the Predict API on your host computer's port `80`. This maps to the Docker image's port `8080`.

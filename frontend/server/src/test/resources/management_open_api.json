@@ -243,7 +243,7 @@
           {
             "in": "query",
             "name": "response_timeout",
-            "description": "Maximum time, in minutes, the Model Server waits for a response from the model inference code, default: 2.",
+            "description": "Maximum time, in seconds, the Model Server waits for a response from the model inference code, default: 2.",
             "required": false,
             "schema": {
               "type": "integer",

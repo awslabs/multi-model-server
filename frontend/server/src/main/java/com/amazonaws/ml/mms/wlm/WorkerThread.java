@@ -135,9 +135,8 @@ public class WorkerThread implements Runnable {
 
                 backendChannel.writeAndFlush(req).sync();
 
-                // TODO: Change this to configurable param
                 long begin = System.currentTimeMillis();
-                ModelWorkerResponse reply = replies.poll(responseTimeout, TimeUnit.MINUTES);
+                ModelWorkerResponse reply = replies.poll(responseTimeout, TimeUnit.SECONDS);
 
                 long duration = System.currentTimeMillis() - begin;
                 logger.info("Backend response time: {}", duration);

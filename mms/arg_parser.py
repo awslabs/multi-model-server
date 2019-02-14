@@ -48,9 +48,6 @@ class ArgParser(object):
         parser.add_argument('--log-config',
                             dest='log_config',
                             help='Log4j configuration file for model server')
-        parser.add_argument('--default-response-timeout',
-                            dest='response_timeout',
-                            help='Default response timeout - value in minutes.')
 
         return parser
 

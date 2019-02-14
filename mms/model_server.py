@@ -63,10 +63,6 @@ def start():
 
             cmd.append("-Dlog4j.configuration=file://{}".format(log_config))
 
-        if args.response_timeout:
-            response_timeout = args.response_timeout
-            cmd.append("-Dresponse_timeout={}".format(response_timeout))
-
         tmp_dir = os.environ.get("TEMP")
         if tmp_dir:
             if not os.path.isdir(tmp_dir):

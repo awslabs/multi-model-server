@@ -164,7 +164,7 @@ When you run the following command, the `-v` argument and path values of `/tmp/m
 MMS will then be able to use the local model file.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu mxnet-model-server --start --mms-config /models/config.properties --models resnet=https://s3.amazonaws.com/model-server/models/resnet-18/resnet-18.model
+docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
 ```
 
 **NOTE**: If you modify the inference_address or the management_address in the configuration file,

@@ -433,7 +433,7 @@ public final class ConfigManager {
     }
 
     public int getDefaultResponseTimeout() {
-        return Integer.parseInt(prop.getProperty(DEFAULT_RESPONSE_TIMEOUT, "2"));
+        return Integer.parseInt(prop.getProperty(DEFAULT_RESPONSE_TIMEOUT, "120"));
     }
 
     private File findMmsHome() {
@@ -554,13 +554,6 @@ public final class ConfigManager {
                             .hasArg()
                             .argName("MODELS-STORE")
                             .desc("Model store location where models can be loaded.")
-                            .build());
-            options.addOption(
-                    Option.builder("t")
-                            .longOpt("response-timeout")
-                            .hasArg()
-                            .argName("RESPONSE-TIMEOUT")
-                            .desc("Model response timeout.")
                             .build());
             return options;
         }

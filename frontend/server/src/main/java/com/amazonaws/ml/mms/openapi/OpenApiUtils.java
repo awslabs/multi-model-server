@@ -326,7 +326,7 @@ public final class OpenApiUtils {
                         "response_timeout",
                         "integer",
                         "2",
-                        "Maximum time, in minutes, the Model Server waits for a response from the model inference code, default: 2."));
+                        "Maximum time, in seconds, the Model Server waits for a response from the model inference code, default: 2."));
         operation.addParameter(
                 new QueryParameter(
                         "initial_workers",

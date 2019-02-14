@@ -27,7 +27,7 @@ Similar as [Inference API](inference_api.md), Management API also provide a [API
 * max_batch_delay - the maximum delay for batch aggregation. The default value is 100 milliseconds.
 * initial_workers - the number of initial workers to create. The default value is `0`. MMS will not run inference until there is at least one work assigned.
 * synchronous - whether or not the creation of worker is synchronous. The default value is false. MMS will create new workers without waiting for acknowledgement that the previous worker is online.
-* response_timeout - If the model's backend worker doesn't respond with inference response within this timeout period, the worker will be deemed unresponsive and rebooted. The units is minutes. The default value is 2 minutes.
+* response_timeout - If the model's backend worker doesn't respond with inference response within this timeout period, the worker will be deemed unresponsive and rebooted. The units is seconds. The default value is 120 seconds.
 
 ```bash
 curl -X POST "http://localhost:8081/models?url=https%3A%2F%2Fs3.amazonaws.com%2Fmodel-server%2Fmodel_archive_1.0%2Fsqueezenet_v1.1.mar"

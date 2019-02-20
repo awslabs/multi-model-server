@@ -99,7 +99,7 @@ public class BatchAggregator {
     }
 
     public void sendError(BaseModelRequest message, String error) {
-        if ((message != null) && (message instanceof ModelLoadModelRequest)) {
+        if (message instanceof ModelLoadModelRequest) {
             logger.warn("Load model failed: {}, error: {}", message.getModelName(), error);
             return;
         }

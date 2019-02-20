@@ -32,6 +32,7 @@ def socket_patches(mocker):
 
 
 # noinspection PyClassHasNoInit
+@pytest.mark.skip(reason="Test needs to be redone")
 class TestOtfCodecHandler:
 
     def test_retrieve_msg_unknown(self, socket_patches):

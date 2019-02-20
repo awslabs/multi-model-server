@@ -20,7 +20,6 @@ import os
 import multiprocessing
 import platform
 import socket
-import atexit
 import sys
 
 from mms.arg_parser import ArgParser
@@ -33,11 +32,12 @@ SOCKET_ACCEPT_TIMEOUT = 30.0
 DEBUG = False
 
 
-class MXNetModelServiceWorker(multiprocessing.Process):
+class MXNetModelServiceWorker(object):  # TODO: Check if multiprocessing.Process is required
     """
     Backend worker to handle Model Server's python service code
     """
-    def __init__(self, s_type=None, s_name=None, host_addr=None, port_num=None, model_req=None, preload_model=False):
+    def __init__(self, s_type=None, s_name=None, host_addr=None, port_num=None, model_request=None,
+                 preload_model=False):
         if os.environ.get("OMP_NUM_THREADS") is None:
             os.environ["OMP_NUM_THREADS"] = "1"
         if os.environ.get("MXNET_USE_OPERATOR_TUNING") is None:
@@ -68,7 +68,7 @@ class MXNetModelServiceWorker(multiprocessing.Process):
         self.sock = socket.socket(socket_family, socket.SOCK_STREAM)
         self.preload = preload_model
         self.service = None
-        self.model_meta_data = model_req
+        self.model_meta_data = model_request
         self.out = self.err = None
 
     def load_model(self, load_model_request=None):
@@ -115,7 +115,7 @@ class MXNetModelServiceWorker(multiprocessing.Process):
             # TODO: This doesn't work for Windows!!
             os.mkfifo(self.out)
             os.mkfifo(self.err)
-        except:
+        except Exception:  # pylint: disable=broad-except
             pass
 
     def _remap_io(self):
@@ -151,9 +151,15 @@ class MXNetModelServiceWorker(multiprocessing.Process):
                 emit_metrics(self.service.context.metrics.store)
 
     def start_worker(self, cl_socket):
+        """
+        Method to start the worker threads. These worker threads use multiprocessing to spawn a new worker.
+
+        :param cl_socket:
+        :return:
+        """
         try:
             self.handle_connection(cl_socket)
-        except:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             logging.error("Backend worker process die.", exc_info=True)
         finally:
             try:
@@ -181,7 +187,7 @@ class MXNetModelServiceWorker(multiprocessing.Process):
         logging.info("Python runtime: %s", platform.python_version())
 
         while True:
-            (cl_socket, address) = self.sock.accept()
+            (cl_socket, _) = self.sock.accept()
             if self.service is None and self.preload is True:
                 # Lazy loading the models
                 self.load_model(model_req)

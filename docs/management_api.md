@@ -26,7 +26,7 @@ Similar as [Inference API](inference_api.md), Management API also provide a [API
 * batch_size - the inference batch size. The default value is `1`.
 * max_batch_delay - the maximum delay for batch aggregation. The default value is 100 milliseconds.
 * initial_workers - the number of initial workers to create. The default value is `0`. MMS will not run inference until there is at least one work assigned.
-* preload_model - load the model once and share this with all the forked model workers. This should be set to "true" only on `unix` based CPU systems.
+* preload_model - load the model once and share this with all the forked model workers. This should be set to "true" only on `unix` based CPU systems. MMS will forcefully set it to false on systems where it can't preload a model. The default value is `true`. 
 * synchronous - whether or not the creation of worker is synchronous. The default value is false. MMS will create new workers without waiting for acknowledgement that the previous worker is online.
 
 ```bash

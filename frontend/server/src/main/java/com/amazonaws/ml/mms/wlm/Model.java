@@ -52,6 +52,7 @@ public class Model {
 
     public Model(ModelArchive modelArchive, int queueSize, String preloadModel) {
         this.modelArchive = modelArchive;
+        this.preloadModel = preloadModel;
         batchSize = 1;
         maxBatchDelay = 100;
         jobsDb = new ConcurrentHashMap<>();
@@ -60,7 +61,6 @@ public class Model {
         failedInfReqs = new AtomicInteger(0);
         port = new AtomicInteger(-1);
         lock = new ReentrantLock();
-        this.preloadModel = preloadModel;
     }
 
     public String getModelName() {
@@ -121,7 +121,7 @@ public class Model {
     }
 
     public void removeJobQueue(String threadId) {
-        if (!threadId.equals(DEFAULT_DATA_QUEUE) && jobsDb.containsKey(threadId)) {
+        if (!threadId.equals(DEFAULT_DATA_QUEUE)) {
             jobsDb.remove(threadId);
         }
     }

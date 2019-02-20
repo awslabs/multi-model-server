@@ -67,7 +67,7 @@ class ModelService(object):
         list of outputs to be sent back to client.
             data to be sent back
         """
-        pass
+        pass  # pylint: disable=unnecessary-pass
 
     @abstractmethod
     def ping(self):
@@ -79,7 +79,7 @@ class ModelService(object):
         String
             A message, "health": "healthy!", to show system is healthy.
         """
-        pass
+        pass  # pylint: disable=unnecessary-pass
 
     def signature(self):
         """

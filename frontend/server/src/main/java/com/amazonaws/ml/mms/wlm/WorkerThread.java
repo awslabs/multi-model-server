@@ -228,9 +228,9 @@ public class WorkerThread implements Runnable {
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);
         } finally {
-            if (!this.serverThread && req != null) {
+            if (!serverThread && req != null) {
                 aggregator.sendError(req, "Worker died.");
-            } else if (this.serverThread) {
+            } else if (serverThread) {
                 model.setPort(-1);
             }
             setState(WorkerState.WORKER_STOPPED);

@@ -39,6 +39,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +74,7 @@ public class WorkerThread implements Runnable {
     private int gpuId;
     private long memory;
     private long startTime;
-    private Thread currentThread;
+    private AtomicReference<Thread> currentThread = new AtomicReference<>();
     private String workerId;
 
     private WorkerState state;
@@ -105,11 +106,7 @@ public class WorkerThread implements Runnable {
         replies = new ArrayBlockingQueue<>(1);
         workerLoadTime =
                 new Metric(
-                        "W-"
-                                + this.port
-                                + '-'
-                                + model.getModelName()
-                                        .substring(0, Math.min(model.getModelName().length(), 25)),
+                        getWorkerName(),
                         String.valueOf(System.currentTimeMillis()),
                         "ms",
                         ConfigManager.getInstance().getHostName(),
@@ -119,13 +116,9 @@ public class WorkerThread implements Runnable {
     @Override
     public void run() {
         int responseTimeout = model.getResponseTimeout();
-        currentThread = Thread.currentThread();
-        currentThread.setName(
-                "W-"
-                        + port
-                        + '-'
-                        + model.getModelName()
-                                .substring(0, Math.min(model.getModelName().length(), 25)));
+        Thread thread = Thread.currentThread();
+        thread.setName(getWorkerName());
+        currentThread.set(thread);
         BaseModelRequest req = null;
         try {
             connect();
@@ -181,6 +174,10 @@ public class WorkerThread implements Runnable {
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);
         } finally {
+            // WorkerThread is running in thread pool, the thread will be assigned to next
+            // Runnable once this worker is finished. If currentThread keep holding the reference
+            // of the thread, currentThread.interrupt() might kill next worker.
+            currentThread.set(null);
             if (req != null) {
                 aggregator.sendError(req, "Worker died.");
             }
@@ -238,7 +235,10 @@ public class WorkerThread implements Runnable {
                                         latch.countDown();
                                         logger.info(
                                                 "{} Worker disconnected. {}", getWorkerId(), state);
-                                        currentThread.interrupt();
+                                        Thread thread = currentThread.getAndSet(null);
+                                        if (thread != null) {
+                                            thread.interrupt();
+                                        }
                                     });
 
             backendChannel
@@ -302,17 +302,26 @@ public class WorkerThread implements Runnable {
         if (backendChannel != null) {
             backendChannel.close();
         }
-        if (currentThread != null) {
-            currentThread.interrupt();
+        Thread thread = currentThread.getAndSet(null);
+        if (thread != null) {
+            thread.interrupt();
             aggregator.sendError(null, "Worker scaled down.");
 
             model.removeJobQueue(workerId);
         }
     }
 
+    private final String getWorkerName() {
+        String modelName = model.getModelName();
+        if (modelName.length() > 25) {
+            modelName = modelName.substring(0, 25);
+        }
+        return "W-" + port + '-' + modelName;
+    }
+
     void setState(WorkerState newState) {
         listener.notifyChangeState(model.getModelName(), newState);
-        logger.debug("{} State change {} -> {}", currentThread.getName(), state, newState);
+        logger.debug("{} State change {} -> {}", getWorkerName(), state, newState);
         long timeTaken = System.currentTimeMillis() - startTime;
         if (state != WorkerState.WORKER_SCALED_DOWN) {
             // Don't update the state if it was terminated on purpose.. Scaling in..

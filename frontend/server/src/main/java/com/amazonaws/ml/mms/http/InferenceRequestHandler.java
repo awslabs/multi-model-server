@@ -14,6 +14,7 @@ package com.amazonaws.ml.mms.http;
 
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
+import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.InputParameter;
 import com.amazonaws.ml.mms.util.messages.RequestInput;
@@ -25,6 +26,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
@@ -90,7 +92,21 @@ public class InferenceRequestHandler extends HttpRequestHandler {
     private void handleInvocations(
             ChannelHandlerContext ctx, FullHttpRequest req, QueryStringDecoder decoder)
             throws ModelNotFoundException {
-        String modelName = NettyUtils.getParameter(decoder, "model_name", null);
+        boolean singleModelMode = ConfigManager.getInstance().getSingleModelMode();
+        Map<String, Model> models;
+        String modelName = null;
+
+        if (singleModelMode) {
+            models = ModelManager.getInstance().getModels();
+            if (!models.isEmpty()) {
+                modelName = models.entrySet().iterator().next().getValue().getModelName();
+            } else {
+                NettyUtils.sendJsonResponse(
+                        ctx, "Model not available", HttpResponseStatus.BAD_REQUEST);
+            }
+        } else {
+            modelName = NettyUtils.getParameter(decoder, "model_name", null);
+        }
         predict(ctx, req, decoder, modelName);
     }
 

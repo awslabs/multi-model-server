@@ -121,6 +121,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             throws ModelNotFoundException {
         ModelManager modelManager = ModelManager.getInstance();
         Model model = modelManager.getModels().get(modelName);
+
         if (model == null) {
             throw new ModelNotFoundException("Model not found: " + modelName);
         }
@@ -149,13 +150,24 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             long memory = worker.getMemory();
             resp.addWorker(workerId, startTime, isRunning, gpuId, memory);
         }
-
-        NettyUtils.sendJsonResponse(ctx, resp);
+        NettyUtils.sendJsonResponse(ctx, resp, HttpResponseStatus.OK);
     }
 
     private void handleRegisterModel(ChannelHandlerContext ctx, QueryStringDecoder decoder)
             throws ModelException {
         String modelUrl = NettyUtils.getParameter(decoder, "url", null);
+        boolean singleModelMode = ConfigManager.getInstance().getSingleModelMode();
+        ModelManager modelManager = ModelManager.getInstance();
+
+        if ((modelManager.getModels().size() > 0) && (singleModelMode)) {
+            NettyUtils.sendJsonResponse(
+                    ctx,
+                    "Model Server is currently serving a model and is running "
+                            + "in single model mode. Can't load more models",
+                    HttpResponseStatus.BAD_REQUEST);
+            return;
+        }
+
         if (modelUrl == null) {
             throw new BadRequestException("Parameter url is required.");
         }
@@ -182,7 +194,6 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             }
         }
 
-        ModelManager modelManager = ModelManager.getInstance();
         final ModelArchive archive;
         try {
             archive =
@@ -220,12 +231,19 @@ public class ManagementRequestHandler extends HttpRequestHandler {
 
     private void handleUnregisterModel(ChannelHandlerContext ctx, String modelName)
             throws ModelNotFoundException {
-        ModelManager modelManager = ModelManager.getInstance();
-        if (!modelManager.unregisterModel(modelName)) {
-            throw new ModelNotFoundException("Model not found: " + modelName);
+        String msg;
+        HttpResponseStatus status = HttpResponseStatus.OK;
+        if (ConfigManager.getInstance().getSingleModelMode()) {
+            msg = "Model Server is running in Single Model Mode. Can not unregister the model";
+            status = HttpResponseStatus.BAD_REQUEST;
+        } else {
+            ModelManager modelManager = ModelManager.getInstance();
+            if (!modelManager.unregisterModel(modelName)) {
+                throw new ModelNotFoundException("Model not found: " + modelName);
+            }
+            msg = "Model \"" + modelName + "\" unregistered";
         }
-        String msg = "Model \"" + modelName + "\" unregistered";
-        NettyUtils.sendJsonResponse(ctx, new StatusResponse(msg));
+        NettyUtils.sendJsonResponse(ctx, new StatusResponse(msg), status);
     }
 
     private void handleScaleModel(

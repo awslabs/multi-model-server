@@ -159,6 +159,7 @@ Most of those properties are designed for performance tuning. Adjusting those nu
 * job_queue_size: number inference jobs that frontend will queue before backend can serve, default 100.
 * async_logging: enable asynchronous logging for higher throughput, log output may be delayed if this is enabled, default: false.
 * default_response_timeout: Timeout, in seconds, used for model's backend workers before they are deemed unresponsive and rebooted. default: 120 seconds.
+* single_model_mode: This configuration allows MMS to handle only one model to be hosted. In this mode, `invocations` API can be used to run predictions, without any model_name. Default value is false.
 
 ### config.properties Example
 

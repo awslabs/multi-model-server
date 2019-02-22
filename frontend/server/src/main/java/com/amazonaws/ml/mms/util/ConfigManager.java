@@ -64,6 +64,7 @@ public final class ConfigManager {
     private static final String BLACKLIST_ENV_VARS = "blacklist_env_vars";
     private static final String DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
     private static final String DEFAULT_RESPONSE_TIMEOUT = "default_response_timeout";
+    private static final String SINGLE_MODEL_MODE = "single_model_mode";
 
     // advanced parameters for performance tuning
     private static final String NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
@@ -202,6 +203,10 @@ public final class ConfigManager {
 
     public int getNumberOfGpu() {
         return getIntProperty(NUMBER_OF_GPU, 0);
+    }
+
+    public boolean getSingleModelMode() {
+        return Boolean.parseBoolean(getProperty(SINGLE_MODEL_MODE, "false"));
     }
 
     public int getDefaultWorkers() {
@@ -409,7 +414,9 @@ public final class ConfigManager {
                 + "\nDefault workers per model: "
                 + getDefaultWorkers()
                 + "\nBlacklist Regex: "
-                + prop.getProperty(BLACKLIST_ENV_VARS, "N/A");
+                + prop.getProperty(BLACKLIST_ENV_VARS, "N/A")
+                + "\nSingle model mode: "
+                + prop.getProperty(SINGLE_MODEL_MODE, "false");
     }
 
     public boolean useNativeIo() {

@@ -73,6 +73,7 @@ class ModelHandler(object):
         :param context: model server context
         :return: list of outputs to be send back to client
         """
+        self.error = None  # reset earlier errors
 
         try:
             preprocess_start = time.time()

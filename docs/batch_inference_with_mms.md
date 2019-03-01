@@ -30,7 +30,7 @@ Before jumping into this document, please go over the following docs
 ## Batch Inference with MMS using ResNet-152 model
 To support batching of inference requests, MMS needs the following:
 1. MMS Model Configuration: MMS provides means to configure "Max Batch Size" and "Max Batch Delay" through "POST /models" API. 
-   MMS needs to know the maximum batch size that the model can handle and the maximum delay that MMS can wait for, to form this request-batch. 
+   MMS needs to know the maximum batch size that the model can handle and the maximum delay that MMS should wait for, to form this request-batch. 
 2. Model Handler code: MMS requires the Model Handler to handle the batch of inference requests. 
 
 In this section we will go over the configuration of MMS to handle batching and the actual code changes required at the model level to handle batching. 

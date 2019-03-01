@@ -107,7 +107,7 @@ class MXNetVisionServiceBatching(object):
             try:
                 img_arr = mx.image.imdecode(img, 1, True, None)
             except Exception as e:
-                logging.warn(e, exc_info=True)
+                logging.error(e, exc_info=True)
                 self.erroneous_reqs.add(idx)
                 continue
 
@@ -147,11 +147,11 @@ class MXNetVisionServiceBatching(object):
         ...
 ...
     def inference(self, model_input):
-        Batch = namedtuple('Batch', ['data'])
+        batch = namedtuple('Batch', ['data'])
         if self.error is not None:
             return None
 
-        self.mx_model.forward(Batch([model_input]), is_train=False)
+        self.mx_model.forward(batch([model_input]), is_train=False)
         outputs = self.mx_model.get_outputs()
         res = mx.ndarray.split(outputs[0], axis=0, num_outputs=outputs[0].shape[0])
         res = [res] if not isinstance(res, list) else res

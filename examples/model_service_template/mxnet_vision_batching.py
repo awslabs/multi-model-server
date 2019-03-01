@@ -26,13 +26,13 @@ class MXNetVisionServiceBatching(object):
         self.labels = None
         self.signature = None
         self.epoch = 0
-        self.error = None
         self._context = None
         self._batch_size = 0
         self.initialized = False
         self.erroneous_reqs = set()
 
-    def top_probability(self, data, labels, top=5):
+    # noinspection PyMethodMayBeStatic
+    def top_probability(data, labels, top=5):
         """
         Get top probability prediction from NDArray.
 
@@ -53,10 +53,6 @@ class MXNetVisionServiceBatching(object):
         top_prob = map(lambda x: int(x.asscalar()), sorted_prob[0:top])
         return [{'probability': float(data[0, i].asscalar()), 'class': labels[i]}
                 for i in top_prob]
-
-    # noinspection PyMethodMayBeStatic
-    def get_model_files_prefix(self, context):
-        return context.manifest["model"]["modelName"]
 
     def initialize(self, context):
         """
@@ -80,7 +76,7 @@ class MXNetVisionServiceBatching(object):
         with open(signature_file_path) as f:
             self.signature = json.load(f)
 
-        model_files_prefix = self.get_model_files_prefix(context)
+        model_files_prefix = context.manifest["model"]["modelName"]
         archive_synset = os.path.join(model_dir, "synset.txt")
         if os.path.isfile(archive_synset):
             synset = archive_synset
@@ -125,11 +121,9 @@ class MXNetVisionServiceBatching(object):
         :return: list of NDArray
             Inference output.
         """
-        Batch = namedtuple('Batch', ['data'])
-        if self.error is not None:
-            return None
+        batch = namedtuple('Batch', ['data'])
 
-        self.mx_model.forward(Batch([model_input]), is_train=False)
+        self.mx_model.forward(batch([model_input]), is_train=False)
         outputs = self.mx_model.get_outputs()
         res = mx.ndarray.split(outputs[0], axis=0, num_outputs=outputs[0].shape[0])
         res = [res] if not isinstance(res, list) else res
@@ -167,7 +161,7 @@ class MXNetVisionServiceBatching(object):
             try:
                 img_arr = mx.image.imdecode(img, 1, True, None)
             except Exception as e:
-                logging.warn(e, exc_info=True)
+                logging.error(e, exc_info=True)
                 self.erroneous_reqs.add(idx)
                 continue
 

@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -30,6 +30,7 @@ class MXNetVisionServiceBatching(object):
         self._context = None
         self._batch_size = 0
         self.initialized = False
+        self.erroneous_reqs = set()
 
     def top_probability(self, data, labels, top=5):
         """
@@ -130,13 +131,6 @@ class MXNetVisionServiceBatching(object):
 
         self.mx_model.forward(Batch([model_input]), is_train=False)
         outputs = self.mx_model.get_outputs()
-        for d in outputs:
-            if isinstance(d, list):
-                for n in outputs:
-                    if isinstance(n, mx.ndarray.ndarray.NDArray):
-                        n.wait_to_read()
-            elif isinstance(d, mx.ndarray.ndarray.NDArray):
-                d.wait_to_read()
         res = mx.ndarray.split(outputs[0], axis=0, num_outputs=outputs[0].shape[0])
         res = [res] if not isinstance(res, list) else res
         return res
@@ -166,22 +160,23 @@ class MXNetVisionServiceBatching(object):
                 img = data.get("data")
 
             if img is None or len(img) == 0:
-                self.error = "Empty image input"
-                return None
+                logging.error("Error processing request")
+                self.erroneous_reqs.add(idx)
+                continue
 
             try:
                 img_arr = mx.image.imdecode(img, 1, True, None)
             except Exception as e:
                 logging.warn(e, exc_info=True)
-                self.error = "Corrupted image input"
-                return None
+                self.erroneous_reqs.add(idx)
+                continue
 
             img_arr = mx.image.imresize(img_arr, w, h, 2)
             img_arr = mx.nd.transpose(img_arr, (2, 0, 1))
             self._num_requests = idx + 1
             img_list.append(img_arr)
         
-        logging.debug("PID:{} received {} requests".format(os.getpid(), self._num_requests))
+        logging.debug("Worker :{} received {} requests".format(os.getpid(), self._num_requests))
         reqs = mx.nd.stack(*img_list)
         reqs = reqs.as_in_context(self.mxnet_ctx)
 
@@ -192,13 +187,12 @@ class MXNetVisionServiceBatching(object):
         return reqs
 
     def postprocess(self, data):
-        if self.error is not None:
-            return [self.error] * self._batch_size
-
-        assert hasattr(self, 'labels'), \
-            "Can't find labels attribute. Did you put synset.txt file into " \
-            "model archive or manually load class label file in __init__?"
-        res = [self.top_probability(d, self.labels, top=5) for d in data[:self._num_requests]]
+        res = []
+        for idx, resp in data[:self._num_requests]:
+            if idx not in self.erroneous_reqs:
+                res.append(self.top_probability(resp, self.labels, top=5))
+            else:
+                res.append("Illegal request")
         return res
 
 

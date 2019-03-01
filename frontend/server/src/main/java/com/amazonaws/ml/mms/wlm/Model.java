@@ -13,6 +13,7 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.archive.ModelArchive;
+import com.amazonaws.ml.mms.util.ConfigManager;
 import java.io.File;
 import java.util.Map;
 import java.util.Objects;
@@ -184,7 +185,7 @@ public class Model {
     }
 
     public int getResponseTimeout() {
-        return responseTimeout;
+        return ConfigManager.getInstance().isDebug() ? Integer.MAX_VALUE : responseTimeout;
     }
 
     public void setResponseTimeout(int responseTimeout) {

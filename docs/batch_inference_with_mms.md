@@ -8,7 +8,7 @@
     * [Preprocess logic](#preprocess-logic)
     * [Inference logic](#inference-logic)
     * [Postprocess logic](#postprocess-logic)
-  * [MMS Configuration](#mms-configuration)
+  * [MMS Model Configuration](#mms-model-configuration)
 * [Demo](#demo-to-configure-mms-with-batch-supported-model)
   * [Prerequisites](#pre-requisites)
   * [Running MMS with batch inference](#loading-resnet-152-which-handles-batch-inferences)
@@ -17,14 +17,19 @@
 
 ## Introduction
 
-Micro-batching of requests is defined as aggregation of a set of requests and running this set of requests through the ML/DL framework for inference at once.
-Model Server (MMS) was designed to natively supports micro batching of incoming requests. This functionality provides MMS customers launch models into production to
-optimally utilize their host resources, there by reducing the operational expense of hosting an inference service. In this document we will go through an example of how this is done
+Micro-batching in the Machine-Learning/Deep-Learning is a process of aggregating inference-requests and sending this aggregated requests through the ML/DL framework for inference at once.
+Model Server (MMS) was designed to natively supports micro batching of incoming inference requests. This functionality provides customer using MMS to optimally utilize their host resources, because most ML/DL frameworks
+are optimized for batch requests. This optimal utilization of host resources in turn reduces the operational expense of hosting an inference service using MMS. In this document we will go through an example of how this is done
 and compare the performance of running a batched inference against running single inferences. 
+
+## Prerequisites:
+Before jumping into this document, please go over the following docs
+1. [What is MMS?](../README.md)
+1. [What is custom service code?](custom_service.md)
 
 ## Batch Inference with MMS using ResNet-152 model
 To support micro-batching of inference requests, MMS needs the following:
-1. MMS Configuration: MMS provides means to configure "Max Batch Size" and "Max Batch Delay" through "POST /models" API. 
+1. MMS Model Configuration: MMS provides means to configure "Max Batch Size" and "Max Batch Delay" through "POST /models" API. 
    MMS needs to know the maximum batch size that the model can handle and the maximum delay that MMS can wait for, to form this request-batch. 
 2. Model Handler code: MMS requires the Model Handler to handle the batch of inference requests. 
 
@@ -39,18 +44,18 @@ The handler method is the entrypoint to the model. When MMS receives a request f
 A model's `handler` entry-point is expected to have the following logic:
 1. Loading Model: The handler code should have logic to load the model-artifacts onto the DL/ML Framework, as a part of initialization. In our example, the DL Framework is MXNet
 1. Once initialized, this handler method is given requests for processing. So, the handler is expected to have the logic for: 
-  1. Logic for `preprocess`ing request: The handler converts the incoming request to a format understandable by the ML/DL framework. In our example, that is an NDArray.
-  1. Logic for `inference`: The handler should take the preprocessed data and pass it through through the DL Framework for inference.
-  1. Logic for `postprocess`ing: The handler should take the output of the inference-logic and `postprocess` this data. This is then sent back the clients as the final result.
+    1. Logic for `preprocess`ing request: The handler converts the incoming request to a format understandable by the ML/DL framework. In our example, that is an NDArray.
+    1. Logic for `inference`: The handler should take the preprocessed data and pass it through through the DL Framework for inference.
+    1. Logic for `postprocess`ing: The handler should take the output of the inference-logic and `postprocess` this data. This is then sent back the clients as the final result.
 
 Let's look into how we define the `initialize`, `preprocess`, `inference` and `postprocess` logic in detail.
 
 #### Initialization logic
-As a part of the handler's paramenters, MMS sends a `context` object to the handler. This object contains the batch-size that this model was configured to handle. The configuration for the model 
-comes from the `POST /models` call and this is explained in detail in the below section [MMS Configuration](#mms-configuration). Lets look at a code snippet
+As a part of the handler's parameters, MMS sends a `context` object to the handler. Besides everything else, this `context` object also contains the batch-size that this model was configured to handle. 
+The configuration for the model comes from the `POST /models` call and this is explained in detail in the below section [MMS Model Configuration](#mms-model-configuration). Lets look at a code snippet,
 
 ```python
-class BatchingExample(object):
+class MXNetVisionServiceBatching(object):
 ...
     def initialize(self, context):
         ...
@@ -74,37 +79,55 @@ come into the handler, it always returns the `batch_size` number of NDArray elem
 ```python
 import mxnet as mx
 
-class BatchingExample(object):
+class MXNetVisionServiceBatching(object):
 ...
     def initialize(self, context):
     ...
 ...
     def preprocess(self, request):
         img_list = []
+        param_name = self.signature['inputs'][0]['data_name']
         input_shape = self.signature['inputs'][0]['data_shape']
         # We are assuming input shape is NCHW
         [c, h, w] = input_shape[1:]
-        
+
         for idx, data in enumerate(request):
-            img_arr = mx.image.imdecode(img, 1, True, None)
-            img = data.get("body")
+            img = data.get(param_name)
+            if img is None:
+                img = data.get("body")
+
+            if img is None:
+                img = data.get("data")
+
+            if img is None or len(img) == 0:
+                logging.error("Error processing request")
+                self.erroneous_reqs.add(idx)
+                continue
+
+            try:
+                img_arr = mx.image.imdecode(img, 1, True, None)
+            except Exception as e:
+                logging.warn(e, exc_info=True)
+                self.erroneous_reqs.add(idx)
+                continue
+
             img_arr = mx.image.imresize(img_arr, w, h, 2)
             img_arr = mx.nd.transpose(img_arr, (2, 0, 1))
             self._num_requests = idx + 1
             img_list.append(img_arr)
-            
-            reqs = mx.nd.stack(*img_list)
-            reqs = reqs.as_in_context(self.mxnet_ctx)
-    
-        # If the number of requests coming into the preprocess handler is not equal to the batch_size, then we pad the NDArray with 0's.
+        
+        logging.debug("Worker :{} received {} requests".format(os.getpid(), self._num_requests))
+        reqs = mx.nd.stack(*img_list)
+        reqs = reqs.as_in_context(self.mxnet_ctx)
+
         if (self._batch_size - self._num_requests) != 0:
             padding = mx.nd.zeros((self._batch_size - self._num_requests, c, h, w), self.mxnet_ctx, 'uint8')
             reqs = mx.nd.concat(reqs, padding, dim=0)
-    
+
         return reqs
 ```
 **NOTE: The above code handles the case where the `handler` doesn't receive a `batch_size` number of requests. This is because MMS waits for a `max_batch_delay` amount of time to receive 
-`batch_size` number of requests. If the `max_batch_delay` timer time's out before receiving `batch_size` number of requests, MMS frontend bundles what ever requests it received
+`batch_size` number of requests. If the `max_batch_delay` timer times out before receiving `batch_size` number of requests, MMS bundles what ever requests it received
 and sends it to the handler for processing.**
 
 #### Inference logic
@@ -115,7 +138,7 @@ completeness of this document.
 import mxnet as mx
 from collections import namedtuple
 
-class BatchingExample(object):
+class MXNetVisionServiceBatching(object):
 ...
     def initialize(self, context):
         ...
@@ -130,13 +153,6 @@ class BatchingExample(object):
 
         self.mx_model.forward(Batch([model_input]), is_train=False)
         outputs = self.mx_model.get_outputs()
-        for d in outputs:
-            if isinstance(d, list):
-                for n in outputs:
-                    if isinstance(n, mx.ndarray.ndarray.NDArray):
-                        n.wait_to_read()
-            elif isinstance(d, mx.ndarray.ndarray.NDArray):
-                d.wait_to_read()
         res = mx.ndarray.split(outputs[0], axis=0, num_outputs=outputs[0].shape[0])
         res = [res] if not isinstance(res, list) else res
         return res
@@ -155,7 +171,7 @@ Lets look at the sample logic
 import mxnet as mx
 from collections import namedtuple
 
-class BatchingExample(object):
+class MXNetVisionServiceBatching(object):
 ...
     def initialize(self, context):
         ...
@@ -166,10 +182,12 @@ class BatchingExample(object):
     def inference(self, model_input):
         ...
     def postprocess(self, data):
-        if self.error is not None:
-            return [self.error] * self._batch_size
-
-        res = [self.top_probability(d, self.labels, top=5) for d in data[:self._num_requests]]
+        res = []
+        for idx, resp in data[:self._num_requests]:
+            if idx not in self.erroneous_reqs:
+                res.append(self.top_probability(resp, self.labels, top=5))
+            else:
+                res.append("Illegal request")
         return res
 ...
 ```
@@ -178,17 +196,22 @@ In the above code, we iterate only until **self._num_requests**. This variable i
 for the actual requests coming from external clients.
 
 
-### MMS Configuration
-MMS gets the batch-size information from **POST /models** API. For more information about this API please refer [management API document](https://github.com/awslabs/mxnet-model-server/blob/master/docs/management_api.md).
+### MMS Model Configuration
+To configure MMS to use the micro-batching feature, you would have to provide the batch configuration information through [**POST /models** API](https://github.com/awslabs/mxnet-model-server/blob/master/docs/management_api.md#register-a-model).
 The configuration that we are interested in is the following: 
 1. `batch_size`: This is the maximum batch size that a model is expected to handle. 
-2. `max_batch_delay`: This is the maximum batch delay time MMS frontend waits to receive `batch_size` number of requests. If MMS doesn't receive `batch_size` number of requests
+2. `max_batch_delay`: This is the maximum batch delay time MMS waits to receive `batch_size` number of requests. If MMS doesn't receive `batch_size` number of requests
 before this timer time's out, it sends what ever requests that were received to the model `handler`.
+
+Let's look at an example using this configuration
+```bash
+# The following command will register a model "resnet-152.mar" and configure MMS to use a batch_size of 8 and a max batch delay of 50 milli seconds. 
+curl -X POST "localhost:8081/models?url=resnet-152.mar&batch_size=8&max_batch_delay=50"
+```
  
-These configurations are used both in MMS Frontend and the handler code.  
-in the model's custom-service-code (a.k.a the handler code).
-1. MMS Frontend: MMS Frontend associates the batch related configuration with each model. The frontend then tries to aggregate the batch-size number of requests and send it to the backend.
-2. Handler code: The handler code is given the information about the batch-size. The handler then uses this information to tell the DL framework about the expected batch size.
+These configurations are used both in MMS and in the model's custom-service-code (a.k.a the handler code).
+1. MMS: MMS associates the batch related configuration with each model. The frontend then tries to aggregate the batch-size number of requests and send it to the backend.
+2. Model Custom Handler Code: The handler code is given the information about the batch-size. The handler then uses this information to tell the DL framework about the expected batch size.
 
 
 ## Demo to configure MMS with batch-supported model
@@ -253,7 +276,7 @@ $ curl localhost:8081/models/resnet-152
     ```text
     $ curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
     ``` 
-  * Run imnference to test the model
+  * Run inference to test the model
     ```text
       $ curl -X POST localhost/predictions/resnet-152 -T kitten.jpg
       {
@@ -278,23 +301,28 @@ $ curl localhost:8081/models/resnet-152
       }
     ```
     
-* Now that we have the service up and running, we could run performance tests with the same kitten image as follows.
+* Now that we have the service up and running, we could run performance tests with the same kitten image as follows. There are multiple tools to measure performance of web-servers. We will use 
+[apache-bench](https://httpd.apache.org/docs/2.4/programs/ab.html) to run our performance tests. We chose `apache-bench` for our tests because of the ease of installation and ease of running tests.
+Before running this test, we need to first install `apache-bench` on our System. Since we were running this on a ubuntu host, we installed apache-bench as follows
+```bash
+$ sudo apt-get udpate && sudo apt-get install apache2-utils
+```   
+Now that installation is done, we can run performance benchmark test as follows. 
 ```text
 $ ab -k -l -n 10000 -c 1000 -T "image/jpeg" -p kitten.jpg localhost:8080/predictions/resnet-152
 ```
-To run this, we would need to install "apache bench" first. Since we were running this on a ubuntu host, we installed this as follows
-```bash
-$ sudo apt-get udpate && sudo apt-get install apache2-utils
-``` 
+The above test simulates MMS receiving 1000 concurrent requests at once and a total of 10,000 requests. All of these requests are directed to the endpoint "localhost:8080/predictions/resnet-152", which assumes
+that resnet-152 is already registered and scaled-up on MMS. We had done this registration and scaling up in the above steps.
 
 ## Performance benchmarking
-We benchmarked MMS with batch-inference enabled Resnet-152 on a P3.8xlarge instance, which is a AWS provided GPU EC2 instance. 
+We benchmarked MMS with batch-inference enabled Resnet-152 on a *P3.8xlarge* instance, which is a AWS provided GPU EC2 instance. 
 We ran MMS in our [GPU container](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/tags) which hosted the above resnet-152 model. 
-We ran the tests for batch sizes 1, 8 and captured results. 
+We ran the tests for batch sizes 1, 8 and 16 and captured the results. 
 We saw a significant gain in throughput and also saw that the GPU resources were utilized more optimally. Attached is the graph showing the throughput gains. The 
-experiment was done with the following configuration
+experiment was done with the following configuration. To understand the details of this configuration please refer the [Configuration document](configuration.md)
 
 ```bash
+# MMS configuration
 $ cat config.properties
 model_store=/opt/ml/model
 inference_address=http://0.0.0.0:8080
@@ -302,16 +330,20 @@ management_address=http://0.0.0.0:8081
 number_of_netty_threads=32
 job_queue_size=1000
 async_logging=true
+```
 
+```bash
 # To load the model run the following command
 $ curl -X POST "localhost:81/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/examples/resnet-152-batching/resnet-152.mar&batch_size=8&max_batch_delay=50&initial_workers=8"
 
+```
+As seen from the above command, the number of workers was set at 8 (2 per GPU), and `max_batch_delay` was set at 50 ms.  
 
+```bash
 # Apache bench performance test command
 $ ab -k -l -n 10000 -c 1000 -T "image/jpeg" -p kitten.jpg localhost:8080/predictions/resnet-152
 ```
-We set the `batch_size` at 1, 8 and 16 and captured the results of `ab` command by setting the `-c` option, or concurrency, at 10, 50, 100, 500 and 1000 for each of the `batch_size`s.
-As seen from the command, the number of workers was set at 8 (2 per GPU), and `max_batch_delay` was set at 50 ms.  
+We set the `batch_size` in the above `curl` command at 1, 8 and 16 and captured the results of `ab` command by setting the `-c` option, or concurrency, at 10, 50, 100, 500 and 1000 for each of the `batch_size`s.
 
 ![Graph](images/throughput.png)
 
@@ -320,7 +352,8 @@ the batch size of 1 out performs batch size of 8 or 16. This is because, some re
 by the model handlers. Whereas, by definition, batch size of 1 wouldn't wait for this timeout to occur and the model handler is given the request to handle as and when
 the requests come in.
 
-To understand this behavior a little better, we kept the batch-size at 8 and number of workers at 8 and varied the `max_batch_delay` and ran `ab`. This showed that as 
+We tried to show in an intuitive way as to why we get lower TPS when batch size is 8 or 16 as compared to batch size of 1, when the number of concurrent requests sent to MMS was set at 10.
+For this, we kept the batch-size at 8, number of backend workers at 8 and kept the number of concurrent requests coming in at 10 and varied the `max_batch_delay` and ran `ab`. As we can see from the graph below, as
 the max_batch_delay was set closer to 0, the TPS increased and gets closer to being similar to `batch_size` 1.
 
 ![tps_vs_batch_delay](images/tps_vs_delay.png) 

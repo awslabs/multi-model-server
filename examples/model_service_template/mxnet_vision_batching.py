@@ -192,7 +192,7 @@ class MXNetVisionServiceBatching(object):
             if idx not in self.erroneous_reqs:
                 res.append(self.top_probability(resp, self.labels, top=5))
             else:
-                res.append("Illegal request")
+                res.append("This request was not processed successfully. Refer to mms.log for additional information")
         return res
 
 

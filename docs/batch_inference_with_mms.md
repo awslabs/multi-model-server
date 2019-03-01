@@ -18,7 +18,7 @@
 ## Introduction
 
 Batching in the Machine-Learning/Deep-Learning is a process of aggregating inference-requests and sending this aggregated requests through the ML/DL framework for inference at once.
-Model Server (MMS) was designed to natively supports micro batching of incoming inference requests. This functionality provides customer using MMS to optimally utilize their host resources, because most ML/DL frameworks
+Model Server (MMS) was designed to natively support batching of incoming inference requests. This functionality provides customer using MMS to optimally utilize their host resources, because most ML/DL frameworks
 are optimized for batch requests. This optimal utilization of host resources in turn reduces the operational expense of hosting an inference service using MMS. In this document we will go through an example of how this is done
 and compare the performance of running a batched inference against running single inference.
 

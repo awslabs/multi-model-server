@@ -197,7 +197,7 @@ for the actual requests coming from external clients.
 
 
 ### MMS Model Configuration
-To configure MMS to use the micro-batching feature, you would have to provide the batch configuration information through [**POST /models** API](https://github.com/awslabs/mxnet-model-server/blob/master/docs/management_api.md#register-a-model).
+To configure MMS to use the batching feature, you would have to provide the batch configuration information through [**POST /models** API](https://github.com/awslabs/mxnet-model-server/blob/master/docs/management_api.md#register-a-model).
 The configuration that we are interested in is the following: 
 1. `batch_size`: This is the maximum batch size that a model is expected to handle. 
 2. `max_batch_delay`: This is the maximum batch delay time MMS waits to receive `batch_size` number of requests. If MMS doesn't receive `batch_size` number of requests

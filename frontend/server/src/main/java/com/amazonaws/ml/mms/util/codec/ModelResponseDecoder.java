@@ -17,12 +17,17 @@ import com.amazonaws.ml.mms.util.messages.Predictions;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ModelResponseDecoder extends ByteToMessageDecoder {
 
-    private static final int MAX_BUFFER_SIZE = 6553500;
+    private final int maxBufferSize;
+
+    public ModelResponseDecoder(int maxBufferSize) {
+        this.maxBufferSize = maxBufferSize;
+    }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
@@ -37,27 +42,27 @@ public class ModelResponseDecoder extends ByteToMessageDecoder {
             ModelWorkerResponse resp = new ModelWorkerResponse();
             resp.setCode(in.readInt());
 
-            int len = CodecUtils.readLength(in, MAX_BUFFER_SIZE);
+            int len = CodecUtils.readLength(in, maxBufferSize);
             if (len == CodecUtils.BUFFER_UNDER_RUN) {
                 return;
             }
             resp.setMessage(CodecUtils.readString(in, len));
 
             List<Predictions> predictions = new ArrayList<>();
-            while ((len = CodecUtils.readLength(in, MAX_BUFFER_SIZE)) != CodecUtils.END) {
+            while ((len = CodecUtils.readLength(in, maxBufferSize)) != CodecUtils.END) {
                 if (len == CodecUtils.BUFFER_UNDER_RUN) {
                     return;
                 }
                 Predictions prediction = new Predictions();
                 prediction.setRequestId(CodecUtils.readString(in, len));
 
-                len = CodecUtils.readLength(in, MAX_BUFFER_SIZE);
+                len = CodecUtils.readLength(in, maxBufferSize);
                 if (len == CodecUtils.BUFFER_UNDER_RUN) {
                     return;
                 }
                 prediction.setContentType(CodecUtils.readString(in, len));
 
-                len = CodecUtils.readLength(in, MAX_BUFFER_SIZE);
+                len = CodecUtils.readLength(in, maxBufferSize);
                 if (len == CodecUtils.BUFFER_UNDER_RUN) {
                     return;
                 }

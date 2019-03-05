@@ -25,6 +25,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -41,21 +42,25 @@ public final class ModelManager {
     private ConfigManager configManager;
     private WorkLoadManager wlm;
     private ConcurrentHashMap<String, Model> models;
+    private Set<String> startupModels;
     private ScheduledExecutorService scheduler;
 
-    private ModelManager(ConfigManager configManager, WorkLoadManager wlm) {
+    private ModelManager(
+            ConfigManager configManager, WorkLoadManager wlm, Set<String> startupModels) {
         this.configManager = configManager;
         this.wlm = wlm;
         models = new ConcurrentHashMap<>();
         scheduler = Executors.newScheduledThreadPool(2);
+        this.startupModels = startupModels;
     }
 
     public ScheduledExecutorService getScheduler() {
         return scheduler;
     }
 
-    public static void init(ConfigManager configManager, WorkLoadManager wlm) {
-        modelManager = new ModelManager(configManager, wlm);
+    public static void init(
+            ConfigManager configManager, WorkLoadManager wlm, Set<String> startupModels) {
+        modelManager = new ModelManager(configManager, wlm, startupModels);
     }
 
     public static ModelManager getInstance() {
@@ -102,6 +107,7 @@ public final class ModelManager {
             throw new BadRequestException("Model " + modelName + " is already registered.");
         }
         logger.info("Model {} loaded.", model.getModelName());
+
         return archive;
     }
 
@@ -192,5 +198,9 @@ public final class ModelManager {
 
     public void submitTask(Runnable runnable) {
         wlm.scheduleAsync(runnable);
+    }
+
+    public Set<String> getStartupModels() {
+        return startupModels;
     }
 }

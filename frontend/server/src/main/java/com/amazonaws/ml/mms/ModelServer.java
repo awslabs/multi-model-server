@@ -33,8 +33,10 @@ import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.cli.CommandLine;
@@ -103,8 +105,9 @@ public class ModelServer {
     }
 
     private void initModelStore() {
+        Set<String> startupModels = new HashSet<>();
         WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getBackendGroup());
-        ModelManager.init(configManager, wlm);
+        ModelManager.init(configManager, wlm, startupModels);
 
         String loadModels = configManager.getLoadModels();
         if (loadModels == null || loadModels.isEmpty()) {
@@ -144,6 +147,7 @@ public class ModelServer {
 
                         ModelArchive archive = modelManager.registerModel(file.getName());
                         modelManager.updateModel(archive.getModelName(), workers, workers);
+                        startupModels.add(archive.getModelName());
                     } catch (ModelException | IOException e) {
                         logger.warn("Failed to load model: " + file.getAbsolutePath(), e);
                     }
@@ -180,6 +184,7 @@ public class ModelServer {
                                 100,
                                 configManager.getDefaultResponseTimeout());
                 modelManager.updateModel(archive.getModelName(), workers, workers);
+                startupModels.add(archive.getModelName());
             } catch (ModelException | IOException e) {
                 logger.warn("Failed to load model: " + url, e);
             }

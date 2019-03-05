@@ -219,7 +219,7 @@ public class WorkerThread implements Runnable {
                                 public void initChannel(Channel ch) {
                                     ChannelPipeline p = ch.pipeline();
                                     p.addLast(ENCODER);
-                                    p.addLast(new ModelResponseDecoder());
+                                    p.addLast(new ModelResponseDecoder(configManager.getBackendResponseBufferSize()));
                                     p.addLast(new WorkerHandler());
                                 }
                             });

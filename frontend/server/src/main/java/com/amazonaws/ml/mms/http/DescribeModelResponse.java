@@ -28,6 +28,8 @@ public class DescribeModelResponse {
     private int batchSize;
     private int maxBatchDelay;
     private String status;
+    private String modelInitialization;
+
     private List<Worker> workers;
     private Metrics metrics;
 
@@ -41,6 +43,14 @@ public class DescribeModelResponse {
 
     public void setModelName(String modelName) {
         this.modelName = modelName;
+    }
+
+    public String getModelInitialization() {
+        return modelInitialization;
+    }
+
+    public void setModelInitialization(String modelInitialization) {
+        this.modelInitialization = modelInitialization;
     }
 
     public String getModelVersion() {

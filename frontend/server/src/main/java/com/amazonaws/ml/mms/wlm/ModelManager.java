@@ -23,8 +23,10 @@ import com.amazonaws.ml.mms.util.NettyUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -41,6 +43,7 @@ public final class ModelManager {
     private ConfigManager configManager;
     private WorkLoadManager wlm;
     private ConcurrentHashMap<String, Model> models;
+    private HashSet<String> startupModels;
     private ScheduledExecutorService scheduler;
 
     private ModelManager(ConfigManager configManager, WorkLoadManager wlm) {
@@ -48,6 +51,7 @@ public final class ModelManager {
         this.wlm = wlm;
         models = new ConcurrentHashMap<>();
         scheduler = Executors.newScheduledThreadPool(2);
+        this.startupModels = new HashSet<>();
     }
 
     public ScheduledExecutorService getScheduler() {
@@ -102,6 +106,7 @@ public final class ModelManager {
             throw new BadRequestException("Model " + modelName + " is already registered.");
         }
         logger.info("Model {} loaded.", model.getModelName());
+
         return archive;
     }
 
@@ -116,6 +121,7 @@ public final class ModelManager {
         model.setMaxWorkers(0);
         wlm.modelChanged(model);
         model.getModelArchive().clean();
+        startupModels.remove(modelName);
         logger.info("Model {} unregistered.", modelName);
         return true;
     }
@@ -192,5 +198,9 @@ public final class ModelManager {
 
     public void submitTask(Runnable runnable) {
         wlm.scheduleAsync(runnable);
+    }
+
+    public Set<String> getStartupModels() {
+        return startupModels;
     }
 }

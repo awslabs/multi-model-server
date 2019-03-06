@@ -91,6 +91,11 @@ public class InferenceRequestHandler extends HttpRequestHandler {
             ChannelHandlerContext ctx, FullHttpRequest req, QueryStringDecoder decoder)
             throws ModelNotFoundException {
         String modelName = NettyUtils.getParameter(decoder, "model_name", null);
+        if ((modelName == null || modelName.isEmpty())) {
+            if (ModelManager.getInstance().getStartupModels().size() == 1) {
+                modelName = ModelManager.getInstance().getStartupModels().iterator().next();
+            }
+        }
         predict(ctx, req, decoder, modelName);
     }
 

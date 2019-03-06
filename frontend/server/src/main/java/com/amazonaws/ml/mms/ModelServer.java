@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.cli.CommandLine;
@@ -105,7 +104,7 @@ public class ModelServer {
     }
 
     private void initModelStore() {
-        Set<String> startupModels = new HashSet<>();
+        HashSet<String> startupModels = new HashSet<>();
         WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getBackendGroup());
         ModelManager.init(configManager, wlm, startupModels);
 

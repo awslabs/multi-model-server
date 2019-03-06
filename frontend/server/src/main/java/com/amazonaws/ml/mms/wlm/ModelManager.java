@@ -122,6 +122,7 @@ public final class ModelManager {
         model.setMaxWorkers(0);
         wlm.modelChanged(model);
         model.getModelArchive().clean();
+        startupModels.remove(modelName);
         logger.info("Model {} unregistered.", modelName);
         return true;
     }

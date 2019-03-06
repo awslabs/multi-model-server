@@ -132,8 +132,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         resp.setMaxBatchDelay(model.getMaxBatchDelay());
         resp.setMaxWorkers(model.getMaxWorkers());
         resp.setMinWorkers(model.getMinWorkers());
-        resp.setModelInitialization(
-                modelManager.getStartupModels().contains(modelName) ? "At startup" : "At runtime");
+        resp.setModelRegisteredAtStartup(modelManager.getStartupModels().contains(modelName));
         Manifest manifest = model.getModelArchive().getManifest();
         Manifest.Engine engine = manifest.getEngine();
         if (engine != null) {

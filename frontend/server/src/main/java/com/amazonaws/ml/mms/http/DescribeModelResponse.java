@@ -28,7 +28,7 @@ public class DescribeModelResponse {
     private int batchSize;
     private int maxBatchDelay;
     private String status;
-    private String modelInitialization;
+    private boolean modelRegisteredAtStartup;
 
     private List<Worker> workers;
     private Metrics metrics;
@@ -45,12 +45,12 @@ public class DescribeModelResponse {
         this.modelName = modelName;
     }
 
-    public String getModelInitialization() {
-        return modelInitialization;
+    public boolean getModelRegisteredAtStartup() {
+        return modelRegisteredAtStartup;
     }
 
-    public void setModelInitialization(String modelInitialization) {
-        this.modelInitialization = modelInitialization;
+    public void setModelRegisteredAtStartup(boolean modelRegisteredAtStartup) {
+        this.modelRegisteredAtStartup = modelRegisteredAtStartup;
     }
 
     public String getModelVersion() {

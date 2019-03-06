@@ -86,6 +86,8 @@ public final class ConfigManager {
     private static final String CERTIFICATE_FILE = "certificate_file";
     private static final String PRIVATE_KEY_FILE = "private_key_file";
 
+    private static final String MAX_RESPONSE_SIZE = "max_response_size";
+
     private Pattern blacklistPattern;
     private Properties prop;
 
@@ -418,6 +420,10 @@ public final class ConfigManager {
 
     public int getIoRatio() {
         return getIntProperty(IO_RATIO, 50);
+    }
+
+    public int getMaxResponseSize() {
+        return getIntProperty(MAX_RESPONSE_SIZE, 6553500);
     }
 
     void setProperty(String key, String value) {

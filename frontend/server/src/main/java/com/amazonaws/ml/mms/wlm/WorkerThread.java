@@ -208,6 +208,7 @@ public class WorkerThread implements Runnable {
         setState(WorkerState.WORKER_STARTED);
         final CountDownLatch latch = new CountDownLatch(1);
 
+        final int responseBufferSize = configManager.getMaxResponseSize();
         try {
             Connector connector = new Connector(port);
             Bootstrap b = new Bootstrap();
@@ -219,7 +220,7 @@ public class WorkerThread implements Runnable {
                                 public void initChannel(Channel ch) {
                                     ChannelPipeline p = ch.pipeline();
                                     p.addLast(ENCODER);
-                                    p.addLast(new ModelResponseDecoder());
+                                    p.addLast(new ModelResponseDecoder(responseBufferSize));
                                     p.addLast(new WorkerHandler());
                                 }
                             });

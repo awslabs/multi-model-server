@@ -307,7 +307,7 @@ Notes on a couple of the parameters:
 * **keystore_type** - Store of cryptographic keys and certificates
 * **private_key_file** - Location of the private key file
 * **certificate_file** - Location of the certificate file
-* **backend_response_buffer_size** - The maximum buffer size the frontend allocates for a worker response, in bytes.
+* **max_response_size** - The maximum buffer size the frontend allocates for a worker response, in bytes.
 
 in the range of 0 .. (num-gpu-1) in a round-robin fashion. **By default MMS uses all the available GPUs but this parameter can be configured if user want to use only few of them**.
 

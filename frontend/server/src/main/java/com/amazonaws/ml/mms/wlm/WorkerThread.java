@@ -208,7 +208,7 @@ public class WorkerThread implements Runnable {
         setState(WorkerState.WORKER_STARTED);
         final CountDownLatch latch = new CountDownLatch(1);
 
-        final int responseBufferSize = configManager.getBackendResponseBufferSize();
+        final int responseBufferSize = configManager.getMaxResponseSize();
         try {
             Connector connector = new Connector(port);
             Bootstrap b = new Bootstrap();

@@ -326,5 +326,5 @@ in the range of 0 .. (num-gpu-1) in a round-robin fashion. **By default MMS uses
 # keystore_type=PKCS12
 # private_key_file=src/test/resources/key.pem
 # certificate_file=src/test/resources/certs.pem
-# backend_response_buffer_size=6553500
+# max_response_size=6553500
 ```

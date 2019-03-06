@@ -23,6 +23,7 @@ import com.amazonaws.ml.mms.util.NettyUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,25 +43,23 @@ public final class ModelManager {
     private ConfigManager configManager;
     private WorkLoadManager wlm;
     private ConcurrentHashMap<String, Model> models;
-    private Set<String> startupModels;
+    private HashSet<String> startupModels;
     private ScheduledExecutorService scheduler;
 
-    private ModelManager(
-            ConfigManager configManager, WorkLoadManager wlm, Set<String> startupModels) {
+    private ModelManager(ConfigManager configManager, WorkLoadManager wlm) {
         this.configManager = configManager;
         this.wlm = wlm;
         models = new ConcurrentHashMap<>();
         scheduler = Executors.newScheduledThreadPool(2);
-        this.startupModels = startupModels;
+        this.startupModels = new HashSet<>();
     }
 
     public ScheduledExecutorService getScheduler() {
         return scheduler;
     }
 
-    public static void init(
-            ConfigManager configManager, WorkLoadManager wlm, Set<String> startupModels) {
-        modelManager = new ModelManager(configManager, wlm, startupModels);
+    public static void init(ConfigManager configManager, WorkLoadManager wlm) {
+        modelManager = new ModelManager(configManager, wlm);
     }
 
     public static ModelManager getInstance() {

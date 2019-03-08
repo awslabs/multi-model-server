@@ -308,6 +308,7 @@ Notes on a couple of the parameters:
 * **private_key_file** - Location of the private key file
 * **certificate_file** - Location of the certificate file
 * **max_response_size** - The maximum buffer size the frontend allocates for a worker response, in bytes.
+* **max_request_size** - The maximum allowable request size that the MMS accepts.
 
 in the range of 0 .. (num-gpu-1) in a round-robin fashion. **By default MMS uses all the available GPUs but this parameter can be configured if user want to use only few of them**.
 
@@ -327,4 +328,5 @@ in the range of 0 .. (num-gpu-1) in a round-robin fashion. **By default MMS uses
 # private_key_file=src/test/resources/key.pem
 # certificate_file=src/test/resources/certs.pem
 # max_response_size=6553500
+# max_request_size=6553500
 ```

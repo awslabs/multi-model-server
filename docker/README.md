@@ -33,7 +33,7 @@ Running MXNet Model Server with Docker in two steps:
 This will download the MMS Docker image and run its default configuration, serving a SqueezeNet model.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 With the `-p` flag, we're setting it up so you can run the Predict API on your host computer's port `80`. This maps to the Docker image's port `8080`.
@@ -70,19 +70,17 @@ docker rm -f mms
 We have 5 containers tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/).
 1. *latest*: This is the latest officially released MMS CPU container. This is based on the latest [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu).
 2. *latest-gpu*: This is the latest officially released MMS GPU container. This is based on the latest [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu).
-2. *<MMS Release Tag>-mxnet-cpu*: Each released version since MMS 1.0.1 has an individual tagged CPU container. These containers are based on [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu), in that MMS release.
-2. *<MMS Release Tag>-mxnet-cpu*: Each released version since MMS 1.0.1 has an individual tagged GPU container. These containers are based on [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu), in that MMS release.
-4. *nightly-mxnet-cpu*: This will be the official CPU container which is built based on the nightly release of MMS pip package. This will be built from [Dockerfile.nightly-cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-cpu).
-5. *nightly-mxnet-gpu*: This will be the official GPU container which is built based on the nightly release of MMS pip package. This will be built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-gpu).
-6. *base-ubuntu16.04-py2.7*: This is the latest released base MMS container. This container *only* contains, MMS, python 2.7 on Ubuntu 16.04. This container was built for ease of extension for MMS container to multiple ML/DL frameworks. This will be based on [Dockerfile](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.base.ubuntu_16_04.py2_7)
-6. *base-ubuntu16.04-py3.6*: This is the latest released base MMS container. This container *only* contains, MMS, python 3.6 on Ubuntu 16.04. This container was built for ease of extension for MMS container to multiple ML/DL frameworks. This will be based on [Dockerfile](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.base.ubuntu_16_04.py3_6)
+3. *(MMS Release Tag)-mxnet-cpu*: Each released version since MMS 1.0.0 has an individual release tagged CPU MXNet container. These containers are based on [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu), in that MMS release.
+4. *(MMS Release Tag)-mxnet-cpu*: Each released version since MMS 1.0.0 has an individual release tagged GPU MXNet container. These containers are based on [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu), in that MMS release.
+5. *nightly-mxnet-cpu*: This is the official CPU container which is built based on the nightly release of MMS pip package. This is built from [Dockerfile.nightly-cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-cpu).
+6. *nightly-mxnet-gpu*: This is the official GPU container which is built based on the nightly release of MMS pip package. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-gpu).
 
 To pull the a particular container, run the following command
 
 #### Pulling the latest CPU container:
 Docker pull by default pulls the latest tag. This tag is associated with latest released MMS CPU container. This tag isn't available until after an official release. 
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server # This gets the latest release which is the same as 1.0.1-mxnet-cpu
+docker pull awsdeeplearningteam/mxnet-model-server 
 ``` 
 
 #### Pulling the latest GPU container:
@@ -104,7 +102,6 @@ We do not recommend running this container in production setup.
 ```bash
 docker pull awsdeeplearningteam/mxnet-model-server:nightly-mxnet-gpu
 ``` 
-
 
 ## Configuring MMS with Docker
 
@@ -183,7 +180,7 @@ You will upload the same kitten image as before, but this time you will request 
 curl -X POST http://127.0.0.1/predictions/resnet -T @kitten.jpg
 ```
 
-Given that this is a different model, the same image yields a different inference result which will be something similar to the following:
+Given that this is a different model, the same image yields a different inference result which is something similar to the following:
 
 ```
 {
@@ -204,6 +201,5 @@ Now you are ready to try some other more **advanced settings** such as:
 
 * GPU inference
 * MMS settings
-* Optimizing inference with gunicorn configurations
 
 Next Step: [Advanced Settings](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md)

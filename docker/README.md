@@ -68,41 +68,38 @@ docker rm -f mms
 
 ## Available pre-built continers
 We have 5 containers tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/).
-1. *latest*: This will be the same as `mxnet-model-server:1.0.0-mxnet-cpu`. This tag will be available after an official release.
-2. *1.0.1-mxnet-cpu*: This will be the official CPU container based on the [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu). This tag will be available after an official 1.0 release.
-3. *1.0.1-mxnet-gpu*: This will be the official GPU container based on the [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu). This tag will be available after an official 1.0 release.
+1. *latest*: This is the latest officially released MMS CPU container. This is based on the latest [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu).
+2. *latest-gpu*: This is the latest officially released MMS GPU container. This is based on the latest [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu).
+2. *<MMS Release Tag>-mxnet-cpu*: Each released version since MMS 1.0.1 has an individual tagged CPU container. These containers are based on [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu), in that MMS release.
+2. *<MMS Release Tag>-mxnet-cpu*: Each released version since MMS 1.0.1 has an individual tagged GPU container. These containers are based on [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu), in that MMS release.
 4. *nightly-mxnet-cpu*: This will be the official CPU container which is built based on the nightly release of MMS pip package. This will be built from [Dockerfile.nightly-cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-cpu).
 5. *nightly-mxnet-gpu*: This will be the official GPU container which is built based on the nightly release of MMS pip package. This will be built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-gpu).
+6. *base-ubuntu16.04-py2.7*: This is the latest released base MMS container. This container *only* contains, MMS, python 2.7 on Ubuntu 16.04. This container was built for ease of extension for MMS container to multiple ML/DL frameworks. This will be based on [Dockerfile](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.base.ubuntu_16_04.py2_7)
+6. *base-ubuntu16.04-py3.6*: This is the latest released base MMS container. This container *only* contains, MMS, python 3.6 on Ubuntu 16.04. This container was built for ease of extension for MMS container to multiple ML/DL frameworks. This will be based on [Dockerfile](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.base.ubuntu_16_04.py3_6)
 
 To pull the a particular container, run the following command
 
-#### Pulling the latest tag:
-Docker pull by default pulls the latest tag. This tag isn't available until after an official release. 
+#### Pulling the latest CPU container:
+Docker pull by default pulls the latest tag. This tag is associated with latest released MMS CPU container. This tag isn't available until after an official release. 
 ```bash
 docker pull awsdeeplearningteam/mxnet-model-server # This gets the latest release which is the same as 1.0.1-mxnet-cpu
 ``` 
 
-#### Pulling the `1.0.1-mxnet-cpu` tag:
-To pull a official 1.0 MMS CPU container run the following command. This tag isn't available until after an official release. 
+#### Pulling the latest GPU container:
+To pull a official latest released MMS GPU container run the following command. This tag isn't available until after an official release. 
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu 
-``` 
-
-#### Pulling the `1.0.1-mxnet-gpu` tag:
-To pull a official 1.0 MMS GPU container run the following command. This tag isn't available until after an official release. 
-```bash
-docker pull awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-gpu 
+docker pull awsdeeplearningteam/mxnet-model-server:latest-gpu
 ``` 
 
 #### Pulling the `nightly-mxnet-cpu` tag:
-To pull a official latest 1.0 MMS CPU container run the following command. This track the pre-release version of MMS.
+To pull a latest nigthtly MMS CPU container run the following command. This track the pre-release version of MMS.
 We do not recommend running this container in production setup.
 ```bash
 docker pull awsdeeplearningteam/mxnet-model-server:nightly-mxnet-cpu
 ``` 
 
 #### Pulling the `nightly-mxnet-gpu` tag:
-To pull a official latest 1.0 MMS GPU container run the following command. This track the pre-release version of MMS.
+To pull a latest nigthtly MMS CPU container run the following command. This track the pre-release version of MMS.
 We do not recommend running this container in production setup.
 ```bash
 docker pull awsdeeplearningteam/mxnet-model-server:nightly-mxnet-gpu
@@ -138,20 +135,28 @@ Download the template `config.properties` and place it in the `models` folder yo
 Edit the file you downloaded, `config.properties`.
 
 ```properties
-# vmargs=-Xmx1g -XX:MaxDirectMemorySize=512m -Dlog4j.configuration=file:///opt/ml/conf/log4j.properties
-model_store=/models
-# load_models=ALL
+vmargs=-Xmx128m -XX:-UseLargePages -XX:+UseG1GC -XX:MaxMetaspaceSize=32M -XX:MaxDirectMemorySize=10m -XX:+ExitOnOutOfMemoryError
+model_store=/opt/ml/model
+load_models=ALL
 inference_address=http://0.0.0.0:8080
 management_address=http://0.0.0.0:8081
+# management_address=unix:/tmp/management.sock
 # number_of_netty_threads=0
-# max_workers=0
-# job_queue_size=1000
+# netty_client_threads=0
+# default_response_timeout=120
+# default_workers_per_model=0
+# job_queue_size=100
+# async_logging=false
 # number_of_gpu=1
+# cors_allowed_origin
+# cors_allowed_methods
+# cors_allowed_headers
 # keystore=src/test/resources/keystore.p12
 # keystore_pass=changeit
 # keystore_type=PKCS12
 # private_key_file=src/test/resources/key.pem
 # certificate_file=src/test/resources/certs.pem
+# blacklist_env_vars=
 ```
 
 Modify the configuration file to suite your configuration needs before running the model server.
@@ -164,7 +169,7 @@ When you run the following command, the `-v` argument and path values of `/tmp/m
 MMS will then be able to use the local model file.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-cpu mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
+docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
 ```
 
 **NOTE**: If you modify the inference_address or the management_address in the configuration file,

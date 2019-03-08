@@ -67,7 +67,7 @@ docker rm -f mms
 ```
 
 ## Available pre-built continers
-We have 5 containers tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/).
+We have following container tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/).
 1. *latest*: This is the latest officially released MMS CPU container. This is based on the latest [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu).
 2. *latest-gpu*: This is the latest officially released MMS GPU container. This is based on the latest [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu).
 3. *(MMS Release Tag)-mxnet-cpu*: Each released version since MMS 1.0.0 has an individual release tagged CPU MXNet container. These containers are based on [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu), in that MMS release.

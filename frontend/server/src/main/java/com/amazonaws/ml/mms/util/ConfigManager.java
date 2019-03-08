@@ -85,7 +85,7 @@ public final class ConfigManager {
     private static final String KEYSTORE_TYPE = "keystore_type";
     private static final String CERTIFICATE_FILE = "certificate_file";
     private static final String PRIVATE_KEY_FILE = "private_key_file";
-
+    private static final String MAX_REQUEST_SIZE = "max_request_size";
     private static final String MAX_RESPONSE_SIZE = "max_response_size";
 
     private Pattern blacklistPattern;
@@ -411,7 +411,11 @@ public final class ConfigManager {
                 + "\nDefault workers per model: "
                 + getDefaultWorkers()
                 + "\nBlacklist Regex: "
-                + prop.getProperty(BLACKLIST_ENV_VARS, "N/A");
+                + prop.getProperty(BLACKLIST_ENV_VARS, "N/A")
+                + "\nMaximum Response Size: "
+                + prop.getProperty(MAX_RESPONSE_SIZE, "6553500")
+                + "\nMaximum Request Size: "
+                + prop.getProperty(MAX_REQUEST_SIZE, "6553500");
     }
 
     public boolean useNativeIo() {
@@ -424,6 +428,10 @@ public final class ConfigManager {
 
     public int getMaxResponseSize() {
         return getIntProperty(MAX_RESPONSE_SIZE, 6553500);
+    }
+
+    public int getMaxRequestSize() {
+        return getIntProperty(MAX_REQUEST_SIZE, 6553500);
     }
 
     void setProperty(String key, String value) {

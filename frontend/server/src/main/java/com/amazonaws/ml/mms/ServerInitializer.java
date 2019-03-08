@@ -14,6 +14,7 @@ package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.http.InferenceRequestHandler;
 import com.amazonaws.ml.mms.http.ManagementRequestHandler;
+import com.amazonaws.ml.mms.util.ConfigManager;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -46,11 +47,12 @@ public class ServerInitializer extends ChannelInitializer<Channel> {
     @Override
     public void initChannel(Channel ch) {
         ChannelPipeline pipeline = ch.pipeline();
+        int maxRequestSize = ConfigManager.getInstance().getMaxRequestSize();
         if (sslCtx != null) {
             pipeline.addLast("ssl", sslCtx.newHandler(ch.alloc()));
         }
         pipeline.addLast("http", new HttpServerCodec());
-        pipeline.addLast("aggregator", new HttpObjectAggregator(6553600));
+        pipeline.addLast("aggregator", new HttpObjectAggregator(maxRequestSize));
         if (managementServer) {
             pipeline.addLast("handler", new ManagementRequestHandler());
         } else {

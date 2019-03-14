@@ -64,7 +64,7 @@ See [model-archiver](../model-archiver/README.md) for more detail.
 MMS docker image makes it easier for you to serve a model. In 0.4 release, MMS require a configuration file (mms_app_cpu.conf or mms_app_gpu.conf) to start MMS in docker container. The old conf file format is no longer supported. To make it simple, MMS no longer requires the --mms-config parameter, the default configuration should work for most of use cases. MMS will start automatically while docker container starts:
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server:1.0.0-mxnet-cpu
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server
 ```
 
 After docker container started, you can use [Management API](management_api.md) to load models for inference.

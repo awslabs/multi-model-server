@@ -45,7 +45,7 @@ Official pre-configured, optimized container images of MMS are provided on [Dock
 docker pull awsdeeplearningteam/mxnet-model-server
 
 # for gpu image use following command:
-docker pull awsdeeplearningteam/mxnet-model-server:1.0.1-mxnet-gpu
+docker pull awsdeeplearningteam/mxnet-model-server:latest-gpu
 ```
 In our article we are going to use the official CPU container image.
 

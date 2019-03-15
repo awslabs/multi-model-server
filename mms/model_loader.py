@@ -58,6 +58,7 @@ class ModelLoader(object):
         :param batch_size:
         :return: Model
         """
+        # pylint: disable=unnecessary-pass
         pass
 
     @staticmethod

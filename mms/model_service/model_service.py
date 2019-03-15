@@ -67,6 +67,7 @@ class ModelService(object):
         list of outputs to be sent back to client.
             data to be sent back
         """
+        # pylint: disable=unnecessary-pass
         pass
 
     @abstractmethod
@@ -79,6 +80,7 @@ class ModelService(object):
         String
             A message, "health": "healthy!", to show system is healthy.
         """
+        # pylint: disable=unnecessary-pass
         pass
 
     def signature(self):

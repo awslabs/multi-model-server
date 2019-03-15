@@ -39,11 +39,6 @@ class TestOtfCodecHandler:
         with pytest.raises(ValueError, match=r"Invalid command: .*"):
             codec.retrieve_msg(socket_patches.socket)
 
-    def test_retrieve_msg_exceed_buffer_size(self, socket_patches):
-        socket_patches.socket.recv.side_effect = [b"L", b"\x0F\x00\x00\x03"]
-        with pytest.raises(ValueError, match=r"Exceed max buffer size: .*"):
-            codec.retrieve_msg(socket_patches.socket)
-
     def test_retrieve_msg_load_gpu(self, socket_patches):
         expected = {"modelName": b"model_name", "modelPath": b"model_path",
                     "batchSize": 1, "handler": b"handler", "gpu": 1}

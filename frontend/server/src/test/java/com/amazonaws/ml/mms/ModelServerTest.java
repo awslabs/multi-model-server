@@ -164,6 +164,8 @@ public class ModelServerTest {
         testInvocationsJson(channel);
         testInvocationsMultipart(channel);
         testLegacyPredict(channel);
+        testPredictionsInvalidRequestSize(channel);
+        testPredictionsValidRequestSize(channel);
         testMetricManager();
 
         channel.close();
@@ -425,6 +427,40 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(result, "OK");
+    }
+
+    private void testPredictionsInvalidRequestSize(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/noop");
+
+        req.content().writeZero(11485760);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM);
+        channel.writeAndFlush(req);
+
+        latch.await();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
+    }
+
+    private void testPredictionsValidRequestSize(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/noop");
+
+        req.content().writeZero(10385760);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM);
+        channel.writeAndFlush(req);
+
+        latch.await();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
     }
 
     private void testLegacyPredict(Channel channel) throws InterruptedException {

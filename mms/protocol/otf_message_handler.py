@@ -18,7 +18,6 @@ import struct
 from builtins import bytearray
 from builtins import bytes
 
-MAX_BUFFER_SIZE = 6553500
 
 int_size = 4
 END_OF_LIST = -1
@@ -123,9 +122,6 @@ def create_load_model_response(code, message):
 
 
 def _retrieve_buffer(conn, length):
-    if length > MAX_BUFFER_SIZE:
-        raise ValueError("Exceed max buffer size: {}".format(length))
-
     data = bytearray()
 
     while length > 0:

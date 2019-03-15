@@ -9,8 +9,8 @@
 # permissions and limitations under the License.
 
 import json
-import pytest
 import os
+import pytest
 from collections import namedtuple
 from model_archiver.model_packaging_utils import ModelExportUtils
 from model_archiver.manifest_components.engine import EngineType

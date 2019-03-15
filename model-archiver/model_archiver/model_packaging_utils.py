@@ -53,7 +53,7 @@ class ModelExportUtils(object):
             export_file_path = os.getcwd()
 
         export_file = os.path.join(export_file_path, '{}{}'.format(model_name,
-                                                                   MODEL_ARCHIVE_EXTENSION if archive_format == "mar"
+                                                                   MODEL_ARCHIVE_EXTENSION if archive_format == "mar"\
                                                                    else TAR_GZ_EXTENSION))
 
         if os.path.exists(export_file):
@@ -232,8 +232,8 @@ class ModelExportUtils(object):
         :param manifest:
         :return:
         """
-        mar_path = os.path.join(export_file, '{}{}'.format(model_name, MODEL_ARCHIVE_EXTENSION
-                                                                    if archive_format == "mar" else TAR_GZ_EXTENSION))
+        mar_path = os.path.join(export_file, '{}{}'.format(model_name, MODEL_ARCHIVE_EXTENSION \
+            if archive_format == "mar" else TAR_GZ_EXTENSION))
         try:
             if archive_format == "mar":
                 with zipfile.ZipFile(mar_path, 'w', zipfile.ZIP_DEFLATED) as z:
@@ -251,7 +251,7 @@ class ModelExportUtils(object):
                     z.addfile(tarinfo=tar_manifest, fileobj=BytesIO(manifest.encode()))
                     z.close()
             else:
-                logging.error("Unknown format {}".format(archive_format))
+                logging.error("Unknown format %s", archive_format)
 
         except IOError:
             logging.error("Failed to save the model-archive to model-path \"%s\". "

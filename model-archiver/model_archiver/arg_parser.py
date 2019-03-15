@@ -74,6 +74,15 @@ class ArgParser(object):
                                         'parameter. If --export-path is not specified, the file will be saved in the '
                                         'current working directory. ')
 
+        parser_export.add_argument('--archive-format',
+                                   required=False,
+                                   type=str,
+                                   default="mar",
+                                   choices=["tgz","mar"],
+                                   help='The format in which the model artifacts are archived\n'
+                                        'tgz: This is the format in which Sagemaker models are consumed\n'
+                                        'mar: This is the format in which models are consumed in MMS\n')
+
         parser_export.add_argument('-f', '--force',
                                    required=False,
                                    action='store_true',

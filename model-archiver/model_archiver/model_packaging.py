@@ -31,14 +31,17 @@ def package_model(args, manifest):
     try:
         ModelExportUtils.validate_inputs(model_path, model_name, export_file_path)
         # Step 1 : Check if .mar already exists with the given model name
-        export_file_path = ModelExportUtils.check_mar_already_exists(model_name, export_file_path, args.force)
+        export_file_path = ModelExportUtils.check_mar_already_exists(model_name, export_file_path,
+                                                                     args.force, args.archive_format)
 
         # Step 2 : Check if any special handling is required for custom models like onnx models
         t, files_to_exclude = ModelExportUtils.check_custom_model_types(model_path, model_name)
         temp_files.extend(t)
 
         # Step 3 : Zip 'em all up
-        ModelExportUtils.zip(export_file_path, model_name, model_path, files_to_exclude, manifest)
+        ModelExportUtils.archive(export_file_path, model_name, model_path, files_to_exclude, manifest,
+                                 args.archive_format)
+
         logging.info("Successfully exported model %s to file %s", model_name, export_file_path)
     except ModelArchiverError as e:
         logging.error(e)

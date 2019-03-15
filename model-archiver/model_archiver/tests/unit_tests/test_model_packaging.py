@@ -34,7 +34,8 @@ class TestModelPackaging:
     export_path = '/Users/ghaipiyu/'
 
     args = Namespace(author=author, email=email, engine=engine, model_name=model_name, handler=handler,
-                     runtime=RuntimeType.PYTHON.value, model_path=model_path, export_path=export_path, force=False)
+                     runtime=RuntimeType.PYTHON.value, model_path=model_path, export_path=export_path, force=False,
+                     archive_format="mar")
 
     @pytest.fixture()
     def patches(self, mocker):
@@ -58,5 +59,5 @@ class TestModelPackaging:
 
         package_model(self.args, ModelExportUtils.generate_manifest_json(self.args))
         patches.export_utils.validate_inputs.assert_called()
-        patches.export_utils.zip.assert_called()
+        patches.export_utils.archive.assert_called()
         patches.export_utils.clean_temp_files.assert_called()

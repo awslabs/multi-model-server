@@ -78,7 +78,7 @@ class ArgParser(object):
                                    required=False,
                                    type=str,
                                    default="mar",
-                                   choices=["tgz","mar"],
+                                   choices=["tgz", "mar"],
                                    help='The format in which the model artifacts are archived\n'
                                         'tgz: This is the format in which Sagemaker models are consumed\n'
                                         'mar: This is the format in which models are consumed in MMS\n')

@@ -15,12 +15,12 @@ at runtime.
 
 import argparse
 import os
+
 from .manifest_components.manifest import RuntimeType
 
 
 # noinspection PyTypeChecker
 class ArgParser(object):
-
     """
     Argument parser for model-export-tool commands
     More detailed example is available at https://github.com/awslabs/mxnet-model-server/blob/master/README.md
@@ -28,7 +28,6 @@ class ArgParser(object):
 
     @staticmethod
     def export_model_args_parser():
-
         """ Argument parser for mxnet-model-export
         """
         # TODO Add more CLI args here later
@@ -56,6 +55,18 @@ class ArgParser(object):
                                    type=str,
                                    default=None,
                                    help='Handler path to handle custom MMS inference logic.')
+
+        parser_export.add_argument('--max-batch-size',
+                                   required=False,
+                                   type=int,
+                                   default=1,
+                                   help='The maximum batch size this model accepts.')
+
+        parser_export.add_argument('--max-batch-delay',
+                                   required=False,
+                                   type=int,
+                                   default=100,
+                                   help='The maximum time, in milliseconds, to wait for a full batch.')
 
         parser_export.add_argument('--runtime',
                                    required=False,

@@ -17,12 +17,12 @@ import logging
 import os
 import re
 import zipfile
-from .model_archiver_error import ModelArchiverError
 
 from .manifest_components.engine import Engine
 from .manifest_components.manifest import Manifest
 from .manifest_components.model import Model
 from .manifest_components.publisher import Publisher
+from .model_archiver_error import ModelArchiverError
 
 MODEL_ARCHIVE_EXTENSION = '.mar'
 MODEL_SERVER_VERSION = '1.0'
@@ -189,7 +189,8 @@ class ModelExportUtils(object):
 
     @staticmethod
     def generate_model(modelargs):
-        model = Model(model_name=modelargs.model_name, handler=modelargs.handler)
+        model = Model(model_name=modelargs.model_name, handler=modelargs.handler,
+                      max_batch_size=modelargs.max_batch_size, max_batch_delay=modelargs.max_batch_delay)
         return model
 
     @staticmethod

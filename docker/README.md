@@ -6,7 +6,7 @@ MXNet Model Server (MMS) can be used with any container service. In this guide, 
 
 ## Contents of this Document
 * [Quickstart](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#quickstart)
-* [Available pre-built continers](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#available-pre-built-continers)
+* [Available pre-built containers](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#available-pre-built-containers)
 * [Configuring MMS with Docker](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#configuring-mms-with-docker)
 
 
@@ -66,7 +66,7 @@ Now that you have tested it out, you may stop the Docker container. The followin
 docker rm -f mms
 ```
 
-## Available pre-built continers
+## Available pre-built containers
 We have following container tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/).
 1. *latest*: This is the latest officially released MMS CPU container. This is based on the latest [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu).
 2. *latest-gpu*: This is the latest officially released MMS GPU container. This is based on the latest [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu).

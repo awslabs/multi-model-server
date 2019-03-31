@@ -158,6 +158,7 @@ public class ModelServerTest {
         testListModels(managementChannel);
         testDescribeModel(managementChannel);
         testLoadModelWithInitialWorkers(managementChannel);
+        testLoadModelWithBatchSize(managementChannel);
         testPredictions(channel);
         testPredictionsBinary(channel);
         testPredictionsJson(channel);
@@ -226,6 +227,9 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
+        System.out.println("------------");
+        System.out.println(result);
+        System.out.println("------------");
         Assert.assertEquals(result, expected);
     }
 
@@ -271,6 +275,35 @@ public class ModelServerTest {
 
         StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
         Assert.assertEquals(resp.getStatus(), "Workers scaled");
+    }
+
+    private void testLoadModelWithBatchSize(Channel channel) throws InterruptedException {
+        testUnregisterModel(channel);
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=noop-v0.1&model_name=noop_v0.1&runtime=python&batch_size=256&max_batch_delay=500");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Model \"noop_v0.1\" registered");
+
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest describeReq =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/models/noop_v0.1");
+        channel.writeAndFlush(describeReq);
+        latch.await();
+
+        DescribeModelResponse describeResp = describeModel(channel, "noop_v0.1");
+
+        Assert.assertEquals(256, describeResp.getBatchSize());
+        Assert.assertEquals(500, describeResp.getMaxBatchDelay());
     }
 
     private void testScaleModel(Channel channel) throws InterruptedException {
@@ -328,16 +361,23 @@ public class ModelServerTest {
     }
 
     private void testDescribeModel(Channel channel) throws InterruptedException {
+        DescribeModelResponse resp = describeModel(channel, "noop_v0.1");
+        Assert.assertTrue(resp.getWorkers().size() > 1);
+    }
+
+    private DescribeModelResponse describeModel(Channel channel, String modelName)
+            throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
         HttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/models/noop_v0.1");
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.GET,
+                        String.format("/models/%s", modelName));
         channel.writeAndFlush(req);
         latch.await();
 
-        DescribeModelResponse resp = JsonUtils.GSON.fromJson(result, DescribeModelResponse.class);
-        Assert.assertTrue(resp.getWorkers().size() > 1);
+        return JsonUtils.GSON.fromJson(result, DescribeModelResponse.class);
     }
 
     private void testPredictions(Channel channel) throws InterruptedException {

@@ -36,9 +36,9 @@ class Model(object):
 
         model_dict['handler'] = self.handler
 
-        model_dict['batch_size'] = self.batch_size
+        model_dict['batchSize'] = self.batch_size
 
-        model_dict['max_batch_delay'] = self.max_batch_delay
+        model_dict['maxBatchDelay'] = self.max_batch_delay
 
         if self.description is not None:
             model_dict['description'] = self.description

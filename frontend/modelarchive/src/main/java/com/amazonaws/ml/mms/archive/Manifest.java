@@ -166,7 +166,7 @@ public class Manifest {
         private String handler;
 
         private int batchSize = 1;
-        private int batchDelay = 100;
+        private int maxBatchDelay = 100;
 
         public Model() {}
 
@@ -221,16 +221,16 @@ public class Manifest {
             this.batchSize = batchSize;
         }
 
-        public void setBatchDelay(int batchDelay) {
-            this.batchDelay = batchDelay;
+        public void setMaxBatchDelay(int maxBatchDelay) {
+            this.maxBatchDelay = maxBatchDelay;
         }
 
         public int getBatchSize() {
             return batchSize;
         }
 
-        public int getBatchDelay() {
-            return batchDelay;
+        public int getMaxBatchDelay() {
+            return maxBatchDelay;
         }
     }
 

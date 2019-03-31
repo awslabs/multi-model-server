@@ -50,7 +50,7 @@ public class Model {
         this.responseTimeout = responseTimeout;
 
         batchSize = modelArchive.getManifest().getModel().getBatchSize();
-        maxBatchDelay = modelArchive.getManifest().getModel().getBatchDelay();
+        maxBatchDelay = modelArchive.getManifest().getModel().getMaxBatchDelay();
 
         jobsDb = new ConcurrentHashMap<>();
         // Always have a queue for data

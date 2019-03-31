@@ -157,8 +157,12 @@ public class ModelServerTest {
         testScaleModel(managementChannel);
         testListModels(managementChannel);
         testDescribeModel(managementChannel);
+
+        testInitialModelDefaultBatchSettings(managementChannel);
+        testLoadModelWithBatchSizeOverride(managementChannel);
         testLoadModelWithInitialWorkers(managementChannel);
         testLoadModelWithBatchSize(managementChannel);
+
         testPredictions(channel);
         testPredictionsBinary(channel);
         testPredictionsJson(channel);
@@ -277,6 +281,35 @@ public class ModelServerTest {
         Assert.assertEquals(resp.getStatus(), "Workers scaled");
     }
 
+    private void testInitialModelDefaultBatchSettings(Channel channel) throws InterruptedException {
+        DescribeModelResponse response = describeModel(channel, "noop-batch");
+
+        Assert.assertEquals(64, response.getBatchSize());
+        Assert.assertEquals(300, response.getMaxBatchDelay());
+    }
+
+    private void testLoadModelWithBatchSizeOverride(Channel channel) throws InterruptedException {
+        unregisterModel(channel, "noop-batch");
+
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=noop-batch-v1.0&batch_size=128&max_batch_delay=250");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Model \"noop-batch\" registered");
+
+        DescribeModelResponse describeResp = describeModel(channel, "noop-batch");
+
+        Assert.assertEquals(128, describeResp.getBatchSize());
+        Assert.assertEquals(250, describeResp.getMaxBatchDelay());
+    }
+
     private void testLoadModelWithBatchSize(Channel channel) throws InterruptedException {
         testUnregisterModel(channel);
         result = null;
@@ -335,15 +368,7 @@ public class ModelServerTest {
     }
 
     private void testUnregisterModel(Channel channel) throws InterruptedException {
-        result = null;
-        latch = new CountDownLatch(1);
-        HttpRequest req =
-                new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/models/noop_v0.1");
-        channel.writeAndFlush(req);
-        latch.await();
-
-        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        StatusResponse resp = unregisterModel(channel, "noop_v0.1");
         Assert.assertEquals(resp.getStatus(), "Model \"noop_v0.1\" unregistered");
     }
 
@@ -357,27 +382,12 @@ public class ModelServerTest {
         latch.await();
 
         ListModelsResponse resp = JsonUtils.GSON.fromJson(result, ListModelsResponse.class);
-        Assert.assertEquals(resp.getModels().size(), 2);
+        Assert.assertEquals(resp.getModels().size(), 3);
     }
 
     private void testDescribeModel(Channel channel) throws InterruptedException {
         DescribeModelResponse resp = describeModel(channel, "noop_v0.1");
         Assert.assertTrue(resp.getWorkers().size() > 1);
-    }
-
-    private DescribeModelResponse describeModel(Channel channel, String modelName)
-            throws InterruptedException {
-        result = null;
-        latch = new CountDownLatch(1);
-        HttpRequest req =
-                new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1,
-                        HttpMethod.GET,
-                        String.format("/models/%s", modelName));
-        channel.writeAndFlush(req);
-        latch.await();
-
-        return JsonUtils.GSON.fromJson(result, DescribeModelResponse.class);
     }
 
     private void testPredictions(Channel channel) throws InterruptedException {
@@ -913,6 +923,36 @@ public class ModelServerTest {
                 }
             }
         }
+    }
+
+    private DescribeModelResponse describeModel(Channel channel, String modelName)
+            throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.GET,
+                        String.format("/models/%s", modelName));
+        channel.writeAndFlush(req);
+        latch.await();
+
+        return JsonUtils.GSON.fromJson(result, DescribeModelResponse.class);
+    }
+
+    private StatusResponse unregisterModel(Channel channel, String modelName)
+            throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.DELETE,
+                        String.format("/models/%s", modelName));
+        channel.writeAndFlush(req);
+        latch.await();
+
+        return JsonUtils.GSON.fromJson(result, StatusResponse.class);
     }
 
     private Channel connect(boolean management) {

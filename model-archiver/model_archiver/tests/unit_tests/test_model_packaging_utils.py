@@ -147,9 +147,11 @@ class TestExportModelUtils:
         engine = EngineType.MXNET.value
         model_name = 'my-model'
         handler = 'a.py::my-awesome-func'
+        batch_size = 32
+        max_batch_delay = 300
 
         args = Namespace(author=author, email=email, engine=engine, model_name=model_name, handler=handler,
-                         runtime=RuntimeType.PYTHON.value, batch_size=32, max_batch_delay=300)
+                         runtime=RuntimeType.PYTHON.value, batch_size=batch_size, max_batch_delay=max_batch_delay)
 
         def test_publisher(self):
             pub = ModelExportUtils.generate_publisher(self.args)
@@ -173,6 +175,9 @@ class TestExportModelUtils:
             assert 'model' in manifest_json
             assert 'publisher' in manifest_json
             assert 'license' not in manifest_json
+
+            assert manifest_json['model']['batch_size'] == self.batch_size
+            assert manifest_json['model']['max_batch_delay'] == self.max_batch_delay
 
     # noinspection PyClassHasNoInit
     class TestModelNameRegEx:

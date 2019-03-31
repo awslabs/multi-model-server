@@ -34,7 +34,8 @@ class TestModelPackaging:
     export_path = '/Users/ghaipiyu/'
 
     args = Namespace(author=author, email=email, engine=engine, model_name=model_name, handler=handler,
-                     runtime=RuntimeType.PYTHON.value, model_path=model_path, export_path=export_path, force=False)
+                     runtime=RuntimeType.PYTHON.value, batch_size=1, max_batch_delay=100, model_path=model_path,
+                     export_path=export_path, force=False)
 
     @pytest.fixture()
     def patches(self, mocker):

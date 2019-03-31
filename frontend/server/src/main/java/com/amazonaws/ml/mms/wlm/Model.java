@@ -45,8 +45,10 @@ public class Model {
     // Per worker thread job queue. This separates out the control queue from data queue
     private ConcurrentMap<String, LinkedBlockingDeque<Job>> jobsDb;
 
-    public Model(ModelArchive modelArchive, int queueSize) {
+    public Model(ModelArchive modelArchive, int queueSize, int responseTimeout) {
         this.modelArchive = modelArchive;
+        this.responseTimeout = responseTimeout;
+
         batchSize = modelArchive.getManifest().getModel().getBatchSize();
         maxBatchDelay = modelArchive.getManifest().getModel().getBatchDelay();
 

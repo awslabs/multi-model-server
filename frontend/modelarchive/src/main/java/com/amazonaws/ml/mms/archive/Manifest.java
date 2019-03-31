@@ -165,6 +165,9 @@ public class Manifest {
         private Map<String, Object> extensions;
         private String handler;
 
+        private int batchSize;
+        private int batchDelay;
+
         public Model() {}
 
         public String getModelName() {
@@ -212,6 +215,22 @@ public class Manifest {
 
         public void setHandler(String handler) {
             this.handler = handler;
+        }
+
+        public void setBatchSize(int batchSize) {
+            this.batchSize = batchSize;
+        }
+
+        public void setBatchDelay(int batchDelay) {
+            this.batchDelay = batchDelay;
+        }
+
+        public int getBatchSize() {
+            return batchSize;
+        }
+
+        public int getBatchDelay() {
+            return batchDelay;
         }
     }
 

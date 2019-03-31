@@ -176,8 +176,8 @@ class TestExportModelUtils:
             assert 'publisher' in manifest_json
             assert 'license' not in manifest_json
 
-            assert manifest_json['model']['batch_size'] == self.batch_size
-            assert manifest_json['model']['max_batch_delay'] == self.max_batch_delay
+            assert manifest_json['model']['batchSize'] == self.batch_size
+            assert manifest_json['model']['maxBatchDelay'] == self.max_batch_delay
 
     # noinspection PyClassHasNoInit
     class TestModelNameRegEx:

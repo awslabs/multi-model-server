@@ -190,7 +190,7 @@ class ModelExportUtils(object):
     @staticmethod
     def generate_model(modelargs):
         model = Model(model_name=modelargs.model_name, handler=modelargs.handler,
-                      max_batch_size=modelargs.max_batch_size, max_batch_delay=modelargs.max_batch_delay)
+                      batch_size=modelargs.batch_size, max_batch_delay=modelargs.max_batch_delay)
         return model
 
     @staticmethod

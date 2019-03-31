@@ -149,7 +149,7 @@ class TestExportModelUtils:
         handler = 'a.py::my-awesome-func'
 
         args = Namespace(author=author, email=email, engine=engine, model_name=model_name, handler=handler,
-                         runtime=RuntimeType.PYTHON.value, max_batch_size=32, max_batch_delay=300)
+                         runtime=RuntimeType.PYTHON.value, batch_size=32, max_batch_delay=300)
 
         def test_publisher(self):
             pub = ModelExportUtils.generate_publisher(self.args)

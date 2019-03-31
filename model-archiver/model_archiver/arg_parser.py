@@ -56,17 +56,19 @@ class ArgParser(object):
                                    default=None,
                                    help='Handler path to handle custom MMS inference logic.')
 
-        parser_export.add_argument('--max-batch-size',
+        parser_export.add_argument('--batch-size',
                                    required=False,
                                    type=int,
                                    default=1,
-                                   help='The maximum batch size this model accepts.')
+                                   help='The default batch size to use for this model. Can be overridden using the '
+                                        'Management API.')
 
         parser_export.add_argument('--max-batch-delay',
                                    required=False,
                                    type=int,
                                    default=100,
-                                   help='The maximum time, in milliseconds, to wait for a full batch.')
+                                   help='The maximum time, in milliseconds, to wait for a full batch. Can be '
+                                        'overridden using the Management API.')
 
         parser_export.add_argument('--runtime',
                                    required=False,

@@ -18,14 +18,14 @@ class Model(object):
     as the entry point into the service code through the handler property
     """
 
-    def __init__(self, model_name, handler, description=None, model_version=None, extensions=None, max_batch_size=1,
+    def __init__(self, model_name, handler, description=None, model_version=None, extensions=None, batch_size=1,
                  max_batch_delay=100):
         self.model_name = model_name
         self.description = description
         self.model_version = model_version
         self.extensions = extensions
         self.handler = handler
-        self.max_batch_size = max_batch_size
+        self.batch_size = batch_size
         self.max_batch_delay = max_batch_delay
         self.model_dict = self.__to_dict__()
 
@@ -36,7 +36,7 @@ class Model(object):
 
         model_dict['handler'] = self.handler
 
-        model_dict['max_batch_size'] = self.max_batch_size
+        model_dict['batch_size'] = self.batch_size
 
         model_dict['max_batch_delay'] = self.max_batch_delay
 

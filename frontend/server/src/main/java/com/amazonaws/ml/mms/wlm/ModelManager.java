@@ -12,10 +12,7 @@
  */
 package com.amazonaws.ml.mms.wlm;
 
-import com.amazonaws.ml.mms.archive.Manifest;
-import com.amazonaws.ml.mms.archive.ModelArchive;
-import com.amazonaws.ml.mms.archive.ModelException;
-import com.amazonaws.ml.mms.archive.ModelNotFoundException;
+import com.amazonaws.ml.mms.archive.*;
 import com.amazonaws.ml.mms.http.BadRequestException;
 import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.util.ConfigManager;
@@ -66,9 +63,8 @@ public final class ModelManager {
         return modelManager;
     }
 
-    public ModelArchive registerModel(String url) throws ModelException, IOException {
-        return registerModel(
-                url, null, null, null, 1, 100, configManager.getDefaultResponseTimeout());
+    public String getModelStore() {
+        return configManager.getModelStore();
     }
 
     public ModelArchive registerModel(
@@ -81,7 +77,7 @@ public final class ModelManager {
             int responseTimeout)
             throws ModelException, IOException {
 
-        ModelArchive archive = ModelArchive.downloadModel(configManager.getModelStore(), url);
+        ModelArchive archive = ModelArchive.downloadModel(getModelStore(), url);
         if (modelName == null || modelName.isEmpty()) {
             modelName = archive.getModelName();
         } else {
@@ -108,6 +104,28 @@ public final class ModelManager {
         logger.info("Model {} loaded.", model.getModelName());
 
         return archive;
+    }
+
+    public void registerModel(ModelArchive archive) throws InvalidModelException {
+        registerModel(
+                archive,
+                configManager.getJobQueueSize(),
+                configManager.getDefaultResponseTimeout());
+    }
+
+    public void registerModel(ModelArchive archive, int queueSize, int responseTimeout)
+            throws InvalidModelException {
+        archive.validate();
+
+        Model model = new Model(archive, queueSize);
+        model.setResponseTimeout(responseTimeout);
+        Model existingModel = models.putIfAbsent(archive.getModelName(), model);
+        if (existingModel != null) {
+            // model already exists
+            throw new BadRequestException(
+                    "Model " + archive.getModelName() + " is already registered.");
+        }
+        logger.info("Model {} loaded.", model.getModelName());
     }
 
     public boolean unregisterModel(String modelName) {

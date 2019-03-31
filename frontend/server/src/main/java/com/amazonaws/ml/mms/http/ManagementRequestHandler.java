@@ -42,8 +42,12 @@ import java.util.function.Function;
  */
 public class ManagementRequestHandler extends HttpRequestHandler {
 
+    private final ConfigManager configManager;
+
     /** Creates a new {@code ManagementRequestHandler} instance. */
-    public ManagementRequestHandler() {}
+    public ManagementRequestHandler(ConfigManager manager) {
+        configManager = manager;
+    }
 
     @Override
     protected void handleRequest(
@@ -164,8 +168,8 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         String modelName = NettyUtils.getParameter(decoder, "model_name", null);
         String runtime = NettyUtils.getParameter(decoder, "runtime", null);
         String handler = NettyUtils.getParameter(decoder, "handler", null);
-        int batchSize = NettyUtils.getIntParameter(decoder, "batch_size", 1);
-        int maxBatchDelay = NettyUtils.getIntParameter(decoder, "max_batch_delay", 100);
+        int batchSize = NettyUtils.getIntParameter(decoder, "batch_size", 0);
+        int batchDelay = NettyUtils.getIntParameter(decoder, "max_batch_delay", 0);
         int initialWorkers = NettyUtils.getIntParameter(decoder, "initial_workers", 0);
         boolean synchronous =
                 Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
@@ -186,15 +190,26 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         ModelManager modelManager = ModelManager.getInstance();
         final ModelArchive archive;
         try {
-            archive =
-                    modelManager.registerModel(
-                            modelUrl,
-                            modelName,
-                            runtimeType,
-                            handler,
-                            batchSize,
-                            maxBatchDelay,
-                            responseTimeout);
+            archive = ModelArchive.downloadModel(configManager.getModelStore(), modelUrl);
+            Manifest.Model model = archive.getManifest().getModel();
+
+            if (modelName != null) {
+                model.setModelName(modelName);
+            }
+            if (runtimeType != null) {
+                archive.getManifest().setRuntime(runtimeType);
+            }
+            if (handler != null) {
+                model.setHandler(handler);
+            }
+            if (batchSize != 0) {
+                model.setBatchSize(batchSize);
+            }
+            if (batchDelay != 0) {
+                model.setBatchDelay(batchDelay);
+            }
+
+            modelManager.registerModel(archive, configManager.getJobQueueSize(), responseTimeout);
         } catch (IOException e) {
             throw new InternalServerException("Failed to save model: " + modelUrl, e);
         }

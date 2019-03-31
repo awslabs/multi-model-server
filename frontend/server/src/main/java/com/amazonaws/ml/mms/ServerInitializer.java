@@ -30,6 +30,7 @@ import io.netty.handler.ssl.SslContext;
 public class ServerInitializer extends ChannelInitializer<Channel> {
 
     private final boolean managementServer;
+    private final ConfigManager configManager;
     private SslContext sslCtx;
 
     /**
@@ -38,9 +39,11 @@ public class ServerInitializer extends ChannelInitializer<Channel> {
      * @param sslCtx null if SSL is not enabled
      * @param managementServer true to initialize a management server instead of an API Server
      */
-    public ServerInitializer(SslContext sslCtx, boolean managementServer) {
+    public ServerInitializer(
+            SslContext sslCtx, boolean managementServer, ConfigManager configManager) {
         this.sslCtx = sslCtx;
         this.managementServer = managementServer;
+        this.configManager = configManager;
     }
 
     /** {@inheritDoc} */
@@ -54,7 +57,7 @@ public class ServerInitializer extends ChannelInitializer<Channel> {
         pipeline.addLast("http", new HttpServerCodec());
         pipeline.addLast("aggregator", new HttpObjectAggregator(maxRequestSize));
         if (managementServer) {
-            pipeline.addLast("handler", new ManagementRequestHandler());
+            pipeline.addLast("handler", new ManagementRequestHandler(configManager));
         } else {
             pipeline.addLast("handler", new InferenceRequestHandler());
         }

@@ -115,19 +115,19 @@ public class ModelServer {
 
         ModelManager modelManager = ModelManager.getInstance();
         int workers = configManager.getDefaultWorkers();
+        String modelStore = configManager.getModelStore();
+
+        if (modelStore == null) {
+            logger.warn("Model store is not configured.");
+            return;
+        }
+        File modelStoreDir = new File(modelStore);
+        if (!modelStoreDir.exists()) {
+            logger.warn("Model store path is not found: {}", modelStore);
+            return;
+        }
+
         if ("ALL".equalsIgnoreCase(loadModels)) {
-            String modelStore = configManager.getModelStore();
-            if (modelStore == null) {
-                logger.warn("Model store is not configured.");
-                return;
-            }
-
-            File modelStoreDir = new File(modelStore);
-            if (!modelStoreDir.exists()) {
-                logger.warn("Model store path is not found: {}", modelStore);
-                return;
-            }
-
             // Check folders to see if they can be models as well
             File[] files = modelStoreDir.listFiles();
             if (files != null) {
@@ -144,7 +144,8 @@ public class ModelServer {
                     try {
                         logger.debug("Loading models from model store: {}", file.getName());
 
-                        ModelArchive archive = modelManager.registerModel(file.getName());
+                        ModelArchive archive = ModelArchive.downloadModel(modelStore, fileName);
+                        modelManager.registerModel(archive);
                         modelManager.updateModel(archive.getModelName(), workers, workers);
                         startupModels.add(archive.getModelName());
                     } catch (ModelException | IOException e) {
@@ -173,15 +174,12 @@ public class ModelServer {
             try {
                 logger.info("Loading initial models: {}", url);
 
-                ModelArchive archive =
-                        modelManager.registerModel(
-                                url,
-                                modelName,
-                                null,
-                                null,
-                                1,
-                                100,
-                                configManager.getDefaultResponseTimeout());
+                ModelArchive archive = ModelArchive.downloadModel(modelStore, url);
+                if (modelName != null) {
+                    archive.getManifest().getModel().setModelName(modelName);
+                }
+
+                modelManager.registerModel(archive);
                 modelManager.updateModel(archive.getModelName(), workers, workers);
                 startupModels.add(archive.getModelName());
             } catch (ModelException | IOException e) {
@@ -210,7 +208,7 @@ public class ModelServer {
         if (connector.isSsl()) {
             sslCtx = configManager.getSslContext();
         }
-        b.childHandler(new ServerInitializer(sslCtx, connector.isManagement()));
+        b.childHandler(new ServerInitializer(sslCtx, connector.isManagement(), configManager));
 
         ChannelFuture future;
         try {

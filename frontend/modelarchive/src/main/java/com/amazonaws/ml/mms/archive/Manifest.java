@@ -165,8 +165,8 @@ public class Manifest {
         private Map<String, Object> extensions;
         private String handler;
 
-        private int batchSize;
-        private int batchDelay;
+        private int batchSize = 1;
+        private int batchDelay = 100;
 
         public Model() {}
 

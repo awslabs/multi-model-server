@@ -47,8 +47,9 @@ public class Model {
 
     public Model(ModelArchive modelArchive, int queueSize) {
         this.modelArchive = modelArchive;
-        batchSize = 1;
-        maxBatchDelay = 100;
+        batchSize = modelArchive.getManifest().getModel().getBatchSize();
+        maxBatchDelay = modelArchive.getManifest().getModel().getBatchDelay();
+
         jobsDb = new ConcurrentHashMap<>();
         // Always have a queue for data
         jobsDb.putIfAbsent(DEFAULT_DATA_QUEUE, new LinkedBlockingDeque<>(queueSize));

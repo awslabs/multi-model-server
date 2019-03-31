@@ -173,11 +173,8 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         int initialWorkers = NettyUtils.getIntParameter(decoder, "initial_workers", 0);
         boolean synchronous =
                 Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
-        int responseTimeout =
-                Integer.parseInt(NettyUtils.getParameter(decoder, "response_timeout", "-1"));
-        if (responseTimeout == -1) {
-            responseTimeout = ConfigManager.getInstance().getDefaultResponseTimeout();
-        }
+        int responseTimeout = NettyUtils.getIntParameter(decoder, "response_timeout", -1);
+
         Manifest.RuntimeType runtimeType = null;
         if (runtime != null) {
             try {
@@ -207,6 +204,9 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             }
             if (maxBatchDelay != 0) {
                 model.setMaxBatchDelay(maxBatchDelay);
+            }
+            if (responseTimeout == -1) {
+                responseTimeout = configManager.getDefaultResponseTimeout();
             }
 
             modelManager.registerModel(archive, configManager.getJobQueueSize(), responseTimeout);

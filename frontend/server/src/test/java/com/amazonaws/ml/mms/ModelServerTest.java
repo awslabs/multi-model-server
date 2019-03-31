@@ -231,9 +231,6 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        System.out.println("------------");
-        System.out.println(result);
-        System.out.println("------------");
         Assert.assertEquals(result, expected);
     }
 

@@ -19,7 +19,7 @@ RUN apt-get update && \
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
 
-RUN pip install --no-cache-dir mxnet-model-server --pre
+RUN pip install --no-cache-dir mxnet-model-server 
 
 RUN useradd -m model-server \
     && mkdir -p /home/model-server/tmp
@@ -27,12 +27,10 @@ RUN useradd -m model-server \
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
 COPY config.properties /home/model-server
 
-RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh \
-    && chown -R model-server /home/model-server
+RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh
 
 EXPOSE 8080 8081
 
-USER model-server
 WORKDIR /home/model-server
 ENV TEMP=/home/model-server/tmp
 ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]

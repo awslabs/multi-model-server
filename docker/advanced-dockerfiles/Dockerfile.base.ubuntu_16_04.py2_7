@@ -21,8 +21,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
 
 RUN pip install --no-cache-dir mxnet-model-server 
 
-RUN useradd -m model-server \
-    && mkdir -p /home/model-server/tmp
+RUN mkdir -p /home/model-server/tmp
 
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
 COPY config.properties /home/model-server

@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM nvidia/cuda:9.2-cudnn7-runtime-ubuntu16.04
 
 ENV PYTHONUNBUFFERED TRUE
 
@@ -19,7 +19,7 @@ RUN apt-get update && \
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
 
-RUN pip install --no-cache-dir mxnet-model-server --pre
+RUN pip install --no-cache-dir mxnet-model-server 
 
 RUN mkdir -p /home/model-server/tmp
 

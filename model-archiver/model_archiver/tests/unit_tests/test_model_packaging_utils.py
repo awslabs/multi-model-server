@@ -178,12 +178,13 @@ class TestExportModelUtils:
     class TestModelNameRegEx:
 
         def test_regex_pass(self):
-            model_names = ['my-awesome-model', 'Aa.model', 'a', 'aA.model', 'a1234.model', 'a-A-A.model']
+            model_names = ['my-awesome-model', 'Aa.model', 'a', 'aA.model', 'a1234.model', 'a-A-A.model', '123-abc']
             for m in model_names:
                 ModelExportUtils.check_model_name_regex_or_exit(m)
 
         def test_regex_fail(self):
-            model_names = ['abc%', '123.abc', '12-model-a.model', '##.model', '-.model']
+            model_names = ['abc%', '123$abc', 'abc!123', '@123', '(model', 'mdoel)',
+                           '12*model-a.model', '##.model', '-.model']
             for m in model_names:
                 with pytest.raises(ModelArchiverError):
                     ModelExportUtils.check_model_name_regex_or_exit(m)

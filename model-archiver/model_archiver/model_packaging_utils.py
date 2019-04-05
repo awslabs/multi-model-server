@@ -302,10 +302,10 @@ class ModelExportUtils(object):
         :param model_name:
         :return:
         """
-        if not re.match(r'^[A-Za-z][A-Za-z0-9_\-.]*$', model_name):
+        if not re.match(r'^[A-Za-z0-9][A-Za-z0-9_\-.]*$', model_name):
             raise ModelArchiverError("Model name contains special characters.\n"
                                      "The allowed regular expression filter for model "
-                                     "name is: ^[A-Za-z][A-Za-z0-9_\\-.]*$")
+                                     "name is: ^[A-Za-z0-9][A-Za-z0-9_\\-.]*$")
 
     @staticmethod
     def validate_inputs(model_path, model_name, export_path):

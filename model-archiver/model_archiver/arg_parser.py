@@ -77,11 +77,11 @@ class ArgParser(object):
         parser_export.add_argument('--archive-format',
                                    required=False,
                                    type=str,
-                                   default="mar",
-                                   choices=["tgz", "mar"],
+                                   default="default",
+                                   choices=["tgz", "default"],
                                    help='The format in which the model artifacts are archived\n'
-                                        'tgz: This is the format in which Sagemaker models are consumed\n'
-                                        'mar: This is the format in which models are consumed in MMS\n')
+                                        'tgz: This creates the model-archive in <model-name>.tar.gz format\n'
+                                        'default: This creates the model-archive in <model-name>.mar format\n')
 
         parser_export.add_argument('-f', '--force',
                                    required=False,

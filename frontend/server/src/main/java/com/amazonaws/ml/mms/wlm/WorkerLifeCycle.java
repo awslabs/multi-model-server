@@ -53,6 +53,7 @@ public class WorkerLifeCycle {
 
         StringBuilder pythonPath = new StringBuilder();
         HashMap<String, String> environment = new HashMap<>(System.getenv());
+        environment.putAll(configManager.getBackendConfiguration());
 
         if (System.getenv("PYTHONPATH") != null) {
             pythonPath.append(System.getenv("PYTHONPATH")).append(File.pathSeparatorChar);

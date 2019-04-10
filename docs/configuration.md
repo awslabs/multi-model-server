@@ -159,6 +159,9 @@ Most of those properties are designed for performance tuning. Adjusting those nu
 * job_queue_size: number inference jobs that frontend will queue before backend can serve, default 100.
 * async_logging: enable asynchronous logging for higher throughput, log output may be delayed if this is enabled, default: false.
 * default_response_timeout: Timeout, in seconds, used for model's backend workers before they are deemed unresponsive and rebooted. default: 120 seconds.
+* decode_input_request: Configuration to let backend workers to decode requests, when the content type is known. 
+If this is set to "true", backend workers do "Bytearray to JSON object" conversion when the content type is "application/json" and 
+the backend workers convert "Bytearray to utf-8 string" when the Content-Type of the request is set to "text*". default: true  
 
 ### config.properties Example
 

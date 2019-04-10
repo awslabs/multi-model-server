@@ -79,9 +79,13 @@ class ArgParser(object):
                                    type=str,
                                    default="default",
                                    choices=["tgz", "default"],
-                                   help='The format in which the model artifacts are archived\n'
-                                        'tgz: This creates the model-archive in <model-name>.tar.gz format\n'
-                                        'default: This creates the model-archive in <model-name>.mar format\n')
+                                   help='The format in which the model artifacts are archived.\n'
+                                        'tgz: This creates the model-archive in <model-name>.tar.gz format.'
+                                        'If platform hosting MMS requires model-artifacts to be in \".tar.gz\"'
+                                        ' use this option.\n'
+                                        'default: This creates the model-archive in <model-name>.mar format.'
+                                        ' This is the default archiving format. Models archived in this format'
+                                        ' will be readily hostable on native MMS.\n')
 
         parser_export.add_argument('-f', '--force',
                                    required=False,

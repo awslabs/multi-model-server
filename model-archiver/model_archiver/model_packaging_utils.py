@@ -40,7 +40,14 @@ class ModelExportUtils(object):
     """
 
     @staticmethod
-    def check_mar_already_exists(model_name, export_file_path, overwrite, archive_format="native_mms"):
+    def get_archive_export_path(export_file_path, model_name, archive_format):
+        return os.path.join(export_file_path, '{}{}'.format(model_name,
+                                                            MODEL_ARCHIVE_EXTENSION
+                                                            if archive_format == "default"
+                                                            else TAR_GZ_EXTENSION))
+
+    @staticmethod
+    def check_mar_already_exists(model_name, export_file_path, overwrite, archive_format="default"):
         """
         Function to check if .mar already exists
         :param archive_format:
@@ -52,10 +59,7 @@ class ModelExportUtils(object):
         if export_file_path is None:
             export_file_path = os.getcwd()
 
-        export_file = os.path.join(export_file_path, '{}{}'.format(model_name,
-                                                                   MODEL_ARCHIVE_EXTENSION
-                                                                   if archive_format == "native_mms"
-                                                                   else TAR_GZ_EXTENSION))
+        export_file = ModelExportUtils.get_archive_export_path(export_file_path, model_name, archive_format)
 
         if os.path.exists(export_file):
             if overwrite:
@@ -233,8 +237,7 @@ class ModelExportUtils(object):
         :param manifest:
         :return:
         """
-        mar_path = os.path.join(export_file, '{}{}'.format(model_name, MODEL_ARCHIVE_EXTENSION
-                                                           if archive_format == "default" else TAR_GZ_EXTENSION))
+        mar_path = ModelExportUtils.get_archive_export_path(export_file, model_name, archive_format)
         try:
             if archive_format == "default":
                 with zipfile.ZipFile(mar_path, 'w', zipfile.ZIP_DEFLATED) as z:

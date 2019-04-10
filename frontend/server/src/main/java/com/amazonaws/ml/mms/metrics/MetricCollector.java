@@ -32,7 +32,7 @@ public class MetricCollector implements Runnable {
 
     static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
     private static final org.apache.log4j.Logger loggerMetrics =
-            org.apache.log4j.Logger.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+            org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_SERVER_METRICS_LOGGER);
     private ConfigManager configManager;
 
     public MetricCollector(ConfigManager configManager) {

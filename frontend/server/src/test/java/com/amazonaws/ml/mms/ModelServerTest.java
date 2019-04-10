@@ -58,9 +58,11 @@ import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -122,7 +124,7 @@ public class ModelServerTest {
     @Test
     public void test()
             throws InterruptedException, HttpPostRequestEncoder.ErrorDataEncoderException,
-                    IOException {
+                    IOException, NoSuchFieldException, IllegalAccessException {
         Channel channel = null;
         Channel managementChannel = null;
         for (int i = 0; i < 5; ++i) {
@@ -166,6 +168,8 @@ public class ModelServerTest {
         testLegacyPredict(channel);
         testPredictionsInvalidRequestSize(channel);
         testPredictionsValidRequestSize(channel);
+        testPredictionsDecodeRequest(channel, managementChannel);
+        testPredictionsDoNotDecodeRequest(channel, managementChannel);
         testMetricManager();
 
         channel.close();
@@ -461,6 +465,82 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+    }
+
+    private void loadNoopConfigTests(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=noop-v1.0-config-tests&model_name=noop-config&initial_workers=1&synchronous=true");
+        channel.writeAndFlush(req);
+        latch.await();
+    }
+
+    private void unloadNoopConfigTests(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/models/noop-config");
+        channel.writeAndFlush(req);
+        latch.await();
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Model \"noop-config\" unregistered");
+    }
+
+    void setConfiguration(String key, String val)
+            throws NoSuchFieldException, IllegalAccessException {
+        Field f = configManager.getClass().getDeclaredField("prop");
+        f.setAccessible(true);
+        Properties p = (Properties) f.get(configManager);
+        p.setProperty(key, val);
+    }
+
+    private void testPredictionsDecodeRequest(Channel inferChannel, Channel mgmtChannel)
+            throws InterruptedException, NoSuchFieldException, IllegalAccessException {
+        setConfiguration("decode_input_request", "true");
+        loadNoopConfigTests(mgmtChannel);
+
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/noop-config");
+        req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+        inferChannel.writeAndFlush(req);
+
+        latch.await();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        Assert.assertFalse(result.contains("bytearray"));
+        unloadNoopConfigTests(mgmtChannel);
+    }
+
+    private void testPredictionsDoNotDecodeRequest(Channel inferChannel, Channel mgmtChannel)
+            throws InterruptedException, NoSuchFieldException, IllegalAccessException {
+        setConfiguration("decode_input_request", "false");
+        loadNoopConfigTests(mgmtChannel);
+
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/noop-config");
+        req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+        inferChannel.writeAndFlush(req);
+
+        latch.await();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        Assert.assertTrue(result.contains("bytearray"));
+        unloadNoopConfigTests(mgmtChannel);
     }
 
     private void testLegacyPredict(Channel channel) throws InterruptedException {

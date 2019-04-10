@@ -14,6 +14,7 @@ OTF Codec
 import json
 import logging
 import struct
+import os
 
 from builtins import bytearray
 from builtins import bytes
@@ -252,6 +253,7 @@ def _retrieve_input_data(conn):
     | content_type |
     | input data in bytes |
     """
+    decode_req = os.environ.get("MMS_DECODE_INPUT_REQUEST")
     length = _retrieve_int(conn)
     if length == -1:
         return None
@@ -265,12 +267,10 @@ def _retrieve_input_data(conn):
 
     length = _retrieve_int(conn)
     value = _retrieve_buffer(conn, length)
-
-    if content_type == "application/json":
+    if content_type == "application/json" and (decode_req is None or decode_req == "true"):
         model_input["value"] = json.loads(value.decode("utf-8"))
-    elif content_type.startswith("text"):
+    elif content_type.startswith("text") and (decode_req is None or decode_req == "true"):
         model_input["value"] = value.decode("utf-8")
     else:
         model_input["value"] = value
-
     return model_input

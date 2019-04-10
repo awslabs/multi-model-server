@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.Properties;
@@ -87,6 +88,7 @@ public final class ConfigManager {
     private static final String PRIVATE_KEY_FILE = "private_key_file";
     private static final String MAX_REQUEST_SIZE = "max_request_size";
     private static final String MAX_RESPONSE_SIZE = "max_response_size";
+    private static final String MMS_DECODE_INPUT_REQUEST = "decode_input_request";
 
     private Pattern blacklistPattern;
     private Properties prop;
@@ -488,6 +490,14 @@ public final class ConfigManager {
             asyncAppender.addAppender(appender);
         }
         logger.addAppender(asyncAppender);
+    }
+
+    public HashMap<String, String> getBackendConfiguration() {
+        HashMap<String, String> config = new HashMap<>();
+        // Append properties used by backend worker here
+        config.put("MMS_DECODE_INPUT_REQUEST", prop.getProperty(MMS_DECODE_INPUT_REQUEST, "true"));
+
+        return config;
     }
 
     private static String getCanonicalPath(File file) {

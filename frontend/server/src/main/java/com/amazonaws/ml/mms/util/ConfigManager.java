@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -54,41 +55,42 @@ public final class ConfigManager {
 
     public static final String MODEL_METRICS_LOGGER = "MODEL_METRICS";
     public static final String MODEL_LOGGER = "MODEL_LOG";
-    public static final String MMS_METRICS_LOGGER = "MMS_METRICS";
+    public static final String MODEL_SERVER_METRICS_LOGGER = "MMS_METRICS";
 
-    private static final String DEBUG = "debug";
-    private static final String INFERENCE_ADDRESS = "inference_address";
-    private static final String MANAGEMENT_ADDRESS = "management_address";
+    private static final String MMS_DEBUG = "debug";
+    private static final String MMS_INFERENCE_ADDRESS = "inference_address";
+    private static final String MMS_MANAGEMENT_ADDRESS = "management_address";
     private static final String MODEL_SERVER_HOME = "model_server_home";
     private static final String MODEL_STORE = "model_store";
-    private static final String LOAD_MODELS = "load_models";
-    private static final String BLACKLIST_ENV_VARS = "blacklist_env_vars";
-    private static final String DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
-    private static final String DEFAULT_RESPONSE_TIMEOUT = "default_response_timeout";
+    private static final String MMS_LOAD_MODELS = "load_models";
+    private static final String MMS_BLACKLIST_ENV_VARS = "blacklist_env_vars";
+    private static final String MMS_DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
+    private static final String MMS_DEFAULT_RESPONSE_TIMEOUT = "default_response_timeout";
 
     // advanced parameters for performance tuning
-    private static final String NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
-    private static final String NETTY_CLIENT_THREADS = "netty_client_threads";
+    private static final String MMS_NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
+    private static final String MMS_NETTY_CLIENT_THREADS = "netty_client_threads";
     private static final String USE_NATIVE_IO = "use_native_io";
     private static final String IO_RATIO = "io_ratio";
-    private static final String JOB_QUEUE_SIZE = "job_queue_size";
+    private static final String MMS_JOB_QUEUE_SIZE = "job_queue_size";
 
-    private static final String NUMBER_OF_GPU = "number_of_gpu";
+    private static final String MMS_NUMBER_OF_GPU = "number_of_gpu";
     private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
-    private static final String ASYNC_LOGGING = "async_logging";
+    private static final String MMS_ASYNC_LOGGING = "async_logging";
 
-    private static final String CORS_ALLOWED_ORIGIN = "cors_allowed_origin";
-    private static final String CORS_ALLOWED_METHODS = "cors_allowed_methods";
-    private static final String CORS_ALLOWED_HEADERS = "cors_allowed_headers";
+    private static final String MMS_CORS_ALLOWED_ORIGIN = "cors_allowed_origin";
+    private static final String MMS_CORS_ALLOWED_METHODS = "cors_allowed_methods";
+    private static final String MMS_CORS_ALLOWED_HEADERS = "cors_allowed_headers";
 
-    private static final String KEYSTORE = "keystore";
-    private static final String KEYSTORE_PASS = "keystore_pass";
-    private static final String KEYSTORE_TYPE = "keystore_type";
-    private static final String CERTIFICATE_FILE = "certificate_file";
-    private static final String PRIVATE_KEY_FILE = "private_key_file";
-    private static final String MAX_REQUEST_SIZE = "max_request_size";
-    private static final String MAX_RESPONSE_SIZE = "max_response_size";
     private static final String MMS_DECODE_INPUT_REQUEST = "decode_input_request";
+    private static final String MMS_KEYSTORE = "keystore";
+    private static final String MMS_KEYSTORE_PASS = "keystore_pass";
+    private static final String MMS_KEYSTORE_TYPE = "keystore_type";
+    private static final String MMS_CERTIFICATE_FILE = "certificate_file";
+    private static final String MMS_PRIVATE_KEY_FILE = "private_key_file";
+    private static final String MMS_MAX_REQUEST_SIZE = "max_request_size";
+    private static final String MMS_MAX_RESPONSE_SIZE = "max_response_size";
+    private static final String ENABLE_ENV_VARS_CONFIG = "enable_env_vars_config";
 
     private Pattern blacklistPattern;
     private Properties prop;
@@ -138,15 +140,15 @@ public final class ConfigManager {
 
         String[] models = args.getModels();
         if (models != null) {
-            prop.setProperty(LOAD_MODELS, String.join(",", models));
+            prop.setProperty(MMS_LOAD_MODELS, String.join(",", models));
         }
 
         prop.setProperty(
-                NUMBER_OF_GPU,
+                MMS_NUMBER_OF_GPU,
                 String.valueOf(
                         Integer.min(
                                 getAvailableGpu(),
-                                getIntProperty(NUMBER_OF_GPU, Integer.MAX_VALUE))));
+                                getIntProperty(MMS_NUMBER_OF_GPU, Integer.MAX_VALUE))));
 
         String pythonExecutable = args.getPythonExecutable();
         if (pythonExecutable != null) {
@@ -160,9 +162,35 @@ public final class ConfigManager {
             hostName = "Unknown";
         }
 
-        if (Boolean.parseBoolean(prop.getProperty(ASYNC_LOGGING))) {
+        if (Boolean.parseBoolean(prop.getProperty(MMS_ASYNC_LOGGING))) {
             enableAsyncLogging();
         }
+
+        if (Boolean.parseBoolean(getEnableEnvVarsConfig())) {
+            // Environment variables have higher precedence over the config file variables
+            setSystemVars();
+        }
+    }
+
+    private void setSystemVars() {
+        Class<ConfigManager> configClass = ConfigManager.class;
+        Field[] fields = configClass.getDeclaredFields();
+        for (Field f : fields) {
+            if (f.getName().startsWith("MMS_")) {
+                String val = System.getenv(f.getName());
+                if (val != null) {
+                    try {
+                        prop.setProperty((String) f.get(ConfigManager.class), val);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace(); // NOPMD
+                    }
+                }
+            }
+        }
+    }
+
+    String getEnableEnvVarsConfig() {
+        return prop.getProperty(ENABLE_ENV_VARS_CONFIG, "false");
     }
 
     public String getHostName() {
@@ -178,34 +206,34 @@ public final class ConfigManager {
     }
 
     public boolean isDebug() {
-        return Boolean.getBoolean("DEBUG")
-                || Boolean.parseBoolean(prop.getProperty(DEBUG, "false"));
+        return Boolean.getBoolean("MMS_DEBUG")
+                || Boolean.parseBoolean(prop.getProperty(MMS_DEBUG, "false"));
     }
 
     public Connector getListener(boolean management) {
         String binding;
         if (management) {
-            binding = prop.getProperty(MANAGEMENT_ADDRESS, "http://127.0.0.1:8081");
+            binding = prop.getProperty(MMS_MANAGEMENT_ADDRESS, "http://127.0.0.1:8081");
         } else {
-            binding = prop.getProperty(INFERENCE_ADDRESS, "http://127.0.0.1:8080");
+            binding = prop.getProperty(MMS_INFERENCE_ADDRESS, "http://127.0.0.1:8080");
         }
         return Connector.parse(binding, management);
     }
 
     public int getNettyThreads() {
-        return getIntProperty(NUMBER_OF_NETTY_THREADS, 0);
+        return getIntProperty(MMS_NUMBER_OF_NETTY_THREADS, 0);
     }
 
     public int getNettyClientThreads() {
-        return getIntProperty(NETTY_CLIENT_THREADS, 0);
+        return getIntProperty(MMS_NETTY_CLIENT_THREADS, 0);
     }
 
     public int getJobQueueSize() {
-        return getIntProperty(JOB_QUEUE_SIZE, 100);
+        return getIntProperty(MMS_JOB_QUEUE_SIZE, 100);
     }
 
     public int getNumberOfGpu() {
-        return getIntProperty(NUMBER_OF_GPU, 0);
+        return getIntProperty(MMS_NUMBER_OF_GPU, 0);
     }
 
     public int getDefaultWorkers() {
@@ -213,7 +241,7 @@ public final class ConfigManager {
             return 1;
         }
 
-        int workers = getIntProperty(DEFAULT_WORKERS_PER_MODEL, 0);
+        int workers = getIntProperty(MMS_DEFAULT_WORKERS_PER_MODEL, 0);
         if (workers == 0) {
             workers = getNumberOfGpu();
         }
@@ -257,7 +285,7 @@ public final class ConfigManager {
     }
 
     public String getLoadModels() {
-        return prop.getProperty(LOAD_MODELS);
+        return prop.getProperty(MMS_LOAD_MODELS);
     }
 
     public Pattern getBlacklistPattern() {
@@ -265,15 +293,15 @@ public final class ConfigManager {
     }
 
     public String getCorsAllowedOrigin() {
-        return prop.getProperty(CORS_ALLOWED_ORIGIN);
+        return prop.getProperty(MMS_CORS_ALLOWED_ORIGIN);
     }
 
     public String getCorsAllowedMethods() {
-        return prop.getProperty(CORS_ALLOWED_METHODS);
+        return prop.getProperty(MMS_CORS_ALLOWED_METHODS);
     }
 
     public String getCorsAllowedHeaders() {
-        return prop.getProperty(CORS_ALLOWED_HEADERS);
+        return prop.getProperty(MMS_CORS_ALLOWED_HEADERS);
     }
 
     public SslContext getSslContext() throws IOException, GeneralSecurityException {
@@ -284,12 +312,12 @@ public final class ConfigManager {
 
         PrivateKey privateKey;
         X509Certificate[] chain;
-        String keyStoreFile = prop.getProperty(KEYSTORE);
-        String privateKeyFile = prop.getProperty(PRIVATE_KEY_FILE);
-        String certificateFile = prop.getProperty(CERTIFICATE_FILE);
+        String keyStoreFile = prop.getProperty(MMS_KEYSTORE);
+        String privateKeyFile = prop.getProperty(MMS_PRIVATE_KEY_FILE);
+        String certificateFile = prop.getProperty(MMS_CERTIFICATE_FILE);
         if (keyStoreFile != null) {
-            char[] keystorePass = getProperty(KEYSTORE_PASS, "changeit").toCharArray();
-            String keystoreType = getProperty(KEYSTORE_TYPE, "PKCS12");
+            char[] keystorePass = getProperty(MMS_KEYSTORE_PASS, "changeit").toCharArray();
+            String keystoreType = getProperty(MMS_KEYSTORE_TYPE, "PKCS12");
             KeyStore keyStore = KeyStore.getInstance(keystoreType);
             try (InputStream is = new FileInputStream(keyStoreFile)) {
                 keyStore.load(is, keystorePass);
@@ -368,7 +396,7 @@ public final class ConfigManager {
     }
 
     public void validateConfigurations() throws InvalidPropertiesFormatException {
-        String blacklistVars = prop.getProperty(BLACKLIST_ENV_VARS, "");
+        String blacklistVars = prop.getProperty(MMS_BLACKLIST_ENV_VARS, "");
         try {
             blacklistPattern = Pattern.compile(blacklistVars);
         } catch (PatternSyntaxException e) {
@@ -413,11 +441,11 @@ public final class ConfigManager {
                 + "\nDefault workers per model: "
                 + getDefaultWorkers()
                 + "\nBlacklist Regex: "
-                + prop.getProperty(BLACKLIST_ENV_VARS, "N/A")
+                + prop.getProperty(MMS_BLACKLIST_ENV_VARS, "N/A")
                 + "\nMaximum Response Size: "
-                + prop.getProperty(MAX_RESPONSE_SIZE, "6553500")
+                + prop.getProperty(MMS_MAX_RESPONSE_SIZE, "6553500")
                 + "\nMaximum Request Size: "
-                + prop.getProperty(MAX_REQUEST_SIZE, "6553500");
+                + prop.getProperty(MMS_MAX_REQUEST_SIZE, "6553500");
     }
 
     public boolean useNativeIo() {
@@ -429,11 +457,11 @@ public final class ConfigManager {
     }
 
     public int getMaxResponseSize() {
-        return getIntProperty(MAX_RESPONSE_SIZE, 6553500);
+        return getIntProperty(MMS_MAX_RESPONSE_SIZE, 6553500);
     }
 
     public int getMaxRequestSize() {
-        return getIntProperty(MAX_REQUEST_SIZE, 6553500);
+        return getIntProperty(MMS_MAX_REQUEST_SIZE, 6553500);
     }
 
     void setProperty(String key, String value) {
@@ -449,7 +477,7 @@ public final class ConfigManager {
     }
 
     public int getDefaultResponseTimeout() {
-        return Integer.parseInt(prop.getProperty(DEFAULT_RESPONSE_TIMEOUT, "120"));
+        return Integer.parseInt(prop.getProperty(MMS_DEFAULT_RESPONSE_TIMEOUT, "120"));
     }
 
     private File findMmsHome() {
@@ -469,7 +497,7 @@ public final class ConfigManager {
         enableAsyncLogging(Logger.getRootLogger());
         enableAsyncLogging(Logger.getLogger(MODEL_METRICS_LOGGER));
         enableAsyncLogging(Logger.getLogger(MODEL_LOGGER));
-        enableAsyncLogging(Logger.getLogger(MMS_METRICS_LOGGER));
+        enableAsyncLogging(Logger.getLogger(MODEL_SERVER_METRICS_LOGGER));
         enableAsyncLogging(Logger.getLogger("ACCESS_LOG"));
         enableAsyncLogging(Logger.getLogger("com.amazonaws.ml.mms"));
     }

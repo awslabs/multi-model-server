@@ -153,6 +153,7 @@ By default, MMS will use all available GPUs for inference, you use `number_of_gp
 
 Most of those properties are designed for performance tuning. Adjusting those numbers will impact scalability and throughput.
 
+* enable_env_vars_config: Enable configuring MMS through environment variables. When this option is set to "true", all the static configurations of MMS can come through environment variables as well. default: false
 * number_of_netty_threads: number frontend netty thread, default: number of logical processors available to the JVM.
 * netty_client_threads: number of backend netty thread, default: number of logical processors available to the JVM.
 * default_workers_per_model: number of workers to create for each model that loaded at startup time, default: available GPUs in system or number of logical processors available to the JVM.

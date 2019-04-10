@@ -61,7 +61,7 @@ public class ConfigManagerTest {
         metrics.add(createMetric("TestMetric1", "12345"));
         metrics.add(createMetric("TestMetric2", "23478"));
         org.apache.log4j.Logger logger =
-                org.apache.log4j.Logger.getLogger(ConfigManager.MMS_METRICS_LOGGER);
+                org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_SERVER_METRICS_LOGGER);
         logger.debug(metrics);
         Assert.assertTrue(new File("build/logs/mms_metrics.log").exists());
 

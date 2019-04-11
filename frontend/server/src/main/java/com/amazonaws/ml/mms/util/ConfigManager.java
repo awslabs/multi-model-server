@@ -86,7 +86,7 @@ public final class ConfigManager {
     private static final String USE_NATIVE_IO = "use_native_io";
     private static final String IO_RATIO = "io_ratio";
     private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
-    private static final String ENABLE_ENV_VARS_CONFIG = "enable_envvars_config";
+    private static final String ENABLE_ENVVARS_CONFIG = "enable_envvars_config";
 
     // Variables which are local
     public static final String MODEL_METRICS_LOGGER = "MODEL_METRICS";
@@ -191,7 +191,7 @@ public final class ConfigManager {
     }
 
     String getEnableEnvVarsConfig() {
-        return prop.getProperty(ENABLE_ENV_VARS_CONFIG, "false");
+        return prop.getProperty(ENABLE_ENVVARS_CONFIG, "false");
     }
 
     public String getHostName() {

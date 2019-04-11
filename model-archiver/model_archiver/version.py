@@ -11,4 +11,4 @@
 This is the current version of Model Archiver Tool
 """
 
-__version__ = '1.0.2'
+__version__ = '1.0.3'

@@ -18,9 +18,12 @@ import com.amazonaws.ml.mms.metrics.Metric;
 import io.netty.handler.ssl.SslContext;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,13 +50,49 @@ public class ConfigManagerTest {
         return metric;
     }
 
+    @SuppressWarnings("unchecked")
+    private void modifyEnv(String key, String val)
+            throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        try {
+            Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
+            Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
+            theEnvironmentField.setAccessible(true);
+            Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
+            env.put(key, val);
+            Field theCIEField =
+                    processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
+            theCIEField.setAccessible(true);
+            Map<String, String> cienv = (Map<String, String>) theCIEField.get(null);
+            cienv.put(key, val);
+        } catch (NoSuchFieldException e) {
+            Class[] classes = Collections.class.getDeclaredClasses();
+            Map<String, String> env = System.getenv();
+            for (Class cl : classes) {
+                if ("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
+                    Field field = cl.getDeclaredField("m");
+                    field.setAccessible(true);
+                    Object obj = field.get(env);
+                    Map<String, String> map = (Map<String, String>) obj;
+                    map.clear();
+                    map.put(key, val);
+                }
+            }
+        }
+    }
+
     @Test
-    public void test() throws IOException, GeneralSecurityException {
+    public void test()
+            throws IOException, GeneralSecurityException, IllegalAccessException,
+                    NoSuchFieldException, ClassNotFoundException {
+        modifyEnv("MMS_DEFAULT_RESPONSE_TIMEOUT", "130");
         ConfigManager.Arguments args = new ConfigManager.Arguments();
         args.setModels(new String[] {"noop_v0.1"});
         ConfigManager.init(args);
         ConfigManager configManager = ConfigManager.getInstance();
         configManager.setProperty("keystore", "src/test/resources/keystore.p12");
+        Assert.assertEquals("true", configManager.getEnableEnvVarsConfig());
+        Assert.assertEquals(130, configManager.getDefaultResponseTimeout());
+
         Dimension dimension;
         List<Metric> metrics = new ArrayList<>();
         // Create two metrics and add them to a list

@@ -52,36 +52,25 @@ import org.apache.log4j.AsyncAppender;
 import org.apache.log4j.Logger;
 
 public final class ConfigManager {
-
-    public static final String MODEL_METRICS_LOGGER = "MODEL_METRICS";
-    public static final String MODEL_LOGGER = "MODEL_LOG";
-    public static final String MODEL_SERVER_METRICS_LOGGER = "MMS_METRICS";
+    // Variables that can be configured through config.properties and Environment Variables
+    // NOTE: Variables which can be configured through environment variables **SHOULD** have a
+    // "MMS_" prefix
 
     private static final String MMS_DEBUG = "debug";
     private static final String MMS_INFERENCE_ADDRESS = "inference_address";
     private static final String MMS_MANAGEMENT_ADDRESS = "management_address";
-    private static final String MODEL_SERVER_HOME = "model_server_home";
-    private static final String MODEL_STORE = "model_store";
     private static final String MMS_LOAD_MODELS = "load_models";
     private static final String MMS_BLACKLIST_ENV_VARS = "blacklist_env_vars";
     private static final String MMS_DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
     private static final String MMS_DEFAULT_RESPONSE_TIMEOUT = "default_response_timeout";
-
-    // advanced parameters for performance tuning
     private static final String MMS_NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
     private static final String MMS_NETTY_CLIENT_THREADS = "netty_client_threads";
-    private static final String USE_NATIVE_IO = "use_native_io";
-    private static final String IO_RATIO = "io_ratio";
     private static final String MMS_JOB_QUEUE_SIZE = "job_queue_size";
-
     private static final String MMS_NUMBER_OF_GPU = "number_of_gpu";
-    private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
     private static final String MMS_ASYNC_LOGGING = "async_logging";
-
     private static final String MMS_CORS_ALLOWED_ORIGIN = "cors_allowed_origin";
     private static final String MMS_CORS_ALLOWED_METHODS = "cors_allowed_methods";
     private static final String MMS_CORS_ALLOWED_HEADERS = "cors_allowed_headers";
-
     private static final String MMS_DECODE_INPUT_REQUEST = "decode_input_request";
     private static final String MMS_KEYSTORE = "keystore";
     private static final String MMS_KEYSTORE_PASS = "keystore_pass";
@@ -90,7 +79,19 @@ public final class ConfigManager {
     private static final String MMS_PRIVATE_KEY_FILE = "private_key_file";
     private static final String MMS_MAX_REQUEST_SIZE = "max_request_size";
     private static final String MMS_MAX_RESPONSE_SIZE = "max_response_size";
-    private static final String ENABLE_ENV_VARS_CONFIG = "enable_env_vars_config";
+    private static final String MODEL_SERVER_HOME = "model_server_home";
+    private static final String MMS_MODEL_STORE = "model_store";
+
+    // Configuration which are not documented or enabled through environment variables
+    private static final String USE_NATIVE_IO = "use_native_io";
+    private static final String IO_RATIO = "io_ratio";
+    private static final String METRIC_TIME_INTERVAL = "metric_time_interval";
+    private static final String ENABLE_ENV_VARS_CONFIG = "enable_envvars_config";
+
+    // Variables which are local
+    public static final String MODEL_METRICS_LOGGER = "MODEL_METRICS";
+    public static final String MODEL_LOGGER = "MODEL_LOG";
+    public static final String MODEL_SERVER_METRICS_LOGGER = "MMS_METRICS";
 
     private Pattern blacklistPattern;
     private Properties prop;
@@ -135,7 +136,7 @@ public final class ConfigManager {
 
         String modelStore = args.getModelStore();
         if (modelStore != null) {
-            prop.setProperty(MODEL_STORE, modelStore);
+            prop.setProperty(MMS_MODEL_STORE, modelStore);
         }
 
         String[] models = args.getModels();
@@ -281,7 +282,7 @@ public final class ConfigManager {
     }
 
     public String getModelStore() {
-        return getCanonicalPath(prop.getProperty(MODEL_STORE));
+        return getCanonicalPath(prop.getProperty(MMS_MODEL_STORE));
     }
 
     public String getLoadModels() {

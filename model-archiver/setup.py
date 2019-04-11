@@ -47,7 +47,7 @@ def detect_model_archiver_version():
     if "--release" in sys.argv:
         sys.argv.remove("--release")
         # pylint: disable = relative-import
-        return model_archiver.__version__.strip() + '.' + str(date.today()).replace('-', '')
+        return model_archiver.__version__.strip()
 
     # pylint: disable = relative-import
     return model_archiver.__version__.strip() + 'b' + str(date.today()).replace('-', '')

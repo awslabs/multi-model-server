@@ -57,7 +57,7 @@ def detect_model_server_version():
     sys.path.append(os.path.abspath("mms"))
     if "--release" in sys.argv:
         sys.argv.remove("--release")
-        return mms.__version__.strip() + '.' + str(date.today()).replace('-', '')
+        return mms.__version__.strip()
 
     return mms.__version__.strip() + 'b' + str(date.today()).replace('-', '')
 

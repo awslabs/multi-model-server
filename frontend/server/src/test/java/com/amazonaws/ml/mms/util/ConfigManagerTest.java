@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 public class ConfigManagerTest {
-
     static {
         TestUtils.init();
     }
@@ -114,5 +113,18 @@ public class ConfigManagerTest {
 
         SslContext ctx = configManager.getSslContext();
         Assert.assertNotNull(ctx);
+    }
+
+    @Test
+    public void testNoEnvVars()
+            throws IllegalAccessException, NoSuchFieldException, ClassNotFoundException {
+        System.setProperty("mmsConfigFile", "src/test/resources/config_test_env.properties");
+        modifyEnv("MMS_DEFAULT_RESPONSE_TIMEOUT", "130");
+        ConfigManager.Arguments args = new ConfigManager.Arguments();
+        args.setModels(new String[] {"noop_v0.1"});
+        ConfigManager.init(args);
+        ConfigManager configManager = ConfigManager.getInstance();
+        Assert.assertEquals("false", configManager.getEnableEnvVarsConfig());
+        Assert.assertEquals(120, configManager.getDefaultResponseTimeout());
     }
 }

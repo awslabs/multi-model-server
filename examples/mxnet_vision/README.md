@@ -53,7 +53,7 @@ In this pre-trained model, input name is 'data' and shape is '(1,3,224,224)'. Wh
 ```python
 >>> import mxnet as mx
 >>> load_symbol, args, auxs = mx.model.load_checkpoint("squeezenet_v1.1", 0)
->>> mod = mx.mod.Module(load_symbol, label_names=None, context=mx.cpu())
+>>> mod = mx.mod.Module(load_symbol, label_names=None, data_names=['data'], context=mx.cpu())
 >>> mod.data_names
 ['data']
 >>> mod.bind(data_shapes=[('data', (1, 3, 224, 224))])

@@ -68,6 +68,13 @@ class TestExportModelUtils:
             patches.path_exists.assert_called_once_with("/Users/dummyUser/some-model.tar.gz")
             assert ret_val == "/Users/dummyUser"
 
+        def test_export_file_is_none_tar(self, patches):
+            patches.path_exists.return_value = False
+            ret_val = ModelExportUtils.check_mar_already_exists('some-model', None, False, archive_format='no-archive')
+
+            patches.path_exists.assert_called_once_with("/Users/dummyUser/some-model")
+            assert ret_val == "/Users/dummyUser"
+
 
     # noinspection PyClassHasNoInit
     class TestCustomModelTypes:

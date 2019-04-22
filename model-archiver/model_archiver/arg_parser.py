@@ -31,17 +31,16 @@ class ArgParser(object):
 
         """ Argument parser for mxnet-model-export
         """
-        # TODO Add more CLI args here later
-        runtime_types = ', '.join(s.value for s in RuntimeType)
 
-        parser_export = argparse.ArgumentParser(prog='model-archiver', description='Model Archiver Tool')
+        parser_export = argparse.ArgumentParser(prog='model-archiver', description='Model Archiver Tool',
+                                                formatter_class=argparse.RawTextHelpFormatter)
 
         parser_export.add_argument('--model-name',
                                    required=True,
                                    type=str,
                                    default=None,
-                                   help='Exported model name. Exported file will be named as '
-                                        'model-name.mar and saved in current working directory if no --export-path is '
+                                   help='Exported model name. Exported file will be named as\n'
+                                        'model-name.mar and saved in current working directory if no --export-path is\n'
                                         'specified, else it will be saved under the export path')
 
         parser_export.add_argument('--model-path',
@@ -62,36 +61,38 @@ class ArgParser(object):
                                    type=str,
                                    default=RuntimeType.PYTHON.value,
                                    choices=[s.value for s in RuntimeType],
-                                   help='The runtime specifies which language to run your inference code on. '
-                                        'The default runtime is {}. At the present moment we support the '
-                                        'following runtimes \n {}'.format(RuntimeType.PYTHON, runtime_types))
+                                   help='The runtime specifies which language to run your inference code on.\n'
+                                        'The default runtime is "python".')
 
         parser_export.add_argument('--export-path',
                                    required=False,
                                    type=str,
                                    default=os.getcwd(),
-                                   help='Path where the exported .mar file will be saved. This is an optional '
-                                        'parameter. If --export-path is not specified, the file will be saved in the '
+                                   help='Path where the exported .mar file will be saved. This is an optional\n'
+                                        'parameter. If --export-path is not specified, the file will be saved in the\n'
                                         'current working directory. ')
 
         parser_export.add_argument('--archive-format',
                                    required=False,
                                    type=str,
                                    default="default",
-                                   choices=["tgz", "default"],
+                                   choices=["tgz", "no-archive", "default"],
                                    help='The format in which the model artifacts are archived.\n'
-                                        'tgz: This creates the model-archive in <model-name>.tar.gz format.'
-                                        'If platform hosting MMS requires model-artifacts to be in \".tar.gz\"'
-                                        ' use this option.\n'
-                                        'default: This creates the model-archive in <model-name>.mar format.'
-                                        ' This is the default archiving format. Models archived in this format'
-                                        ' will be readily hostable on native MMS.\n')
+                                        'tgz: This creates the model-archive in <model-name>.tar.gz format.\n'
+                                        'If platform hosting MMS requires model-artifacts to be in ".tar.gz"\n'
+                                        'use this option.\n'
+                                        'no-archive: This option creates an non-archived version of model artifacts \n'
+                                        'at "export-path/{model-name}" location. This can be used when archiving \n'
+                                        'is not required.\n'
+                                        'default: This creates the model-archive in <model-name>.mar format.\n'
+                                        'This is the default archiving format. Models archived in this format\n'
+                                        'will be readily hostable on native MMS.\n')
 
         parser_export.add_argument('-f', '--force',
                                    required=False,
                                    action='store_true',
-                                   help='When the -f or --force flag is specified, an existing .mar file with same '
-                                        'name as that provided in --model-name in the path specified by --export-path '
+                                   help='When the -f or --force flag is specified, an existing .mar file with same\n'
+                                        'name as that provided in --model-name in the path specified by --export-path\n'
                                         'will overwritten')
 
         return parser_export

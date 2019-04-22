@@ -17,6 +17,7 @@ import logging
 import os
 import re
 import zipfile
+import shutil
 from .model_archiver_error import ModelArchiverError
 
 from .manifest_components.engine import Engine
@@ -24,8 +25,12 @@ from .manifest_components.manifest import Manifest
 from .manifest_components.model import Model
 from .manifest_components.publisher import Publisher
 
-MODEL_ARCHIVE_EXTENSION = '.mar'
-TAR_GZ_EXTENSION = '.tar.gz'
+archiving_options = {
+    "tgz": "tar.gz",
+    "no-archive": "",
+    "default": ".mar"
+}
+
 MODEL_SERVER_VERSION = '1.0'
 MODEL_ARCHIVE_VERSION = '1.0'
 MANIFEST_FILE_NAME = 'MANIFEST.json'
@@ -41,10 +46,7 @@ class ModelExportUtils(object):
 
     @staticmethod
     def get_archive_export_path(export_file_path, model_name, archive_format):
-        return os.path.join(export_file_path, '{}{}'.format(model_name,
-                                                            MODEL_ARCHIVE_EXTENSION
-                                                            if archive_format == "default"
-                                                            else TAR_GZ_EXTENSION))
+        return os.path.join(export_file_path, '{}{}'.format(model_name, archiving_options.get(archive_format)))
 
     @staticmethod
     def check_mar_already_exists(model_name, export_file_path, overwrite, archive_format="default"):
@@ -226,6 +228,11 @@ class ModelExportUtils(object):
             os.remove(f)
 
     @staticmethod
+    def make_dir(d):
+        if not os.path.isdir(d):
+            os.makedirs(d)
+
+    @staticmethod
     def archive(export_file, model_name, model_path, files_to_exclude, manifest, archive_format="default"):
         """
         Create a model-archive
@@ -239,12 +246,7 @@ class ModelExportUtils(object):
         """
         mar_path = ModelExportUtils.get_archive_export_path(export_file, model_name, archive_format)
         try:
-            if archive_format == "default":
-                with zipfile.ZipFile(mar_path, 'w', zipfile.ZIP_DEFLATED) as z:
-                    ModelExportUtils.archive_dir(model_path, z, set(files_to_exclude), archive_format, model_name)
-                    # Write the manifest here now as a json
-                    z.writestr(os.path.join(MAR_INF, MANIFEST_FILE_NAME), manifest)
-            elif archive_format == "tgz":
+            if archive_format == "tgz":
                 import tarfile
                 from io import BytesIO
                 with tarfile.open(mar_path, 'w:gz') as z:
@@ -254,9 +256,21 @@ class ModelExportUtils(object):
                     tar_manifest.size = len(manifest.encode('utf-8'))
                     z.addfile(tarinfo=tar_manifest, fileobj=BytesIO(manifest.encode()))
                     z.close()
+            elif archive_format == "no-archive":
+                if model_path != mar_path:
+                    # Copy files to export path if
+                    ModelExportUtils.archive_dir(model_path, mar_path,
+                                                 set(files_to_exclude), archive_format, model_name)
+                # Write the MANIFEST in place
+                manifest_path = os.path.join(mar_path, MAR_INF)
+                ModelExportUtils.make_dir(manifest_path)
+                with open(os.path.join(manifest_path, MANIFEST_FILE_NAME), "w") as f:
+                    f.write(manifest.encode('utf-8'))
             else:
-                logging.error("Unknown format %s", archive_format)
-
+                with zipfile.ZipFile(mar_path, 'w', zipfile.ZIP_DEFLATED) as z:
+                    ModelExportUtils.archive_dir(model_path, z, set(files_to_exclude), archive_format, model_name)
+                    # Write the manifest here now as a json
+                    z.writestr(os.path.join(MAR_INF, MANIFEST_FILE_NAME), manifest)
         except IOError:
             logging.error("Failed to save the model-archive to model-path \"%s\". "
                           "Check the file permissions and retry.", export_file)
@@ -288,6 +302,10 @@ class ModelExportUtils(object):
                 file_path = os.path.join(root, f)
                 if archive_format == "tgz":
                     dst.add(file_path, arcname=os.path.join(model_name, os.path.relpath(file_path, path)))
+                elif archive_format == "no-archive":
+                    dst_dir = os.path.dirname(os.path.join(dst, os.path.relpath(file_path, path)))
+                    ModelExportUtils.make_dir(dst_dir)
+                    shutil.copy(file_path, dst_dir)
                 else:
                     dst.write(file_path, os.path.relpath(file_path, path))
 

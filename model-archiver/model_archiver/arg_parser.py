@@ -78,13 +78,14 @@ class ArgParser(object):
                                    default="default",
                                    choices=["tgz", "no-archive", "default"],
                                    help='The format in which the model artifacts are archived.\n'
-                                        'tgz: This creates the model-archive in <model-name>.tar.gz format.\n'
+                                        '"tgz": This creates the model-archive in <model-name>.tar.gz format.\n'
                                         'If platform hosting MMS requires model-artifacts to be in ".tar.gz"\n'
                                         'use this option.\n'
-                                        'no-archive: This option creates an non-archived version of model artifacts \n'
-                                        'at "export-path/{model-name}" location. This can be used when archiving \n'
-                                        'is not required.\n'
-                                        'default: This creates the model-archive in <model-name>.mar format.\n'
+                                        '"no-archive": This option creates an non-archived version of model artifacts\n'
+                                        'at "export-path/{model-name}" location. As a result of this choice, \n'
+                                        'MANIFEST file will be created at "export-path/{model-name}" location\n'
+                                        'without archiving these model files\n'
+                                        '"default": This creates the model-archive in <model-name>.mar format.\n'
                                         'This is the default archiving format. Models archived in this format\n'
                                         'will be readily hostable on native MMS.\n')
 

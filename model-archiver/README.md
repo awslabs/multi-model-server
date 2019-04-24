@@ -69,13 +69,16 @@ optional arguments:
                         working directory.
   --archive-format {tgz,default}
                         The format in which the model artifacts are archived.
-                        tgz: This creates the model-archive in <model-
-                        name>.tar.gz format.If platform hosting MMS requires
-                        model-artifacts to be in ".tar.gz" use this option.
-                        default: This creates the model-archive in <model-
-                        name>.mar format. This is the default archiving format.
-                        Models archived in this format will be readily hostable
-                        on native MMS.
+                        "tgz": This creates the model-archive in <model-name>.tar.gz format.
+                        If platform hosting MMS requires model-artifacts to be in ".tar.gz"
+                        use this option.
+                        "no-archive": This option creates an non-archived version of model artifacts
+                        at "export-path/{model-name}" location. As a result of this choice,
+                        MANIFEST file will be created at "export-path/{model-name}" location
+                        without archiving these model files
+                        "default": This creates the model-archive in <model-name>.mar format.
+                        This is the default archiving format. Models archived in this format
+                        will be readily hostable on native MMS.
   -f, --force           When the -f or --force flag is specified, an existing
                         .mar file with same name as that provided in --model-
                         name in the path specified by --export-path will

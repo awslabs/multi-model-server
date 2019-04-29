@@ -71,6 +71,7 @@ class ModelHandler(object):
         :param batch: list of raw requests, should match batch size
         :return: list of preprocessed model input data
         """
+        # Take the input data and pre-process it make it inference ready
         assert self._batch_size == len(batch), "Invalid input batch size: {}".format(len(batch))
         return None
 
@@ -80,6 +81,7 @@ class ModelHandler(object):
         :param model_input: transformed model input data
         :return: list of inference output in NDArray
         """
+        # Do some inference call to engine here and return output
         return None
 
     def postprocess(self, inference_output):
@@ -88,7 +90,19 @@ class ModelHandler(object):
         :param inference_output: list of inference output
         :return: list of predict results
         """
+        # Take output from network and post-process to desired format
         return ["OK"] * self._batch_size
+        
+    def handle(self, data, context):
+        """
+        Call preprocess, inference and post-process functions
+        :param data: input data
+        :param context: mms context
+        """
+        
+        model_input = self.preprocess(data)
+        model_out = self.inference(model_input)
+        return self.postprocess(model_out)
 
 _service = ModelHandler()
 

@@ -35,8 +35,10 @@ def package_model(args, manifest):
                                                                      args.force, args.archive_format)
 
         # Step 2 : Check if any special handling is required for custom models like onnx models
-        t, files_to_exclude = ModelExportUtils.check_custom_model_types(model_path, model_name)
-        temp_files.extend(t)
+        files_to_exclude = []
+        if args.convert:
+            t, files_to_exclude = ModelExportUtils.check_custom_model_types(model_path, model_name)
+            temp_files.extend(t)
 
         # Step 3 : Zip 'em all up
         ModelExportUtils.archive(export_file_path, model_name, model_path, files_to_exclude, manifest,

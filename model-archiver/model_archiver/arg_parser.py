@@ -96,4 +96,13 @@ class ArgParser(object):
                                         'name as that provided in --model-name in the path specified by --export-path\n'
                                         'will overwritten')
 
+        parser_export.add_argument('-c', '--convert',
+                                   required=False,
+                                   action='store_true',
+                                   help='When this option is used, model-archiver looks for special files and tries\n'
+                                        'preprocesses them. For example, if this option is chosen when running\n'
+                                        'model-archiver tool on a model with ".onnx" extension, the tool will try and\n'
+                                        'convert ".onnx" model into an MXNet model.')
+
+
         return parser_export

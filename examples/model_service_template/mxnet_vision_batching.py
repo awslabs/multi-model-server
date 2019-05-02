@@ -145,6 +145,9 @@ class MXNetVisionServiceBatching(object):
         # We are assuming input shape is NCHW
         [c, h, w] = input_shape[1:]
 
+        # Clear error requests set.
+        self.erroneous_reqs.clear()
+
         for idx, data in enumerate(request):
             img = data.get(param_name)
             if img is None:

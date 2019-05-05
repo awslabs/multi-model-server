@@ -171,6 +171,7 @@ public class ModelServerTest {
         testPredictionsDecodeRequest(channel, managementChannel);
         testPredictionsDoNotDecodeRequest(channel, managementChannel);
         testPredictionsModifyResponseHeader(channel, managementChannel);
+        testPredictionsNoManifest(channel, managementChannel);
         testMetricManager();
         testErrorBatch();
 
@@ -487,16 +488,16 @@ public class ModelServerTest {
     private void unloadTests(Channel channel, String modelName) throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
+        String expected = "Model \"" + modelName + "\" unregistered";
         String url = "/models/" + modelName;
         HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, url);
         channel.writeAndFlush(req);
         latch.await();
         StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
-        String expected = "Model \"" + modelName + "\" unregistered";
         Assert.assertEquals(resp.getStatus(), expected);
     }
 
-    void setConfiguration(String key, String val)
+    private void setConfiguration(String key, String val)
             throws NoSuchFieldException, IllegalAccessException {
         Field f = configManager.getClass().getDeclaredField("prop");
         f.setAccessible(true);
@@ -550,15 +551,39 @@ public class ModelServerTest {
 
     private void testPredictionsModifyResponseHeader(
             Channel inferChannel, Channel managementChannel)
-            throws NoSuchFieldException, IllegalAccessException, InterruptedException {
-        setConfiguration("decode_input_request", "false");
-        loadTests(managementChannel, "respheader-test", "respheader");
+        throws NoSuchFieldException, IllegalAccessException, InterruptedException {
+            setConfiguration("decode_input_request", "false");
+            loadTests(managementChannel, "respheader-test", "respheader");
+            result = null;
+            latch = new CountDownLatch(1);
+            DefaultFullHttpRequest req =
+                    new DefaultFullHttpRequest(
+                            HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/respheader");
+
+            req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
+            HttpUtil.setContentLength(req, req.content().readableBytes());
+            req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+            inferChannel.writeAndFlush(req);
+
+            latch.await();
+
+            Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+            Assert.assertEquals(headers.get("dummy"), "1");
+            Assert.assertEquals(headers.get("content-type"), "text/plain");
+            Assert.assertTrue(result.contains("bytearray"));
+            unloadTests(managementChannel, "respheader");
+        }
+
+    private void testPredictionsNoManifest(Channel inferChannel, Channel mgmtChannel)
+        throws InterruptedException, NoSuchFieldException, IllegalAccessException {
+            setConfiguration("default_service_handler", "service:handle");
+            loadTests(mgmtChannel, "noop-no-manifest", "nomanifest");
 
         result = null;
         latch = new CountDownLatch(1);
         DefaultFullHttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/respheader");
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/nomanifest");
         req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
         HttpUtil.setContentLength(req, req.content().readableBytes());
         req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
@@ -567,10 +592,8 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
-        Assert.assertEquals(headers.get("dummy"), "1");
-        Assert.assertEquals(headers.get("content-type"), "text/plain");
-        Assert.assertTrue(result.contains("bytearray"));
-        unloadTests(managementChannel, "respheader");
+        Assert.assertEquals(result, "OK");
+        unloadTests(mgmtChannel, "nomanifest");
     }
 
     private void testLegacyPredict(Channel channel) throws InterruptedException {

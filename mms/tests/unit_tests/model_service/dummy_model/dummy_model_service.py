@@ -10,9 +10,9 @@
 
 from mms.model_service.model_service import SingleNodeService
 
-'''
+"""
 This file is a dummy file for the purpose of unit-testing test_service_manager.py
-'''
+"""
 
 
 class DummyNodeService(SingleNodeService):

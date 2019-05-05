@@ -217,6 +217,11 @@ public class ModelArchive {
                 }
             }
 
+            if (manifest.getModel().getModelName() == null
+                    || manifest.getModel().getModelName().isEmpty()) {
+                manifest.getModel().setModelName(url);
+            }
+
             failed = false;
             return new ModelArchive(manifest, url, dir, extracted);
         } finally {

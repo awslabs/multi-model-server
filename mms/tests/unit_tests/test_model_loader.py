@@ -84,10 +84,11 @@ class TestLoadModels:
         patches.mock_open.side_effect = [mock.mock_open(read_data=self.mock_manifest).return_value]
         patches.open_signature.side_effect = [mock.mock_open(read_data='{}').return_value]
         patches.is_file.return_value = True
-        patches.os_path.return_value = False
+        patches.os_path.side_effect = [False, True]
         sys.path.append(self.model_dir)
         handler = 'dummy_model_service'
         model_loader = ModelLoaderFactory.get_model_loader(self.model_dir)
+        assert isinstance(model_loader, LegacyModelLoader)
         service = model_loader.load(self.model_name, self.model_dir, handler, 0, 1)
 
         assert inspect.ismethod(service._entry_point)

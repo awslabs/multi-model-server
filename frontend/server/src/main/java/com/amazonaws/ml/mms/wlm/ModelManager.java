@@ -83,7 +83,7 @@ public final class ModelManager {
 
         ModelArchive archive = ModelArchive.downloadModel(configManager.getModelStore(), url);
         if (modelName == null || modelName.isEmpty()) {
-            modelName = archive.getModelName();
+            modelName = archive.getModelName().isEmpty() ? url : archive.getModelName();
         } else {
             archive.getManifest().getModel().setModelName(modelName);
         }
@@ -92,6 +92,13 @@ public final class ModelManager {
         }
         if (handler != null) {
             archive.getManifest().getModel().setHandler(handler);
+        }
+
+        if (archive.getManifest().getModel().getHandler() == null
+                || archive.getManifest().getModel().getHandler().isEmpty()) {
+            archive.getManifest()
+                    .getModel()
+                    .setHandler(configManager.getMmsDefaultServiceHandler());
         }
 
         archive.validate();

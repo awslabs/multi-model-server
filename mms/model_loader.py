@@ -36,8 +36,10 @@ class ModelLoaderFactory(object):
         manifest_file = os.path.join(model_dir, "MAR-INF/MANIFEST.json")
         if os.path.exists(manifest_file):
             return MmsModelLoader()
-        else:
+        elif os.path.exists(os.path.join(model_dir, "MANIFEST.json")):
             return LegacyModelLoader()
+        else:
+            return MmsModelLoader()
 
 
 class ModelLoader(object):
@@ -98,7 +100,6 @@ class MmsModelLoader(ModelLoader):
         :return:
         """
         logging.debug("Loading model - working dir: %s", os.getcwd())
-
         # TODO: Request ID is not given. UUID is a temp UUID.
         metrics = MetricsStore(uuid.uuid4(), model_name)
         manifest_file = os.path.join(model_dir, "MAR-INF/MANIFEST.json")
@@ -112,7 +113,7 @@ class MmsModelLoader(ModelLoader):
         function_name = None if len(temp) == 1 else temp[1]
         if module_name.endswith(".py"):
             module_name = module_name[:-3]
-
+        module_name = module_name.split("/")[-1]
         module = importlib.import_module(module_name)
         if module is None:
             raise ValueError("Unable to load module {}, make sure it is added to python path".format(module_name))
@@ -128,7 +129,8 @@ class MmsModelLoader(ModelLoader):
         else:
             model_class_definitions = ModelLoader.list_model_services(module)
             if len(model_class_definitions) != 1:
-                raise ValueError("Expected only one class in custom service code or a function entry point")
+                raise ValueError("Expected only one class in custom service code or a function entry point {}".format(
+                    model_class_definitions))
 
             model_class = model_class_definitions[0]
             model_service = model_class()
@@ -171,8 +173,11 @@ class LegacyModelLoader(ModelLoader):
         :return:
         """
         manifest_file = os.path.join(model_dir, "MANIFEST.json")
-        with open(manifest_file) as f:
-            manifest = json.load(f)
+
+        manifest = None
+        if os.path.isfile(manifest_file):
+            with open(manifest_file) as f:
+                manifest = json.load(f)
         if not handler.endswith(".py"):
             handler = handler + ".py"
 

@@ -79,6 +79,7 @@ public final class ConfigManager {
     private static final String MMS_PRIVATE_KEY_FILE = "private_key_file";
     private static final String MMS_MAX_REQUEST_SIZE = "max_request_size";
     private static final String MMS_MAX_RESPONSE_SIZE = "max_response_size";
+    private static final String MMS_DEFAULT_SERVICE_HANDLER = "default_service_handler";
     private static final String MODEL_SERVER_HOME = "model_server_home";
     private static final String MMS_MODEL_STORE = "model_store";
 
@@ -235,6 +236,10 @@ public final class ConfigManager {
 
     public int getNumberOfGpu() {
         return getIntProperty(MMS_NUMBER_OF_GPU, 0);
+    }
+
+    public String getMmsDefaultServiceHandler() {
+        return getProperty(MMS_DEFAULT_SERVICE_HANDLER, "");
     }
 
     public int getDefaultWorkers() {

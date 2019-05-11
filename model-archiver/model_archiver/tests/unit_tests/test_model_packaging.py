@@ -38,7 +38,7 @@ class TestModelPackaging:
 
     args = Namespace(author=author, email=email, engine=engine, model_name=model_name, handler=handler,
                      runtime=RuntimeType.PYTHON.value, model_path=model_path, export_path=export_path, force=False,
-                     archive_format="default")
+                     archive_format="default", convert=False)
 
     @pytest.fixture()
     def patches(self, mocker):

@@ -30,7 +30,7 @@ class Context(object):
             "server_version": mms_version
         }
         self.request_ids = None
-        self.request_processor = RequestProcessor(dict())
+        self.request_processor = None
         self._metrics = None
 
     @property
@@ -53,14 +53,32 @@ class Context(object):
     def metrics(self, metrics):
         self._metrics = metrics
 
-    def set_response_content_type(self, request_id, value):
-        self._request_processor.add_response_property(request_id, {'content-type': value})
+    def get_request_id(self, idx=0):
+        return self.request_ids.get(idx)
 
-    def get_response_content_type(self, request_id):
-        response_headers = self._request_processor.get_response_header().get(request_id)
-        if response_headers is not None:
-            return response_headers.get('content-type')
+    def set_response_content_type(self, idx, value):
+        self._request_processor[idx].add_response_property('content-type', value)
+
+    def get_response_content_type(self, idx):
+        if self._request_processor is not None and self.request_processor[idx] is not None:
+            return self._request_processor[idx].get_response_header().get('content-type')
         return None
+
+    def get_http_response_status(self, idx):
+        return self._request_processor[idx].get_response_status_code(), \
+               self._request_processor[idx].get_response_status_phrase()
+
+    def set_http_response_status(self, code=200, phrase="", idx=0):
+        """
+        Set the status code of individual requests
+        :param phrase:
+        :param idx: The index data in the list(data) that is sent to the handle() method
+        :param code:
+        :return:
+        """
+        if self._request_processor is not None and self._request_processor[idx] is not None:
+            self._request_processor[idx].report_status(code,
+                                                       reason_phrase=phrase)
 
     def __eq__(self, other):
         return isinstance(other, Context) and self.__dict__ == other.__dict__
@@ -83,6 +101,12 @@ class RequestProcessor(object):
     def report_status(self, code, reason_phrase=None):
         self._status_code = code
         self._reason_phrase = reason_phrase
+
+    def get_response_status_code(self):
+        return self._status_code
+
+    def get_response_status_phrase(self):
+        return self._reason_phrase
 
     def add_response_property(self, key, value):
         self._response_header[key] = value

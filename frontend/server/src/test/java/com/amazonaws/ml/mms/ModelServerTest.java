@@ -171,6 +171,7 @@ public class ModelServerTest {
         testPredictionsDecodeRequest(channel, managementChannel);
         testPredictionsDoNotDecodeRequest(channel, managementChannel);
         testMetricManager();
+        testErrorBatch();
 
         channel.close();
         managementChannel.close();
@@ -923,6 +924,49 @@ public class ModelServerTest {
         Assert.assertEquals(httpStatus, HttpResponseStatus.SERVICE_UNAVAILABLE);
         Assert.assertEquals(resp.getCode(), HttpResponseStatus.SERVICE_UNAVAILABLE.code());
         Assert.assertEquals(resp.getMessage(), "Invalid model predict output");
+    }
+
+    private void testErrorBatch() throws InterruptedException {
+        Channel channel = connect(true);
+        Assert.assertNotNull(channel);
+
+        httpStatus = null;
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=error_batch&model_name=err_batch&initial_workers=1&synchronous=true");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        StatusResponse status = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(status.getStatus(), "Workers scaled");
+
+        channel.close();
+
+        channel = connect(false);
+        Assert.assertNotNull(channel);
+
+        result = null;
+        latch = new CountDownLatch(1);
+        httpStatus = null;
+        req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/err_batch");
+        req.content().writeCharSequence("data=invalid_output", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers()
+                .set(
+                        HttpHeaderNames.CONTENT_TYPE,
+                        HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED);
+        channel.writeAndFlush(req);
+
+        latch.await();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.INSUFFICIENT_STORAGE);
+        Assert.assertEquals(result, "Invalid response");
     }
 
     private void testMetricManager() throws JsonParseException, InterruptedException {

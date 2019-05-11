@@ -49,6 +49,7 @@ def create_predict_response(ret, req_id_map, message, code, context=None):
     """
     Create inference response.
 
+    :param context:
     :param ret:
     :param req_id_map:
     :param message:
@@ -63,20 +64,36 @@ def create_predict_response(ret, req_id_map, message, code, context=None):
     msg += buf
 
     for idx in req_id_map:
-        buf = req_id_map[idx].encode('utf-8')
-        msg += struct.pack("!i", len(buf))
-        msg += buf
+        # Encoding Request ID
+        req_id = req_id_map[idx].encode('utf-8')
+        msg += struct.pack("!i", len(req_id))
+        msg += req_id
 
+        # Encoding Content-Type
         if context is None:
             msg += struct.pack('!i', 0)  # content_type
         else:
-            content_type = context.get_response_content_type(req_id_map[idx])
+            content_type = context.get_response_content_type(idx)
             if content_type is None or len(content_type) == 0:
                 msg += struct.pack('!i', 0)  # content_type
             else:
                 msg += struct.pack('!i', len(content_type))
                 msg += content_type.encode('utf-8')
 
+        # Encoding the per prediction HTTP response code
+        if context is None:
+            msg += struct.pack('!i', code)
+            msg += struct.pack('!i', 0)  # No code phrase is returned
+        else:
+            sc, phrase = context.get_http_response_status(idx)
+            http_code = sc if sc is not None else 200
+            http_phrase = phrase if phrase is not None else ""
+
+            msg += struct.pack('!i', http_code)
+            msg += struct.pack("!i", len(http_phrase))
+            msg += http_phrase.encode("utf-8")
+
+        # Encoding Response message
         if ret is None:
             buf = b"error"
             msg += struct.pack('!i', len(buf))

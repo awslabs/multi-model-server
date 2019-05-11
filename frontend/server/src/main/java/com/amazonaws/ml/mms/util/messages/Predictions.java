@@ -15,6 +15,9 @@ package com.amazonaws.ml.mms.util.messages;
 public class Predictions {
 
     private String requestId;
+    private int statusCode;
+    private String reasonPhrase;
+
     private String contentType;
     private byte[] resp;
 
@@ -40,7 +43,23 @@ public class Predictions {
         return contentType;
     }
 
+    public void setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
+    }
+
     public void setContentType(String contentType) {
         this.contentType = contentType;
+    }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public String getReasonPhrase() {
+        return reasonPhrase;
+    }
+
+    public void setReasonPhrase(String reasonPhrase) {
+        this.reasonPhrase = reasonPhrase;
     }
 }

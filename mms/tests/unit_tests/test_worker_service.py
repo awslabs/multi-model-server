@@ -41,7 +41,7 @@ class TestService:
 
     def test_valid_req(self, service):
         headers, input_batch, req_to_id_map = service.retrieve_data_for_inference(self.data)
-        assert headers.get(req_to_id_map[0]).get("xyz").get("content-type") == "text/csv"
+        assert headers[0].get_request_property("xyz").get("content-type") == "text/csv"
         assert input_batch[0] == {"xyz": "abc"}
         assert req_to_id_map == {0: "123"}
 

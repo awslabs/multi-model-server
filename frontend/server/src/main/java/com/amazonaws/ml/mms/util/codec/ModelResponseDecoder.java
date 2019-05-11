@@ -39,6 +39,7 @@ public class ModelResponseDecoder extends ByteToMessageDecoder {
         boolean completed = false;
         try {
             ModelWorkerResponse resp = new ModelWorkerResponse();
+            // Get Response overall Code
             resp.setCode(in.readInt());
 
             int len = CodecUtils.readLength(in, maxBufferSize);
@@ -53,13 +54,26 @@ public class ModelResponseDecoder extends ByteToMessageDecoder {
                     return;
                 }
                 Predictions prediction = new Predictions();
+                // Set response RequestId
                 prediction.setRequestId(CodecUtils.readString(in, len));
 
                 len = CodecUtils.readLength(in, maxBufferSize);
                 if (len == CodecUtils.BUFFER_UNDER_RUN) {
                     return;
                 }
+                // Set content type
                 prediction.setContentType(CodecUtils.readString(in, len));
+
+                // Set per request response code
+                int httpStatusCode = in.readInt();
+                prediction.setStatusCode(httpStatusCode);
+
+                // Set the actual message
+                len = CodecUtils.readLength(in, maxBufferSize);
+                if (len == CodecUtils.BUFFER_UNDER_RUN) {
+                    return;
+                }
+                prediction.setReasonPhrase(CodecUtils.readString(in, len));
 
                 len = CodecUtils.readLength(in, maxBufferSize);
                 if (len == CodecUtils.BUFFER_UNDER_RUN) {

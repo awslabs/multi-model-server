@@ -72,9 +72,13 @@ public class Job {
         scheduled = System.currentTimeMillis();
     }
 
-    public void response(byte[] body, CharSequence contentType) {
-        FullHttpResponse resp =
-                new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, false);
+    public void response(
+            byte[] body, CharSequence contentType, int statusCode, String statusPhrase) {
+        HttpResponseStatus status =
+                (statusPhrase == null)
+                        ? HttpResponseStatus.valueOf(statusCode)
+                        : HttpResponseStatus.valueOf(statusCode, statusPhrase);
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, false);
         if (contentType != null && contentType.length() > 0) {
             resp.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
         }

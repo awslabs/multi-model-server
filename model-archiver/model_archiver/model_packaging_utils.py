@@ -26,7 +26,7 @@ from .manifest_components.model import Model
 from .manifest_components.publisher import Publisher
 
 archiving_options = {
-    "tgz": "tar.gz",
+    "tgz": ".tar.gz",
     "no-archive": "",
     "default": ".mar"
 }
@@ -265,7 +265,7 @@ class ModelExportUtils(object):
                 manifest_path = os.path.join(mar_path, MAR_INF)
                 ModelExportUtils.make_dir(manifest_path)
                 with open(os.path.join(manifest_path, MANIFEST_FILE_NAME), "w") as f:
-                    f.write(manifest.encode('utf-8'))
+                    f.write(manifest)
             else:
                 with zipfile.ZipFile(mar_path, 'w', zipfile.ZIP_DEFLATED) as z:
                     ModelExportUtils.archive_dir(model_path, z, set(files_to_exclude), archive_format, model_name)

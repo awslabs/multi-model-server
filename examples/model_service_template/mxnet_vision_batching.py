@@ -32,7 +32,7 @@ class MXNetVisionServiceBatching(object):
         self.erroneous_reqs = set()
 
     # noinspection PyMethodMayBeStatic
-    def top_probability(data, labels, top=5):
+    def top_probability(self, data, labels, top=5):
         """
         Get top probability prediction from NDArray.
 
@@ -185,7 +185,7 @@ class MXNetVisionServiceBatching(object):
 
     def postprocess(self, data):
         res = []
-        for idx, resp in data[:self._num_requests]:
+        for idx, resp in enumerate(data[:self._num_requests]):
             if idx not in self.erroneous_reqs:
                 res.append(self.top_probability(resp, self.labels, top=5))
             else:

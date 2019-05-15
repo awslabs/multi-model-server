@@ -82,6 +82,7 @@ class TestExportModelUtils:
             assert ar_opts.get("tgz") == ".tar.gz"
             assert ar_opts.get("no-archive") == ""
             assert ar_opts.get("default") == ".mar"
+            assert len(ar_opts) == 3
 
     # noinspection PyClassHasNoInit
     class TestCustomModelTypes:

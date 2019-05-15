@@ -151,6 +151,7 @@ def test_model_archiver():
             if t.get("force"):
                 cmd += " -f"
 
+            # TODO: Add tests to check for "convert" functionality
             if run_test(t, cmd):
                 validate(t)
         finally:

@@ -14,6 +14,7 @@ phases:
       - pip install wheel
       - pip install twine
       - pip install pytest-mock -U
+      - pip install requests
       - pip install -U -e .[mxnet]
       - cd model-archiver/ && pip install -U -e . && cd ../
 
@@ -22,6 +23,7 @@ phases:
       - frontend/gradlew -p frontend build
       - python -m pytest mms/tests/unit_tests
       - cd model-archiver/ && python -m pytest model_archiver/tests/unit_tests && cd ../
+      - cd model-archiver/ && python -m pytest model_archiver/tests/integ_tests && cd ../
       # integration test is broken: https://github.com/awslabs/mxnet-model-server/issues/437
       #- python -m pytest mms/tests/integration_tests
       - pylint -rn --rcfile=./mms/tests/pylintrc mms/.

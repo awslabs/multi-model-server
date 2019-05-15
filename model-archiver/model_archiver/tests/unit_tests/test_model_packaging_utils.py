@@ -75,6 +75,13 @@ class TestExportModelUtils:
             patches.path_exists.assert_called_once_with("/Users/dummyUser/some-model")
             assert ret_val == "/Users/dummyUser"
 
+    # noinspection PyClassHasNoInit
+    class TestArchiveTypes:
+        def test_archive_types(self):
+            from model_archiver.model_packaging_utils import archiving_options as ar_opts
+            assert ar_opts.get("tgz") == ".tar.gz"
+            assert ar_opts.get("no-archive") == ""
+            assert ar_opts.get("default") == ".mar"
 
     # noinspection PyClassHasNoInit
     class TestCustomModelTypes:

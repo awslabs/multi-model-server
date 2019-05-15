@@ -75,7 +75,7 @@ class TestModelPackaging:
         patches.export_utils.archive.assert_called()
         patches.export_utils.clean_temp_files.assert_called()
 
-    def test_export_model_method_tar(self, patches):
+    def test_export_model_method_noarchive(self, patches):
         self.args.update(archive_format="no-archive")
         patches.export_utils.check_mar_already_exists.return_value = '/Users/dummyUser/'
         patches.export_utils.check_custom_model_types.return_value = '/Users/dummyUser', ['a.txt', 'b.txt']

@@ -14,12 +14,12 @@ MANIFEST_FILE = "MAR-INF/MANIFEST.json"
 
 
 def update_tests(test):
-    test["modelName"] = test.get("modelName") if test.get("modelName") is not None else DEFAULT_MODEL_NAME
-    test["modelPath"] = test.get("modelPath") if test.get("modelPath") is not None else DEFAULT_MODEL_PATH
-    test["handler"] = test.get("handler") if test.get("handler") is not None else DEFAULT_HANDLER
-    test["runtime"] = test.get("runtime") if test.get("runtime") is not None else DEFAULT_RUNTIME
-    test["exportPath"] = test.get("exportPath") if test.get("exportPath") is not None else DEFAULT_EXPORT_PATH
-    test["archiveFormat"] = test.get("archiveFormat") if test.get("archiveFormat") is not None else "default"
+    test["modelName"] = test.get("modelName", DEFAULT_MODEL_NAME)
+    test["modelPath"] = test.get("modelPath", DEFAULT_MODEL_PATH)
+    test["handler"] = test.get("handler", DEFAULT_HANDLER)
+    test["runtime"] = test.get("runtime", DEFAULT_RUNTIME)
+    test["exportPath"] = test.get("exportPath", DEFAULT_EXPORT_PATH)
+    test["archiveFormat"] = test.get("archiveFormat", "default")
     return test
 
 

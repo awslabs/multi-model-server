@@ -31,7 +31,6 @@ class MXNetVisionServiceBatching(object):
         self.initialized = False
         self.erroneous_reqs = set()
 
-    # noinspection PyMethodMayBeStatic
     def top_probability(self, data, labels, top=5):
         """
         Get top probability prediction from NDArray.
@@ -49,7 +48,6 @@ class MXNetVisionServiceBatching(object):
             data = mx.nd.array(
                 np.squeeze(data.asnumpy(), axis=tuple(range(dim)[2:])))
         sorted_prob = mx.nd.argsort(data[0], is_ascend=False)
-        # pylint: disable=deprecated-lambda
         top_prob = map(lambda x: int(x.asscalar()), sorted_prob[0:top])
         return [{'probability': float(data[0, i].asscalar()), 'class': labels[i]}
                 for i in top_prob]
@@ -105,7 +103,6 @@ class MXNetVisionServiceBatching(object):
         self.mxnet_ctx = mx.cpu() if gpu_id is None else mx.gpu(gpu_id)
         sym, arg_params, aux_params = mx.model.load_checkpoint(checkpoint_prefix, self.epoch)
 
-        # noinspection PyTypeChecker
         self.mx_model = mx.mod.Module(symbol=sym, context=self.mxnet_ctx,
                                       data_names=data_names, label_names=None)
         self.mx_model.bind(for_training=False, data_shapes=data_shapes)

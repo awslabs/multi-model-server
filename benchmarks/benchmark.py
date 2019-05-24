@@ -91,7 +91,6 @@ AGGREGATE_REPORT_CSV_LABELS_MAP = {
     'aggregate_report_90%_line': 'aggregate_report_90_line',
     'aggregate_report_99%_line': 'aggregate_report_99_line',
     'aggregate_report_error%': 'aggregate_report_error'
-
 }
 
 
@@ -194,19 +193,11 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
             container = 'mms_benchmark_{}'.format(pargs.docker[0].split('/')[1])
             docker_path = pargs.docker[0]
         run_process("{} rm -f {}".format(docker, container))
-        docker_run_call = "{} run --name {} -p 8080:8080 -p 8081:8081 -v {}:{} -itd {}".format(docker, container, MMS_BASE, DOCKER_MMS_BASE, docker_path)
+        docker_run_call = "{} run --name {} -p 8080:8080 -p 8081:8081 -itd {}".format(docker, container, docker_path)
         run_process(docker_run_call)
-        run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && python setup.py bdist_wheel --universal && pip install --user -U -e .'".format(docker, container), shell=True)
-        run_process("{} exec -it {} sh -c 'cd /mxnet-model-server && pip install --user -U -e .'".format(docker, container), shell=True)
-        run_process("{} start {}".format(docker, container))
-
-        docker_start_call = "{} exec {} mxnet-model-server --start --mms-config {}".format(docker, container, DOCKER_CONFIG_PROP)
-        docker_start = run_process(docker_start_call, wait=False)
-        time.sleep(3)
-        docker_start.kill()
-
 
     management_port = int(pargs.management[0]) if pargs.management else port + 1
+    time.sleep(300)
 
     try:
         # temp files
@@ -229,7 +220,6 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
             'loops': int(pargs.loops[0]),
             'perfmon_file': perfmon_file
         }
-
         run_jmeter_args.update(JMETER_RESULT_SETTINGS)
         run_jmeter_args.update(jmeter_args)
         run_jmeter_args.update(dict(zip(pargs.options[::2], pargs.options[1::2])))
@@ -238,6 +228,7 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         jmeter_call = '{} -n -t {} {} -l {} -j {} -e -o {}'.format(JMETER, abs_jmx, jmeter_args_str, tmpfile, logfile, reportDir)
         run_process(jmeter_call)
 
+        time.sleep(30)
         # run AggregateReport
         ag_call = 'java -jar {} --tool Reporter --generate-csv {} --input-jtl {} --plugin-type AggregateReport'.format(CMDRUNNER, outfile, tmpfile)
         run_process(ag_call)
@@ -304,12 +295,14 @@ def run_multi_benchmark(key, xs, *args, **kwargs):
                 f.write("prefixLabel{}={}\n".format(j+1, p))
                 f.write("\n")
         merge_call = 'java -jar {} --tool Reporter --generate-csv joined.csv --input-jtl {} --plugin-type MergeResults'.format(CMDRUNNER, merge_results)
+        time.sleep(30)
         run_process(merge_call)
         shutil.move('joined.csv', joined) # MergeResults ignores path given and puts result into cwd
         baseJtl = joined
         basePrefix = ""
 
     # build report
+    time.sleep(30)
     run_process('{} -g {} -o {}'.format(JMETER, joined, reportDir))
 
     print("Merged output available at {}".format(out_dir))
@@ -483,6 +476,8 @@ if __name__ == '__main__':
         benchmark_model = pargs.model[0].lower()
         for benchmark_name in BENCHMARK_NAMES:
             run_benchmark()
+            if not os.path.isdir(os.path.join(OUT_DIR, benchmark_name, basename(benchmark_model), 'report')):
+                run_benchmark()
 
     elif pargs.all:
         for benchmark_name, benchmark_model in ALL_BENCHMARKS:

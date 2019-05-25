@@ -1,7 +1,6 @@
 import os
 import io
 
-from model_handler import ModelHandler
 
 import torch
 import time
@@ -22,25 +21,24 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class PyTorchImageClassifier(ModelHandler):
+class PyTorchImageClassifier():
     """
     PyTorchImageClassifier service class. This service takes a flower 
     image and returns the name of that flower. 
     """
 
     def __init__(self):
-        super(PyTorchImageClassifier, self).__init__()
 
         self.checkpoint_file_path = None
         self.model = None
         self.mapping = None
         self.device = "cpu"
+        self.initialized = False
 
     def initialize(self, context):
         """
            Load the model and mapping file to perform infernece.
         """
-        super(PyTorchImageClassifier, self).initialize(context)
 
         properties = context.system_properties
         model_dir = properties.get("model_dir")
@@ -70,6 +68,8 @@ class PyTorchImageClassifier(ModelHandler):
              raise RuntimeError("Missing the mapping file")
         with open(mapping_file_path) as f:
           self.mapping = json.load(f)
+
+        self.initialized = True
 
     def preprocess(self, data):
         """
@@ -130,4 +130,8 @@ def handle(data, context):
     if data is None:
         return None
 
-    return _service.handle(data, context)
+    data = _service.preprocess(data)
+    data = _service.inference(data)
+    data = _service.postprocess(data)
+
+    return data

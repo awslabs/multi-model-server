@@ -12,4 +12,4 @@ The following are examples on how to create and serve model archives with MMS.
 
 * [How to setup metrics collection with AWS CloudWatch](metrics_cloudwatch)
 
-* [How to run inference on PyTorch based model](densenet_pytorch)
+* [DenseNet PyTorch](densenet_pytorch)

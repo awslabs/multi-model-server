@@ -11,3 +11,5 @@ The following are examples on how to create and serve model archives with MMS.
   * [LSTM with PTB](lstm_ptb) - download a pre-trained LSTM model that generates text, use model archiver, then serve the model archive with MMS
 
 * [How to setup metrics collection with AWS CloudWatch](metrics_cloudwatch)
+
+* [DenseNet PyTorch](densenet_pytorch)

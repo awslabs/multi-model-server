@@ -12,6 +12,8 @@
  */
 package com.amazonaws.ml.mms.util.messages;
 
+import java.util.Map;
+
 public class Predictions {
 
     private String requestId;
@@ -19,7 +21,16 @@ public class Predictions {
     private String reasonPhrase;
 
     private String contentType;
+    Map<String, String> headers;
     private byte[] resp;
+
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+        this.headers = headers;
+    }
 
     public Predictions() {}
 

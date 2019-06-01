@@ -170,6 +170,7 @@ public class ModelServerTest {
         testPredictionsValidRequestSize(channel);
         testPredictionsDecodeRequest(channel, managementChannel);
         testPredictionsDoNotDecodeRequest(channel, managementChannel);
+        testPredictionsModifyResponseHeader(channel, managementChannel);
         testMetricManager();
         testErrorBatch();
 
@@ -468,28 +469,31 @@ public class ModelServerTest {
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
     }
 
-    private void loadNoopConfigTests(Channel channel) throws InterruptedException {
+    private void loadTests(Channel channel, String model, String modelName)
+            throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
-        HttpRequest req =
-                new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1,
-                        HttpMethod.POST,
-                        "/models?url=noop-v1.0-config-tests&model_name=noop-config&initial_workers=1&synchronous=true");
+        String url =
+                "/models?url="
+                        + model
+                        + "&model_name="
+                        + modelName
+                        + "&initial_workers=1&synchronous=true";
+        HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, url);
         channel.writeAndFlush(req);
         latch.await();
     }
 
-    private void unloadNoopConfigTests(Channel channel) throws InterruptedException {
+    private void unloadTests(Channel channel, String modelName) throws InterruptedException {
         result = null;
         latch = new CountDownLatch(1);
-        HttpRequest req =
-                new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/models/noop-config");
+        String url = "/models/" + modelName;
+        HttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, url);
         channel.writeAndFlush(req);
         latch.await();
         StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
-        Assert.assertEquals(resp.getStatus(), "Model \"noop-config\" unregistered");
+        String expected = "Model \"" + modelName + "\" unregistered";
+        Assert.assertEquals(resp.getStatus(), expected);
     }
 
     void setConfiguration(String key, String val)
@@ -503,7 +507,7 @@ public class ModelServerTest {
     private void testPredictionsDecodeRequest(Channel inferChannel, Channel mgmtChannel)
             throws InterruptedException, NoSuchFieldException, IllegalAccessException {
         setConfiguration("decode_input_request", "true");
-        loadNoopConfigTests(mgmtChannel);
+        loadTests(mgmtChannel, "noop-v1.0-config-tests", "noop-config");
 
         result = null;
         latch = new CountDownLatch(1);
@@ -519,13 +523,13 @@ public class ModelServerTest {
 
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
         Assert.assertFalse(result.contains("bytearray"));
-        unloadNoopConfigTests(mgmtChannel);
+        unloadTests(mgmtChannel, "noop-config");
     }
 
     private void testPredictionsDoNotDecodeRequest(Channel inferChannel, Channel mgmtChannel)
             throws InterruptedException, NoSuchFieldException, IllegalAccessException {
         setConfiguration("decode_input_request", "false");
-        loadNoopConfigTests(mgmtChannel);
+        loadTests(mgmtChannel, "noop-v1.0-config-tests", "noop-config");
 
         result = null;
         latch = new CountDownLatch(1);
@@ -541,7 +545,30 @@ public class ModelServerTest {
 
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
         Assert.assertTrue(result.contains("bytearray"));
-        unloadNoopConfigTests(mgmtChannel);
+        unloadTests(mgmtChannel, "noop-config");
+    }
+
+    private void testPredictionsModifyResponseHeader(
+            Channel inferChannel, Channel managementChannel)
+            throws NoSuchFieldException, IllegalAccessException, InterruptedException {
+        setConfiguration("decode_input_request", "false");
+        loadTests(managementChannel, "respheader-test", "respheader");
+
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/respheader");
+        req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+        inferChannel.writeAndFlush(req);
+
+        latch.await();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        Assert.assertTrue(result.contains("bytearray"));
+        unloadTests(managementChannel, "respheader");
     }
 
     private void testLegacyPredict(Channel channel) throws InterruptedException {

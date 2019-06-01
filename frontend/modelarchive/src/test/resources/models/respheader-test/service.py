@@ -81,28 +81,18 @@ class NoopService(object):
         logging.debug("model_dir: {}".format(model_dir))
         logging.debug("gpu_id: {}".format(gpu_id))
         logging.debug("batch_size: {}".format(batch_size))
+        request_processor = context.request_processor
         try:
-            preprocess_start = time.time()
             data = self.preprocess(data)
-            inference_start = time.time()
             data = self.inference(data)
-            postprocess_start = time.time()
             data = self.postprocess(data)
-            end_time = time.time()
-
             context.set_response_content_type(0, "text/plain")
 
-            content_type = context.get_request_header(0, "Content-Type")
-            logging.debug("content_type: {}".format(content_type))
-
-            metrics = context.metrics
-            metrics.add_time("PreprocessTime", round((inference_start - preprocess_start) * 1000, 2))
-            metrics.add_time("InferenceTime", round((postprocess_start - inference_start) * 1000, 2))
-            metrics.add_time("PostprocessTime", round((end_time - postprocess_start) * 1000, 2))
+            context.set_response_header(0, "dummy", "1")
             return data
         except Exception as e:
             logging.error(e, exc_info=True)
-            context.request_processor.report_status(500, "Unknown inference error.")
+            request_processor.report_status(500, "Unknown inference error.")
             return ["Error {}".format(str(e))] * len(data)
 
 

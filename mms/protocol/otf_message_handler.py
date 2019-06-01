@@ -64,8 +64,7 @@ def create_predict_response(ret, req_id_map, message, code, context=None):
     msg += buf
 
     for idx in req_id_map:
-        # Encoding Request ID
-        req_id = req_id_map[idx].encode('utf-8')
+        req_id = req_id_map.get(idx).encode('utf-8')
         msg += struct.pack("!i", len(req_id))
         msg += req_id
 
@@ -82,8 +81,11 @@ def create_predict_response(ret, req_id_map, message, code, context=None):
 
         # Encoding the per prediction HTTP response code
         if context is None:
+            # status code and reason phrase set to none
             msg += struct.pack('!i', code)
             msg += struct.pack('!i', 0)  # No code phrase is returned
+            # Response headers none
+            msg += struct.pack('!i', 0)
         else:
             sc, phrase = context.get_http_response_status(idx)
             http_code = sc if sc is not None else 200
@@ -92,8 +94,11 @@ def create_predict_response(ret, req_id_map, message, code, context=None):
             msg += struct.pack('!i', http_code)
             msg += struct.pack("!i", len(http_phrase))
             msg += http_phrase.encode("utf-8")
+            # Response headers
+            response_headers = json.dumps(context.get_response_headers(idx)).encode('utf-8')
+            msg += struct.pack('!i', len(response_headers))
+            msg += response_headers
 
-        # Encoding Response message
         if ret is None:
             buf = b"error"
             msg += struct.pack('!i', len(buf))

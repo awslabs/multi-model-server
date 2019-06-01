@@ -56,13 +56,17 @@ class Context(object):
     def get_request_id(self, idx=0):
         return self.request_ids.get(idx)
 
+    def get_request_header(self, idx, key):
+        return self._request_processor[idx].get_request_property(key)
+
+    def get_all_request_header(self, idx):
+        return self._request_processor[idx].get_request_properties()
+
     def set_response_content_type(self, idx, value):
-        self._request_processor[idx].add_response_property('content-type', value)
+        self.set_response_header(idx, 'content-type', value)
 
     def get_response_content_type(self, idx):
-        if self._request_processor is not None and self.request_processor[idx] is not None:
-            return self._request_processor[idx].get_response_header().get('content-type')
-        return None
+        return self.get_response_headers(idx).get('content-type')
 
     def get_http_response_status(self, idx):
         return self._request_processor[idx].get_response_status_code(), \
@@ -79,6 +83,14 @@ class Context(object):
         if self._request_processor is not None and self._request_processor[idx] is not None:
             self._request_processor[idx].report_status(code,
                                                        reason_phrase=phrase)
+
+    def get_response_headers(self, idx):
+        return self._request_processor[idx].get_response_headers()
+
+    def set_response_header(self, idx, key, value):
+        self._request_processor[idx].add_response_property(key, value)
+
+    # TODO: Should we add "add_header()" interface, to have multiple values for a single header. EG: Accept headers.
 
     def __eq__(self, other):
         return isinstance(other, Context) and self.__dict__ == other.__dict__
@@ -111,5 +123,11 @@ class RequestProcessor(object):
     def add_response_property(self, key, value):
         self._response_header[key] = value
 
-    def get_response_header(self):
+    def get_response_headers(self):
         return self._response_header
+
+    def get_response_header(self, key):
+        return self._response_header.get(key)
+
+    def get_request_properties(self):
+        return self._request_header

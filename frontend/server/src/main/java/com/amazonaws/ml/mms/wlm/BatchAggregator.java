@@ -86,7 +86,8 @@ public class BatchAggregator {
                         prediction.getResp(),
                         prediction.getContentType(),
                         prediction.getStatusCode(),
-                        prediction.getReasonPhrase());
+                        prediction.getReasonPhrase(),
+                        prediction.getHeaders());
             }
         } else {
             for (String reqId : jobs.keySet()) {

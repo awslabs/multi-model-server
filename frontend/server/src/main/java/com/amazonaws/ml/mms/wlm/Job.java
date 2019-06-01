@@ -22,6 +22,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,14 +74,24 @@ public class Job {
     }
 
     public void response(
-            byte[] body, CharSequence contentType, int statusCode, String statusPhrase) {
+            byte[] body,
+            CharSequence contentType,
+            int statusCode,
+            String statusPhrase,
+            Map<String, String> responseHeaders) {
         HttpResponseStatus status =
                 (statusPhrase == null)
                         ? HttpResponseStatus.valueOf(statusCode)
                         : HttpResponseStatus.valueOf(statusCode, statusPhrase);
         FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, false);
+
         if (contentType != null && contentType.length() > 0) {
             resp.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
+        }
+        if (responseHeaders != null) {
+            for (Map.Entry<String, String> e : responseHeaders.entrySet()) {
+                resp.headers().set(e.getKey(), e.getValue());
+            }
         }
         resp.content().writeBytes(body);
 

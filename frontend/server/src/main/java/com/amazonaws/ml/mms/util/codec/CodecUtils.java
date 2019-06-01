@@ -12,9 +12,13 @@
  */
 package com.amazonaws.ml.mms.util.codec;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.CorruptedFrameException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class CodecUtils {
 
@@ -51,5 +55,10 @@ public final class CodecUtils {
         byte[] buf = new byte[len];
         in.readBytes(buf);
         return buf;
+    }
+
+    public static Map<String, String> readMap(ByteBuf in, int len) {
+        String s = readString(in, len);
+        return new Gson().fromJson(s, new TypeToken<HashMap<String, String>>() {}.getType());
     }
 }

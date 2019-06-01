@@ -79,7 +79,6 @@ public class ModelResponseDecoder extends ByteToMessageDecoder {
                 if (len == CodecUtils.BUFFER_UNDER_RUN) {
                     return;
                 }
-
                 prediction.setHeaders(CodecUtils.readMap(in, len));
 
                 len = CodecUtils.readLength(in, maxBufferSize);

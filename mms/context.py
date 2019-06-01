@@ -68,11 +68,11 @@ class Context(object):
     def get_response_content_type(self, idx):
         return self.get_response_headers(idx).get('content-type')
 
-    def get_http_response_status(self, idx):
+    def get_response_status(self, idx):
         return self._request_processor[idx].get_response_status_code(), \
                self._request_processor[idx].get_response_status_phrase()
 
-    def set_http_response_status(self, code=200, phrase="", idx=0):
+    def set_response_status(self, code=200, phrase="", idx=0):
         """
         Set the status code of individual requests
         :param phrase:
@@ -83,6 +83,16 @@ class Context(object):
         if self._request_processor is not None and self._request_processor[idx] is not None:
             self._request_processor[idx].report_status(code,
                                                        reason_phrase=phrase)
+
+    def set_all_response_status(self, code=200, phrase=""):
+        """
+        Set the status code of individual requests
+        :param phrase:
+        :param code:
+        :return:
+        """
+        for idx, _ in enumerate(self._request_processor):
+            self._request_processor[idx].report_status(code, reason_phrase=phrase)
 
     def get_response_headers(self, idx):
         return self._request_processor[idx].get_response_headers()

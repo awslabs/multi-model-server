@@ -19,7 +19,6 @@ import os
 from builtins import bytearray
 from builtins import bytes
 
-
 int_size = 4
 END_OF_LIST = -1
 LOAD_MSG = b'L'
@@ -43,6 +42,17 @@ def retrieve_msg(conn):
         raise ValueError("Invalid command: {}".format(cmd))
 
     return cmd, msg
+
+
+def encode_response_headers(resp_hdr_map):
+    msg = bytearray()
+    msg += struct.pack('!i', len(resp_hdr_map))
+    for k, v in resp_hdr_map.items():
+        msg += struct.pack('!i', len(k.encode('utf-8')))
+        msg += k.encode('utf-8')
+        msg += struct.pack('!i', len(v.encode('utf-8')))
+        msg += v.encode('utf-8')
+    return msg
 
 
 def create_predict_response(ret, req_id_map, message, code, context=None):
@@ -87,7 +97,7 @@ def create_predict_response(ret, req_id_map, message, code, context=None):
             # Response headers none
             msg += struct.pack('!i', 0)
         else:
-            sc, phrase = context.get_http_response_status(idx)
+            sc, phrase = context.get_response_status(idx)
             http_code = sc if sc is not None else 200
             http_phrase = phrase if phrase is not None else ""
 
@@ -95,9 +105,7 @@ def create_predict_response(ret, req_id_map, message, code, context=None):
             msg += struct.pack("!i", len(http_phrase))
             msg += http_phrase.encode("utf-8")
             # Response headers
-            response_headers = json.dumps(context.get_response_headers(idx)).encode('utf-8')
-            msg += struct.pack('!i', len(response_headers))
-            msg += response_headers
+            msg += encode_response_headers(context.get_response_headers(idx))
 
         if ret is None:
             buf = b"error"

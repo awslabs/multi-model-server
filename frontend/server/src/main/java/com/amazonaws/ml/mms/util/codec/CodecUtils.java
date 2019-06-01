@@ -12,8 +12,6 @@
  */
 package com.amazonaws.ml.mms.util.codec;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.CorruptedFrameException;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +25,7 @@ public final class CodecUtils {
 
     private CodecUtils() {}
 
-    public static int readLength(ByteBuf byteBuf, int maxLength) {
+    static int readLength(ByteBuf byteBuf, int maxLength) {
         int size = byteBuf.readableBytes();
         if (size < 4) {
             return BUFFER_UNDER_RUN;
@@ -43,11 +41,11 @@ public final class CodecUtils {
         return len;
     }
 
-    public static String readString(ByteBuf byteBuf, int len) {
+    static String readString(ByteBuf byteBuf, int len) {
         return new String(read(byteBuf, len), StandardCharsets.UTF_8);
     }
 
-    public static byte[] read(ByteBuf in, int len) {
+    static byte[] read(ByteBuf in, int len) {
         if (len < 0) {
             throw new CorruptedFrameException("Invalid message size: " + len);
         }
@@ -57,8 +55,15 @@ public final class CodecUtils {
         return buf;
     }
 
-    public static Map<String, String> readMap(ByteBuf in, int len) {
-        String s = readString(in, len);
-        return new Gson().fromJson(s, new TypeToken<HashMap<String, String>>() {}.getType());
+    static Map<String, String> readMap(ByteBuf in, int len) {
+        HashMap<String, String> ret = new HashMap<>();
+        for (; len > 0; len--) {
+            int l = readLength(in, in.readableBytes());
+            String key = readString(in, l);
+            l = readLength(in, in.readableBytes());
+            String val = readString(in, l);
+            ret.put(key, val);
+        }
+        return ret;
     }
 }

@@ -21,7 +21,7 @@ public class Predictions {
     private String reasonPhrase;
 
     private String contentType;
-    Map<String, String> headers;
+    private Map<String, String> headers;
     private byte[] resp;
 
     public Map<String, String> getHeaders() {

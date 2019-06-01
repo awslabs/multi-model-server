@@ -567,6 +567,8 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        Assert.assertEquals(headers.get("dummy"), "1");
+        Assert.assertEquals(headers.get("content-type"), "text/plain");
         Assert.assertTrue(result.contains("bytearray"));
         unloadTests(managementChannel, "respheader");
     }

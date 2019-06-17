@@ -24,19 +24,19 @@ import java.util.Map;
 public interface Request {
     /**
      * Get all header names in the request object
-     * @return
+     * @return List of request header names
      */
     List<String> getHeaderNames();
 
     /**
      * Get the URI of the request
-     * @return URI
+     * @return URI of the endpoint
      */
     String getRequestURI();
 
     /**
      * Get all query parameters coming in for this endpoint
-     * @return
+     * @return a dictionary of all the parameters in the query
      */
     Map<String, List<String>> getParameterMap();
 
@@ -49,14 +49,14 @@ public interface Request {
 
     /**
      * Get the content-type of the incoming request object
-     * @return
+     * @return content-type string in the request
      */
     String getContentType();
 
     /**
      * Get the body content stream of the incoming request
-     * @return
-     * @throws IOException
+     * @return the request content input stream
+     * @throws IOException if there is an I/O error
      */
     InputStream getInputStream() throws IOException;
 }

@@ -28,8 +28,8 @@ public interface Response {
 
     /**
      * Set HTTP response status code and status phrase
-     * @param sc
-     * @param phrase
+     * @param sc - Integer value representing the status code of this response
+     * @param phrase - String phrase representing the status phrase of this response
      */
     void setStatus(int sc, String phrase);
 
@@ -55,8 +55,8 @@ public interface Response {
 
     /**
      * Get the output stream object for response
-     * @return
-     * @throws IOException
+     * @return response body content as OutputStream
+     * @throws IOException if I/O error occurs
      */
     OutputStream getOutputStream() throws IOException;
 }

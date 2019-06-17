@@ -18,13 +18,13 @@ package com.amazonaws.ml.mms.servingsdk;
 public interface Model {
     /**
      * Get the name of this model
-     * @return
+     * @return The name of this model
      */
     String getModelName();
 
     /**
      * Get source of the model
-     * @return
+     * @return The source of this model file
      */
     String getModelUrl();
 }

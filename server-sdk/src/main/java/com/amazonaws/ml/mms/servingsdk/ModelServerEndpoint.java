@@ -26,7 +26,7 @@ public abstract class ModelServerEndpoint {
      * @param req - Incoming request
      * @param res - Outgoing response
      * @param ctx - ModelServer's context which defines the current model-server system information
-     * @throws IOException
+     * @throws IOException if I/O error occurs
      */
     public void doGet(Request req, Response res, Context ctx) throws IOException {
         throw new ModelServerEndpointException("No implementaion found .. Default implementation invoked");

@@ -34,7 +34,7 @@ allprojects {
         doLast {
             copy {
                 def fromDir = project.jar
-                def intoDir = "${rootProject.projectDir}/build/sagemaker"
+                def intoDir = "${rootProject.projectDir}/build/plugins"
                 from fromDir
                 into intoDir
                 println "Copying files from" + fromDir + " into " + intoDir

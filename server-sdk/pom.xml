@@ -4,8 +4,8 @@
   <groupId>software.amazon.ai</groupId>
   <artifactId>mms-plugins-sdk</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
-  <name>server-sdk</name>
+  <version>1.0.0</version>
+  <name>mms-plugins-sdk</name>
   <description>
     SDK for Model Server plugins
   </description>

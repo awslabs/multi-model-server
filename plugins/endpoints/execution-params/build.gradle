@@ -1,6 +1,6 @@
 dependencies {
     compile "com.google.code.gson:gson:${gson_version}"
-    compile "com.amazonaws.ml.mms:plugins-sdk:${mms_server_sdk_version}"
+    compile "software.amazon.ai:mms-plugins-sdk:${mms_server_sdk_version}"
 }
 
 project.ext{

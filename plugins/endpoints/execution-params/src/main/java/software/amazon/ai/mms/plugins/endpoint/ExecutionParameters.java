@@ -1,16 +1,16 @@
-package com.sagemaker.endpoint;
+package software.amazon.ai.mms.plugins.endpoint;
 
-import com.amazonaws.ml.mms.servingsdk.Context;
-import com.amazonaws.ml.mms.servingsdk.ModelServerEndpoint;
-import com.amazonaws.ml.mms.servingsdk.annotations.Endpoint;
-import com.amazonaws.ml.mms.servingsdk.annotations.helpers.EndpointTypes;
-import com.amazonaws.ml.mms.servingsdk.http.Request;
-import com.amazonaws.ml.mms.servingsdk.http.Response;
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Properties;
+import software.amazon.ai.mms.servingsdk.Context;
+import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
+import software.amazon.ai.mms.servingsdk.annotations.Endpoint;
+import software.amazon.ai.mms.servingsdk.annotations.helpers.EndpointTypes;
+import software.amazon.ai.mms.servingsdk.http.Request;
+import software.amazon.ai.mms.servingsdk.http.Response;
 
 @Endpoint(
         urlPattern = "execution-parameters",

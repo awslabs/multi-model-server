@@ -186,6 +186,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         ModelManager modelManager = ModelManager.getInstance();
         final ModelArchive archive;
         try {
+
             archive =
                     modelManager.registerModel(
                             modelUrl,
@@ -194,7 +195,8 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                             handler,
                             batchSize,
                             maxBatchDelay,
-                            responseTimeout);
+                            responseTimeout,
+                            null);
         } catch (IOException e) {
             throw new InternalServerException("Failed to save model: " + modelUrl, e);
         }

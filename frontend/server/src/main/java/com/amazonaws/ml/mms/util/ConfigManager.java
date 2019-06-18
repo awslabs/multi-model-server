@@ -239,7 +239,7 @@ public final class ConfigManager {
     }
 
     public String getMmsDefaultServiceHandler() {
-        return getProperty(MMS_DEFAULT_SERVICE_HANDLER, "");
+        return getProperty(MMS_DEFAULT_SERVICE_HANDLER, null);
     }
 
     public int getDefaultWorkers() {

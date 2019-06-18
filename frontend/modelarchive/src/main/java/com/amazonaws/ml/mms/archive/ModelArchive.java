@@ -217,11 +217,6 @@ public class ModelArchive {
                 }
             }
 
-            if (manifest.getModel().getModelName() == null
-                    || manifest.getModel().getModelName().isEmpty()) {
-                manifest.getModel().setModelName(url);
-            }
-
             failed = false;
             return new ModelArchive(manifest, url, dir, extracted);
         } finally {
@@ -328,6 +323,10 @@ public class ModelArchive {
             clean();
             throw e;
         }
+    }
+
+    public String getHandler() {
+        return manifest.getModel().getHandler();
     }
 
     public Manifest getManifest() {

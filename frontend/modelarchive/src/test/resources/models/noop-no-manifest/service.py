@@ -69,41 +69,18 @@ class NoopService(object):
         :return: list of outputs to be send back to client
         """
         # Add your initialization code here
-        properties = context.system_properties
-        server_name = properties.get("server_name")
-        server_version = properties.get("server_version")
-        model_dir = properties.get("model_dir")
-        gpu_id = properties.get("gpu_id")
-        batch_size = properties.get("batch_size")
-
-        logging.debug("server_name: {}".format(server_name))
-        logging.debug("server_version: {}".format(server_version))
-        logging.debug("model_dir: {}".format(model_dir))
-        logging.debug("gpu_id: {}".format(gpu_id))
-        logging.debug("batch_size: {}".format(batch_size))
         request_processor = context.request_processor
         try:
-            preprocess_start = time.time()
             data = self.preprocess(data)
-            inference_start = time.time()
             data = self.inference(data)
-            postprocess_start = time.time()
             data = self.postprocess(data)
-            end_time = time.time()
 
-            context.set_response_content_type(context.request_ids[0], "text/plain")
+            context.set_response_content_type(0, "text/plain")
 
-            content_type = request_processor.get_request_property("Content-Type")
-            logging.debug("content_type: {}".format(content_type))
-
-            metrics = context.metrics
-            metrics.add_time("PreprocessTime", round((inference_start - preprocess_start) * 1000, 2))
-            metrics.add_time("InferenceTime", round((postprocess_start - inference_start) * 1000, 2))
-            metrics.add_time("PostprocessTime", round((end_time - postprocess_start) * 1000, 2))
             return data
         except Exception as e:
             logging.error(e, exc_info=True)
-            request_processor.report_status(500, "Unknown inference error.")
+            request_processor[0].report_status(500, "Unknown inference error.")
             return ["Error {}".format(str(e))] * len(data)
 
 

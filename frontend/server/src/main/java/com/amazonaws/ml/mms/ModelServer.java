@@ -103,11 +103,20 @@ public class ModelServer {
         }
     }
 
+    private String getDefaultModelName(String name) {
+        if (name.contains(".model") || name.contains(".mar")) {
+            return name.substring(name.lastIndexOf('/') + 1, name.lastIndexOf('.'))
+                    .replaceAll("(\\W|^_)", "_");
+        } else {
+            return name.substring(name.lastIndexOf('/') + 1).replaceAll("(\\W|^_)", "_");
+        }
+    }
+
     private void initModelStore() {
         WorkLoadManager wlm = new WorkLoadManager(configManager, serverGroups.getBackendGroup());
         ModelManager.init(configManager, wlm);
         Set<String> startupModels = ModelManager.getInstance().getStartupModels();
-
+        String defaultModelName;
         String loadModels = configManager.getLoadModels();
         if (loadModels == null || loadModels.isEmpty()) {
             return;
@@ -143,8 +152,10 @@ public class ModelServer {
                     }
                     try {
                         logger.debug("Loading models from model store: {}", file.getName());
+                        defaultModelName = getDefaultModelName(fileName);
 
-                        ModelArchive archive = modelManager.registerModel(file.getName());
+                        ModelArchive archive =
+                                modelManager.registerModel(file.getName(), defaultModelName);
                         modelManager.updateModel(archive.getModelName(), workers, workers);
                         startupModels.add(archive.getModelName());
                     } catch (ModelException | IOException e) {
@@ -172,6 +183,7 @@ public class ModelServer {
 
             try {
                 logger.info("Loading initial models: {}", url);
+                defaultModelName = getDefaultModelName(url);
 
                 ModelArchive archive =
                         modelManager.registerModel(
@@ -181,7 +193,8 @@ public class ModelServer {
                                 null,
                                 1,
                                 100,
-                                configManager.getDefaultResponseTimeout());
+                                configManager.getDefaultResponseTimeout(),
+                                defaultModelName);
                 modelManager.updateModel(archive.getModelName(), workers, workers);
                 startupModels.add(archive.getModelName());
             } catch (ModelException | IOException e) {

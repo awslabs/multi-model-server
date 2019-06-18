@@ -551,33 +551,33 @@ public class ModelServerTest {
 
     private void testPredictionsModifyResponseHeader(
             Channel inferChannel, Channel managementChannel)
-        throws NoSuchFieldException, IllegalAccessException, InterruptedException {
-            setConfiguration("decode_input_request", "false");
-            loadTests(managementChannel, "respheader-test", "respheader");
-            result = null;
-            latch = new CountDownLatch(1);
-            DefaultFullHttpRequest req =
-                    new DefaultFullHttpRequest(
-                            HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/respheader");
+            throws NoSuchFieldException, IllegalAccessException, InterruptedException {
+        setConfiguration("decode_input_request", "false");
+        loadTests(managementChannel, "respheader-test", "respheader");
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/respheader");
 
-            req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
-            HttpUtil.setContentLength(req, req.content().readableBytes());
-            req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
-            inferChannel.writeAndFlush(req);
+        req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+        inferChannel.writeAndFlush(req);
 
-            latch.await();
+        latch.await();
 
-            Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
-            Assert.assertEquals(headers.get("dummy"), "1");
-            Assert.assertEquals(headers.get("content-type"), "text/plain");
-            Assert.assertTrue(result.contains("bytearray"));
-            unloadTests(managementChannel, "respheader");
-        }
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        Assert.assertEquals(headers.get("dummy"), "1");
+        Assert.assertEquals(headers.get("content-type"), "text/plain");
+        Assert.assertTrue(result.contains("bytearray"));
+        unloadTests(managementChannel, "respheader");
+    }
 
     private void testPredictionsNoManifest(Channel inferChannel, Channel mgmtChannel)
-        throws InterruptedException, NoSuchFieldException, IllegalAccessException {
-            setConfiguration("default_service_handler", "service:handle");
-            loadTests(mgmtChannel, "noop-no-manifest", "nomanifest");
+            throws InterruptedException, NoSuchFieldException, IllegalAccessException {
+        setConfiguration("default_service_handler", "service:handle");
+        loadTests(mgmtChannel, "noop-no-manifest", "nomanifest");
 
         result = null;
         latch = new CountDownLatch(1);

@@ -10,18 +10,21 @@
  * OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package com.amazonaws.ml.mms.servingsdk;
-
-import java.util.Properties;
+package software.amazon.ai.mms.servingsdk;
 
 /**
- * This interface provides access to the current running Model Server.
+ * This provides information about the model which is currently registered with Model Server
  */
-public interface Context {
+public interface Model {
     /**
-     * Get the confuguration of the current running Model Server
-     * @return Properties
+     * Get the name of this model
+     * @return The name of this model
      */
-    Properties getConfig();
+    String getModelName();
 
+    /**
+     * Get source of the model
+     * @return The source of this model file
+     */
+    String getModelUrl();
 }

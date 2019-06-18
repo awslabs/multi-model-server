@@ -11,7 +11,7 @@
  * and limitations under the License.
  */
 
-package com.amazonaws.ml.mms.servingsdk.http;
+package software.amazon.ai.mms.servingsdk.http;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -7,7 +7,7 @@
  * the specific language governing permissions and limitations under the License.
  */
 
-package com.amazonaws.ml.mms.servingsdk;
+package software.amazon.ai.mms.servingsdk;
 
 /**
  * Runtime exception for custom model server endpoint plugins

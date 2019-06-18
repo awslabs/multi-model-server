@@ -10,10 +10,10 @@
  * OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package com.amazonaws.ml.mms.servingsdk;
+package software.amazon.ai.mms.servingsdk;
 
-import com.amazonaws.ml.mms.servingsdk.http.Request;
-import com.amazonaws.ml.mms.servingsdk.http.Response;
+import software.amazon.ai.mms.servingsdk.http.Request;
+import software.amazon.ai.mms.servingsdk.http.Response;
 
 import java.io.IOException;
 

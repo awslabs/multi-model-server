@@ -11,7 +11,7 @@
  * and limitations under the License.
  */
 
-package com.amazonaws.ml.mms.servingsdk;
+package software.amazon.ai.mms.servingsdk;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

@@ -11,9 +11,9 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
-package com.amazonaws.ml.mms.servingsdk.annotations;
+package software.amazon.ai.mms.servingsdk.annotations;
 
-import com.amazonaws.ml.mms.servingsdk.annotations.helpers.EndpointTypes;
+import software.amazon.ai.mms.servingsdk.annotations.helpers.EndpointTypes;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

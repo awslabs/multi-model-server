@@ -14,6 +14,9 @@ package com.amazonaws.ml.mms.http;
 
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
+import com.amazonaws.ml.mms.servingsdk_impl.ModelServerContext;
+import com.amazonaws.ml.mms.servingsdk_impl.ModelServerRequest;
+import com.amazonaws.ml.mms.servingsdk_impl.ModelServerResponse;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.InputParameter;
 import com.amazonaws.ml.mms.util.messages.RequestInput;
@@ -22,18 +25,25 @@ import com.amazonaws.ml.mms.wlm.Job;
 import com.amazonaws.ml.mms.wlm.Model;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
 
 /**
  * A class handling inbound HTTP requests to the management API.
@@ -43,9 +53,12 @@ import org.slf4j.LoggerFactory;
 public class InferenceRequestHandler extends HttpRequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(InferenceRequestHandler.class);
+    Map<String, ModelServerEndpoint> inferEndpointMap;
 
     /** Creates a new {@code InferenceRequestHandler} instance. */
-    public InferenceRequestHandler() {}
+    public InferenceRequestHandler(Map<String, ModelServerEndpoint> endpointMap) {
+        inferEndpointMap = endpointMap;
+    }
 
     @Override
     protected void handleRequest(
@@ -68,8 +81,43 @@ public class InferenceRequestHandler extends HttpRequestHandler {
                 handlePredictions(ctx, req, segments);
                 break;
             default:
-                handleLegacyPredict(ctx, req, decoder, segments);
+                if (inferEndpointMap.getOrDefault(segments[1], null) != null) {
+                    handleCustomEndpoint(ctx, req, segments, decoder);
+                } else {
+                    handleLegacyPredict(ctx, req, decoder, segments);
+                }
                 break;
+        }
+    }
+
+    private void handleCustomEndpoint(
+            ChannelHandlerContext ctx,
+            FullHttpRequest req,
+            String[] segments,
+            QueryStringDecoder decoder) {
+        if (HttpMethod.GET.equals(req.method())) {
+            ModelServerEndpoint endpoint = inferEndpointMap.get(segments[1]);
+            Runnable r =
+                    () -> {
+                        FullHttpResponse rsp =
+                                new DefaultFullHttpResponse(
+                                        HttpVersion.HTTP_1_1, HttpResponseStatus.OK, false);
+                        try {
+                            endpoint.doGet(
+                                    new ModelServerRequest(req, decoder),
+                                    new ModelServerResponse(rsp),
+                                    new ModelServerContext());
+                            NettyUtils.sendHttpResponse(ctx, rsp, true);
+                        } catch (Exception e) {
+                            ByteArrayOutputStream ps = new ByteArrayOutputStream();
+                            e.printStackTrace(new PrintStream(ps));
+                            logger.error("Unknown exception", e);
+                            NettyUtils.sendError(ctx, HttpResponseStatus.NOT_IMPLEMENTED, e);
+                        }
+                    };
+            ModelManager.getInstance().submitTask(r);
+        } else {
+            throw new ServiceUnavailableException("Unknown HTTP method called.");
         }
     }
 

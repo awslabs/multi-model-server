@@ -33,7 +33,7 @@ import os
 import subprocess
 import sys
 from datetime import date
-from shutil import copyfile, rmtree
+from shutil import copy2, rmtree
 
 import setuptools.command.build_py
 from setuptools import setup, find_packages, Command
@@ -41,9 +41,6 @@ from setuptools import setup, find_packages, Command
 import mms
 
 pkgs = find_packages()
-source_server_file = os.path.abspath('frontend/server/build/libs/server-1.0.jar')
-dest_file_name = os.path.abspath('mms/frontend/model-server.jar')
-
 
 def pypi_description():
     """
@@ -62,18 +59,13 @@ def detect_model_server_version():
     return mms.__version__.strip() + 'b' + str(date.today()).replace('-', '')
 
 
-class BuildFrontEnd(Command):
+class BuildFrontEnd(setuptools.command.build_py.build_py):
     """
     Class defined to run custom commands.
     """
     description = 'Build Model Server Frontend'
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
+    source_server_file = os.path.abspath('frontend/server/build/libs/server-1.0.jar')
+    dest_file_name = os.path.abspath('mms/frontend/model-server.jar')
 
     # noinspection PyMethodMayBeStatic
     def run(self):
@@ -90,18 +82,18 @@ class BuildFrontEnd(Command):
             else:
                 raise
 
-        if os.path.exists(source_server_file):
-            os.remove(source_server_file)
+        if os.path.exists(self.source_server_file):
+            os.remove(self.source_server_file)
 
         # Remove build/lib directory.
         if os.path.exists('build/lib/'):
             rmtree('build/lib/')
 
         try:
-            subprocess.check_call('frontend/gradlew -p frontend build', shell=True)
+            subprocess.check_call('frontend/gradlew -p frontend clean build', shell=True)
         except OSError:
             assert 0, "build failed"
-        copyfile(source_server_file, dest_file_name)
+        copy2(self.source_server_file, self.dest_file_name)
 
 
 class BuildPy(setuptools.command.build_py.build_py):
@@ -113,6 +105,36 @@ class BuildPy(setuptools.command.build_py.build_py):
         sys.stderr.flush()
         self.run_command('build_frontend')
         setuptools.command.build_py.build_py.run(self)
+
+
+class BuildPlugins(Command):
+    description = 'Build Model Server Plugins'
+    user_options = [('plugins=', 'p', 'Plugins installed')]
+    source_plugin_dir = \
+        os.path.abspath('plugins/build/plugins')
+
+    def initialize_options(self):
+        self.plugins = None
+
+    def finalize_options(self):
+        if self.plugins is None:
+            print("No plugin option provided. Defaulting to 'default'")
+            self.plugins = "default"
+
+    # noinspection PyMethodMayBeStatic
+    def run(self):
+        if os.path.isdir(self.source_plugin_dir):
+            rmtree(self.source_plugin_dir)
+
+        try:
+            if self.plugins == "sagemaker":
+                subprocess.check_call('plugins/gradlew -p plugins clean bS', shell=True)
+            else:
+                raise OSError("No such rule exists")
+        except OSError:
+            assert 0, "build failed"
+
+        self.run_command('build_py')
 
 
 if __name__ == '__main__':
@@ -132,6 +154,7 @@ if __name__ == '__main__':
         packages=pkgs,
         cmdclass={
             'build_frontend': BuildFrontEnd,
+            'build_plugins': BuildPlugins,
             'build_py': BuildPy,
         },
         install_requires=requirements,

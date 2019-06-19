@@ -21,6 +21,8 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslContext;
+import java.util.Map;
+import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
 
 /**
  * A special {@link io.netty.channel.ChannelInboundHandler} which offers an easy way to initialize a
@@ -31,6 +33,8 @@ public class ServerInitializer extends ChannelInitializer<Channel> {
 
     private final boolean managementServer;
     private SslContext sslCtx;
+    private final Map<String, ModelServerEndpoint> inferenceEndpoints;
+    private final Map<String, ModelServerEndpoint> mgmtEndpoints;
 
     /**
      * Creates a new {@code HttpRequestHandler} instance.
@@ -38,9 +42,15 @@ public class ServerInitializer extends ChannelInitializer<Channel> {
      * @param sslCtx null if SSL is not enabled
      * @param managementServer true to initialize a management server instead of an API Server
      */
-    public ServerInitializer(SslContext sslCtx, boolean managementServer) {
+    public ServerInitializer(
+            SslContext sslCtx,
+            boolean managementServer,
+            Map<String, ModelServerEndpoint> infEp,
+            Map<String, ModelServerEndpoint> mgmtEp) {
         this.sslCtx = sslCtx;
         this.managementServer = managementServer;
+        inferenceEndpoints = infEp;
+        mgmtEndpoints = mgmtEp;
     }
 
     /** {@inheritDoc} */
@@ -54,9 +64,9 @@ public class ServerInitializer extends ChannelInitializer<Channel> {
         pipeline.addLast("http", new HttpServerCodec());
         pipeline.addLast("aggregator", new HttpObjectAggregator(maxRequestSize));
         if (managementServer) {
-            pipeline.addLast("handler", new ManagementRequestHandler());
+            pipeline.addLast("handler", new ManagementRequestHandler(mgmtEndpoints));
         } else {
-            pipeline.addLast("handler", new InferenceRequestHandler());
+            pipeline.addLast("handler", new InferenceRequestHandler(inferenceEndpoints));
         }
     }
 }

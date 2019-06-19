@@ -15,6 +15,7 @@ package com.amazonaws.ml.mms;
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.metrics.MetricManager;
+import com.amazonaws.ml.mms.servingsdk_impl.PluginLoader;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.Connector;
 import com.amazonaws.ml.mms.util.ServerGroups;
@@ -31,10 +32,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,6 +49,9 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
+import software.amazon.ai.mms.servingsdk.annotations.Endpoint;
+import software.amazon.ai.mms.servingsdk.annotations.helpers.EndpointTypes;
 
 public class ModelServer {
 
@@ -53,6 +60,8 @@ public class ModelServer {
     private ServerGroups serverGroups;
     private List<ChannelFuture> futures = new ArrayList<>(2);
     private AtomicBoolean stopped = new AtomicBoolean(false);
+    private HashMap<String, ModelServerEndpoint> infEps;
+    private HashMap<String, ModelServerEndpoint> mgmtEps;
 
     private ConfigManager configManager;
 
@@ -207,10 +216,8 @@ public class ModelServer {
             Connector connector, EventLoopGroup serverGroup, EventLoopGroup workerGroup)
             throws InterruptedException, IOException, GeneralSecurityException {
         final String purpose = connector.getPurpose();
-
         Class<? extends ServerChannel> channelClass = connector.getServerChannel();
         logger.info("Initialize {} server with: {}.", purpose, channelClass.getSimpleName());
-
         ServerBootstrap b = new ServerBootstrap();
         b.option(ChannelOption.SO_BACKLOG, 1024)
                 .channel(channelClass)
@@ -223,7 +230,7 @@ public class ModelServer {
         if (connector.isSsl()) {
             sslCtx = configManager.getSslContext();
         }
-        b.childHandler(new ServerInitializer(sslCtx, connector.isManagement()));
+        b.childHandler(new ServerInitializer(sslCtx, connector.isManagement(), infEps, mgmtEps));
 
         ChannelFuture future;
         try {
@@ -276,6 +283,9 @@ public class ModelServer {
 
         initModelStore();
 
+        infEps = PluginLoader.getInstance().getAllInferenceServingEndpoints();
+        mgmtEps = PluginLoader.getInstance().getAllManagementServingEndpoints();
+
         Connector inferenceConnector = configManager.getListener(false);
         Connector managementConnector = configManager.getListener(true);
         if (inferenceConnector.equals(managementConnector)) {
@@ -293,6 +303,27 @@ public class ModelServer {
         futures.add(initializeServer(managementConnector, serverGroup, workerGroup));
 
         return futures;
+    }
+
+    private boolean validEndpoint(Annotation a, EndpointTypes type) {
+        return a instanceof Endpoint
+                && !((Endpoint) a).urlPattern().isEmpty()
+                && ((Endpoint) a).endpointType().equals(type);
+    }
+
+    private HashMap<String, ModelServerEndpoint> registerEndpoints(EndpointTypes type) {
+        ServiceLoader<ModelServerEndpoint> loader = ServiceLoader.load(ModelServerEndpoint.class);
+        HashMap<String, ModelServerEndpoint> ep = new HashMap<>();
+        for (ModelServerEndpoint mep : loader) {
+            Class<? extends ModelServerEndpoint> modelServerEndpointClassObj = mep.getClass();
+            Annotation[] annotations = modelServerEndpointClassObj.getAnnotations();
+            for (Annotation a : annotations) {
+                if (validEndpoint(a, type)) {
+                    ep.put(((Endpoint) a).urlPattern(), mep);
+                }
+            }
+        }
+        return ep;
     }
 
     public boolean isRunning() {

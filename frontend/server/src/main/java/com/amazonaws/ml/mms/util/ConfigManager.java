@@ -242,18 +242,27 @@ public final class ConfigManager {
         return getProperty(MMS_DEFAULT_SERVICE_HANDLER, null);
     }
 
+    public Properties getConfiguration() {
+        return new Properties(prop);
+    }
+
     public int getDefaultWorkers() {
         if (isDebug()) {
             return 1;
         }
-
         int workers = getIntProperty(MMS_DEFAULT_WORKERS_PER_MODEL, 0);
+
+        if ((workers == 0) && (prop.getProperty("NUM_WORKERS", null) != null)) {
+            workers = getIntProperty("NUM_WORKERS", 0);
+        }
+
         if (workers == 0) {
             workers = getNumberOfGpu();
         }
         if (workers == 0) {
             workers = Runtime.getRuntime().availableProcessors();
         }
+        setProperty("NUM_WORKERS", Integer.toString(workers));
         return workers;
     }
 

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
 
 /**
  * A class handling inbound HTTP requests to the management API.
@@ -42,8 +43,11 @@ import java.util.function.Function;
  */
 public class ManagementRequestHandler extends HttpRequestHandler {
 
+    Map<String, ModelServerEndpoint> mgmtEndpointMap;
     /** Creates a new {@code ManagementRequestHandler} instance. */
-    public ManagementRequestHandler() {}
+    public ManagementRequestHandler(Map<String, ModelServerEndpoint> endpointMap) {
+        mgmtEndpointMap = endpointMap;
+    }
 
     @Override
     protected void handleRequest(
@@ -52,7 +56,8 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             QueryStringDecoder decoder,
             String[] segments)
             throws ModelException {
-        if (!"models".equals(segments[1])) {
+        if (!"models".equals(segments[1])
+                && mgmtEndpointMap.getOrDefault(segments[1], null) == null) {
             throw new ResourceNotFoundException();
         }
 

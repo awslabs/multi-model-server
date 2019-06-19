@@ -79,6 +79,9 @@ def start():
         else:
             mms_conf_file = "config.properties"
 
+        class_path = \
+            ".:{}".format(os.path.join(mms_home, "mms/frontend/*"))
+
         if os.path.isfile(mms_conf_file):
             props = load_properties(mms_conf_file)
             vm_args = props.get("vmargs")
@@ -89,9 +92,14 @@ def start():
                         if word.startswith("-Dlog4j.configuration="):
                             arg_list.remove(word)
                 cmd.extend(arg_list)
+            plugins = props.get("plugins_path", None)
+            if plugins:
+                class_path += ":" + plugins + "/*" if "*" not in plugins else ":" + plugins
 
-        cmd.append("-jar")
-        cmd.append("{}/mms/frontend/model-server.jar".format(mms_home))
+        cmd.append("-cp")
+        cmd.append(class_path)
+
+        cmd.append("com.amazonaws.ml.mms.ModelServer")
 
         # model-server.jar command line parameters
         cmd.append("--python")

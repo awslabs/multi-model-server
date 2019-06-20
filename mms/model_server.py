@@ -132,6 +132,8 @@ def start():
             pid = process.pid
             with open(pid_file, "w") as pf:
                 pf.write(str(pid))
+            if args.foreground:
+                process.wait()
         except OSError as e:
             if e.errno == 2:
                 print("java not found, please make sure JAVA_HOME is set properly.")

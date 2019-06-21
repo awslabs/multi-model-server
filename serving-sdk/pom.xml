@@ -4,7 +4,7 @@
   <groupId>software.amazon.ai</groupId>
   <artifactId>mms-plugins-sdk</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <name>mms-plugins-sdk</name>
   <description>
     SDK for Model Server plugins
@@ -19,7 +19,7 @@
   <scm>
     <connection>scm:git:git://github.com/awslabs/mxnet-model-server.git</connection>
     <developerConnection>scm:git:ssh://git@github.com:deep-learning-mms-bot/mxnet-model-server.git</developerConnection>
-    <url>https://github.com/awslabs/mxnet-model-server/tree/master/server-sdk</url>
+    <url>https://github.com/awslabs/mxnet-model-server/tree/master/serving-sdk</url>
     <tag>HEAD</tag>
   </scm>
   <developers>

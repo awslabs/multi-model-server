@@ -12,16 +12,33 @@
  */
 package software.amazon.ai.mms.servingsdk;
 
-import java.util.Properties;
+import java.util.List;
 
 /**
- * This interface provides access to the current running Model Server.
+ * This provides information about the model which is currently registered with Model Server
  */
-public interface Context {
+public interface Model {
     /**
-     * Get the confuguration of the current running Model Server
-     * @return Properties
+     * Get the name of this model
+     * @return The name of this model
      */
-    Properties getConfig();
+    String getModelName();
 
+    /**
+     * Get the URL of the Model location
+     * @return models URL
+     */
+    String getModelUrl();
+
+    /**
+     * Get the model's entry-point
+     * @return "handler" invoked to handle requests
+     */
+    String getModelHandler();
+
+    /**
+     * Returns the current list of workers for this model
+     * @return list of Worker objects
+     */
+    List<Worker> getModelWorkers();
 }

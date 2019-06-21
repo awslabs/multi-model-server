@@ -8,4 +8,4 @@
  */
 
 rootProject.name = 'plugins'
-include 'endpoints/execution-params'
+include 'endpoints'

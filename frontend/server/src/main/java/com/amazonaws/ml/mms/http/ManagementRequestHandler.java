@@ -48,10 +48,9 @@ import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
  */
 public class ManagementRequestHandler extends HttpRequestHandler {
 
-    Map<String, ModelServerEndpoint> mgmtEndpointMap;
     /** Creates a new {@code ManagementRequestHandler} instance. */
-    public ManagementRequestHandler(Map<String, ModelServerEndpoint> endpointMap) {
-        mgmtEndpointMap = endpointMap;
+    public ManagementRequestHandler(Map<String, ModelServerEndpoint> ep) {
+        endpointMap = ep;
     }
 
     @Override
@@ -61,31 +60,34 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             QueryStringDecoder decoder,
             String[] segments)
             throws ModelException {
-        if (!"models".equals(segments[1])
-                && mgmtEndpointMap.getOrDefault(segments[1], null) == null) {
-            throw new ResourceNotFoundException();
-        }
-
-        HttpMethod method = req.method();
-        if (segments.length < 3) {
-            if (HttpMethod.GET.equals(method)) {
-                handleListModels(ctx, decoder);
-                return;
-            } else if (HttpMethod.POST.equals(method)) {
-                handleRegisterModel(ctx, decoder, req);
-                return;
-            }
-            throw new MethodNotAllowedException();
-        }
-
-        if (HttpMethod.GET.equals(method)) {
-            handleDescribeModel(ctx, segments[2]);
-        } else if (HttpMethod.PUT.equals(method)) {
-            handleScaleModel(ctx, decoder, segments[2]);
-        } else if (HttpMethod.DELETE.equals(method)) {
-            handleUnregisterModel(ctx, segments[2]);
+        if (endpointMap.getOrDefault(segments[1], null) != null) {
+            handleCustomEndpoint(ctx, req, segments, decoder);
         } else {
-            throw new MethodNotAllowedException();
+            if (!"models".equals(segments[1])) {
+                throw new ResourceNotFoundException();
+            }
+
+            HttpMethod method = req.method();
+            if (segments.length < 3) {
+                if (HttpMethod.GET.equals(method)) {
+                    handleListModels(ctx, decoder);
+                    return;
+                } else if (HttpMethod.POST.equals(method)) {
+                    handleRegisterModel(ctx, decoder, req);
+                    return;
+                }
+                throw new MethodNotAllowedException();
+            }
+
+            if (HttpMethod.GET.equals(method)) {
+                handleDescribeModel(ctx, segments[2]);
+            } else if (HttpMethod.PUT.equals(method)) {
+                handleScaleModel(ctx, decoder, segments[2]);
+            } else if (HttpMethod.DELETE.equals(method)) {
+                handleUnregisterModel(ctx, segments[2]);
+            } else {
+                throw new MethodNotAllowedException();
+            }
         }
     }
 

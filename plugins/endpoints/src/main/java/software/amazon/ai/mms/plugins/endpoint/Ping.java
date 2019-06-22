@@ -16,8 +16,7 @@ import software.amazon.ai.mms.servingsdk.http.Response;
 @Endpoint(urlPattern = "ping", endpointType = EndpointTypes.INFERENCE, description = "Ping ")
 public class Ping extends ModelServerEndpoint {
     private boolean init;
-    private byte[] success = "{\n\t\"Status\": \"Healthy\"\n}\n"
-            .getBytes(StandardCharsets.UTF_8);
+    private byte[] success = "{\n\t\"Status\": \"Healthy\"\n}\n".getBytes(StandardCharsets.UTF_8);
 
     private boolean modelsLoaded(Context ctx) {
         Map<String, Model> modelMap = ctx.getModels();
@@ -54,8 +53,7 @@ public class Ping extends ModelServerEndpoint {
                         .write("Models are not loaded".getBytes(StandardCharsets.UTF_8));
             } else {
                 init = true;
-                rsp.getOutputStream()
-                        .write(success);
+                rsp.getOutputStream().write(success);
             }
         } else {
             String svcFile = ctx.getConfig().getProperty("default_service_handler");
@@ -64,8 +62,7 @@ public class Ping extends ModelServerEndpoint {
                 rsp.getOutputStream()
                         .write("Service file unavailable".getBytes(StandardCharsets.UTF_8));
             } else {
-                rsp.getOutputStream()
-                        .write(success);
+                rsp.getOutputStream().write(success);
             }
         }
     }

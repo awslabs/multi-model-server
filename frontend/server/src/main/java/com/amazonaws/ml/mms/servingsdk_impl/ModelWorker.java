@@ -13,24 +13,26 @@
 
 package com.amazonaws.ml.mms.servingsdk_impl;
 
-import com.amazonaws.ml.mms.util.ConfigManager;
-import com.amazonaws.ml.mms.wlm.ModelManager;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import software.amazon.ai.mms.servingsdk.Context;
-import software.amazon.ai.mms.servingsdk.Model;
+import com.amazonaws.ml.mms.wlm.WorkerState;
+import com.amazonaws.ml.mms.wlm.WorkerThread;
+import software.amazon.ai.mms.servingsdk.Worker;
 
-public class ModelServerContext implements Context {
-    @Override
-    public Properties getConfig() {
-        return ConfigManager.getInstance().getConfiguration();
+public class ModelWorker implements Worker {
+    boolean isRunning;
+    long memory;
+
+    public ModelWorker(WorkerThread t) {
+        isRunning = t.getState() == WorkerState.WORKER_MODEL_LOADED;
+        memory = t.getMemory();
     }
 
     @Override
-    public Map<String, Model> getModels() {
-        HashMap<String, Model> r = new HashMap<>();
-        ModelManager.getInstance().getModels().forEach((k, v) -> r.put(k, new ModelServerModel(v)));
-        return r;
+    public boolean getIsRunning() {
+        return isRunning;
+    }
+
+    @Override
+    public Long getWorkerMemory() {
+        return memory;
     }
 }

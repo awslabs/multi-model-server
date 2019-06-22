@@ -16,7 +16,7 @@ public interface Worker {
      * Get the current running status of this model's worker
      * @return True - if the worker is currently running. False - the worker is currently not running.
      */
-    Boolean getIsRunning();
+    boolean getIsRunning();
 
     /**
      * Get the current memory foot print of this worker

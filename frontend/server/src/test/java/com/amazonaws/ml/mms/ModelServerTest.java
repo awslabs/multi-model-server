@@ -160,6 +160,7 @@ public class ModelServerTest {
         testListModels(managementChannel);
         testDescribeModel(managementChannel);
         testLoadModelWithInitialWorkers(managementChannel);
+        testLoadModelWithInitialWorkersWithReqBody(managementChannel);
         testPredictions(channel);
         testPredictionsBinary(channel);
         testPredictionsJson(channel);
@@ -273,6 +274,27 @@ public class ModelServerTest {
                         HttpVersion.HTTP_1_1,
                         HttpMethod.POST,
                         "/models?url=noop-v0.1&model_name=noop_v0.1&initial_workers=1&synchronous=true");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
+        Assert.assertEquals(resp.getStatus(), "Workers scaled");
+    }
+
+    private void testLoadModelWithInitialWorkersWithReqBody(Channel channel)
+            throws InterruptedException {
+        testUnregisterModel(channel);
+
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/models");
+        req.headers().add("Content-Type", "application/json");
+        req.content()
+                .writeCharSequence(
+                        "{'url':'noop-v0.1', 'model_name':'noop_v0.1', 'initial_workers':'1', 'synchronous':'true'}",
+                        CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
         channel.writeAndFlush(req);
         latch.await();
 

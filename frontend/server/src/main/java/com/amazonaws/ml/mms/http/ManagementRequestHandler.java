@@ -318,7 +318,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(mime) {
             in =
                     JsonUtils.GSON.fromJson(
-                            new String(NettyUtils.getBytes(req.content()), CharsetUtil.UTF_8),
+                            req.content().toString(CharsetUtil.UTF_8),
                             RegisterModelRequest.class);
         } else {
             in = new RegisterModelRequest(decoder);

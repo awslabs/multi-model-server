@@ -23,15 +23,23 @@ import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
 import software.amazon.ai.mms.servingsdk.annotations.Endpoint;
 import software.amazon.ai.mms.servingsdk.annotations.helpers.EndpointTypes;
 
-public final class PluginLoader {
+public final class PluginsManager {
 
-    private static PluginLoader instance = new PluginLoader();
-    private Logger logger = LoggerFactory.getLogger(PluginLoader.class);
+    private static PluginsManager instance = new PluginsManager();
+    private Logger logger = LoggerFactory.getLogger(PluginsManager.class);
 
-    private PluginLoader() {}
+    private HashMap<String, ModelServerEndpoint> inferenceEndpoints;
+    private HashMap<String, ModelServerEndpoint> managementEndpoints;
 
-    public static PluginLoader getInstance() {
+    private PluginsManager() {}
+
+    public static PluginsManager getInstance() {
         return instance;
+    }
+
+    public void initialize() {
+        inferenceEndpoints = initInferenceEndpoints();
+        managementEndpoints = initManagementEndpoints();
     }
 
     private boolean validEndpoint(Annotation a, EndpointTypes type) {
@@ -64,11 +72,19 @@ public final class PluginLoader {
         return ep;
     }
 
-    public HashMap<String, ModelServerEndpoint> getAllInferenceServingEndpoints() {
+    private HashMap<String, ModelServerEndpoint> initInferenceEndpoints() {
         return getEndpoints(EndpointTypes.INFERENCE);
     }
 
-    public HashMap<String, ModelServerEndpoint> getAllManagementServingEndpoints() {
+    private HashMap<String, ModelServerEndpoint> initManagementEndpoints() {
         return getEndpoints(EndpointTypes.MANAGEMENT);
+    }
+
+    public HashMap<String, ModelServerEndpoint> getInferenceEndpoints() {
+        return inferenceEndpoints;
+    }
+
+    public HashMap<String, ModelServerEndpoint> getManagementEndpoints() {
+        return managementEndpoints;
     }
 }

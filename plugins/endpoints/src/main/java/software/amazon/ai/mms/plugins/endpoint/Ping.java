@@ -13,7 +13,10 @@ import software.amazon.ai.mms.servingsdk.annotations.helpers.EndpointTypes;
 import software.amazon.ai.mms.servingsdk.http.Request;
 import software.amazon.ai.mms.servingsdk.http.Response;
 
-@Endpoint(urlPattern = "ping", endpointType = EndpointTypes.INFERENCE, description = "Ping ")
+@Endpoint(
+        urlPattern = "ping",
+        endpointType = EndpointTypes.INFERENCE,
+        description = "Ping endpoint for sagemaker containers.")
 public class Ping extends ModelServerEndpoint {
     private boolean init;
     private byte[] success = "{\n\t\"Status\": \"Healthy\"\n}\n".getBytes(StandardCharsets.UTF_8);
@@ -46,7 +49,7 @@ public class Ping extends ModelServerEndpoint {
     public void doGet(Request req, Response rsp, Context ctx) throws IOException {
         rsp.setStatus(200);
         String isMultiModelMode = System.getenv("SAGEMAKER_MULTI_MODE");
-        if ("false".equalsIgnoreCase(isMultiModelMode)) {
+        if (isMultiModelMode == null || "false".equalsIgnoreCase(isMultiModelMode)) {
             if (!init && !modelsLoaded(ctx)) {
                 rsp.setStatus(503, "Model loading...");
                 rsp.getOutputStream()

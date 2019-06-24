@@ -19,6 +19,7 @@ import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.metrics.Dimension;
 import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.metrics.MetricManager;
+import com.amazonaws.ml.mms.servingsdk_impl.PluginsManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.Connector;
 import com.amazonaws.ml.mms.util.JsonUtils;
@@ -97,6 +98,7 @@ public class ModelServerTest {
     public void beforeSuite() throws InterruptedException, IOException, GeneralSecurityException {
         ConfigManager.init(new ConfigManager.Arguments());
         configManager = ConfigManager.getInstance();
+        PluginsManager.getInstance().initialize();
 
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
 

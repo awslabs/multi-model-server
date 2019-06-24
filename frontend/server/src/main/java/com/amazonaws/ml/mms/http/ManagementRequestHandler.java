@@ -315,7 +315,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
     private RegisterModelRequest parseRequest(FullHttpRequest req, QueryStringDecoder decoder) {
         RegisterModelRequest in;
         CharSequence mime = HttpUtil.getMimeType(req);
-        if (mime != null && "application/json".equalsIgnoreCase(mime.toString())) {
+        if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(mime) {
             in =
                     JsonUtils.GSON.fromJson(
                             new String(NettyUtils.getBytes(req.content()), CharsetUtil.UTF_8),

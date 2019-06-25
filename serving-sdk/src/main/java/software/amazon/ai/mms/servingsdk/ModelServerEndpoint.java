@@ -28,7 +28,7 @@ public abstract class ModelServerEndpoint {
      * @param ctx - ModelServer's context which defines the current model-server system information
      * @throws IOException if I/O error occurs
      */
-    public void doGet(Request req, Response res, Context ctx) throws IOException {
+    public void doGet(Request req, Response res, Context ctx) throws ModelServerEndpointException, IOException {
         throw new ModelServerEndpointException("No implementation found .. Default implementation invoked");
     }
 
@@ -39,7 +39,7 @@ public abstract class ModelServerEndpoint {
      * @param ctx - ModelServer's context which defines the current model-server system information
      * @throws IOException if I/O error occurs
      */
-    public void doPut(Request req, Response res, Context ctx) throws IOException {
+    public void doPut(Request req, Response res, Context ctx) throws ModelServerEndpointException, IOException {
         throw new ModelServerEndpointException("No implementation found .. Default implementation invoked");
     }
 
@@ -50,7 +50,7 @@ public abstract class ModelServerEndpoint {
      * @param ctx - ModelServer's context which defines the current model-server system information
      * @throws IOException if I/O error occurs
      */
-    public void doPost(Request req, Response res, Context ctx) throws IOException {
+    public void doPost(Request req, Response res, Context ctx) throws ModelServerEndpointException, IOException {
         throw new ModelServerEndpointException("No implementation found .. Default implementation invoked");
     }
 
@@ -61,7 +61,7 @@ public abstract class ModelServerEndpoint {
      * @param ctx - ModelServer's context which defines the current model-server system information
      * @throws IOException if I/O error occurs
      */
-    public void doDelete(Request req, Response res, Context ctx) throws IOException {
+    public void doDelete(Request req, Response res, Context ctx) throws ModelServerEndpointException, IOException {
         throw new ModelServerEndpointException("No implementation found .. Default implementation invoked");
     }
 

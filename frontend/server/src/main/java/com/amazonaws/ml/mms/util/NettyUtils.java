@@ -132,6 +132,12 @@ public final class NettyUtils {
         sendJsonResponse(ctx, error, status);
     }
 
+    public static void sendError(
+            ChannelHandlerContext ctx, HttpResponseStatus status, Throwable t, String msg) {
+        ErrorResponse error = new ErrorResponse(status.code(), t.getClass().getSimpleName(), msg);
+        sendJsonResponse(ctx, error, status);
+    }
+
     /**
      * Send HTTP response to client.
      *

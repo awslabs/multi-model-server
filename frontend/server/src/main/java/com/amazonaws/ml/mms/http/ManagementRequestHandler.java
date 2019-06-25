@@ -26,6 +26,7 @@ import com.amazonaws.ml.mms.wlm.ModelManager;
 import com.amazonaws.ml.mms.wlm.WorkerThread;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
@@ -315,11 +316,10 @@ public class ManagementRequestHandler extends HttpRequestHandler {
     private RegisterModelRequest parseRequest(FullHttpRequest req, QueryStringDecoder decoder) {
         RegisterModelRequest in;
         CharSequence mime = HttpUtil.getMimeType(req);
-        if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(mime) {
+        if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(mime)) {
             in =
                     JsonUtils.GSON.fromJson(
-                            req.content().toString(CharsetUtil.UTF_8),
-                            RegisterModelRequest.class);
+                            req.content().toString(CharsetUtil.UTF_8), RegisterModelRequest.class);
         } else {
             in = new RegisterModelRequest(decoder);
         }

@@ -28,13 +28,12 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
+import software.amazon.ai.mms.servingsdk.ModelServerEndpointException;
 
 /**
  * A class handling inbound HTTP requests.
@@ -144,15 +143,22 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
                                 "Running \"{}\" endpoint took {} ms",
                                 segments[0],
                                 System.currentTimeMillis() - start);
+                    } catch (ModelServerEndpointException me) {
+                        NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, me);
+                        logger.error("Error thrown by the model endpoint plugin.", me);
                     } catch (IOException ioe) {
-                        NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, ioe);
-                        ByteArrayOutputStream ps = new ByteArrayOutputStream();
-                        ioe.printStackTrace(new PrintStream(ps));
+                        NettyUtils.sendError(
+                                ctx,
+                                HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                ioe,
+                                "I/O error while running the custom endpoint");
                         logger.error("I/O error while running the custom endpoint.", ioe);
                     } catch (Throwable e) {
-                        NettyUtils.sendError(ctx, HttpResponseStatus.NOT_IMPLEMENTED, e);
-                        ByteArrayOutputStream ps = new ByteArrayOutputStream();
-                        e.printStackTrace(new PrintStream(ps));
+                        NettyUtils.sendError(
+                                ctx,
+                                HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                e,
+                                "Unknown exception");
                         logger.error("Unknown exception", e);
                     }
                 };

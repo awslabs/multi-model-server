@@ -14,4 +14,5 @@ package software.amazon.ai.mms.servingsdk;
  */
 public class ModelServerEndpointException extends RuntimeException {
     public ModelServerEndpointException(String err) {super(err);}
+    public ModelServerEndpointException(String err, Throwable t) {super(err, t);}
 }

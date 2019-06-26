@@ -11,11 +11,12 @@
  * and limitations under the License.
  */
 
-package com.amazonaws.ml.mms.servingsdk_impl;
+package com.amazonaws.ml.mms.servingsdk.impl;
 
 import com.amazonaws.ml.mms.http.InvalidPluginException;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.ServiceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +26,16 @@ import software.amazon.ai.mms.servingsdk.annotations.helpers.EndpointTypes;
 
 public final class PluginsManager {
 
-    private static PluginsManager instance = new PluginsManager();
+    private static final PluginsManager INSTANCE = new PluginsManager();
     private Logger logger = LoggerFactory.getLogger(PluginsManager.class);
 
-    private HashMap<String, ModelServerEndpoint> inferenceEndpoints;
-    private HashMap<String, ModelServerEndpoint> managementEndpoints;
+    private Map<String, ModelServerEndpoint> inferenceEndpoints;
+    private Map<String, ModelServerEndpoint> managementEndpoints;
 
     private PluginsManager() {}
 
     public static PluginsManager getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
     public void initialize() {
@@ -42,7 +43,7 @@ public final class PluginsManager {
         managementEndpoints = initManagementEndpoints();
     }
 
-    private boolean validEndpoint(Annotation a, EndpointTypes type) {
+    private boolean validateEndpointPlugin(Annotation a, EndpointTypes type) {
         return a instanceof Endpoint
                 && !((Endpoint) a).urlPattern().isEmpty()
                 && ((Endpoint) a).endpointType().equals(type);
@@ -56,7 +57,7 @@ public final class PluginsManager {
             Class<? extends ModelServerEndpoint> modelServerEndpointClassObj = mep.getClass();
             Annotation[] annotations = modelServerEndpointClassObj.getAnnotations();
             for (Annotation a : annotations) {
-                if (validEndpoint(a, type)) {
+                if (validateEndpointPlugin(a, type)) {
                     if (ep.get(((Endpoint) a).urlPattern()) != null) {
                         throw new InvalidPluginException(
                                 "Multiple plugins found for endpoint "
@@ -80,11 +81,11 @@ public final class PluginsManager {
         return getEndpoints(EndpointTypes.MANAGEMENT);
     }
 
-    public HashMap<String, ModelServerEndpoint> getInferenceEndpoints() {
+    public Map<String, ModelServerEndpoint> getInferenceEndpoints() {
         return inferenceEndpoints;
     }
 
-    public HashMap<String, ModelServerEndpoint> getManagementEndpoints() {
+    public Map<String, ModelServerEndpoint> getManagementEndpoints() {
         return managementEndpoints;
     }
 }

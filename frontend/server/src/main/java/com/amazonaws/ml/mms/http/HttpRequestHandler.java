@@ -14,9 +14,9 @@ package com.amazonaws.ml.mms.http;
 
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
-import com.amazonaws.ml.mms.servingsdk_impl.ModelServerContext;
-import com.amazonaws.ml.mms.servingsdk_impl.ModelServerRequest;
-import com.amazonaws.ml.mms.servingsdk_impl.ModelServerResponse;
+import com.amazonaws.ml.mms.servingsdk.impl.ModelServerContext;
+import com.amazonaws.ml.mms.servingsdk.impl.ModelServerRequest;
+import com.amazonaws.ml.mms.servingsdk.impl.ModelServerResponse;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import io.netty.channel.ChannelHandlerContext;

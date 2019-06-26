@@ -11,7 +11,7 @@
  * and limitations under the License.
  */
 
-package com.amazonaws.ml.mms.servingsdk_impl;
+package com.amazonaws.ml.mms.servingsdk.impl;
 
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.handler.codec.http.FullHttpResponse;

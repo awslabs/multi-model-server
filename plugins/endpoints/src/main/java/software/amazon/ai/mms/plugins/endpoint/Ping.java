@@ -26,7 +26,7 @@ public class Ping extends ModelServerEndpoint {
 
         for (Map.Entry<String, Model> entry : modelMap.entrySet()) {
             for (Worker w : entry.getValue().getModelWorkers()) {
-                if (w.getIsRunning()) {
+                if (w.isRunning()) {
                     return true;
                 }
             }

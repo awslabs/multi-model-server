@@ -80,6 +80,8 @@ public final class ConfigManager {
     private static final String MMS_MAX_REQUEST_SIZE = "max_request_size";
     private static final String MMS_MAX_RESPONSE_SIZE = "max_response_size";
     private static final String MMS_DEFAULT_SERVICE_HANDLER = "default_service_handler";
+
+    private static final String MMS_PRELOAD_MODEL = "preload_model";
     private static final String MODEL_SERVER_HOME = "model_server_home";
     private static final String MMS_MODEL_STORE = "model_store";
 
@@ -220,6 +222,10 @@ public final class ConfigManager {
             binding = prop.getProperty(MMS_INFERENCE_ADDRESS, "http://127.0.0.1:8080");
         }
         return Connector.parse(binding, management);
+    }
+
+    public String getPreloadModel() {
+        return getProperty(MMS_PRELOAD_MODEL, "false");
     }
 
     public int getNettyThreads() {
@@ -460,7 +466,9 @@ public final class ConfigManager {
                 + "\nMaximum Response Size: "
                 + prop.getProperty(MMS_MAX_RESPONSE_SIZE, "6553500")
                 + "\nMaximum Request Size: "
-                + prop.getProperty(MMS_MAX_REQUEST_SIZE, "6553500");
+                + prop.getProperty(MMS_MAX_REQUEST_SIZE, "6553500")
+                + "\nPreload model: "
+                + prop.getProperty(MMS_PRELOAD_MODEL, "false");
     }
 
     public boolean useNativeIo() {

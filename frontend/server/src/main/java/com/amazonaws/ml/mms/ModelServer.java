@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -161,10 +162,15 @@ public class ModelServer {
                         defaultModelName = getDefaultModelName(fileName);
 
                         ModelArchive archive =
-                                modelManager.registerModel(file.getName(), defaultModelName);
+                                modelManager.registerModel(
+                                        file.getName(), defaultModelName, configManager.getPreloadModel());
                         modelManager.updateModel(archive.getModelName(), workers, workers);
                         startupModels.add(archive.getModelName());
-                    } catch (ModelException | IOException e) {
+                    } catch (ModelException
+                            | IOException
+                            | InterruptedException
+                            | ExecutionException
+                            | TimeoutException e) {
                         logger.warn("Failed to load model: " + file.getAbsolutePath(), e);
                     }
                 }
@@ -200,10 +206,15 @@ public class ModelServer {
                                 1,
                                 100,
                                 configManager.getDefaultResponseTimeout(),
-                                defaultModelName);
+                                defaultModelName,
+                                configManager.getPreloadModel());
                 modelManager.updateModel(archive.getModelName(), workers, workers);
                 startupModels.add(archive.getModelName());
-            } catch (ModelException | IOException e) {
+            } catch (ModelException
+                    | IOException
+                    | InterruptedException
+                    | ExecutionException
+                    | TimeoutException e) {
                 logger.warn("Failed to load model: " + url, e);
             }
         }

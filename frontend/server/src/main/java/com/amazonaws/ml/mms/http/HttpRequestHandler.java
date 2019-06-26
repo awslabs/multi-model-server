@@ -30,6 +30,8 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
@@ -170,7 +172,7 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
             FullHttpRequest req,
             QueryStringDecoder decoder,
             String[] segments)
-            throws ModelException;
+            throws ModelException, InterruptedException, ExecutionException, TimeoutException;
 
     protected abstract void handleApiDescription(ChannelHandlerContext ctx);
 

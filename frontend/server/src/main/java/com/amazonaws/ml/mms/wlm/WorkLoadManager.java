@@ -21,8 +21,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class WorkLoadManager {
@@ -35,6 +38,7 @@ public class WorkLoadManager {
     private EventLoopGroup backendGroup;
     private AtomicInteger port;
     private AtomicInteger gpuCounter;
+    private AtomicInteger threadNumber;
 
     public WorkLoadManager(ConfigManager configManager, EventLoopGroup backendGroup) {
         this.configManager = configManager;
@@ -43,6 +47,7 @@ public class WorkLoadManager {
         this.gpuCounter = new AtomicInteger(0);
         threadPool = Executors.newCachedThreadPool();
         workers = new ConcurrentHashMap<>();
+        threadNumber = new AtomicInteger(0);
     }
 
     public List<WorkerThread> getWorkers(String modelName) {
@@ -55,7 +60,13 @@ public class WorkLoadManager {
 
     public Map<Integer, WorkerThread> getWorkers() {
         Map<Integer, WorkerThread> map = new HashMap<>();
-        for (List<WorkerThread> workerThreads : workers.values()) {
+        for (Map.Entry<String, List<WorkerThread>> entry : workers.entrySet()) {
+            // Add server thread
+            String modelName = entry.getKey();
+            List<WorkerThread> workerThreads = entry.getValue();
+            WorkerThread serverThread =
+                    ModelManager.getInstance().getModels().get(modelName).getServerThread();
+            map.put(serverThread.getPid(), serverThread);
             for (WorkerThread worker : workerThreads) {
                 map.put(worker.getPid(), worker);
             }
@@ -119,6 +130,29 @@ public class WorkLoadManager {
         }
     }
 
+    public void addServerThread(Model model, CompletableFuture<Boolean> future)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        WorkerStateListener listener = new WorkerStateListener(future, 1);
+        BatchAggregator aggregator = new BatchAggregator(model);
+        synchronized (model.getModelName()) {
+            model.setPort(port.getAndIncrement());
+            WorkerThread thread =
+                    new WorkerThread(
+                            configManager,
+                            backendGroup,
+                            model.getPort(),
+                            -1,
+                            model,
+                            aggregator,
+                            listener,
+                            threadNumber.getAndIncrement(),
+                            true);
+            model.setServerThread(thread);
+            threadPool.submit(thread);
+            future.get(1, TimeUnit.MINUTES);
+        }
+    }
+
     private void addThreads(
             List<WorkerThread> threads, Model model, int count, CompletableFuture<Boolean> future) {
         WorkerStateListener listener = new WorkerStateListener(future, count);
@@ -135,11 +169,13 @@ public class WorkLoadManager {
                     new WorkerThread(
                             configManager,
                             backendGroup,
-                            configManager.isDebug() ? port.get() : port.getAndIncrement(),
+                            model.getPort(),
                             gpuId,
                             model,
                             aggregator,
-                            listener);
+                            listener,
+                            threadNumber.getAndIncrement(),
+                            false);
             threads.add(thread);
             threadPool.submit(thread);
         }

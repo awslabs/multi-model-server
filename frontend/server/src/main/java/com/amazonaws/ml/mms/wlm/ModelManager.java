@@ -29,8 +29,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +68,8 @@ public final class ModelManager {
         return modelManager;
     }
 
-    public ModelArchive registerModel(String url, String defaultModelName)
-            throws ModelException, IOException {
+    public ModelArchive registerModel(String url, String defaultModelName, String preforkInit)
+            throws ModelException, IOException, InterruptedException, ExecutionException, TimeoutException {
         return registerModel(
                 url,
                 null,
@@ -76,7 +78,8 @@ public final class ModelManager {
                 1,
                 100,
                 configManager.getDefaultResponseTimeout(),
-                defaultModelName);
+                defaultModelName,
+                preforkInit);
     }
 
     public ModelArchive registerModel(
@@ -87,8 +90,10 @@ public final class ModelManager {
             int batchSize,
             int maxBatchDelay,
             int responseTimeout,
-            String defaultModelName)
-            throws ModelException, IOException {
+            String defaultModelName,
+            String preloadModel)
+            throws ModelException, IOException, InterruptedException, ExecutionException,
+                    TimeoutException {
 
         ModelArchive archive = ModelArchive.downloadModel(configManager.getModelStore(), url);
         if (modelName == null || modelName.isEmpty()) {
@@ -112,7 +117,7 @@ public final class ModelManager {
 
         archive.validate();
 
-        Model model = new Model(archive, configManager.getJobQueueSize());
+        Model model = new Model(archive, configManager.getJobQueueSize(), preloadModel);
         model.setBatchSize(batchSize);
         model.setMaxBatchDelay(maxBatchDelay);
         model.setResponseTimeout(responseTimeout);
@@ -121,6 +126,15 @@ public final class ModelManager {
             // model already exists
             throw new BadRequestException("Model " + modelName + " is already registered.");
         }
+
+        if (configManager.isDebug()) {
+            model.setPort(9000);
+        } else {
+            startBackendServer(model);
+        }
+
+        models.put(modelName, model);
+
         logger.info("Model {} loaded.", model.getModelName());
 
         return archive;
@@ -136,6 +150,7 @@ public final class ModelManager {
         model.setMinWorkers(0);
         model.setMaxWorkers(0);
         wlm.modelChanged(model);
+        model.getServerThread().shutdown();
         model.getModelArchive().clean();
         startupModels.remove(modelName);
         logger.info("Model {} unregistered.", modelName);
@@ -152,6 +167,15 @@ public final class ModelManager {
         model.setMaxWorkers(maxWorkers);
         logger.debug("updateModel: {}, count: {}", modelName, minWorkers);
         return wlm.modelChanged(model);
+    }
+
+    public void startBackendServer(Model model)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        if (model == null) {
+            throw new AssertionError("Model not found");
+        }
+        wlm.addServerThread(model, future);
     }
 
     public Map<String, Model> getModels() {

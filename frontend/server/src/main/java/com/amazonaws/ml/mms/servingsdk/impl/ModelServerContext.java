@@ -11,7 +11,7 @@
  * and limitations under the License.
  */
 
-package com.amazonaws.ml.mms.servingsdk_impl;
+package com.amazonaws.ml.mms.servingsdk.impl;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.wlm.ModelManager;

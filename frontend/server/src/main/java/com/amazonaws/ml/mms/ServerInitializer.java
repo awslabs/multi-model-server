@@ -14,7 +14,7 @@ package com.amazonaws.ml.mms;
 
 import com.amazonaws.ml.mms.http.InferenceRequestHandler;
 import com.amazonaws.ml.mms.http.ManagementRequestHandler;
-import com.amazonaws.ml.mms.servingsdk_impl.PluginsManager;
+import com.amazonaws.ml.mms.servingsdk.impl.PluginsManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;

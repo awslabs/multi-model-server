@@ -11,28 +11,28 @@
  * and limitations under the License.
  */
 
-package com.amazonaws.ml.mms.servingsdk_impl;
+package com.amazonaws.ml.mms.servingsdk.impl;
 
 import com.amazonaws.ml.mms.wlm.WorkerState;
 import com.amazonaws.ml.mms.wlm.WorkerThread;
 import software.amazon.ai.mms.servingsdk.Worker;
 
 public class ModelWorker implements Worker {
-    boolean isRunning;
+    boolean running;
     long memory;
 
     public ModelWorker(WorkerThread t) {
-        isRunning = t.getState() == WorkerState.WORKER_MODEL_LOADED;
+        running = t.getState() == WorkerState.WORKER_MODEL_LOADED;
         memory = t.getMemory();
     }
 
     @Override
-    public boolean getIsRunning() {
-        return isRunning;
+    public boolean isRunning() {
+        return running;
     }
 
     @Override
-    public Long getWorkerMemory() {
+    public long getWorkerMemory() {
         return memory;
     }
 }

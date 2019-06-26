@@ -16,17 +16,22 @@ import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
+import com.amazonaws.ml.mms.http.messages.RegisterModelRequest;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.Model;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import com.amazonaws.ml.mms.wlm.WorkerThread;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.util.CharsetUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,10 +48,9 @@ import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
  */
 public class ManagementRequestHandler extends HttpRequestHandler {
 
-    Map<String, ModelServerEndpoint> mgmtEndpointMap;
     /** Creates a new {@code ManagementRequestHandler} instance. */
-    public ManagementRequestHandler(Map<String, ModelServerEndpoint> endpointMap) {
-        mgmtEndpointMap = endpointMap;
+    public ManagementRequestHandler(Map<String, ModelServerEndpoint> ep) {
+        endpointMap = ep;
     }
 
     @Override
@@ -56,31 +60,34 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             QueryStringDecoder decoder,
             String[] segments)
             throws ModelException {
-        if (!"models".equals(segments[1])
-                && mgmtEndpointMap.getOrDefault(segments[1], null) == null) {
-            throw new ResourceNotFoundException();
-        }
-
-        HttpMethod method = req.method();
-        if (segments.length < 3) {
-            if (HttpMethod.GET.equals(method)) {
-                handleListModels(ctx, decoder);
-                return;
-            } else if (HttpMethod.POST.equals(method)) {
-                handleRegisterModel(ctx, decoder);
-                return;
-            }
-            throw new MethodNotAllowedException();
-        }
-
-        if (HttpMethod.GET.equals(method)) {
-            handleDescribeModel(ctx, segments[2]);
-        } else if (HttpMethod.PUT.equals(method)) {
-            handleScaleModel(ctx, decoder, segments[2]);
-        } else if (HttpMethod.DELETE.equals(method)) {
-            handleUnregisterModel(ctx, segments[2]);
+        if (endpointMap.getOrDefault(segments[1], null) != null) {
+            handleCustomEndpoint(ctx, req, segments, decoder);
         } else {
-            throw new MethodNotAllowedException();
+            if (!"models".equals(segments[1])) {
+                throw new ResourceNotFoundException();
+            }
+
+            HttpMethod method = req.method();
+            if (segments.length < 3) {
+                if (HttpMethod.GET.equals(method)) {
+                    handleListModels(ctx, decoder);
+                    return;
+                } else if (HttpMethod.POST.equals(method)) {
+                    handleRegisterModel(ctx, decoder, req);
+                    return;
+                }
+                throw new MethodNotAllowedException();
+            }
+
+            if (HttpMethod.GET.equals(method)) {
+                handleDescribeModel(ctx, segments[2]);
+            } else if (HttpMethod.PUT.equals(method)) {
+                handleScaleModel(ctx, decoder, segments[2]);
+            } else if (HttpMethod.DELETE.equals(method)) {
+                handleUnregisterModel(ctx, segments[2]);
+            } else {
+                throw new MethodNotAllowedException();
+            }
         }
     }
 
@@ -159,23 +166,23 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         NettyUtils.sendJsonResponse(ctx, resp);
     }
 
-    private void handleRegisterModel(ChannelHandlerContext ctx, QueryStringDecoder decoder)
+    private void handleRegisterModel(
+            ChannelHandlerContext ctx, QueryStringDecoder decoder, FullHttpRequest req)
             throws ModelException {
-        String modelUrl = NettyUtils.getParameter(decoder, "url", null);
+        RegisterModelRequest registerModelRequest = parseRequest(req, decoder);
+        String modelUrl = registerModelRequest.getModelUrl();
         if (modelUrl == null) {
             throw new BadRequestException("Parameter url is required.");
         }
 
-        String modelName = NettyUtils.getParameter(decoder, "model_name", null);
-        String runtime = NettyUtils.getParameter(decoder, "runtime", null);
-        String handler = NettyUtils.getParameter(decoder, "handler", null);
-        int batchSize = NettyUtils.getIntParameter(decoder, "batch_size", 1);
-        int maxBatchDelay = NettyUtils.getIntParameter(decoder, "max_batch_delay", 100);
-        int initialWorkers = NettyUtils.getIntParameter(decoder, "initial_workers", 0);
-        boolean synchronous =
-                Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
-        int responseTimeout =
-                Integer.parseInt(NettyUtils.getParameter(decoder, "response_timeout", "-1"));
+        String modelName = registerModelRequest.getModelName();
+        String runtime = registerModelRequest.getRuntime();
+        String handler = registerModelRequest.getHandler();
+        int batchSize = registerModelRequest.getBatchSize();
+        int maxBatchDelay = registerModelRequest.getMaxBatchDelay();
+        int initialWorkers = registerModelRequest.getInitialWorkers();
+        boolean synchronous = registerModelRequest.getSynchronous();
+        int responseTimeout = registerModelRequest.getResponseTimeout();
         if (responseTimeout == -1) {
             responseTimeout = ConfigManager.getInstance().getDefaultResponseTimeout();
         }
@@ -306,5 +313,18 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                             NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e);
                             return null;
                         });
+    }
+
+    private RegisterModelRequest parseRequest(FullHttpRequest req, QueryStringDecoder decoder) {
+        RegisterModelRequest in;
+        CharSequence mime = HttpUtil.getMimeType(req);
+        if (HttpHeaderValues.APPLICATION_JSON.contentEqualsIgnoreCase(mime)) {
+            in =
+                    JsonUtils.GSON.fromJson(
+                            req.content().toString(CharsetUtil.UTF_8), RegisterModelRequest.class);
+        } else {
+            in = new RegisterModelRequest(decoder);
+        }
+        return in;
     }
 }

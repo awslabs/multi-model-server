@@ -38,10 +38,10 @@ class LauncherPlugin implements Plugin<Project> {
                 try {
                     while (!rt.done) {
                         try {
-                            process.exitValue();
+                            process.exitValue()
                             throw new GradleException("MMS stop unexpectedly.")
                         } catch(IllegalThreadStateException ex) {
-                            Thread.sleep(500);
+                            Thread.sleep(500)
                         }
                     }
 
@@ -89,13 +89,13 @@ class LauncherPlugin implements Plugin<Project> {
 class ReaderThread extends Thread {
 
     private InputStream is
-    private boolean done;
+    private boolean done
 
-    public ReaderThread(InputStream is) {
+    ReaderThread(InputStream is) {
         this.is = is
     }
 
-    public void run() {
+    void run() {
         long begin = System.currentTimeMillis()
         def line
         def reader = new BufferedReader(new InputStreamReader(is))

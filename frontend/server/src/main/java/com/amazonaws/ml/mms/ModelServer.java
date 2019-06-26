@@ -15,7 +15,7 @@ package com.amazonaws.ml.mms;
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.metrics.MetricManager;
-import com.amazonaws.ml.mms.servingsdk_impl.PluginLoader;
+import com.amazonaws.ml.mms.servingsdk.impl.PluginsManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.Connector;
 import com.amazonaws.ml.mms.util.ServerGroups;
@@ -60,9 +60,6 @@ public class ModelServer {
     private ServerGroups serverGroups;
     private List<ChannelFuture> futures = new ArrayList<>(2);
     private AtomicBoolean stopped = new AtomicBoolean(false);
-    private HashMap<String, ModelServerEndpoint> infEps;
-    private HashMap<String, ModelServerEndpoint> mgmtEps;
-
     private ConfigManager configManager;
 
     /** Creates a new {@code ModelServer} instance. */
@@ -80,7 +77,7 @@ public class ModelServer {
             ConfigManager.init(arguments);
 
             ConfigManager configManager = ConfigManager.getInstance();
-
+            PluginsManager.getInstance().initialize();
             InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
             new ModelServer(configManager).startAndWait();
         } catch (IllegalArgumentException e) {
@@ -230,7 +227,7 @@ public class ModelServer {
         if (connector.isSsl()) {
             sslCtx = configManager.getSslContext();
         }
-        b.childHandler(new ServerInitializer(sslCtx, connector.isManagement(), infEps, mgmtEps));
+        b.childHandler(new ServerInitializer(sslCtx, connector.isManagement()));
 
         ChannelFuture future;
         try {
@@ -282,9 +279,6 @@ public class ModelServer {
         logger.info(configManager.dumpConfigurations());
 
         initModelStore();
-
-        infEps = PluginLoader.getInstance().getAllInferenceServingEndpoints();
-        mgmtEps = PluginLoader.getInstance().getAllManagementServingEndpoints();
 
         Connector inferenceConnector = configManager.getListener(false);
         Connector managementConnector = configManager.getListener(true);

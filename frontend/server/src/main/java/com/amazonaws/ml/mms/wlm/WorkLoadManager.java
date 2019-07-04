@@ -14,6 +14,7 @@ package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.util.ConfigManager;
 import io.netty.channel.EventLoopGroup;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,16 +89,16 @@ public class WorkLoadManager {
         return numWorking;
     }
 
-    public CompletableFuture<Boolean> modelChanged(Model model) {
+    public CompletableFuture<HttpResponseStatus> modelChanged(Model model) {
         synchronized (model.getModelName()) {
-            CompletableFuture<Boolean> future = new CompletableFuture<>();
+            CompletableFuture<HttpResponseStatus> future = new CompletableFuture<>();
             int minWorker = model.getMinWorkers();
             int maxWorker = model.getMaxWorkers();
             List<WorkerThread> threads;
             if (minWorker == 0) {
                 threads = workers.remove(model.getModelName());
                 if (threads == null) {
-                    future.complete(Boolean.TRUE);
+                    future.complete(HttpResponseStatus.OK);
                     return future;
                 }
             } else {
@@ -113,14 +114,17 @@ public class WorkLoadManager {
                     WorkerThread thread = threads.remove(i);
                     thread.shutdown();
                 }
-                future.complete(Boolean.TRUE);
+                future.complete(HttpResponseStatus.OK);
             }
             return future;
         }
     }
 
     private void addThreads(
-            List<WorkerThread> threads, Model model, int count, CompletableFuture<Boolean> future) {
+            List<WorkerThread> threads,
+            Model model,
+            int count,
+            CompletableFuture<HttpResponseStatus> future) {
         WorkerStateListener listener = new WorkerStateListener(future, count);
         int maxGpu = configManager.getNumberOfGpu();
         for (int i = 0; i < count; ++i) {

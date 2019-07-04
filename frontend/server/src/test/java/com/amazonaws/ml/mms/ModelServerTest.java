@@ -177,6 +177,8 @@ public class ModelServerTest {
         testPredictionsDoNotDecodeRequest(channel, managementChannel);
         testPredictionsModifyResponseHeader(channel, managementChannel);
         testPredictionsNoManifest(channel, managementChannel);
+        testLoadingMemoryError();
+        testPredictionMemoryError();
         testMetricManager();
         testErrorBatch();
 
@@ -1042,6 +1044,67 @@ public class ModelServerTest {
         Assert.assertEquals(httpStatus, HttpResponseStatus.SERVICE_UNAVAILABLE);
         Assert.assertEquals(resp.getCode(), HttpResponseStatus.SERVICE_UNAVAILABLE.code());
         Assert.assertEquals(resp.getMessage(), "Invalid model predict output");
+    }
+
+    private void testLoadingMemoryError() throws InterruptedException {
+        Channel channel = connect(true);
+        Assert.assertNotNull(channel);
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=loading-memory-error&model_name=memory_error&runtime=python&initial_workers=1&synchronous=true");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.INSUFFICIENT_STORAGE);
+        channel.close();
+    }
+
+    private void testPredictionMemoryError() throws InterruptedException {
+        // Load the model
+        Channel channel = connect(true);
+        Assert.assertNotNull(channel);
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=prediction-memory-error&model_name=pred-err&runtime=python&initial_workers=1&synchronous=true");
+        channel.writeAndFlush(req);
+        latch.await();
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        channel.close();
+
+        // Test for prediction
+        channel = connect(false);
+        Assert.assertNotNull(channel);
+        result = null;
+        latch = new CountDownLatch(1);
+        req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/pred-err");
+        req.content().writeCharSequence("data=invalid_output", CharsetUtil.UTF_8);
+
+        channel.writeAndFlush(req);
+        latch.await();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.INSUFFICIENT_STORAGE);
+        channel.close();
+
+        // Unload the model
+        channel = connect(true);
+        latch = new CountDownLatch(1);
+        Assert.assertNotNull(channel);
+        req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/models/pred-err");
+        channel.writeAndFlush(req);
+        latch.await();
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
     }
 
     private void testErrorBatch() throws InterruptedException {

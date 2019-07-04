@@ -142,7 +142,7 @@ public final class ModelManager {
         return true;
     }
 
-    public CompletableFuture<Boolean> updateModel(
+    public CompletableFuture<HttpResponseStatus> updateModel(
             String modelName, int minWorkers, int maxWorkers) {
         Model model = models.get(modelName);
         if (model == null) {

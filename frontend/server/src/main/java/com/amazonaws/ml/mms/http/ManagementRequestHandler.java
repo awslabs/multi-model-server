@@ -270,7 +270,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             final Function<Void, Void> onError) {
 
         ModelManager modelManager = ModelManager.getInstance();
-        CompletableFuture<Boolean> future =
+        CompletableFuture<HttpResponseStatus> future =
                 modelManager.updateModel(modelName, minWorkers, maxWorkers);
         if (!synchronous) {
             NettyUtils.sendJsonResponse(
@@ -282,12 +282,10 @@ public class ManagementRequestHandler extends HttpRequestHandler {
         future.thenApply(
                         v -> {
                             boolean status = modelManager.scaleRequestStatus(modelName);
-                            if (v) {
+                            if (HttpResponseStatus.OK.equals(v)) {
                                 if (status) {
                                     NettyUtils.sendJsonResponse(
-                                            ctx,
-                                            new StatusResponse("Workers scaled"),
-                                            HttpResponseStatus.OK);
+                                            ctx, new StatusResponse("Workers scaled"), v);
                                 } else {
                                     NettyUtils.sendJsonResponse(
                                             ctx,
@@ -297,7 +295,7 @@ public class ManagementRequestHandler extends HttpRequestHandler {
                             } else {
                                 NettyUtils.sendError(
                                         ctx,
-                                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                        v,
                                         new InternalServerException("Failed to start workers"));
                                 if (onError != null) {
                                     onError.apply(null);

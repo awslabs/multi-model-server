@@ -32,6 +32,7 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.UUID;
@@ -120,6 +121,8 @@ public class WorkerThread implements Runnable {
         thread.setName(getWorkerName());
         currentThread.set(thread);
         BaseModelRequest req = null;
+        HttpResponseStatus status = HttpResponseStatus.INTERNAL_SERVER_ERROR;
+
         try {
             connect();
 
@@ -148,10 +151,16 @@ public class WorkerThread implements Runnable {
                         break;
                     case LOAD:
                         if (reply.getCode() == 200) {
-                            setState(WorkerState.WORKER_MODEL_LOADED);
+                            setState(WorkerState.WORKER_MODEL_LOADED, HttpResponseStatus.OK);
                             backoffIdx = 0;
                         } else {
-                            setState(WorkerState.WORKER_ERROR);
+                            setState(
+                                    WorkerState.WORKER_ERROR,
+                                    HttpResponseStatus.valueOf(reply.getCode()));
+                            status = HttpResponseStatus.valueOf(reply.getCode());
+                            throw new WorkerInitializationException(
+                                    "Backend worker did not initialize. Msg - "
+                                            + reply.getMessage());
                         }
                         break;
                     case UNLOAD:
@@ -179,9 +188,9 @@ public class WorkerThread implements Runnable {
             // of the thread, currentThread.interrupt() might kill next worker.
             currentThread.set(null);
             if (req != null) {
-                aggregator.sendError(req, "Worker died.");
+                aggregator.sendError(req, "Worker died.", status);
             }
-            setState(WorkerState.WORKER_STOPPED);
+            setState(WorkerState.WORKER_STOPPED, HttpResponseStatus.INTERNAL_SERVER_ERROR);
             lifeCycle.exit();
             retry();
         }
@@ -205,7 +214,7 @@ public class WorkerThread implements Runnable {
         }
 
         String modelName = model.getModelName();
-        setState(WorkerState.WORKER_STARTED);
+        setState(WorkerState.WORKER_STARTED, HttpResponseStatus.OK);
         final CountDownLatch latch = new CountDownLatch(1);
 
         final int responseBufferSize = configManager.getMaxResponseSize();
@@ -299,14 +308,15 @@ public class WorkerThread implements Runnable {
 
     public void shutdown() {
         running.set(false);
-        setState(WorkerState.WORKER_SCALED_DOWN);
+        setState(WorkerState.WORKER_SCALED_DOWN, HttpResponseStatus.OK);
         if (backendChannel != null) {
             backendChannel.close();
         }
         Thread thread = currentThread.getAndSet(null);
         if (thread != null) {
             thread.interrupt();
-            aggregator.sendError(null, "Worker scaled down.");
+            aggregator.sendError(
+                    null, "Worker scaled down.", HttpResponseStatus.INTERNAL_SERVER_ERROR);
 
             model.removeJobQueue(workerId);
         }
@@ -320,8 +330,8 @@ public class WorkerThread implements Runnable {
         return "W-" + port + '-' + modelName;
     }
 
-    void setState(WorkerState newState) {
-        listener.notifyChangeState(model.getModelName(), newState);
+    void setState(WorkerState newState, HttpResponseStatus status) {
+        listener.notifyChangeState(model.getModelName(), newState, status);
         logger.debug("{} State change {} -> {}", getWorkerName(), state, newState);
         long timeTaken = System.currentTimeMillis() - startTime;
         if (state != WorkerState.WORKER_SCALED_DOWN) {

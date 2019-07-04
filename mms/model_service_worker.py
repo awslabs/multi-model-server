@@ -81,23 +81,26 @@ class MXNetModelServiceWorker(object):
         :param load_model_request:
         :return:
         """
-        model_dir = load_model_request["modelPath"].decode("utf-8")
-        model_name = load_model_request["modelName"].decode("utf-8")
-        handler = load_model_request["handler"].decode("utf-8")
-        batch_size = None
-        if "batchSize" in load_model_request:
-            batch_size = int(load_model_request["batchSize"])
+        try:
+            model_dir = load_model_request["modelPath"].decode("utf-8")
+            model_name = load_model_request["modelName"].decode("utf-8")
+            handler = load_model_request["handler"].decode("utf-8")
+            batch_size = None
+            if "batchSize" in load_model_request:
+                batch_size = int(load_model_request["batchSize"])
 
-        gpu = None
-        if "gpu" in load_model_request:
-            gpu = int(load_model_request["gpu"])
+            gpu = None
+            if "gpu" in load_model_request:
+                gpu = int(load_model_request["gpu"])
 
-        model_loader = ModelLoaderFactory.get_model_loader(model_dir)
-        service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
+            model_loader = ModelLoaderFactory.get_model_loader(model_dir)
+            service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
 
-        logging.debug("Model %s loaded.", model_name)
+            logging.debug("Model %s loaded.", model_name)
 
-        return service, "loaded model {}".format(model_name), 200
+            return service, "loaded model {}".format(model_name), 200
+        except MemoryError:
+            return None, "System out of memory", 507
 
     def handle_connection(self, cl_socket):
         """

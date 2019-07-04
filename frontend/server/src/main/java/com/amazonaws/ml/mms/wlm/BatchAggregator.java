@@ -103,7 +103,7 @@ public class BatchAggregator {
         }
     }
 
-    public void sendError(BaseModelRequest message, String error) {
+    public void sendError(BaseModelRequest message, String error, HttpResponseStatus status) {
         if (message instanceof ModelLoadModelRequest) {
             logger.warn("Load model failed: {}, error: {}", message.getModelName(), error);
             return;
@@ -117,7 +117,7 @@ public class BatchAggregator {
                 if (job == null) {
                     logger.error("Unexpected job: " + requestId);
                 } else {
-                    job.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, error);
+                    job.sendError(status, error);
                 }
             }
             if (!jobs.isEmpty()) {
@@ -131,7 +131,7 @@ public class BatchAggregator {
                 Job job = jobs.remove(jobsId);
 
                 if (job.isControlCmd()) {
-                    job.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, error);
+                    job.sendError(status, error);
                 } else {
                     // Data message can be handled by other workers.
                     // If batch has gone past its batch max delay timer?

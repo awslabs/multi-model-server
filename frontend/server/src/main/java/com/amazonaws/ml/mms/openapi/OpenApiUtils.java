@@ -37,8 +37,8 @@ public final class OpenApiUtils {
         openApi.addPath("/ping", getPingPath());
         openApi.addPath("/predictions/{model_name}", getPredictionsPath());
         openApi.addPath("/api-description", getApiDescriptionPath(true));
-        openApi.addPath("/invocations", getInvocationsPath(false));
-        openApi.addPath("/models/{model_name}/invoke", getInvocationsPath(false));
+        openApi.addPath("/invocations", getInvocationsPath());
+        openApi.addPath("/models/{model_name}/invoke", getInvocationsPath());
 
         return JsonUtils.GSON_PRETTY.toJson(openApi);
     }
@@ -108,7 +108,7 @@ public final class OpenApiUtils {
         return path;
     }
 
-    private static Path getInvocationsPath(boolean deprecated) {
+    private static Path getInvocationsPath() {
         Schema schema = new Schema();
         schema.addProperty("model_name", new Schema("string", "Name of model"), false);
 
@@ -136,8 +136,6 @@ public final class OpenApiUtils {
         operation.addResponse(new Response("500", "Internal Server Error", error));
         operation.addResponse(
                 new Response("503", "No worker is available to serve request", error));
-
-        operation.setDeprecated(deprecated);
 
         Path path = new Path();
         path.setPost(operation);

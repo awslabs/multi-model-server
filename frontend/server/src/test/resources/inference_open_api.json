@@ -653,8 +653,7 @@
               }
             }
           }
-        },
-        "deprecated": false
+        }
       }
     },
     "/models/{model_name}/invoke": {
@@ -835,8 +834,7 @@
               }
             }
           }
-        },
-        "deprecated": false
+        }
       }
     }
   }

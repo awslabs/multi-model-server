@@ -120,6 +120,8 @@ class MXNetModelServiceWorker(object):
                 resp = bytearray()
                 resp += create_load_model_response(code, result)
                 cl_socket.send(resp)
+                if code != 200:
+                    raise RuntimeError("{} - {}".format(code, result))
             else:
                 raise ValueError("Received unknown command: {}".format(cmd))
 

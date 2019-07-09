@@ -158,9 +158,6 @@ public class WorkerThread implements Runnable {
                                     WorkerState.WORKER_ERROR,
                                     HttpResponseStatus.valueOf(reply.getCode()));
                             status = HttpResponseStatus.valueOf(reply.getCode());
-                            throw new WorkerInitializationException(
-                                    "Backend worker did not initialize. Msg - "
-                                            + reply.getMessage());
                         }
                         break;
                     case UNLOAD:

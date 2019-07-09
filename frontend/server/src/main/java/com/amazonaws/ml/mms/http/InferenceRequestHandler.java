@@ -67,8 +67,10 @@ public class InferenceRequestHandler extends HttpRequestHandler {
                 case "api-description":
                     handleApiDescription(ctx);
                     break;
+                case "models":
                 case "invocations":
-                    handleInvocations(ctx, req, decoder);
+                    validatePredictionsEndpoint(segments);
+                    handleInvocations(ctx, req, decoder, segments);
                     break;
                 case "predictions":
                     handlePredictions(ctx, req, segments);
@@ -85,6 +87,18 @@ public class InferenceRequestHandler extends HttpRequestHandler {
         NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listInferenceApis());
     }
 
+    private void validatePredictionsEndpoint(String[] segments) {
+        if (segments.length == 2 && "invocations".equals(segments[1])) {
+            return;
+        } else if (segments.length == 4
+                && "models".equals(segments[1])
+                && "invoke".equals(segments[3])) {
+            return;
+        }
+
+        throw new ResourceNotFoundException();
+    }
+
     private void handlePredictions(
             ChannelHandlerContext ctx, FullHttpRequest req, String[] segments)
             throws ModelNotFoundException {
@@ -95,9 +109,15 @@ public class InferenceRequestHandler extends HttpRequestHandler {
     }
 
     private void handleInvocations(
-            ChannelHandlerContext ctx, FullHttpRequest req, QueryStringDecoder decoder)
+            ChannelHandlerContext ctx,
+            FullHttpRequest req,
+            QueryStringDecoder decoder,
+            String[] segments)
             throws ModelNotFoundException {
-        String modelName = NettyUtils.getParameter(decoder, "model_name", null);
+        String modelName =
+                ("invocations".equals(segments[1]))
+                        ? NettyUtils.getParameter(decoder, "model_name", null)
+                        : segments[2];
         if (modelName == null || modelName.isEmpty()) {
             if (ModelManager.getInstance().getStartupModels().size() == 1) {
                 modelName = ModelManager.getInstance().getStartupModels().iterator().next();

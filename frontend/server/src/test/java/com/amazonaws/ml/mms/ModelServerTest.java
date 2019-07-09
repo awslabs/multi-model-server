@@ -168,6 +168,8 @@ public class ModelServerTest {
         testPredictionsJson(channel);
         testInvocationsJson(channel);
         testInvocationsMultipart(channel);
+        testModelsInvokeJson(channel);
+        testModelsInvokeMultipart(channel);
         testLegacyPredict(channel);
         testPredictionsInvalidRequestSize(channel);
         testPredictionsValidRequestSize(channel);
@@ -447,6 +449,46 @@ public class ModelServerTest {
 
         HttpPostRequestEncoder encoder = new HttpPostRequestEncoder(req, true);
         encoder.addBodyAttribute("model_name", "noop_v0.1");
+        MemoryFileUpload body =
+                new MemoryFileUpload("data", "test.txt", "text/plain", null, null, 4);
+        body.setContent(Unpooled.copiedBuffer("test", StandardCharsets.UTF_8));
+        encoder.addBodyHttpData(body);
+
+        channel.writeAndFlush(encoder.finalizeRequest());
+        if (encoder.isChunked()) {
+            channel.writeAndFlush(encoder).sync();
+        }
+
+        latch.await();
+
+        Assert.assertEquals(result, "OK");
+    }
+
+    private void testModelsInvokeJson(Channel channel) throws InterruptedException {
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/models/noop/invoke");
+        req.content().writeCharSequence("{\"data\": \"test\"}", CharsetUtil.UTF_8);
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+        channel.writeAndFlush(req);
+        latch.await();
+
+        Assert.assertEquals(result, "OK");
+    }
+
+    private void testModelsInvokeMultipart(Channel channel)
+            throws InterruptedException, HttpPostRequestEncoder.ErrorDataEncoderException,
+                    IOException {
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/models/noop/invoke");
+
+        HttpPostRequestEncoder encoder = new HttpPostRequestEncoder(req, true);
         MemoryFileUpload body =
                 new MemoryFileUpload("data", "test.txt", "text/plain", null, null, 4);
         body.setContent(Unpooled.copiedBuffer("test", StandardCharsets.UTF_8));

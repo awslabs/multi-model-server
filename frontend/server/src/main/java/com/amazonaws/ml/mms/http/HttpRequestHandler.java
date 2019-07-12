@@ -24,7 +24,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.QueryStringDecoder;
@@ -56,16 +55,8 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
             if (!req.decoderResult().isSuccess()) {
                 throw new BadRequestException("Invalid HTTP message.");
             }
-
             QueryStringDecoder decoder = new QueryStringDecoder(req.uri());
             String path = decoder.path();
-            if ("/".equals(path)) {
-                if (HttpMethod.OPTIONS.equals(req.method())) {
-                    handleApiDescription(ctx);
-                    return;
-                }
-                throw new MethodNotAllowedException();
-            }
 
             String[] segments = path.split("/");
             handleRequest(ctx, req, decoder, segments);
@@ -171,8 +162,6 @@ public abstract class HttpRequestHandler extends SimpleChannelInboundHandler<Ful
             QueryStringDecoder decoder,
             String[] segments)
             throws ModelException;
-
-    protected abstract void handleApiDescription(ChannelHandlerContext ctx);
 
     /** {@inheritDoc} */
     @Override

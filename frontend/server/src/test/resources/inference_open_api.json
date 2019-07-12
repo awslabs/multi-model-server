@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "Model Serving APIs",
+    "title": "Model Server APIs",
     "description": "Model Server is a flexible and easy to use tool for serving deep learning models",
     "version": "1.0.0"
   },

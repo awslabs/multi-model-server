@@ -64,9 +64,6 @@ public class InferenceRequestHandler extends HttpRequestHandler {
                 case "ping":
                     ModelManager.getInstance().workerStatus(ctx);
                     break;
-                case "api-description":
-                    handleApiDescription(ctx);
-                    break;
                 case "models":
                 case "invocations":
                     validatePredictionsEndpoint(segments);
@@ -83,8 +80,22 @@ public class InferenceRequestHandler extends HttpRequestHandler {
     }
 
     @Override
-    protected void handleApiDescription(ChannelHandlerContext ctx) {
-        NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listInferenceApis());
+    public boolean acceptInboundMessage(Object msg) throws Exception { // NOPMD
+        return super.acceptInboundMessage(msg) && isInferenceReq(msg);
+    }
+
+    private boolean isInferenceReq(Object msg) {
+        FullHttpRequest in = (FullHttpRequest) msg;
+        QueryStringDecoder decoder = new QueryStringDecoder(in.uri());
+        String[] segments = decoder.path().split("/");
+        return segments.length == 0
+                || segments[1].equals("ping")
+                || (segments.length == 4 && segments[1].equals("models"))
+                || segments[1].equals("predictions")
+                || segments[1].equals("api-description")
+                || segments[1].equals("invocations")
+                || (segments.length == 3 && segments[2].equals("predict"))
+                || endpointMap.containsKey(segments[1]);
     }
 
     private void validatePredictionsEndpoint(String[] segments) {

@@ -12,10 +12,13 @@
  */
 package com.amazonaws.ml.mms;
 
+import com.amazonaws.ml.mms.http.ApiDescriptionRequestHandler;
 import com.amazonaws.ml.mms.http.InferenceRequestHandler;
+import com.amazonaws.ml.mms.http.InvalidRequestHandler;
 import com.amazonaws.ml.mms.http.ManagementRequestHandler;
 import com.amazonaws.ml.mms.servingsdk.impl.PluginsManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.util.ConnectorType;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -30,18 +33,18 @@ import io.netty.handler.ssl.SslContext;
  */
 public class ServerInitializer extends ChannelInitializer<Channel> {
 
-    private final boolean managementServer;
+    private ConnectorType connectorType;
     private SslContext sslCtx;
 
     /**
      * Creates a new {@code HttpRequestHandler} instance.
      *
      * @param sslCtx null if SSL is not enabled
-     * @param managementServer true to initialize a management server instead of an API Server
+     * @param type true to initialize a management server instead of an API Server
      */
-    public ServerInitializer(SslContext sslCtx, boolean managementServer) {
+    public ServerInitializer(SslContext sslCtx, ConnectorType type) {
         this.sslCtx = sslCtx;
-        this.managementServer = managementServer;
+        this.connectorType = type;
     }
 
     /** {@inheritDoc} */
@@ -54,16 +57,22 @@ public class ServerInitializer extends ChannelInitializer<Channel> {
         }
         pipeline.addLast("http", new HttpServerCodec());
         pipeline.addLast("aggregator", new HttpObjectAggregator(maxRequestSize));
-        if (managementServer) {
+        pipeline.addLast("apiDescriptor", new ApiDescriptionRequestHandler(connectorType));
+
+        if (ConnectorType.BOTH.equals(connectorType)
+                || ConnectorType.INFERENCE_CONNECTOR.equals(connectorType)) {
             pipeline.addLast(
-                    "handler",
-                    new ManagementRequestHandler(
-                            PluginsManager.getInstance().getManagementEndpoints()));
-        } else {
-            pipeline.addLast(
-                    "handler",
+                    "infHandler",
                     new InferenceRequestHandler(
                             PluginsManager.getInstance().getInferenceEndpoints()));
         }
+        if (ConnectorType.BOTH.equals(connectorType)
+                || ConnectorType.MANAGEMENT_CONNECTOR.equals(connectorType)) {
+            pipeline.addLast(
+                    "mgmtHandler",
+                    new ManagementRequestHandler(
+                            PluginsManager.getInstance().getManagementEndpoints()));
+        }
+        pipeline.addLast("invalidHandler", new InvalidRequestHandler());
     }
 }

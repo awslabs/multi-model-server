@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "Model Management APIs",
-    "description": "The Model Management server makes it easy to manage your live Model Server instance",
+    "title": "Model Server APIs",
+    "description": "Model Server is a flexible and easy to use tool for serving deep learning models",
     "version": "1.0.0"
   },
   "paths": {

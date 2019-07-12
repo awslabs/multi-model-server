@@ -17,7 +17,6 @@ import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.http.messages.RegisterModelRequest;
-import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
@@ -92,8 +91,17 @@ public class ManagementRequestHandler extends HttpRequestHandler {
     }
 
     @Override
-    protected void handleApiDescription(ChannelHandlerContext ctx) {
-        NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listManagementApis());
+    public boolean acceptInboundMessage(Object msg) throws Exception { // NOPMD
+        return super.acceptInboundMessage(msg) && isManagementReq(msg);
+    }
+
+    private boolean isManagementReq(Object msg) {
+        FullHttpRequest in = (FullHttpRequest) msg;
+        QueryStringDecoder decoder = new QueryStringDecoder(in.uri());
+        String[] segments = decoder.path().split("/");
+        return segments.length == 0
+                || ((segments.length == 2 || segments.length == 3) && segments[1].equals("models"))
+                || endpointMap.containsKey(segments[1]);
     }
 
     private void handleListModels(ChannelHandlerContext ctx, QueryStringDecoder decoder) {

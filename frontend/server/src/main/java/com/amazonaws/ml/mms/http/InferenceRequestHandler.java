@@ -12,6 +12,7 @@
  */
 package com.amazonaws.ml.mms.http;
 
+import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
@@ -41,7 +42,7 @@ import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
  *
  * <p>This class
  */
-public class InferenceRequestHandler extends HttpRequestHandler {
+public class InferenceRequestHandler extends HttpRequestHandlerChain {
 
     private static final Logger logger = LoggerFactory.getLogger(InferenceRequestHandler.class);
 
@@ -56,35 +57,42 @@ public class InferenceRequestHandler extends HttpRequestHandler {
             FullHttpRequest req,
             QueryStringDecoder decoder,
             String[] segments)
-            throws ModelNotFoundException {
-        if (endpointMap.getOrDefault(segments[1], null) != null) {
-            handleCustomEndpoint(ctx, req, segments, decoder);
-        } else {
-            switch (segments[1]) {
-                case "ping":
-                    ModelManager.getInstance().workerStatus(ctx);
-                    break;
-                case "api-description":
-                    handleApiDescription(ctx);
-                    break;
-                case "models":
-                case "invocations":
-                    validatePredictionsEndpoint(segments);
-                    handleInvocations(ctx, req, decoder, segments);
-                    break;
-                case "predictions":
-                    handlePredictions(ctx, req, segments);
-                    break;
-                default:
-                    handleLegacyPredict(ctx, req, decoder, segments);
-                    break;
+            throws ModelException {
+        if (isInferenceReq(segments)) {
+            if (endpointMap.getOrDefault(segments[1], null) != null) {
+                handleCustomEndpoint(ctx, req, segments, decoder);
+            } else {
+                switch (segments[1]) {
+                    case "ping":
+                        ModelManager.getInstance().workerStatus(ctx);
+                        break;
+                    case "models":
+                    case "invocations":
+                        validatePredictionsEndpoint(segments);
+                        handleInvocations(ctx, req, decoder, segments);
+                        break;
+                    case "predictions":
+                        handlePredictions(ctx, req, segments);
+                        break;
+                    default:
+                        handleLegacyPredict(ctx, req, decoder, segments);
+                        break;
+                }
             }
+        } else {
+            chain.handleRequest(ctx, req, decoder, segments);
         }
     }
 
-    @Override
-    protected void handleApiDescription(ChannelHandlerContext ctx) {
-        NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listInferenceApis());
+    private boolean isInferenceReq(String[] segments) {
+        return segments.length == 0
+                || segments[1].equals("ping")
+                || (segments.length == 4 && segments[1].equals("models"))
+                || segments[1].equals("predictions")
+                || segments[1].equals("api-description")
+                || segments[1].equals("invocations")
+                || (segments.length == 3 && segments[2].equals("predict"))
+                || endpointMap.containsKey(segments[1]);
     }
 
     private void validatePredictionsEndpoint(String[] segments) {

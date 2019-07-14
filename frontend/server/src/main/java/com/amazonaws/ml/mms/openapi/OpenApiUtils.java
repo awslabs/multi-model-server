@@ -13,6 +13,7 @@
 package com.amazonaws.ml.mms.openapi;
 
 import com.amazonaws.ml.mms.archive.Manifest;
+import com.amazonaws.ml.mms.util.ConnectorType;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.wlm.Model;
 import io.netty.handler.codec.http.HttpHeaderValues;
@@ -23,15 +24,25 @@ public final class OpenApiUtils {
 
     private OpenApiUtils() {}
 
-    public static String listInferenceApis() {
+    public static String listApis(ConnectorType type) {
         OpenApi openApi = new OpenApi();
         Info info = new Info();
-        info.setTitle("Model Serving APIs");
+        info.setTitle("Model Server APIs");
         info.setDescription(
                 "Model Server is a flexible and easy to use tool for serving deep learning models");
         info.setVersion("1.0.0");
         openApi.setInfo(info);
 
+        if (ConnectorType.BOTH.equals(type) || ConnectorType.INFERENCE_CONNECTOR.equals(type)) {
+            listInferenceApis(openApi);
+        }
+        if (ConnectorType.BOTH.equals(type) || ConnectorType.MANAGEMENT_CONNECTOR.equals(type)) {
+            listManagementApis(openApi);
+        }
+        return JsonUtils.GSON_PRETTY.toJson(openApi);
+    }
+
+    static void listInferenceApis(OpenApi openApi) {
         openApi.addPath("/", getApiDescriptionPath(false));
         openApi.addPath("/{model_name}/predict", getLegacyPredictPath());
         openApi.addPath("/ping", getPingPath());
@@ -39,24 +50,12 @@ public final class OpenApiUtils {
         openApi.addPath("/api-description", getApiDescriptionPath(true));
         openApi.addPath("/invocations", getInvocationsPath());
         openApi.addPath("/models/{model_name}/invoke", getInvocationsPath());
-
-        return JsonUtils.GSON_PRETTY.toJson(openApi);
     }
 
-    public static String listManagementApis() {
-        OpenApi openApi = new OpenApi();
-        Info info = new Info();
-        info.setTitle("Model Management APIs");
-        info.setDescription(
-                "The Model Management server makes it easy to manage your live Model Server instance");
-        info.setVersion("1.0.0");
-        openApi.setInfo(info);
-
+    static void listManagementApis(OpenApi openApi) {
         openApi.addPath("/", getApiDescriptionPath(false));
         openApi.addPath("/models", getModelsPath());
         openApi.addPath("/models/{model_name}", getModelManagerPath());
-
-        return JsonUtils.GSON_PRETTY.toJson(openApi);
     }
 
     public static String getModelApi(Model model) {

@@ -18,6 +18,7 @@ import com.amazonaws.ml.mms.metrics.MetricManager;
 import com.amazonaws.ml.mms.servingsdk.impl.PluginsManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.Connector;
+import com.amazonaws.ml.mms.util.ConnectorType;
 import com.amazonaws.ml.mms.util.ServerGroups;
 import com.amazonaws.ml.mms.wlm.ModelManager;
 import com.amazonaws.ml.mms.wlm.WorkLoadManager;
@@ -210,7 +211,10 @@ public class ModelServer {
     }
 
     public ChannelFuture initializeServer(
-            Connector connector, EventLoopGroup serverGroup, EventLoopGroup workerGroup)
+            Connector connector,
+            EventLoopGroup serverGroup,
+            EventLoopGroup workerGroup,
+            ConnectorType type)
             throws InterruptedException, IOException, GeneralSecurityException {
         final String purpose = connector.getPurpose();
         Class<? extends ServerChannel> channelClass = connector.getServerChannel();
@@ -227,7 +231,7 @@ public class ModelServer {
         if (connector.isSsl()) {
             sslCtx = configManager.getSslContext();
         }
-        b.childHandler(new ServerInitializer(sslCtx, connector.isManagement()));
+        b.childHandler(new ServerInitializer(sslCtx, type));
 
         ChannelFuture future;
         try {
@@ -282,10 +286,7 @@ public class ModelServer {
 
         Connector inferenceConnector = configManager.getListener(false);
         Connector managementConnector = configManager.getListener(true);
-        if (inferenceConnector.equals(managementConnector)) {
-            throw new IllegalArgumentException(
-                    "Inference port must differ from the management port");
-        }
+
         inferenceConnector.clean();
         managementConnector.clean();
 
@@ -293,8 +294,25 @@ public class ModelServer {
         EventLoopGroup workerGroup = serverGroups.getChildGroup();
 
         futures.clear();
-        futures.add(initializeServer(inferenceConnector, serverGroup, workerGroup));
-        futures.add(initializeServer(managementConnector, serverGroup, workerGroup));
+
+        if (!inferenceConnector.equals(managementConnector)) {
+            futures.add(
+                    initializeServer(
+                            inferenceConnector,
+                            serverGroup,
+                            workerGroup,
+                            ConnectorType.INFERENCE_CONNECTOR));
+            futures.add(
+                    initializeServer(
+                            managementConnector,
+                            serverGroup,
+                            workerGroup,
+                            ConnectorType.MANAGEMENT_CONNECTOR));
+        } else {
+            futures.add(
+                    initializeServer(
+                            inferenceConnector, serverGroup, workerGroup, ConnectorType.BOTH));
+        }
 
         return futures;
     }

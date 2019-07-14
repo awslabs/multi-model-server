@@ -12,10 +12,15 @@
  */
 package com.amazonaws.ml.mms;
 
+import com.amazonaws.ml.mms.http.ApiDescriptionRequestHandler;
+import com.amazonaws.ml.mms.http.HttpRequestHandler;
+import com.amazonaws.ml.mms.http.HttpRequestHandlerChain;
 import com.amazonaws.ml.mms.http.InferenceRequestHandler;
+import com.amazonaws.ml.mms.http.InvalidRequestHandler;
 import com.amazonaws.ml.mms.http.ManagementRequestHandler;
 import com.amazonaws.ml.mms.servingsdk.impl.PluginsManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
+import com.amazonaws.ml.mms.util.ConnectorType;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -30,40 +35,51 @@ import io.netty.handler.ssl.SslContext;
  */
 public class ServerInitializer extends ChannelInitializer<Channel> {
 
-    private final boolean managementServer;
+    private ConnectorType connectorType;
     private SslContext sslCtx;
 
     /**
      * Creates a new {@code HttpRequestHandler} instance.
      *
      * @param sslCtx null if SSL is not enabled
-     * @param managementServer true to initialize a management server instead of an API Server
+     * @param type true to initialize a management server instead of an API Server
      */
-    public ServerInitializer(SslContext sslCtx, boolean managementServer) {
+    public ServerInitializer(SslContext sslCtx, ConnectorType type) {
         this.sslCtx = sslCtx;
-        this.managementServer = managementServer;
+        this.connectorType = type;
     }
 
     /** {@inheritDoc} */
     @Override
     public void initChannel(Channel ch) {
         ChannelPipeline pipeline = ch.pipeline();
+        HttpRequestHandlerChain apiDescriptionRequestHandler =
+                new ApiDescriptionRequestHandler(connectorType);
+        HttpRequestHandlerChain invalidRequestHandler = new InvalidRequestHandler();
+
         int maxRequestSize = ConfigManager.getInstance().getMaxRequestSize();
         if (sslCtx != null) {
             pipeline.addLast("ssl", sslCtx.newHandler(ch.alloc()));
         }
         pipeline.addLast("http", new HttpServerCodec());
         pipeline.addLast("aggregator", new HttpObjectAggregator(maxRequestSize));
-        if (managementServer) {
-            pipeline.addLast(
-                    "handler",
-                    new ManagementRequestHandler(
-                            PluginsManager.getInstance().getManagementEndpoints()));
-        } else {
-            pipeline.addLast(
-                    "handler",
-                    new InferenceRequestHandler(
-                            PluginsManager.getInstance().getInferenceEndpoints()));
+
+        HttpRequestHandlerChain httpRequestHandlerChain = apiDescriptionRequestHandler;
+        if (ConnectorType.BOTH.equals(connectorType)
+                || ConnectorType.INFERENCE_CONNECTOR.equals(connectorType)) {
+            httpRequestHandlerChain =
+                    httpRequestHandlerChain.setNextHandler(
+                            new InferenceRequestHandler(
+                                    PluginsManager.getInstance().getInferenceEndpoints()));
         }
+        if (ConnectorType.BOTH.equals(connectorType)
+                || ConnectorType.MANAGEMENT_CONNECTOR.equals(connectorType)) {
+            httpRequestHandlerChain =
+                    httpRequestHandlerChain.setNextHandler(
+                            new ManagementRequestHandler(
+                                    PluginsManager.getInstance().getManagementEndpoints()));
+        }
+        httpRequestHandlerChain.setNextHandler(invalidRequestHandler);
+        pipeline.addLast("handler", new HttpRequestHandler(apiDescriptionRequestHandler));
     }
 }

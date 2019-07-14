@@ -17,7 +17,6 @@ import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.http.messages.RegisterModelRequest;
-import com.amazonaws.ml.mms.openapi.OpenApiUtils;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.amazonaws.ml.mms.util.NettyUtils;
@@ -46,7 +45,7 @@ import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
  *
  * <p>This class
  */
-public class ManagementRequestHandler extends HttpRequestHandler {
+public class ManagementRequestHandler extends HttpRequestHandlerChain {
 
     /** Creates a new {@code ManagementRequestHandler} instance. */
     public ManagementRequestHandler(Map<String, ModelServerEndpoint> ep) {
@@ -60,40 +59,45 @@ public class ManagementRequestHandler extends HttpRequestHandler {
             QueryStringDecoder decoder,
             String[] segments)
             throws ModelException {
-        if (endpointMap.getOrDefault(segments[1], null) != null) {
-            handleCustomEndpoint(ctx, req, segments, decoder);
-        } else {
-            if (!"models".equals(segments[1])) {
-                throw new ResourceNotFoundException();
-            }
-
-            HttpMethod method = req.method();
-            if (segments.length < 3) {
-                if (HttpMethod.GET.equals(method)) {
-                    handleListModels(ctx, decoder);
-                    return;
-                } else if (HttpMethod.POST.equals(method)) {
-                    handleRegisterModel(ctx, decoder, req);
-                    return;
-                }
-                throw new MethodNotAllowedException();
-            }
-
-            if (HttpMethod.GET.equals(method)) {
-                handleDescribeModel(ctx, segments[2]);
-            } else if (HttpMethod.PUT.equals(method)) {
-                handleScaleModel(ctx, decoder, segments[2]);
-            } else if (HttpMethod.DELETE.equals(method)) {
-                handleUnregisterModel(ctx, segments[2]);
+        if (isManagementReq(segments)) {
+            if (endpointMap.getOrDefault(segments[1], null) != null) {
+                handleCustomEndpoint(ctx, req, segments, decoder);
             } else {
-                throw new MethodNotAllowedException();
+                if (!"models".equals(segments[1])) {
+                    throw new ResourceNotFoundException();
+                }
+
+                HttpMethod method = req.method();
+                if (segments.length < 3) {
+                    if (HttpMethod.GET.equals(method)) {
+                        handleListModels(ctx, decoder);
+                        return;
+                    } else if (HttpMethod.POST.equals(method)) {
+                        handleRegisterModel(ctx, decoder, req);
+                        return;
+                    }
+                    throw new MethodNotAllowedException();
+                }
+
+                if (HttpMethod.GET.equals(method)) {
+                    handleDescribeModel(ctx, segments[2]);
+                } else if (HttpMethod.PUT.equals(method)) {
+                    handleScaleModel(ctx, decoder, segments[2]);
+                } else if (HttpMethod.DELETE.equals(method)) {
+                    handleUnregisterModel(ctx, segments[2]);
+                } else {
+                    throw new MethodNotAllowedException();
+                }
             }
+        } else {
+            chain.handleRequest(ctx, req, decoder, segments);
         }
     }
 
-    @Override
-    protected void handleApiDescription(ChannelHandlerContext ctx) {
-        NettyUtils.sendJsonResponse(ctx, OpenApiUtils.listManagementApis());
+    private boolean isManagementReq(String[] segments) {
+        return segments.length == 0
+                || ((segments.length == 2 || segments.length == 3) && segments[1].equals("models"))
+                || endpointMap.containsKey(segments[1]);
     }
 
     private void handleListModels(ChannelHandlerContext ctx, QueryStringDecoder decoder) {

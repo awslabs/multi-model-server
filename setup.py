@@ -93,6 +93,7 @@ class BuildFrontEnd(setuptools.command.build_py.build_py):
             subprocess.check_call('frontend/gradlew -p frontend clean build', shell=True)
         except OSError:
             assert 0, "build failed"
+        print("TEST")
         copy2(self.source_server_file, self.dest_file_name)
 
 

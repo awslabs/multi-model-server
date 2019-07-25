@@ -1097,6 +1097,7 @@ public class ModelServerTest {
 
         // Unload the model
         channel = connect(true);
+        httpStatus = null;
         latch = new CountDownLatch(1);
         Assert.assertNotNull(channel);
         req =

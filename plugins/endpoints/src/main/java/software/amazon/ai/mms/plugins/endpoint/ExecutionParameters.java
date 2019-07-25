@@ -2,7 +2,7 @@ package software.amazon.ai.mms.plugins.endpoint;
 
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Properties;
 import software.amazon.ai.mms.servingsdk.Context;
@@ -31,6 +31,6 @@ public class ExecutionParameters extends ModelServerEndpoint {
                                 .setPrettyPrinting()
                                 .create()
                                 .toJson(r)
-                                .getBytes(Charset.forName("UTF-8")));
+                                .getBytes(StandardCharsets.UTF_8));
     }
 }

@@ -83,7 +83,7 @@ For CPU inference, `mxnet-mkl` is recommended. Install it as follows:
 
 ```bash
 # Recommended for running MXNet Model Server on CPU hosts
-pip install mxnet-mkl
+pip install mxnet-mkl 
 ```
 
 For GPU inference, `mxnet-cu92mkl` is recommended. Install it as follows:

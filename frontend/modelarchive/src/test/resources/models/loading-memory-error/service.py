@@ -10,5 +10,6 @@
 
 
 def handle(ctx, data):
-    some_str = "*" * 200000000000000
-    return [some_str]
+    # Python raises MemoryError when the python program goes out of memory. MMS expects this error from the handler
+    # if the handlers can not allocate any further memory.
+    raise MemoryError("Throwing memory error")

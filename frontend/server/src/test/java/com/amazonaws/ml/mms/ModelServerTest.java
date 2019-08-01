@@ -177,6 +177,7 @@ public class ModelServerTest {
         testPredictionsDoNotDecodeRequest(channel, managementChannel);
         testPredictionsModifyResponseHeader(channel, managementChannel);
         testPredictionsNoManifest(channel, managementChannel);
+        testModelRegisterWithDefaultWorkers(managementChannel);
         testLoadingMemoryError();
         testPredictionMemoryError();
         testMetricManager();
@@ -571,6 +572,26 @@ public class ModelServerTest {
         f.setAccessible(true);
         Properties p = (Properties) f.get(configManager);
         p.setProperty(key, val);
+    }
+
+    private void testModelRegisterWithDefaultWorkers(Channel mgmtChannel)
+            throws NoSuchFieldException, IllegalAccessException, InterruptedException {
+        setConfiguration("default_workers_per_model", "1");
+        loadTests(mgmtChannel, "noop-v1.0", "noop_default_model_workers");
+
+        result = null;
+        latch = new CountDownLatch(1);
+        HttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.GET, "/models/noop_default_model_workers");
+        mgmtChannel.writeAndFlush(req);
+
+        latch.await();
+        DescribeModelResponse resp = JsonUtils.GSON.fromJson(result, DescribeModelResponse.class);
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        Assert.assertEquals(resp.getMinWorkers(), 1);
+        unloadTests(mgmtChannel, "noop_default_model_workers");
+        setConfiguration("default_workers_per_model", "0");
     }
 
     private void testPredictionsDecodeRequest(Channel inferChannel, Channel mgmtChannel)

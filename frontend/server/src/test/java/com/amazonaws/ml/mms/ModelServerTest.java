@@ -262,7 +262,7 @@ public class ModelServerTest {
                 new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         HttpMethod.POST,
-                        "/models?url=noop-v0.1&model_name=noop_v0.1&runtime=python");
+                        "/models?url=noop-v0.1&model_name=noop_v0.1&runtime=python&synchronous=false");
         channel.writeAndFlush(req);
         latch.await();
 
@@ -888,7 +888,7 @@ public class ModelServerTest {
                 new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         HttpMethod.POST,
-                        "/models?url=http%3A%2F%2Flocalhost%3A18888%2Ffake.mar");
+                        "/models?url=http%3A%2F%2Flocalhost%3A18888%2Ffake.mar&synchronous=false");
         channel.writeAndFlush(req).sync();
         channel.closeFuture().sync();
 
@@ -908,7 +908,7 @@ public class ModelServerTest {
                 new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         HttpMethod.POST,
-                        "/models?url=https%3A%2F%2Flocalhost%3A8443%2Ffake.mar");
+                        "/models?url=https%3A%2F%2Flocalhost%3A8443%2Ffake.mar&synchronous=false");
         channel.writeAndFlush(req).sync();
         channel.closeFuture().sync();
 
@@ -926,7 +926,9 @@ public class ModelServerTest {
 
         HttpRequest req =
                 new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/models?url=..%2Ffake.mar");
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=..%2Ffake.mar&synchronous=false");
         channel.writeAndFlush(req).sync();
         channel.closeFuture().sync();
 
@@ -977,7 +979,7 @@ public class ModelServerTest {
                 new DefaultFullHttpRequest(
                         HttpVersion.HTTP_1_1,
                         HttpMethod.POST,
-                        "/models?url=init-error&model_name=init-error");
+                        "/models?url=init-error&model_name=init-error&synchronous=false");
         channel.writeAndFlush(req);
         latch.await();
 

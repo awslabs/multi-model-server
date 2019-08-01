@@ -52,7 +52,7 @@ public class RegisterModelRequest {
         batchSize = NettyUtils.getIntParameter(decoder, "batch_size", 1);
         maxBatchDelay = NettyUtils.getIntParameter(decoder, "max_batch_delay", 100);
         initialWorkers = NettyUtils.getIntParameter(decoder, "initial_workers", 0);
-        synchronous = Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", null));
+        synchronous = Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", "true"));
         responseTimeout = NettyUtils.getIntParameter(decoder, "response_timeout", -1);
         modelUrl = NettyUtils.getParameter(decoder, "url", null);
     }

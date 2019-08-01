@@ -246,11 +246,15 @@ public final class ConfigManager {
         return new Properties(prop);
     }
 
+    public int getConfiguredDefaultWorkersPerModel() {
+        return getIntProperty(MMS_DEFAULT_WORKERS_PER_MODEL, 0);
+    }
+
     public int getDefaultWorkers() {
         if (isDebug()) {
             return 1;
         }
-        int workers = getIntProperty(MMS_DEFAULT_WORKERS_PER_MODEL, 0);
+        int workers = getConfiguredDefaultWorkersPerModel();
 
         if ((workers == 0) && (prop.getProperty("NUM_WORKERS", null) != null)) {
             workers = getIntProperty("NUM_WORKERS", 0);

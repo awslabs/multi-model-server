@@ -16,6 +16,7 @@ import com.amazonaws.ml.mms.metrics.Dimension;
 import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.Connector;
+import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.codec.ModelRequestEncoder;
 import com.amazonaws.ml.mms.util.codec.ModelResponseDecoder;
 import com.amazonaws.ml.mms.util.messages.BaseModelRequest;
@@ -177,6 +178,9 @@ public class WorkerThread implements Runnable {
             }
         } catch (WorkerInitializationException e) {
             logger.error("Backend worker error", e);
+        } catch (OutOfMemoryError oom) {
+            logger.error("Out of memory error when creating workers", oom);
+            status = HttpResponseStatus.INSUFFICIENT_STORAGE;
         } catch (Throwable t) {
             logger.warn("Backend worker thread exception.", t);
         } finally {
@@ -187,7 +191,7 @@ public class WorkerThread implements Runnable {
             if (req != null) {
                 aggregator.sendError(req, "Worker died.", status);
             }
-            setState(WorkerState.WORKER_STOPPED, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            setState(WorkerState.WORKER_STOPPED, status);
             lifeCycle.exit();
             retry();
         }
@@ -373,6 +377,9 @@ public class WorkerThread implements Runnable {
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
             logger.error("Unknown exception", cause);
+            if (cause instanceof OutOfMemoryError) {
+                NettyUtils.sendError(ctx, HttpResponseStatus.INSUFFICIENT_STORAGE, cause);
+            }
             ctx.close();
         }
     }

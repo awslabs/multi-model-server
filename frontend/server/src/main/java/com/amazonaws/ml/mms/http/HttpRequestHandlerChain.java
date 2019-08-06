@@ -103,6 +103,9 @@ public abstract class HttpRequestHandlerChain {
                     } catch (ModelServerEndpointException me) {
                         NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, me);
                         logger.error("Error thrown by the model endpoint plugin.", me);
+                    } catch (OutOfMemoryError oom) {
+                        NettyUtils.sendError(
+                                ctx, HttpResponseStatus.INSUFFICIENT_STORAGE, oom, "Out of memory");
                     } catch (IOException ioe) {
                         NettyUtils.sendError(
                                 ctx,

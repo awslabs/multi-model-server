@@ -64,6 +64,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         } catch (ServiceUnavailableException e) {
             logger.trace("", e);
             NettyUtils.sendError(ctx, HttpResponseStatus.SERVICE_UNAVAILABLE, e);
+        } catch (OutOfMemoryError e) {
+            logger.trace("", e);
+            NettyUtils.sendError(ctx, HttpResponseStatus.INSUFFICIENT_STORAGE, e);
         } catch (Throwable t) {
             logger.error("", t);
             NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, t);
@@ -74,6 +77,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         logger.error("", cause);
+        if (cause instanceof OutOfMemoryError) {
+            NettyUtils.sendError(ctx, HttpResponseStatus.INSUFFICIENT_STORAGE, cause);
+        }
         ctx.close();
     }
 }

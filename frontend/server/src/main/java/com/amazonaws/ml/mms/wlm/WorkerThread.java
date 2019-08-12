@@ -188,6 +188,12 @@ public class WorkerThread implements Runnable {
             // Runnable once this worker is finished. If currentThread keep holding the reference
             // of the thread, currentThread.interrupt() might kill next worker.
             currentThread.set(null);
+            Integer exitValue = lifeCycle.getExitValue();
+
+            if (exitValue != null && exitValue == 137) {
+                status = HttpResponseStatus.INSUFFICIENT_STORAGE;
+            }
+
             if (req != null) {
                 aggregator.sendError(req, "Worker died.", status);
             }

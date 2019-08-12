@@ -152,6 +152,13 @@ public class WorkerLifeCycle {
         }
     }
 
+    public synchronized Integer getExitValue() {
+        if (process != null && !process.isAlive()) {
+            return process.exitValue();
+        }
+        return null;
+    }
+
     void setSuccess(boolean success) {
         this.success = success;
         latch.countDown();

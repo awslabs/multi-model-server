@@ -147,9 +147,15 @@ public class WorkerLifeCycle {
     public synchronized void exit() {
         if (process != null) {
             process.destroyForcibly();
-            process = null;
             connector.clean();
         }
+    }
+
+    public synchronized Integer getExitValue() {
+        if (process != null && !process.isAlive()) {
+            return process.exitValue();
+        }
+        return null;
     }
 
     void setSuccess(boolean success) {

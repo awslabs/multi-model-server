@@ -71,11 +71,15 @@ def start():
 
             cmd.append("-Djava.io.tmpdir={}".format(tmp_dir))
 
-        if args.mms_config:
-            if not os.path.isfile(args.mms_config):
-                print("--mms-config file not found: {}".format(args.mms_config))
+        mms_config = args.mms_config
+        if mms_config:
+            if mms_config == "sagemaker":
+                mms_config = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                          "configs", "sagemaker_config.properties")
+            if not os.path.isfile(mms_config):
+                print("--mms-config file not found: {}".format(mms_config))
                 exit(1)
-            mms_conf_file = args.mms_config
+            mms_conf_file = mms_config
         else:
             mms_conf_file = "config.properties"
 

@@ -41,6 +41,8 @@ import java.util.HashMap;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.apache.commons.cli.CommandLine;
@@ -96,6 +98,7 @@ public final class ConfigManager {
 
     private Pattern blacklistPattern;
     private Properties prop;
+    private static Pattern pattern = Pattern.compile("^\\$\\$(.+)\\$\\$$");
 
     private static ConfigManager instance;
 
@@ -121,6 +124,8 @@ public final class ConfigManager {
                 throw new IllegalStateException("Unable to read configuration file", e);
             }
         }
+
+        resolveEnvVarVals(prop);
         String logLocation = System.getenv("LOG_LOCATION");
         if (logLocation != null) {
             System.setProperty("LOG_LOCATION", logLocation);
@@ -171,6 +176,21 @@ public final class ConfigManager {
         if (Boolean.parseBoolean(getEnableEnvVarsConfig())) {
             // Environment variables have higher precedence over the config file variables
             setSystemVars();
+        }
+    }
+
+    private void resolveEnvVarVals(Properties prop) {
+        Set<String> keys = prop.stringPropertyNames();
+        for (String key : keys) {
+            String val = prop.getProperty(key);
+            Matcher matcher = pattern.matcher(val);
+            if (matcher.find()) {
+                String envVar = matcher.group(1);
+                if (envVar == null || System.getenv(envVar) == null) {
+                    throw new IllegalArgumentException("Invalid Environment Variable "+ envVar);
+                }
+                prop.setProperty(key, System.getenv(envVar));
+            }
         }
     }
 

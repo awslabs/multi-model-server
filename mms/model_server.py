@@ -72,6 +72,7 @@ def start():
             cmd.append("-Djava.io.tmpdir={}".format(tmp_dir))
 
         mms_config = args.mms_config
+        mms_conf_file = None
         if mms_config:
             if mms_config == "sagemaker":
                 mms_config = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -109,9 +110,9 @@ def start():
         cmd.append("--python")
         cmd.append(sys.executable)
 
-        if args.mms_config:
+        if mms_conf_file is not None:
             cmd.append("-f")
-            cmd.append(args.mms_config)
+            cmd.append(mms_conf_file)
 
         if args.model_store:
             if not os.path.isdir(args.model_store):

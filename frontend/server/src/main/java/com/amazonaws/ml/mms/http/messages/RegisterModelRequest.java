@@ -65,7 +65,8 @@ public class RegisterModelRequest {
     public RegisterModelRequest() {
         batchSize = 1;
         maxBatchDelay = 100;
-        initialWorkers = 0;
+        synchronous = true;
+        initialWorkers = ConfigManager.getInstance().getConfiguredDefaultWorkersPerModel();
         responseTimeout = -1;
     }
 

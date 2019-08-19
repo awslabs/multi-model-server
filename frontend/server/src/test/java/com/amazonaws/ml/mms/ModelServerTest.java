@@ -162,7 +162,7 @@ public class ModelServerTest {
         testListModels(managementChannel);
         testDescribeModel(managementChannel);
         testLoadModelWithInitialWorkers(managementChannel);
-        testLoadModelWithInitialWorkersWithReqBody(managementChannel);
+        testLoadModelWithInitialWorkersWithJSONReqBody(managementChannel);
         testPredictions(channel);
         testPredictionsBinary(channel);
         testPredictionsJson(channel);
@@ -288,7 +288,7 @@ public class ModelServerTest {
         Assert.assertEquals(resp.getStatus(), "Workers scaled");
     }
 
-    private void testLoadModelWithInitialWorkersWithReqBody(Channel channel)
+    private void testLoadModelWithInitialWorkersWithJSONReqBody(Channel channel)
             throws InterruptedException {
         testUnregisterModel(channel);
 

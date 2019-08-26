@@ -184,12 +184,9 @@ public final class ConfigManager {
         for (String key : keys) {
             String val = prop.getProperty(key);
             Matcher matcher = pattern.matcher(val);
-            if (matcher.matches()) {
-                String envVar = matcher.group(1);
-                if (envVar == null || System.getenv(envVar) == null) {
-                    throw new IllegalArgumentException("Invalid Environment Variable " + envVar);
-                }
-                prop.setProperty(key, System.getenv(envVar));
+            if (matcher.find()) {
+                prop.setProperty(
+                        key, val.replaceAll(pattern.toString(), System.getenv(matcher.group(1))));
             }
         }
     }

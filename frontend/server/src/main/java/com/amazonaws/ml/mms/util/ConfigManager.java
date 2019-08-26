@@ -98,7 +98,7 @@ public final class ConfigManager {
 
     private Pattern blacklistPattern;
     private Properties prop;
-    private static Pattern pattern = Pattern.compile("\\$\\$([^$]\\S+[^$])\\$\\$");
+    private static Pattern pattern = Pattern.compile("\\$\\$([^$]+[^$])\\$\\$");
 
     private static ConfigManager instance;
 
@@ -185,8 +185,17 @@ public final class ConfigManager {
             String val = prop.getProperty(key);
             Matcher matcher = pattern.matcher(val);
             if (matcher.find()) {
-                prop.setProperty(
-                        key, val.replaceAll(pattern.toString(), System.getenv(matcher.group(1))));
+                StringBuffer sb = new StringBuffer();
+                do {
+                    String envVar = matcher.group(1);
+                    if (System.getenv(envVar) == null) {
+                        throw new IllegalArgumentException(
+                                "Invalid Environment Variable " + envVar);
+                    }
+                    matcher.appendReplacement(sb, System.getenv(envVar));
+                } while (matcher.find());
+                matcher.appendTail(sb);
+                prop.setProperty(key, sb.toString());
             }
         }
     }

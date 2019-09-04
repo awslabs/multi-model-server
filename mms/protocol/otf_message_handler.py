@@ -113,13 +113,14 @@ def create_predict_response(ret, req_id_map, message, code, context=None):
             msg += buf
         else:
             val = ret[idx]
-            if isinstance(val, str):
+            # NOTE: Process bytes/bytearray case before processing the string case.
+            if isinstance(val, (bytes, bytearray)):
+                msg += struct.pack('!i', len(val))
+                msg += val
+            elif isinstance(val, str):
                 buf = val.encode("utf-8")
                 msg += struct.pack('!i', len(buf))
                 msg += buf
-            elif isinstance(val, (bytes, bytearray)):
-                msg += struct.pack('!i', len(val))
-                msg += val
             else:
                 try:
                     json_value = json.dumps(val, indent=2).encode("utf-8")

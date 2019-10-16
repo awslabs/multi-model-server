@@ -16,7 +16,7 @@ import com.amazonaws.ml.mms.archive.Manifest;
 import com.amazonaws.ml.mms.archive.ModelArchive;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
-import com.amazonaws.ml.mms.http.BadRequestException;
+import com.amazonaws.ml.mms.http.ConflictStatusException;
 import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
@@ -119,7 +119,7 @@ public final class ModelManager {
         Model existingModel = models.putIfAbsent(modelName, model);
         if (existingModel != null) {
             // model already exists
-            throw new BadRequestException("Model " + modelName + " is already registered.");
+            throw new ConflictStatusException("Model " + modelName + " is already registered.");
         }
         logger.info("Model {} loaded.", model.getModelName());
 

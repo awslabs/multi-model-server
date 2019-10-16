@@ -58,6 +58,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         } catch (BadRequestException | ModelException e) {
             logger.trace("", e);
             NettyUtils.sendError(ctx, HttpResponseStatus.BAD_REQUEST, e);
+        } catch (ConflictStatusException e) {
+            logger.trace("", e);
+            NettyUtils.sendError(ctx, HttpResponseStatus.CONFLICT, e);
         } catch (MethodNotAllowedException e) {
             logger.trace("", e);
             NettyUtils.sendError(ctx, HttpResponseStatus.METHOD_NOT_ALLOWED, e);

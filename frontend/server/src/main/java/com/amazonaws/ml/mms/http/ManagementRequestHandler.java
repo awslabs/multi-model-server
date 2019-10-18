@@ -37,6 +37,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
 
@@ -185,8 +187,12 @@ public class ManagementRequestHandler extends HttpRequestHandlerChain {
         int batchSize = registerModelRequest.getBatchSize();
         int maxBatchDelay = registerModelRequest.getMaxBatchDelay();
         int initialWorkers = registerModelRequest.getInitialWorkers();
-        boolean synchronous = registerModelRequest.getSynchronous();
+        boolean synchronous = registerModelRequest.isSynchronous();
         int responseTimeout = registerModelRequest.getResponseTimeout();
+        String preloadModel = registerModelRequest.getPreloadModel();
+        if (preloadModel == null) {
+            preloadModel = ConfigManager.getInstance().getPreloadModel();
+        }
         if (responseTimeout == -1) {
             responseTimeout = ConfigManager.getInstance().getDefaultResponseTimeout();
         }
@@ -212,8 +218,9 @@ public class ManagementRequestHandler extends HttpRequestHandlerChain {
                             batchSize,
                             maxBatchDelay,
                             responseTimeout,
-                            null);
-        } catch (IOException e) {
+                            null,
+                            preloadModel);
+        } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
             throw new InternalServerException("Failed to save model: " + modelUrl, e);
         }
 

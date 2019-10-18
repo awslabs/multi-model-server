@@ -80,8 +80,7 @@ class ModelService(object):
         String
             A message, "health": "healthy!", to show system is healthy.
         """
-        # pylint: disable=unnecessary-pass
-        pass
+        pass  # pylint: disable=unnecessary-pass
 
     def signature(self):
         """

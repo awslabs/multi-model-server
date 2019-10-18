@@ -60,8 +60,7 @@ class ModelLoader(object):
         :param batch_size:
         :return: Model
         """
-        # pylint: disable=unnecessary-pass
-        pass
+        pass # pylint: disable=unnecessary-pass
 
     @staticmethod
     def list_model_services(module, parent_class=None):

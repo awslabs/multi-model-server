@@ -34,8 +34,13 @@ def start():
             try:
                 parent = psutil.Process(pid)
                 for child in parent.children(recursive=True):
-                    child.kill()
-                parent.kill()
+                    child.terminate()
+                for child in parent.children(recursive=True):
+                    if psutil.pid_exists(child.pid):
+                        child.kill()
+                parent.terminate()
+                if psutil.pid_exists(parent.pid):
+                    parent.kill()
                 print("Model server stopped.")
             except (OSError, psutil.Error):
                 print("Model server already stopped.")

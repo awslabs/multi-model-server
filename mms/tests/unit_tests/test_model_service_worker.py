@@ -51,7 +51,7 @@ class TestInit:
     socket_name = "sampleSocketName"
 
     def test_missing_socket_name(self):
-        with pytest.raises(ValueError, match="Incomplete data provided.*"):
+        with pytest.raises(ValueError, match="Invalid socket type provided.*"):
             MXNetModelServiceWorker()
 
     def test_socket_in_use(self, mocker):
@@ -117,6 +117,8 @@ class TestRunServer:
     def test_success(self, model_service_worker):
         model_service_worker.sock.accept.return_value = self.accept_result
         model_service_worker.sock.recv.return_value = b""
+        exception = SystemExit
+        model_service_worker.sock.accept.side_effect = exception
         with pytest.raises(SystemExit):
             model_service_worker.run_server()
         model_service_worker.sock.accept.assert_called_once()
@@ -164,11 +166,14 @@ class TestHandleConnection:
     def test_handle_connection(self, patches, model_service_worker):
         patches.retrieve_msg.side_effect = [(b"L", ""), (b"I", ""), (b"U", "")]
         model_service_worker.load_model = Mock()
+        model_service_worker.service.predict = Mock()
+        model_service_worker._remap_io = Mock()
         service = Mock()
         service.context = None
-        model_service_worker.load_model.return_value = (service, "", 200)
+        model_service_worker.load_model.return_value = ("", 200)
+        model_service_worker.service.predict.return_value = ("OK")
+        model_service_worker._remap_io.return_value = ("")
         cl_socket = Mock()
-
         with pytest.raises(ValueError, match=r"Received unknown command.*"):
             model_service_worker.handle_connection(cl_socket)
 

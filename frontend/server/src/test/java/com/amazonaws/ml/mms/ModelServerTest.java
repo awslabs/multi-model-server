@@ -56,6 +56,7 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.util.CharsetUtil;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,6 +65,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -147,7 +149,6 @@ public class ModelServerTest {
 
         Assert.assertNotNull(channel, "Failed to connect to inference port.");
         Assert.assertNotNull(managementChannel, "Failed to connect to management port.");
-
         testPing(channel);
 
         testRoot(channel, listInferenceApisResult);
@@ -178,6 +179,7 @@ public class ModelServerTest {
         testPredictionsModifyResponseHeader(channel, managementChannel);
         testPredictionsNoManifest(channel, managementChannel);
         testModelRegisterWithDefaultWorkers(managementChannel);
+        testLogging(channel, managementChannel);
         testLoadingMemoryError();
         testPredictionMemoryError();
         testMetricManager();
@@ -1257,6 +1259,43 @@ public class ModelServerTest {
                 }
             }
         }
+    }
+
+    private void testLogging(Channel inferChannel, Channel mgmtChannel)
+            throws NoSuchFieldException, IllegalAccessException, InterruptedException, IOException {
+        setConfiguration("default_workers_per_model", "2");
+        loadTests(mgmtChannel, "logging", "logging");
+        int expected = 2;
+        for (int i = 0; i < expected; i++) {
+            latch = new CountDownLatch(1);
+            DefaultFullHttpRequest req =
+                    new DefaultFullHttpRequest(
+                            HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/logging");
+            req.content().writeCharSequence("data=test", CharsetUtil.UTF_8);
+            HttpUtil.setContentLength(req, req.content().readableBytes());
+            req.headers()
+                    .set(
+                            HttpHeaderNames.CONTENT_TYPE,
+                            HttpHeaderValues.APPLICATION_X_WWW_FORM_URLENCODED);
+            inferChannel.writeAndFlush(req);
+            latch.await();
+            Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        }
+
+        File logfile = new File("build/logs/mms_log.log");
+        Assert.assertTrue(logfile.exists());
+        Scanner logscanner = new Scanner(logfile, "UTF-8");
+        int count = 0;
+        while (logscanner.hasNextLine()) {
+            String line = logscanner.nextLine();
+            if (line.contains("LoggingService inference [PID]:")) {
+                count = count + 1;
+            }
+        }
+        Logger logger = LoggerFactory.getLogger(ModelServerTest.class);
+        logger.info("testLogging, found {}, expected {}.", count, expected);
+        Assert.assertEquals(count, expected);
+        unloadTests(mgmtChannel, "logging");
     }
 
     private Channel connect(boolean management) {

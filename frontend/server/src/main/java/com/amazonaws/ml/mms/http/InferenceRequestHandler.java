@@ -152,13 +152,10 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             FullHttpRequest req,
             QueryStringDecoder decoder,
             String modelName)
-            throws ModelNotFoundException {
+            throws ModelNotFoundException, BadRequestException {
         RequestInput input = parseRequest(ctx, req, decoder);
         if (modelName == null) {
-            modelName = input.getStringParameter("model_name");
-            if (modelName == null) {
-                throw new BadRequestException("Parameter model_name is required.");
-            }
+            throw new BadRequestException("Parameter model_name is required.");
         }
 
         if (HttpMethod.OPTIONS.equals(req.method())) {

@@ -22,9 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,7 @@ public class WorkLoadManager {
     private EventLoopGroup backendGroup;
     private AtomicInteger port;
     private AtomicInteger gpuCounter;
+    private AtomicInteger threadNumber;
 
     private static final Logger logger = LoggerFactory.getLogger(WorkLoadManager.class);
 
@@ -49,6 +52,7 @@ public class WorkLoadManager {
         this.gpuCounter = new AtomicInteger(0);
         threadPool = Executors.newCachedThreadPool();
         workers = new ConcurrentHashMap<>();
+        threadNumber = new AtomicInteger(0);
     }
 
     public List<WorkerThread> getWorkers(String modelName) {
@@ -61,7 +65,13 @@ public class WorkLoadManager {
 
     public Map<Integer, WorkerThread> getWorkers() {
         Map<Integer, WorkerThread> map = new HashMap<>();
-        for (List<WorkerThread> workerThreads : workers.values()) {
+        for (Map.Entry<String, List<WorkerThread>> entry : workers.entrySet()) {
+            // Add server thread
+            String modelName = entry.getKey();
+            List<WorkerThread> workerThreads = entry.getValue();
+            WorkerThread serverThread =
+                    ModelManager.getInstance().getModels().get(modelName).getServerThread();
+            map.put(serverThread.getPid(), serverThread);
             for (WorkerThread worker : workerThreads) {
                 map.put(worker.getPid(), worker);
             }
@@ -116,11 +126,12 @@ public class WorkLoadManager {
             } else {
                 for (int i = currentWorkers - 1; i >= maxWorker; --i) {
                     WorkerThread thread = threads.remove(i);
-                    WorkerLifeCycle lifecycle = thread.getLifeCycle();
                     thread.shutdown();
-
+                }
+                if (maxWorker == 0) {
+                    model.getServerThread().shutdown();
+                    WorkerLifeCycle lifecycle = model.getServerThread().getLifeCycle();
                     Process workerProcess = lifecycle.getProcess();
-
                     if (workerProcess.isAlive()) {
                         boolean workerDestroyed = false;
                         workerProcess.destroyForcibly();
@@ -149,6 +160,29 @@ public class WorkLoadManager {
         }
     }
 
+    public void addServerThread(Model model, CompletableFuture<HttpResponseStatus> future)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        WorkerStateListener listener = new WorkerStateListener(future, 1);
+        BatchAggregator aggregator = new BatchAggregator(model);
+        synchronized (model.getModelName()) {
+            model.setPort(port.getAndIncrement());
+            WorkerThread thread =
+                    new WorkerThread(
+                            configManager,
+                            backendGroup,
+                            model.getPort(),
+                            -1,
+                            model,
+                            aggregator,
+                            listener,
+                            threadNumber.getAndIncrement(),
+                            true);
+            model.setServerThread(thread);
+            threadPool.submit(thread);
+            future.get(1, TimeUnit.MINUTES);
+        }
+    }
+
     private void addThreads(
             List<WorkerThread> threads,
             Model model,
@@ -168,11 +202,14 @@ public class WorkLoadManager {
                     new WorkerThread(
                             configManager,
                             backendGroup,
-                            configManager.isDebug() ? port.get() : port.getAndIncrement(),
+                            model.getPort(),
                             gpuId,
                             model,
                             aggregator,
-                            listener);
+                            listener,
+                            threadNumber.getAndIncrement(),
+                            false);
+
             threads.add(thread);
             threadPool.submit(thread);
         }

@@ -353,6 +353,7 @@ public final class OpenApiUtils {
         operation.addResponse(new Response("210", "Partial Success", status));
         operation.addResponse(new Response("400", "Bad request", error));
         operation.addResponse(new Response("404", "Model not found", error));
+        operation.addResponse(new Response("409", "Model already registered", error));
         operation.addResponse(new Response("500", "Internal Server Error", error));
 
         return operation;

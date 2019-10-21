@@ -200,6 +200,7 @@ public class ModelServerTest {
         testRegisterModelMissingUrl();
         testRegisterModelInvalidRuntime();
         testRegisterModelNotFound();
+        testRegisterModelConflict();
         testRegisterModelMalformedUrl();
         testRegisterModelConnectionFailed();
         testRegisterModelHttpError();
@@ -881,6 +882,32 @@ public class ModelServerTest {
 
         Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
         Assert.assertEquals(resp.getMessage(), "Model not found in model store: InvalidUrl");
+    }
+
+    private void testRegisterModelConflict() throws InterruptedException {
+        Channel channel = connect(true);
+        Assert.assertNotNull(channel);
+
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=noop-v0.1&model_name=noop_v0.1&runtime=python&synchronous=false");
+        channel.writeAndFlush(req);
+        latch.await();
+
+        req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=noop-v0.1&model_name=noop_v0.1&runtime=python&synchronous=false");
+        channel.writeAndFlush(req);
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.CONFLICT.code());
+        Assert.assertEquals(resp.getMessage(), "Model noop_v0.1 is already registered.");
     }
 
     private void testRegisterModelMalformedUrl() throws InterruptedException {

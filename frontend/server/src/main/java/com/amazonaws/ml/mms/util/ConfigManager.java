@@ -65,6 +65,7 @@ public final class ConfigManager {
     private static final String MMS_BLACKLIST_ENV_VARS = "blacklist_env_vars";
     private static final String MMS_DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
     private static final String MMS_DEFAULT_RESPONSE_TIMEOUT = "default_response_timeout";
+    private static final String MMS_UNREGISTER_MODEL_TIMEOUT = "unregister_model_timeout";
     private static final String MMS_NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
     private static final String MMS_NETTY_CLIENT_THREADS = "netty_client_threads";
     private static final String MMS_JOB_QUEUE_SIZE = "job_queue_size";
@@ -523,6 +524,10 @@ public final class ConfigManager {
 
     public int getDefaultResponseTimeout() {
         return Integer.parseInt(prop.getProperty(MMS_DEFAULT_RESPONSE_TIMEOUT, "120"));
+    }
+
+    public int getUnregisterModelTimeout() {
+        return Integer.parseInt(prop.getProperty(MMS_UNREGISTER_MODEL_TIMEOUT, "120"));
     }
 
     private File findMmsHome() {

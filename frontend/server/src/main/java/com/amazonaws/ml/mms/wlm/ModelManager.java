@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
@@ -126,20 +127,34 @@ public final class ModelManager {
         return archive;
     }
 
-    public boolean unregisterModel(String modelName) {
+    public HttpResponseStatus unregisterModel(String modelName) {
         Model model = models.remove(modelName);
         if (model == null) {
             logger.warn("Model not found: " + modelName);
-            return false;
+            return HttpResponseStatus.NOT_FOUND;
         }
-
         model.setMinWorkers(0);
         model.setMaxWorkers(0);
-        wlm.modelChanged(model);
-        model.getModelArchive().clean();
-        startupModels.remove(modelName);
-        logger.info("Model {} unregistered.", modelName);
-        return true;
+        CompletableFuture<HttpResponseStatus> futureStatus = wlm.modelChanged(model);
+        HttpResponseStatus httpResponseStatus = HttpResponseStatus.OK;
+
+        try {
+            httpResponseStatus = futureStatus.get();
+        } catch (InterruptedException | ExecutionException e) {
+            logger.warn("Process was interrupted while cleaning resources.");
+            httpResponseStatus = HttpResponseStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        // Only continue cleaning if resource cleaning succeeded
+        if (httpResponseStatus == HttpResponseStatus.OK) {
+            model.getModelArchive().clean();
+            startupModels.remove(modelName);
+            logger.info("Model {} unregistered.", modelName);
+        } else {
+            models.put(modelName, model);
+        }
+
+        return httpResponseStatus;
     }
 
     public CompletableFuture<HttpResponseStatus> updateModel(

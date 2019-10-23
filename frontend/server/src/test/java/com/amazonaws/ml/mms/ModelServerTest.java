@@ -208,6 +208,7 @@ public class ModelServerTest {
         testScaleModelNotFound();
         testScaleModelFailure();
         testUnregisterModelNotFound();
+        testUnregisterModelTimeout();
         testInvalidModel();
     }
 
@@ -1014,6 +1015,33 @@ public class ModelServerTest {
 
         Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
         Assert.assertEquals(resp.getMessage(), "Model not found: fake");
+    }
+
+    private void testUnregisterModelTimeout()
+            throws InterruptedException, NoSuchFieldException, IllegalAccessException {
+        Channel channel = connect(true);
+        setConfiguration("unregister_model_timeout", "0");
+
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/models/noop_v0.1");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.REQUEST_TIMEOUT.code());
+        Assert.assertEquals(resp.getMessage(), "Timed out while cleaning resources: noop_v0.1");
+
+        channel = connect(true);
+        setConfiguration("unregister_model_timeout", "120");
+
+        req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/models/noop_v0.1");
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
     }
 
     private void testScaleModelFailure() throws InterruptedException {

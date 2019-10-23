@@ -24,7 +24,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WorkLoadManager {
 
@@ -36,6 +39,8 @@ public class WorkLoadManager {
     private EventLoopGroup backendGroup;
     private AtomicInteger port;
     private AtomicInteger gpuCounter;
+
+    private static final Logger logger = LoggerFactory.getLogger(WorkLoadManager.class);
 
     public WorkLoadManager(ConfigManager configManager, EventLoopGroup backendGroup) {
         this.configManager = configManager;
@@ -110,9 +115,33 @@ public class WorkLoadManager {
                 addThreads(threads, model, minWorker - currentWorkers, future);
             } else {
                 for (int i = currentWorkers - 1; i >= maxWorker; --i) {
-                    // TODO: kill unhealthy worker first.
                     WorkerThread thread = threads.remove(i);
+                    WorkerLifeCycle lifecycle = thread.getLifeCycle();
                     thread.shutdown();
+
+                    Process workerProcess = lifecycle.getProcess();
+
+                    if (workerProcess.isAlive()) {
+                        boolean workerDestroyed = false;
+                        workerProcess.destroyForcibly();
+                        try {
+                            workerDestroyed =
+                                    workerProcess.waitFor(
+                                            configManager.getUnregisterModelTimeout(),
+                                            TimeUnit.SECONDS);
+                        } catch (InterruptedException e) {
+                            logger.warn(
+                                    "WorkerThread interrupted during waitFor, possible asynch resource cleanup.");
+                            future.complete(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                            return future;
+                        }
+                        if (!workerDestroyed) {
+                            logger.warn(
+                                    "WorkerThread timed out while cleaning, please resend request.");
+                            future.complete(HttpResponseStatus.REQUEST_TIMEOUT);
+                            return future;
+                        }
+                    }
                 }
                 future.complete(HttpResponseStatus.OK);
             }

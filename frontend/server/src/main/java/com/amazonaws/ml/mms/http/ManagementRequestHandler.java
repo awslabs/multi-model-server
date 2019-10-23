@@ -238,10 +238,15 @@ public class ManagementRequestHandler extends HttpRequestHandlerChain {
     }
 
     private void handleUnregisterModel(ChannelHandlerContext ctx, String modelName)
-            throws ModelNotFoundException {
+            throws ModelNotFoundException, InternalServerException, RequestTimeoutException {
         ModelManager modelManager = ModelManager.getInstance();
-        if (!modelManager.unregisterModel(modelName)) {
+        HttpResponseStatus httpResponseStatus = modelManager.unregisterModel(modelName);
+        if (httpResponseStatus == HttpResponseStatus.NOT_FOUND) {
             throw new ModelNotFoundException("Model not found: " + modelName);
+        } else if (httpResponseStatus == HttpResponseStatus.INTERNAL_SERVER_ERROR) {
+            throw new InternalServerException("Interrupted while cleaning resources: " + modelName);
+        } else if (httpResponseStatus == HttpResponseStatus.REQUEST_TIMEOUT) {
+            throw new RequestTimeoutException("Timed out while cleaning resources: " + modelName);
         }
         String msg = "Model \"" + modelName + "\" unregistered";
         NettyUtils.sendJsonResponse(ctx, new StatusResponse(msg));

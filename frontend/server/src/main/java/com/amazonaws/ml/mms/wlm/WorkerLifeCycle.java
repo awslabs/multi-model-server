@@ -47,6 +47,10 @@ public class WorkerLifeCycle {
         this.model = model;
     }
 
+    public Process getProcess() {
+        return process;
+    }
+
     private String[] getEnvString(String cwd, String modelPath, String handler) {
         ArrayList<String> envList = new ArrayList<>();
         Pattern blackList = configManager.getBlacklistPattern();

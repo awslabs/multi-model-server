@@ -388,6 +388,7 @@ public final class OpenApiUtils {
         operation.addResponse(new Response("200", "Model unregistered", status));
         operation.addResponse(new Response("202", "Accepted", status));
         operation.addResponse(new Response("404", "Model not found", error));
+        operation.addResponse(new Response("408", "Request Timeout Error", error));
         operation.addResponse(new Response("500", "Internal Server Error", error));
 
         return operation;

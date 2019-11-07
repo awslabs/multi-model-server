@@ -47,7 +47,7 @@ public class ExecutionParameters extends ModelServerEndpoint {
         @SerializedName("MaxPayloadInMB")
         private int maxPayloadInMB;
 
-        public SagemakerXgboostResponse() {
+        public ExecutionParametersResponse() {
             maxConcurrentTransforms = 4;
             batchStrategy = "MULTI_RECORD";
             maxPayloadInMB = 6;

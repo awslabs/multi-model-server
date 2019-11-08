@@ -1265,8 +1265,9 @@ public class ModelServerTest {
             throws NoSuchFieldException, IllegalAccessException, InterruptedException, IOException {
         setConfiguration("default_workers_per_model", "2");
         loadTests(mgmtChannel, "logging", "logging");
+        int niter = 5;
         int expected = 2;
-        for (int i = 0; i < expected; i++) {
+        for (int i = 0; i < niter; i++) {
             latch = new CountDownLatch(1);
             DefaultFullHttpRequest req =
                     new DefaultFullHttpRequest(
@@ -1293,8 +1294,8 @@ public class ModelServerTest {
             }
         }
         Logger logger = LoggerFactory.getLogger(ModelServerTest.class);
-        logger.info("testLogging, found {}, expected {}.", count, expected);
-        Assert.assertEquals(count, expected);
+        logger.info("testLogging, found {}, min expected {}.", count, expected);
+        Assert.assertTrue(count >= expected);
         unloadTests(mgmtChannel, "logging");
     }
 

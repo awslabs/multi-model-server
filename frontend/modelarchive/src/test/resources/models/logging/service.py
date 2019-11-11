@@ -27,6 +27,10 @@ class LoggingService(object):
         self._context = None
         self.initialized = False
 
+    def __del__(self):
+        #print("LoggingService exit")
+        logging.info("LoggingService exit")
+
     def initialize(self, context):
         """
         Initialize model. This will be called during model loading time

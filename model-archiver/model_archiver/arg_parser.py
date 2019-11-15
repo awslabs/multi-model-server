@@ -9,7 +9,7 @@
 # permissions and limitations under the License.
 
 """
-This module parses the arguments given through the mxnet-model-server command-line. This is used by model-server
+This module parses the arguments given through the multi-model-server command-line. This is used by model-server
 at runtime.
 """
 
@@ -23,13 +23,13 @@ class ArgParser(object):
 
     """
     Argument parser for model-export-tool commands
-    More detailed example is available at https://github.com/awslabs/mxnet-model-server/blob/master/README.md
+    More detailed example is available at https://github.com/awslabs/multi-model-server/blob/master/README.md
     """
 
     @staticmethod
     def export_model_args_parser():
 
-        """ Argument parser for mxnet-model-export
+        """ Argument parser for multi-model-export
         """
 
         parser_export = argparse.ArgumentParser(prog='model-archiver', description='Model Archiver Tool',
@@ -102,7 +102,7 @@ class ArgParser(object):
                                    help='When this option is used, model-archiver looks for special files and tries\n'
                                         'preprocesses them. For example, if this option is chosen when running\n'
                                         'model-archiver tool on a model with ".onnx" extension, the tool will try and\n'
-                                        'convert ".onnx" model into an MXNet model.')
+                                        'convert ".onnx" model into an Multi model.')
 
 
         return parser_export

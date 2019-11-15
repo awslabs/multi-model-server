@@ -12,7 +12,7 @@ In this example, we show how to create a service which classifies a review into 
 mkdir /tmp/crepe
 
 # Download the model file
-curl -O https://raw.githubusercontent.com/awslabs/mxnet-model-server/master/examples/gluon_character_cnn/gluon_crepe.py
+curl -O https://raw.githubusercontent.com/awslabs/multi-model-server/master/examples/gluon_character_cnn/gluon_crepe.py
 
 # Download the parameters
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/mms-char-cnn-files/crepe_gluon_epoch6.params
@@ -104,7 +104,7 @@ A packaged model can be downloaded from [here.](https://s3.amazonaws.com/model-s
 `crepe.mar` file is created by exporting model files. We also defined custom service under gluon_crepe.py. We are ready to establish the Character-level CNN inference service:
 
 ```bash
-mxnet-model-server --models crepe.mar --model-store /tmp
+multi-model-server --models crepe.mar --model-store /tmp
 ```
 
 The endpoint is on localhost and port 8080. You can change them by passing --host and --port when establishing the service.

@@ -61,12 +61,12 @@ if __name__ == '__main__':
         name='model-archiver',
         version=version,
         description='Model Archiver is used for creating archives of trained neural net models that can be consumed '
-                    'by MXNet-Model-Server inference',
+                    'by Multi-Model-Server inference',
         long_description=pypi_description(),
-        author='MXNet SDK team',
+        author='Trinity',
         author_email='noreply@amazon.com',
-        url='https://github.com/awslabs/mxnet-model-server/model-archiver/',
-        keywords='MXNet Model Archive Archiver MMS Server Serving Deep Learning Inference AI',
+        url='https://github.com/awslabs/multi-model-server/model-archiver/',
+        keywords='Multi Model Archive Archiver MMS Server Serving Deep Learning Inference AI',
         packages=pkgs,
         install_requires=requirements,
         extras_require={

@@ -18,7 +18,7 @@ In this document, we explore using EIA attached to a Compute Optimized EC2 insta
 
 The capability to run model inference with the EIA can be achieved by building a custom service to use the EIA context rather than a GPU or CPU context. An MXNet version with support for EIA is required.
 
-To understand the basics of writing a custom service file refer to the [Custom Service Documentation](https://github.com/awslabs/mxnet-model-server/blob/master/docs/custom_service.md).
+To understand the basics of writing a custom service file refer to the [Custom Service Documentation](https://github.com/awslabs/multi-model-server/blob/master/docs/custom_service.md).
 
 ## Creating a EC2 instance with EIA support 
 
@@ -70,7 +70,7 @@ You use two different processing contexts with MXNet and EIA
 
 
         
-We modify the [base model service template](https://github.com/awslabs/mxnet-model-server/blob/master/examples/model_service_template/mxnet_model_service.py) to support EIA.
+We modify the [base model service template](https://github.com/awslabs/multi-model-server/blob/master/examples/model_service_template/mxnet_model_service.py) to support EIA.
 
 
 ```python
@@ -101,7 +101,7 @@ We modify the [base model service template](https://github.com/awslabs/mxnet-mod
 
 The above code shows initialization of two contexts, one for data (on CPU) and other for symbols (on EIA).
 
-Once we have the code ready. We can build a model archive consumable by MMS, using the model-archiver. The [model-archiver](https://github.com/awslabs/mxnet-model-server/blob/master/model-archiver/README.md) tool enables to build to an archive understood by MMS.
+Once we have the code ready. We can build a model archive consumable by MMS, using the model-archiver. The [model-archiver](https://github.com/awslabs/multi-model-server/blob/master/model-archiver/README.md) tool enables to build to an archive understood by MMS.
 
 ```bash
 model-archiver --model-name <model-name> --handler model_service:handle --export-path <output-dir> --model-path <model_dir> --runtime python
@@ -116,7 +116,7 @@ $ wget https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-152-eia.ma
 ```
 **NOTE:** The above archive will only work on EIA-enabled instances.
 
-Start the EIA-enabled EC2 instance. If using a Deep Learning AMI, there are two Conda environments (one for Python 2 and one for Python 3), both of which come with MXNet built will EI support and MXNet Model Server. Either of the two can be used.
+Start the EIA-enabled EC2 instance. If using a Deep Learning AMI, there are two Conda environments (one for Python 2 and one for Python 3), both of which come with MXNet built will EI support and Multi Model Server. Either of the two can be used.
 ```bash
 # python 3 
 $ source activate amazonei_mxnet_p36
@@ -128,7 +128,7 @@ $ source activate amazonei_mxnet_p27
 After entering one of the Conda environments, we start MMS, with Resnet-152 EIA model:
 ```bash
 # Start MMS
-$ mxnet-model-server --start  --models resnet-152=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-152-eia.mar
+$ multi-model-server --start  --models resnet-152=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-152-eia.mar
 ```
 
 Now the model is ready for some inference requests. Let us download a kitten image for classification:

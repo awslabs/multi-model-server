@@ -39,7 +39,7 @@ Save the file.
 When you run the following command, the `-v` argument and path values of `/tmp/models/:/models` will map the `models` folder you created (assuming it was in ) with a folder inside the Docker container. MMS will then be able to use the local model file.
 
 ```bash
-nvidia-docker run -itd --name mms -p 80:8080  -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server:latest-gpu mxnet-model-server --start --mms-config /models/config.properties --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+nvidia-docker run -itd --name mms -p 80:8080  -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server:latest-gpu multi-model-server --start --mms-config /models/config.properties --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
 **Step 5: Test inference.**
@@ -122,7 +122,7 @@ docker exec mms mxnet-model-server --start --mms-config /home/model-server/confi
 
 Start MMS in the Docker container using nvidia-docker command as follows. :
 ```bash
-nvidia-docker exec mxnet-model-server --start --mms-config /home/model-server/config.properties
+nvidia-docker exec multi-model-server --start --mms-config /home/model-server/config.properties
 ```
 
 **Note**: To use GPU configuration, modify the config.properties to reflect that the model-server should use GPUs.

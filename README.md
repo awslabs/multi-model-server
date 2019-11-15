@@ -24,7 +24,7 @@ Join our [<img src='docs/images/slack.png' width='20px' /> slack channel](https:
 
 ## Other Relevant Documents
 * [Latest Version Docs](docs/README.md)
-* [v0.4.0 Docs](https://github.com/awslabs/mxnet-model-server/blob/v0.4.0/docs/README.md)
+* [v0.4.0 Docs](https://github.com/awslabs/multi-model-server/blob/v0.4.0/docs/README.md)
 * [Migrating from v0.4.0 to v1.0.0](docs/migration.md)
 
 ## Quick Start
@@ -96,11 +96,11 @@ pip install mxnet-cu92mkl
 **Step 3:** Install or Upgrade MMS as follows:
 
 ```bash
-# Install latest released version of mxnet-model-server 
-pip install mxnet-model-server
+# Install latest released version of multi-model-server 
+pip install multi-model-server
 ```
 
-To upgrade from a previous version of `mxnet-model-server`, please refer [migration reference](docs/migration.md) document.
+To upgrade from a previous version of `multi-model-server`, please refer [migration reference](docs/migration.md) document.
 
 **Notes:**
 * A minimal version of `model-archiver` will be installed with MMS as dependency. See [model-archiver](model-archiver/README.md) for more options and details.
@@ -111,14 +111,14 @@ To upgrade from a previous version of `mxnet-model-server`, please refer [migrat
 Once installed, you can get MMS model server up and running very quickly. Try out `--help` to see all the CLI options available.
 
 ```bash
-mxnet-model-server --help
+multi-model-server --help
 ```
 
 For this quick start, we'll skip over most of the features, but be sure to take a look at the [full server docs](docs/server.md) when you're ready.
 
 Here is an easy example for serving an object classification model:
 ```bash
-mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+multi-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 With the command above executed, you have MMS running on your host, listening for inference requests. **Please note, that if you specify model(s) during MMS start - it will automatically scale backend workers to the number equal to available vCPUs (if you run on CPU instance) or to the number of available GPUs (if you run on GPU instance). In case of powerful hosts with a lot of compute resoures (vCPUs or GPUs) this start up and autoscaling process might take considerable time. If you would like to minimize MMS start up time you can try to avoid registering and scaling up model during start up time and move that to a later point by using corresponding [Management API](docs/management_api.md#register-a-model) calls (this allows finer grain control to how much resources are allocated for any particular model).**
@@ -170,9 +170,9 @@ Now you've seen how easy it can be to serve a deep learning model with MMS! [Wou
 ### Stopping the running model server
 To stop the current running model-server instance, run the following command:
 ```bash
-$ mxnet-model-server --stop
+$ multi-model-server --stop
 ```
-You would see output specifying that mxnet-model-server has stopped.
+You would see output specifying that multi-model-server has stopped.
 
 ### Create a Model Archive
 

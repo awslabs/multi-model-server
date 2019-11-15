@@ -1,7 +1,7 @@
 # Model Zoo
 
 This page lists model archives that are pre-trained and pre-packaged, ready to be served for inference with MMS.
-To propose a model for inclusion, please submit a [pull request](https://github.com/awslabs/mxnet-model-server/pulls).
+To propose a model for inclusion, please submit a [pull request](https://github.com/awslabs/multi-model-server/pulls).
 
 *Special thanks to the [Apache MXNet](https://mxnet.incubator.apache.org) community whose Model Zoo and Model Examples were used in generating these model archives.*
 
@@ -57,11 +57,11 @@ curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
 
 * **Reference**: [Krizhevsky, et al.](http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models alexnet=https://s3.amazonaws.com/model-server/model_archive_1.0/alexnet.mar
+multi-model-server --start --models alexnet=https://s3.amazonaws.com/model-server/model_archive_1.0/alexnet.mar
 ```
 
 * **Run Prediction**:
@@ -89,7 +89,7 @@ pip install numpy
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models arcface=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-arcface-resnet100.mar
+multi-model-server --start --models arcface=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-arcface-resnet100.mar
 ```
 
 * **Get two test images**:
@@ -110,11 +110,11 @@ curl -X POST http://127.0.0.1:8080/predictions/arcface -F "img1=@arcface-input1.
 
 * **Reference**: [Krizhevsky, et al.](http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models caffenet=https://s3.amazonaws.com/model-server/model_archive_1.0/caffenet.mar
+multi-model-server --start --models caffenet=https://s3.amazonaws.com/model-server/model_archive_1.0/caffenet.mar
 ```
 
 * **Run Prediction**:
@@ -127,11 +127,11 @@ curl -X POST http://127.0.0.1:8080/predictions/caffenet -T kitten.jpg
 
 * **Reference**: [R. He, J. McAuley et al.](https://arxiv.org/abs/1602.01585), [J. McAuley, C. Targett, J. Shi, A. van den Hengel et al.](https://arxiv.org/abs/1506.04757) 
 
-* **Model Service**: [gluon_crepe.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/gluon_character_cnn/gluon_crepe.py)
+* **Model Service**: [gluon_crepe.py](https://github.com/awslabs/multi-model-server/blob/master/examples/gluon_character_cnn/gluon_crepe.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models crepe=https://s3.amazonaws.com/model-server/model_archive_1.0/crepe.mar
+multi-model-server --start --models crepe=https://s3.amazonaws.com/model-server/model_archive_1.0/crepe.mar
 ```
 
 * **Run Prediction**:
@@ -156,7 +156,7 @@ pip install pillow
 
 * **Start Server**:
 ```bash
-mxnet-model-server --models duc=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-duc.mar
+multi-model-server --models duc=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-duc.mar
 ```
 
 * **Get the test image**:
@@ -185,7 +185,7 @@ python duc-inference.py city1.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models FERPlus=https://s3.amazonaws.com/model-server/model_archive_1.0/FERPlus.mar
+multi-model-server --start --models FERPlus=https://s3.amazonaws.com/model-server/model_archive_1.0/FERPlus.mar
 ```
 
 * **Get a test image**:
@@ -204,11 +204,11 @@ curl -X POST http://127.0.0.1:8080/predictions/FERPlus -T ferplus-input.jpg
 
 * **Reference**: [Szegedy, et al., Google](https://arxiv.org/pdf/1512.00567.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models onnx-inception-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-inception_v1.mar
+multi-model-server --start --models onnx-inception-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-inception_v1.mar
 ```
 
 * **Run Prediction**:
@@ -222,11 +222,11 @@ curl -X POST http://127.0.0.1:8080/predictions/onnx-inception-v1 -T kitten.jpg
 
 * **Reference**: [Szegedy, et al., Google](https://arxiv.org/pdf/1512.00567.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models inception-bn=https://s3.amazonaws.com/model-server/model_archive_1.0/inception-bn.mar
+multi-model-server --start --models inception-bn=https://s3.amazonaws.com/model-server/model_archive_1.0/inception-bn.mar
 ```
 
 * **Run Prediction**:
@@ -240,11 +240,11 @@ Long short-term memory network trained on the PennTreeBank dataset.
 
 * **Reference**: [Hochreiter, et al.](http://www.bioinf.jku.at/publications/older/2604.pdf)
 
-* **Model Service**: [lstm_ptb_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/lstm_ptb/lstm_ptb_service.py)
+* **Model Service**: [lstm_ptb_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/lstm_ptb/lstm_ptb_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models lstm_ptb=https://s3.amazonaws.com/model-server/model_archive_1.0/lstm_ptb.mar
+multi-model-server --start --models lstm_ptb=https://s3.amazonaws.com/model-server/model_archive_1.0/lstm_ptb.mar
 ```
 
 * **Run Prediction**:
@@ -261,7 +261,7 @@ curl -X POST http://127.0.0.1:8080/predictions/lstm_ptb -H "Content-Type: applic
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models mobilenet=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-mobilenet.mar
+multi-model-server --start --models mobilenet=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-mobilenet.mar
 ```
 
 * **Run Prediction**:
@@ -275,11 +275,11 @@ curl -X POST http://127.0.0.1:8080/predictions/mobilenet -T kitten.jpg
 
 * **Reference**: [Lin, et al.](https://arxiv.org/pdf/1312.4400v3.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models nin=https://s3.amazonaws.com/model-server/model_archive_1.0/nin.mar
+multi-model-server --start --models nin=https://s3.amazonaws.com/model-server/model_archive_1.0/nin.mar
 ```
 
 * **Run Prediction**:
@@ -293,11 +293,11 @@ curl -X POST http://127.0.0.1:8080/predictions/nin -T kitten.jpg
 
 * **Reference**: [Lin, et al.](https://arxiv.org/pdf/1312.4400v3.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet-152=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-152.mar
+multi-model-server --start --models resnet-152=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-152.mar
 ```
 
 * **Run Prediction**:
@@ -311,11 +311,11 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet-152 -T kitten.jpg
 
 * **Reference**: [He, et al.](https://arxiv.org/pdf/1512.03385v1.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet-18=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
+multi-model-server --start --models resnet-18=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
 ```
 
 * **Run Prediction**:
@@ -329,11 +329,11 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet-18 -T kitten.jpg
 
 * **Reference**: [Liu, et al.](https://arxiv.org/pdf/1512.02325v4.pdf)
 
-* **Model Service**: [ssd_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/ssd/ssd_service.py)
+* **Model Service**: [ssd_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/ssd/ssd_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models SSD=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet50_ssd.mar
+multi-model-server --start --models SSD=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet50_ssd.mar
 ```
 
 * **Run Prediction**:
@@ -349,11 +349,11 @@ curl -X POST http://127.0.0.1:8080/predictions/SSD -T 1337890426_Img_8133.jpg
 
 * **Reference**: [Xie, et al.](https://arxiv.org/pdf/1611.05431.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnext101=https://s3.amazonaws.com/model-server/model_archive_1.0/resnext-101-64x4d.mar
+multi-model-server --start --models resnext101=https://s3.amazonaws.com/model-server/model_archive_1.0/resnext-101-64x4d.mar
 ```
 
 * **Run Prediction**:
@@ -372,7 +372,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnext101 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet18-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet18v1.mar
+multi-model-server --start --models resnet18-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet18v1.mar
 ```
 
 * **Run Prediction**:
@@ -389,7 +389,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet18-v1 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet34-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet34v1.mar
+multi-model-server --start --models resnet34-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet34v1.mar
 ```
 
 * **Run Prediction**:
@@ -406,7 +406,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet34-v1 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet50-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet50v1.mar
+multi-model-server --start --models resnet50-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet50v1.mar
 ```
 
 * **Run Prediction**:
@@ -423,7 +423,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet50-v1 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet101-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet101v1.mar
+multi-model-server --start --models resnet101-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet101v1.mar
 ```
 
 * **Run Prediction**:
@@ -440,7 +440,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet101-v1 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet152-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet152v1.mar
+multi-model-server --start --models resnet152-v1=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet152v1.mar
 ```
 
 * **Run Prediction**:
@@ -457,7 +457,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet152-v1 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet18-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet18v2.mar
+multi-model-server --start --models resnet18-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet18v2.mar
 ```
 
 * **Run Prediction**:
@@ -474,7 +474,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet18-v2 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet34-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet34v2.mar
+multi-model-server --start --models resnet34-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet34v2.mar
 ```
 
 * **Run Prediction**:
@@ -491,7 +491,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet34-v2 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet50-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet50v2.mar
+multi-model-server --start --models resnet50-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet50v2.mar
 ```
 
 * **Run Prediction**:
@@ -508,7 +508,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet50-v2 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet101-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet101v2.mar
+multi-model-server --start --models resnet101-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet101v2.mar
 ```
 
 * **Run Prediction**:
@@ -525,7 +525,7 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet101-v2 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models resnet152-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet152v2.mar
+multi-model-server --start --models resnet152-v2=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet152v2.mar
 ```
 
 * **Run Prediction**:
@@ -538,11 +538,11 @@ curl -X POST http://127.0.0.1:8080/predictions/resnet152-v2 -T kitten.jpg
 
 * **Reference**: [Zhang, et al.](https://arxiv.org/abs/1707.01083)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models shufflenet=https://s3.amazonaws.com/model-server/model_archive_1.0/shufflenet.mar
+multi-model-server --start --models shufflenet=https://s3.amazonaws.com/model-server/model_archive_1.0/shufflenet.mar
 ```
 
 * **Run Prediction**:
@@ -555,11 +555,11 @@ curl -X POST http://127.0.0.1:8080/predictions/shufflenet -T kitten.jpg
 
 * **Reference**: [Iandola, et al.](https://arxiv.org/pdf/1602.07360v4.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models squeezenet_v1.1=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+multi-model-server --start --models squeezenet_v1.1=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 * **Run Prediction**:
@@ -572,11 +572,11 @@ curl -X POST http://127.0.0.1:8080/predictions/squeezenet_v1.1 -T kitten.jpg
 
 * **Reference**: [Iandola, et al.](https://arxiv.org/pdf/1602.07360v4.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models onnx-squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet.mar
+multi-model-server --start --models onnx-squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet.mar
 ```
 
 * **Run Prediction**:
@@ -590,11 +590,11 @@ curl -X POST http://127.0.0.1:8080/predictions/onnx-squeezenet -T kitten.jpg
 
 * **Reference**: [Simonyan, et al.](https://arxiv.org/pdf/1409.1556v6.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models vgg16=https://s3.amazonaws.com/model-server/model_archive_1.0/vgg16.mar
+multi-model-server --start --models vgg16=https://s3.amazonaws.com/model-server/model_archive_1.0/vgg16.mar
 ```
 
 * **Run Prediction**:
@@ -607,11 +607,11 @@ curl -X POST http://127.0.0.1:8080/predictions/vgg16 -T kitten.jpg
 
 * **Reference**: [Simonyan, et al.](https://arxiv.org/pdf/1409.1556v6.pdf)
 
-* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
+* **Model Service**: [mxnet_vision_service.py](https://github.com/awslabs/multi-model-server/blob/master/examples/mxnet_vision/mxnet_vision_service.py)
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models vgg19=https://s3.amazonaws.com/model-server/model_archive_1.0/vgg19.mar
+multi-model-server --start --models vgg19=https://s3.amazonaws.com/model-server/model_archive_1.0/vgg19.mar
 ```
 
 * **Run Prediction**:
@@ -630,7 +630,7 @@ curl -X POST http://127.0.0.1:8080/predictions/vgg19 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models onnx-vgg16=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg16.mar
+multi-model-server --start --models onnx-vgg16=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg16.mar
 ```
 
 * **Run Prediction**:
@@ -647,7 +647,7 @@ curl -X POST http://127.0.0.1:8080/predictions/onnx-vgg16 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models onnx-vgg16_bn=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg16_bn.mar
+multi-model-server --start --models onnx-vgg16_bn=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg16_bn.mar
 ```
 
 * **Run Prediction**:
@@ -664,7 +664,7 @@ curl -X POST http://127.0.0.1:8080/predictions/onnx-vgg16_bn -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models onnx-vgg19=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg19.mar
+multi-model-server --start --models onnx-vgg19=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg19.mar
 ```
 
 * **Run Prediction**:
@@ -681,7 +681,7 @@ curl -X POST http://127.0.0.1:8080/predictions/onnx-vgg19 -T kitten.jpg
 
 * **Start Server**:
 ```bash
-mxnet-model-server --start --models onnx-vgg19_bn=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg19_bn.mar
+multi-model-server --start --models onnx-vgg19_bn=https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg19_bn.mar
 ```
 
 * **Run Prediction**:

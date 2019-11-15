@@ -5,25 +5,25 @@
 MXNet Model Server (MMS) can be used with any container service. In this guide, you will learn how to run MMS with Docker.
 
 ## Contents of this Document
-* [Quickstart](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#quickstart)
-* [Available pre-built containers](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#available-pre-built-containers)
-* [Configuring MMS with Docker](https://github.com/awslabs/mxnet-model-server/blob/master/docker/README.md#configuring-mms-with-docker)
+* [Quickstart](https://github.com/awslabs/multi-model-server/blob/master/docker/README.md#quickstart)
+* [Available pre-built containers](https://github.com/awslabs/multi-model-server/blob/master/docker/README.md#available-pre-built-containers)
+* [Configuring MMS with Docker](https://github.com/awslabs/multi-model-server/blob/master/docker/README.md#configuring-mms-with-docker)
 
 
 ## Other Relevant Documents
-* [Advanced Settings](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md)
-    * [GPU Inference](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#gpu-inference)
-    * [Reference Commands](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#reference-commands)
-    * [Docker Details](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#docker-details)
-    * [Description of Config File Settings](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#description-of-config-file-settings)
-    * [Configuring SSL](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md#configuring-ssl)
-* [Launch MMS as a managed inference service on AWS Fargate](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md)
-    * [Introduction to published containers](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#familiarize-yourself-with-our-containers)
-    * [Creating a AWS Fargate task to server SqueezeNet V1.1](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#create-a-aws-faragte-task-to-serve-squeezenet-model)
-    * [Creating an Load Balancer](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#create-a-load-balancer)
-    * [Creating an AWS ECS Service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#creating-an-ecs-service-to-launch-our-aws-fargate-task)
-    * [Testing your service](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#test-your-service)
-    * [Build custom MMS containers images to serve your Deep learning models](https://github.com/awslabs/mxnet-model-server/blob/master/docs/mms_on_fargate.md#customize-the-containers-to-server-your-custom-deep-learning-models)
+* [Advanced Settings](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced_settings.md)
+    * [GPU Inference](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced_settings.md#gpu-inference)
+    * [Reference Commands](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced_settings.md#reference-commands)
+    * [Docker Details](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced_settings.md#docker-details)
+    * [Description of Config File Settings](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced_settings.md#description-of-config-file-settings)
+    * [Configuring SSL](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced_settings.md#configuring-ssl)
+* [Launch MMS as a managed inference service on AWS Fargate](https://github.com/awslabs/multi-model-server/blob/master/docs/mms_on_fargate.md)
+    * [Introduction to published containers](https://github.com/awslabs/multi-model-server/blob/master/docs/mms_on_fargate.md#familiarize-yourself-with-our-containers)
+    * [Creating a AWS Fargate task to server SqueezeNet V1.1](https://github.com/awslabs/multi-model-server/blob/master/docs/mms_on_fargate.md#create-a-aws-faragte-task-to-serve-squeezenet-model)
+    * [Creating an Load Balancer](https://github.com/awslabs/multi-model-server/blob/master/docs/mms_on_fargate.md#create-a-load-balancer)
+    * [Creating an AWS ECS Service](https://github.com/awslabs/multi-model-server/blob/master/docs/mms_on_fargate.md#creating-an-ecs-service-to-launch-our-aws-fargate-task)
+    * [Testing your service](https://github.com/awslabs/multi-model-server/blob/master/docs/mms_on_fargate.md#test-your-service)
+    * [Build custom MMS containers images to serve your Deep learning models](https://github.com/awslabs/multi-model-server/blob/master/docs/mms_on_fargate.md#customize-the-containers-to-server-your-custom-deep-learning-models)
 
 ## Quickstart
 Running MXNet Model Server with Docker in two steps:
@@ -33,7 +33,7 @@ Running MXNet Model Server with Docker in two steps:
 This will download the MMS Docker image and run its default configuration, serving a SqueezeNet model.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server multi-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 With the `-p` flag, we're setting it up so you can run the Predict API on your host computer's port `80`. This maps to the Docker image's port `8080`.
@@ -68,20 +68,20 @@ docker rm -f mms
 
 ## Available pre-built containers
 We have following container tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/).
-1. *latest*: This is the latest officially released MMS CPU container. This is based on the latest [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu).
-2. *latest-gpu*: This is the latest officially released MMS GPU container. This is based on the latest [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu).
-3. *(MMS Release Tag)-mxnet-cpu*: Each released version since MMS 1.0.0 has an individual release tagged CPU MXNet container. These containers are based on [Dockerfile.cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.cpu), in that MMS release.
-4. *(MMS Release Tag)-mxnet-cpu*: Each released version since MMS 1.0.0 has an individual release tagged GPU MXNet container. These containers are based on [Dockerfile.gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.gpu), in that MMS release.
-5. *nightly-mxnet-cpu*: This is the official CPU container which is built based on the nightly release of MMS pip package. This is built from [Dockerfile.nightly-cpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-cpu).
-6. *nightly-mxnet-gpu*: This is the official GPU container which is built based on the nightly release of MMS pip package. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/Dockerfile.nightly-gpu).
-7. *base-cpu-py2.7*: This is the official Base Python 2.7 CPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.ubuntu_16_04.py2_7). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container. **WARNING: Python 2.x will be deprecated from Jan 1 2020.**
-8. *base-cpu-py3.6*: This is the official Base Python 3.6 CPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.ubuntu_16_04.py3_6). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container.
-9. *base-gpu-py2.7*: This is the official Base Python 2.7 GPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.nvidia_cu92_ubuntu_16_04.py2_7). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container. **WARNING: Python 2.x will be deprecated from Jan 1 2020.**
-10. *base-gpu-py3.6*: This is the official Base Python 3.6 GPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.nvidia_cu92_ubuntu_16_04.py3_6). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container.
-11. *nightly-base-cpu-py2.7*: This is the official Nightly Base Python 2.7 CPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.ubuntu_16_04.py2_7). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container. **WARNING: Python 2.x will be deprecated from Jan 1 2020.**
-12. *nightly-base-cpu-py3.6*: This is the official Nightly Base Python 3.6 CPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.ubuntu_16_04.py3_6). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container.
-13. *nightly-base-gpu-py2.7*: This is the official Nightly Base Python 2.7 GPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.nvidia_cu92_ubuntu_16_04.py2_7). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container. **WARNING: Python 2.x will be deprecated from Jan 1 2020.**
-14. *nightly-base-gpu-py3.6*: This is the official Nightly Base Python 3.6 GPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.nvidia_cu92_ubuntu_16_04.py3_6). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container.
+1. *latest*: This is the latest officially released MMS CPU container. This is based on the latest [Dockerfile.cpu](https://github.com/awslabs/multi-model-server/blob/master/docker/Dockerfile.cpu).
+2. *latest-gpu*: This is the latest officially released MMS GPU container. This is based on the latest [Dockerfile.gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/Dockerfile.gpu).
+3. *(MMS Release Tag)-mxnet-cpu*: Each released version since MMS 1.0.0 has an individual release tagged CPU MXNet container. These containers are based on [Dockerfile.cpu](https://github.com/awslabs/multi-model-server/blob/master/docker/Dockerfile.cpu), in that MMS release.
+4. *(MMS Release Tag)-mxnet-cpu*: Each released version since MMS 1.0.0 has an individual release tagged GPU MXNet container. These containers are based on [Dockerfile.gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/Dockerfile.gpu), in that MMS release.
+5. *nightly-mxnet-cpu*: This is the official CPU container which is built based on the nightly release of MMS pip package. This is built from [Dockerfile.nightly-cpu](https://github.com/awslabs/multi-model-server/blob/master/docker/Dockerfile.nightly-cpu).
+6. *nightly-mxnet-gpu*: This is the official GPU container which is built based on the nightly release of MMS pip package. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/Dockerfile.nightly-gpu).
+7. *base-cpu-py2.7*: This is the official Base Python 2.7 CPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.ubuntu_16_04.py2_7). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container. **WARNING: Python 2.x will be deprecated from Jan 1 2020.**
+8. *base-cpu-py3.6*: This is the official Base Python 3.6 CPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.ubuntu_16_04.py3_6). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container.
+9. *base-gpu-py2.7*: This is the official Base Python 2.7 GPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.nvidia_cu92_ubuntu_16_04.py2_7). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container. **WARNING: Python 2.x will be deprecated from Jan 1 2020.**
+10. *base-gpu-py3.6*: This is the official Base Python 3.6 GPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.nvidia_cu92_ubuntu_16_04.py3_6). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container.
+11. *nightly-base-cpu-py2.7*: This is the official Nightly Base Python 2.7 CPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.ubuntu_16_04.py2_7). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container. **WARNING: Python 2.x will be deprecated from Jan 1 2020.**
+12. *nightly-base-cpu-py3.6*: This is the official Nightly Base Python 3.6 CPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.ubuntu_16_04.py3_6). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container.
+13. *nightly-base-gpu-py2.7*: This is the official Nightly Base Python 2.7 GPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.nvidia_cu92_ubuntu_16_04.py2_7). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container. **WARNING: Python 2.x will be deprecated from Jan 1 2020.**
+14. *nightly-base-gpu-py3.6*: This is the official Nightly Base Python 3.6 GPU container which contains only MMS and python. This is built from [Dockerfile.nightly-gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced-dockerfiles/Dockerfile.base.nvidia_cu92_ubuntu_16_04.py3_6). Please note, this container doesn't have any DL/ML engine installed by definition, it is meant to be used for cases where you would like to bring your own engine/framework into container.
 
 To pull the a particular container, run the following command
 
@@ -133,7 +133,7 @@ mkdir /tmp/models
 **Step 2: Download the configuration template.**
 
 Download the template `config.properties` and place it in the `models` folder you just created:
-* [config.properties](https://github.com/awslabs/mxnet-model-server/blob/master/docker/config.properties)
+* [config.properties](https://github.com/awslabs/multi-model-server/blob/master/docker/config.properties)
 
 **Step 3: Modify the configuration template.**
 
@@ -175,7 +175,7 @@ When you run the following command, the `-v` argument and path values of `/tmp/m
 MMS will then be able to use the local model file.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
+docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server multi-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
 ```
 
 **NOTE**: If you modify the inference_address or the management_address in the configuration file,
@@ -211,4 +211,4 @@ Now you are ready to try some other more **advanced settings** such as:
 * GPU inference
 * MMS settings
 
-Next Step: [Advanced Settings](https://github.com/awslabs/mxnet-model-server/blob/master/docker/advanced_settings.md)
+Next Step: [Advanced Settings](https://github.com/awslabs/multi-model-server/blob/master/docker/advanced_settings.md)

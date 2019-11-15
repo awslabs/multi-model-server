@@ -25,7 +25,7 @@ Start the server:
 docker run -itd --name mms -p 8080:8080 -p 8081:8081 -v /tmp/models:/opt/ml/model jwoo11/sockeye-serving serve
 ```
 
-Now we can load the model using the management API provided by `mxnet-model-server`:
+Now we can load the model using the management API provided by `multi-model-server`:
 ```bash
 curl -X POST "http://localhost:8081/models?synchronous=true&initial_workers=1&url=zh"
 ```
@@ -68,4 +68,4 @@ The translation quality depends on the model. Apparently, this one needs more tr
 ```
 
 For more information on MAR files and the built-in REST APIs, see:
-* https://github.com/awslabs/mxnet-model-server/tree/master/docs
+* https://github.com/awslabs/multi-model-server/tree/master/docs

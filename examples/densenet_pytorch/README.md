@@ -49,4 +49,4 @@ Get the status of the model with the following:
 ```
 
 For more information on MAR files and the built-in REST APIs, see:
-* https://github.com/awslabs/mxnet-model-server/tree/master/docs
+* https://github.com/awslabs/multi-model-server/tree/master/docs

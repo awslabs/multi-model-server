@@ -25,7 +25,7 @@ phases:
       - cd model-archiver/ && python -m pytest model_archiver/tests/unit_tests && cd ../
       - cd model-archiver/ && python -m pytest model_archiver/tests/integ_tests && cd ../
       - cd serving-sdk/ && mvn clean deploy && cd ../
-      # integration test is broken: https://github.com/awslabs/mxnet-model-server/issues/437
+      # integration test is broken: https://github.com/awslabs/multi-model-server/issues/437
       #- python -m pytest mms/tests/integration_tests
       - pylint -rn --rcfile=./mms/tests/pylintrc mms/.
       - cd model-archiver/ && pylint -rn --rcfile=./model_archiver/tests/pylintrc model_archiver/. && cd ../

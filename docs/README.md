@@ -4,7 +4,7 @@
 * [Serving Quick Start](../README.md#serve-a-model) - Basic server usage tutorial
 * [Model Archive Quick Start](../model-archiver#creating-a-model-archive) - Tutorial that shows you how to package a model archive file.
 * [Installation](install.md) - Installation procedures and troubleshooting
-* [Serving Models](server.md) - Explains how to use `mxnet-model-server`.
+* [Serving Models](server.md) - Explains how to use `multi-model-server`.
   * [REST API](rest_api.md) - Specification on the API endpoint for MMS
   * [Model Zoo](model_zoo.md) - A collection of MMS model archive (.mar) files that you can use with MMS.
 * [Packaging Model Archive](../model-archiver/README.md) - Explains how to package model archive file, use `model-archiver`.

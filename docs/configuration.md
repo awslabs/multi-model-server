@@ -30,8 +30,8 @@ See [Running the Model Server](server.md) for detail.
 
 MMS use a `config.properties` file to store configurations. MMS use following order to locate this `config.properties` file:
 1. if `MMS_CONFIG_FILE` environment variable is set, MMS will load the configuration from the environment variable.
-2. if `--mms-config` parameter is passed to `mxnet-model-server`, MMS will load the configuration from the parameter.
-3. if there is a `config.properties` in current folder where user start the `mxnet-model-server`, MMS will load the `config.properties` file form current working directory.
+2. if `--mms-config` parameter is passed to `multi-model-server`, MMS will load the configuration from the parameter.
+3. if there is a `config.properties` in current folder where user start the `multi-model-server`, MMS will load the `config.properties` file form current working directory.
 4. If none of above is specified, MMS will load built-in configuration with default values.
 
 **Note:** Docker image that MMS provided has slightly different default value.
@@ -176,5 +176,5 @@ the backend workers convert "Bytearray to utf-8 string" when the Content-Type of
 
 ### config.properties Example
 
-See [config.properties for docker](https://github.com/awslabs/mxnet-model-server/blob/master/docker/config.properties)
+See [config.properties for docker](https://github.com/awslabs/multi-model-server/blob/master/docker/config.properties)
 

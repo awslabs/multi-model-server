@@ -144,7 +144,7 @@ The downloaded model artifact files are:
 
 **2. Download the model archiver source**
 ```bash
-git clone https://github.com/awslabs/mxnet-model-server.git
+git clone https://github.com/awslabs/multi-model-server.git
 ```
 
 **3. Prepare your model custom service code**
@@ -155,7 +155,7 @@ This template is one of several provided with MMS.
 Download the template and place it in your `squeezenet` folder.
 
 ```bash
-cp -r mxnet-model-server/examples/model_service_template/* squeezenet/
+cp -r multi-model-server/examples/model_service_template/* squeezenet/
 ```
 
 **4. Package your model**

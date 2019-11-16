@@ -105,8 +105,8 @@ class MXNetModelServiceWorker(object):
                 io_fd = load_model_request.get("ioFileDescriptor").decode("utf-8")
                 self._create_io_files(self.tmp_dir, io_fd)
             if self.service is None or self.preload is False:
-                model_loader = ModelLoaderFactory.get_model_loader(model_dir)
-                self.service = model_loader.load(model_name, model_dir, handler, gpu, batch_size)
+                self.model_loader = ModelLoaderFactory.get_model_loader(model_dir)
+                self.service = self.model_loader.load(model_name, model_dir, handler, gpu, batch_size)
                 logging.info("Model %s loaded io_fd=%s", model_name, str(io_fd))
             return "loaded model {}. [PID]:{}".format(model_name, os.getpid()), 200
 
@@ -173,9 +173,11 @@ class MXNetModelServiceWorker(object):
             signal.signal(signal.SIGTERM, lambda signum, frame: self.sigterm_handler())
             self.handle_connection(cl_socket)
         except Exception:  # pylint: disable=broad-except
-            logging.error("Backend worker process die.", exc_info=True)
+            logging.error("Backend worker process died.", exc_info=True)
         finally:
             try:
+                self.model_loader.unload()
+                sys.stdout.flush()
                 os.remove(self.out)
                 os.remove(self.err)
             finally:
@@ -240,7 +242,7 @@ if __name__ == "__main__":
     except socket.timeout:
         logging.error("Backend worker did not receive connection in: %d", SOCKET_ACCEPT_TIMEOUT)
     except Exception:  # pylint: disable=broad-except
-        logging.error("Backend worker process die.", exc_info=True)
+        logging.error("Backend worker process died", exc_info=True)
     finally:
         if sock_type == 'unix' and os.path.exists(socket_name):
             os.remove(socket_name)

@@ -113,20 +113,20 @@ class MmsModelLoader(ModelLoader):
         if module_name.endswith(".py"):
             module_name = module_name[:-3]
         module_name = module_name.split("/")[-1]
-        module = importlib.import_module(module_name)
-        if module is None:
+        self.module = importlib.import_module(module_name)
+        if self.module is None:
             raise ValueError("Unable to load module {}, make sure it is added to python path".format(module_name))
         if function_name is None:
             function_name = "handle"
-        if hasattr(module, function_name):
-            entry_point = getattr(module, function_name)
+        if hasattr(self.module, function_name):
+            entry_point = getattr(self.module, function_name)
             service = Service(model_name, model_dir, manifest, entry_point, gpu_id, batch_size)
 
             service.context.metrics = metrics
             # initialize model at load time
             entry_point(None, service.context)
         else:
-            model_class_definitions = ModelLoader.list_model_services(module)
+            model_class_definitions = ModelLoader.list_model_services(self.module)
             if len(model_class_definitions) != 1:
                 raise ValueError("Expected only one class in custom service code or a function entry point {}".format(
                     model_class_definitions))
@@ -154,6 +154,11 @@ class MmsModelLoader(ModelLoader):
 
         return service
 
+    def unload(self):
+        module_vars = [ var for var in vars(self.module) if not var.startswith('__')]
+        for var in module_vars:
+            delattr(self.module, var)
+        del self.module
 
 class LegacyModelLoader(ModelLoader):
     """

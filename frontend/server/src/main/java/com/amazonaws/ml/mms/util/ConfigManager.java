@@ -86,6 +86,7 @@ public final class ConfigManager {
     private static final String MMS_PRELOAD_MODEL = "preload_model";
     private static final String MODEL_SERVER_HOME = "model_server_home";
     private static final String MMS_MODEL_STORE = "model_store";
+    private static final String MMS_PREFER_DIRECT_BUFFER = "prefer_direct_buffer";
 
     // Configuration which are not documented or enabled through environment variables
     private static final String USE_NATIVE_IO = "use_native_io";
@@ -252,6 +253,10 @@ public final class ConfigManager {
 
     public String getPreloadModel() {
         return getProperty(MMS_PRELOAD_MODEL, "false");
+    }
+
+    public boolean getPreferDirectBuffer() {
+        return Boolean.parseBoolean(getProperty(MMS_PREFER_DIRECT_BUFFER, "false"));
     }
 
     public int getNettyThreads() {
@@ -498,7 +503,9 @@ public final class ConfigManager {
                 + "\nMaximum Request Size: "
                 + prop.getProperty(MMS_MAX_REQUEST_SIZE, "6553500")
                 + "\nPreload model: "
-                + prop.getProperty(MMS_PRELOAD_MODEL, "false");
+                + prop.getProperty(MMS_PRELOAD_MODEL, "false")
+                + "\nPrefer direct buffer: "
+                + prop.getProperty(MMS_PREFER_DIRECT_BUFFER, "false");
     }
 
     public boolean useNativeIo() {

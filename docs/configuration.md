@@ -147,6 +147,13 @@ instance of the loaded model. This way only the memory locations in the loaded m
 preload_model=true
 ```
 
+### Prefer direct buffer
+Configuration parameter prefer_direct_buffer controls if the model server will be using direct memory specified by -XX:MaxDirectMemorySize. This parameter is for model server only and  doesn't affect other packages' usage of direct memory buffer. Default: false
+
+```properties
+prefer_direct_buffer=true
+```
+
 ### Restrict backend worker to access environment variable
 
 Environment variable may contains sensitive information like AWS credentials. Backend worker will execute arbitrary model's custom code, which may expose security risk. MMS provides a `blacklist_env_vars` property which allows user to restrict which environment variable can be accessed by backend worker.

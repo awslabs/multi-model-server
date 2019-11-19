@@ -45,8 +45,9 @@ class LoggingService(object):
         :param model_input: transformed model input data
         :return: inference results
         """
+        time.sleep(0.01)
         logging.info("LoggingService inference [PID]: %d", os.getpid())
-        return ["{} OK".format(os.getpid())] * len(model_input)
+        return ["{} OK\n".format(os.getpid())] * len(model_input)
 
     def handle(self, data, context):
         """

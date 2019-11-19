@@ -26,6 +26,7 @@ class LoggingService(object):
         logging.info("LoggingService init")
         self._context = None
         self.initialized = False
+        self.counter = 0
 
     def initialize(self, context):
         """
@@ -37,6 +38,8 @@ class LoggingService(object):
         self.initialized = True
         self._context = context
 
+    counter = 0
+
     @staticmethod
     def inference(model_input):
         """
@@ -45,8 +48,10 @@ class LoggingService(object):
         :param model_input: transformed model input data
         :return: inference results
         """
-        logging.info("LoggingService inference [PID]: %d", os.getpid())
-        return ["{} OK".format(os.getpid())] * len(model_input)
+        time.sleep(0.01)
+        LoggingService.counter += 1
+        logging.info("LoggingService inference [PID]: %d seq=%d ", os.getpid(), LoggingService.counter)
+        return ["pid={} OK seq={}\n".format(os.getpid(), LoggingService.counter)]
 
     def handle(self, data, context):
         """

@@ -1,7 +1,7 @@
 Project Description
 ===================
 
-Apache MXNet Model Server (MMS) is a flexible and easy to use tool for
+Multi Model Server (MMS) is a flexible and easy to use tool for
 serving deep learning models exported from `MXNet <http://mxnet.io/>`__
 or the Open Neural Network Exchange (`ONNX <http://onnx.ai/>`__).
 

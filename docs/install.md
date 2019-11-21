@@ -3,7 +3,7 @@
 
 ## Prerequisites
 
-* **Python**: Required. Model Server for Apache MXNet (MMS) works with Python 2 or 3.  When installing MMS, we recommend that you use a Python and Conda environment to avoid conflicts with your other Apache MXNet or Open Neural Network Exchange (ONNX) installations.
+* **Python**: Required. Multi Model Server (MMS) works with Python 2 or 3.  When installing MMS, we recommend that you use a Python and Conda environment to avoid conflicts with your other Apache MXNet or Open Neural Network Exchange (ONNX) installations.
 
 * **java 8**: Required. MMS use java to serve HTTP requests. You must install java 8 (or later) and make sure java is on available in $PATH environment variable *before* installing MMS. If you have multiple java installed, you can use $JAVA_HOME environment vairable to control which java to use.
 

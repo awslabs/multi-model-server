@@ -1,5 +1,5 @@
-# Loading and serving Gluon models on MXNet Model Server (MMS)
-MXNet Model Server (MMS) supports loading and serving MXNet Imperative and Hybrid Gluon models.
+# Loading and serving Gluon models on Multi model server (MMS)
+Multi model server (MMS) supports loading and serving MXNet Imperative and Hybrid Gluon models.
 This is a short tutorial on how to write a custom Gluon model, and then serve it with MMS.
 
 This tutorial covers the following:

@@ -438,7 +438,7 @@ def modify_config_props_for_mms(pargs):
 
 if __name__ == '__main__':
     benchmark_name_options = [f for f in dir(Benchmarks) if callable(getattr(Benchmarks, f)) and f[0] != '_']
-    parser = argparse.ArgumentParser(prog='multi-model-server-benchmarks', description='Benchmark Multi model server')
+    parser = argparse.ArgumentParser(prog='multi-model-server-benchmarks', description='Benchmark Multi Model Server')
 
     target = parser.add_mutually_exclusive_group(required=True)
     target.add_argument('name', nargs='?', type=str, choices=benchmark_name_options, help='The name of the benchmark to run')

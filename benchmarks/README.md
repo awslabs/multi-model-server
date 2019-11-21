@@ -1,4 +1,4 @@
-# Multi model server Benchmarking
+# Multi Model Server Benchmarking
 
 The benchmarks measure the performance of MMS on various models and benchmarks.  It supports either a number of built-in models or a custom model passed in as a path or URL to the .model file.  It also runs various benchmarks using these models (see benchmarks section below).  The benchmarks are run through a python3 script on the user machine through jmeter.  MMS is run on the same machine in a docker instance to avoid network latencies.  The benchmark must be run from within the context of the full MMS repo because it executes the local code as the version of MMS (and it is recompiled between runs) for ease of development.
 

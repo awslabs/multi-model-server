@@ -20,7 +20,7 @@ RUN apt-get update && \
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 RUN update-alternatives --install /usr/local/bin/pip pip /usr/local/bin/pip3 1
 
-RUN pip install --no-cache-dir --pre mxnet-model-server \
+RUN pip install --no-cache-dir --pre multi-model-server \
     && pip install --no-cache-dir mxnet-mkl
 
 RUN useradd -m model-server \

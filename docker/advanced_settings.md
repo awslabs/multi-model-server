@@ -39,7 +39,7 @@ Save the file.
 When you run the following command, the `-v` argument and path values of `/tmp/models/:/models` will map the `models` folder you created (assuming it was in ) with a folder inside the Docker container. MMS will then be able to use the local model file.
 
 ```bash
-nvidia-docker run -itd --name mms -p 80:8080  -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server:latest-gpu multi-model-server --start --mms-config /models/config.properties --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
+nvidia-docker run -itd --name mms -p 80:8080  -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/multi-model-server:latest-gpu multi-model-server --start --mms-config /models/config.properties --models squeezenet=https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model
 ```
 
 **Step 5: Test inference.**
@@ -67,12 +67,12 @@ Given that this is a different model, the same image yields a different inferenc
 
 Manually pull the MMS Docker CPU image:
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server
+docker pull awsdeeplearningteam/multi-model-server
 ```
 
 Manually pull the MMS Docker GPU image:
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server:latest-gpu
+docker pull awsdeeplearningteam/multi-model-server:latest-gpu
 ```
 
 List your Docker images:
@@ -92,12 +92,12 @@ docker rm -f mms
 
 Delete the MMS Docker GPU image:
 ```bash
-docker rmi awsdeeplearningteam/mxnet-model-server:latest-gpu
+docker rmi awsdeeplearningteam/multi-model-server:latest-gpu
 ```
 
 Delete the MMS Docker GPU image:
 ```bash
-docker rmi awsdeeplearningteam/mxnet-model-server:latest
+docker rmi awsdeeplearningteam/multi-model-server:latest
 ```
 
 Output the recent logs to console.
@@ -112,12 +112,12 @@ docker attach mms
 
 Run the MMS Docker image without starting the Model Server:
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server /bin/bash
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/multi-model-server /bin/bash
 ```
 
 Start MMS in the Docker container (CPU config):
 ```bash
-docker exec mms mxnet-model-server --start --mms-config /home/model-server/config.properties
+docker exec mms multi-model-server --start --mms-config /home/model-server/config.properties
 ```
 
 Start MMS in the Docker container using nvidia-docker command as follows. :
@@ -137,12 +137,12 @@ number_of_gpu=8
 
 Stop MMS.
 ```bash
-docker exec mms mxnet-model-server --stop
+docker exec mms multi-model-server --stop
 ```
 
 Get MMS help.
 ```bash
-docker exec mms mxnet-model-server --help
+docker exec mms multi-model-server --help
 ```
 
 Refer [Docker CLI](https://docs.docker.com/engine/reference/commandline/run/) to understand each parameter.
@@ -153,8 +153,8 @@ Refer [Docker CLI](https://docs.docker.com/engine/reference/commandline/run/) to
 ### Docker Hub
 
 Docker images are available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam):
-* [CPU](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/tags)
-* [GPU](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/tags)
+* [CPU](https://hub.docker.com/r/awsdeeplearningteam/multi-model-server/tags)
+* [GPU](https://hub.docker.com/r/awsdeeplearningteam/multi-model-server/tags)
 ### Building a MMS Docker Image from Scratch
 The following are the steps to build a container image from scratch.
 
@@ -185,7 +185,7 @@ When you've competed the installation, verify that Docker is running by running 
 If you haven't already, clone the MMS repo and go into the `docker` folder.
 
 ```bash
-git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server/docker
+git clone https://github.com/awslabs/multi-model-server.git && cd multi-model-server/docker
 ```
 
 ### Building the Container Image
@@ -235,7 +235,7 @@ Considering that you modified and copied `config.properties` file into the model
 above `nvidia-docker` command, you would have this configuration file ready to use in the Docker instance.
 
 ```bash
-nvidia-docker exec mms mxnet-model-server --start --mms-config /models/config.properties
+nvidia-docker exec mms multi-model-server --start --mms-config /models/config.properties
 ```
 
 ### Testing the MMS Docker

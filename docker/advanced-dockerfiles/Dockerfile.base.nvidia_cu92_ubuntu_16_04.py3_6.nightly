@@ -94,7 +94,7 @@ RUN set -ex; \
 		\) -exec rm -rf '{}' +; \
 	rm -f get-pip.py
 
-RUN pip install --no-cache-dir mxnet-model-server --pre
+RUN pip install --no-cache-dir multi-model-server --pre
 
 RUN mkdir -p /home/model-server/tmp
 

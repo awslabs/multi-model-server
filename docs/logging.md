@@ -1,6 +1,6 @@
 # Logging on Multi Model Server
 
-In this document we will go through logging mechanism in Multi Model Server. We will also go over how to modify the behavior of logging in model-server. Logging in MXNet Model Server also covers
+In this document we will go through logging mechanism in Multi Model Server. We will also go over how to modify the behavior of logging in model-server. Logging in Multi Model Server also covers
 metrics, as metrics are logged into a file. To further understand how to customize metrics or define custom logging layouts, refer to the [metrics document](metrics.md)
 
 # Pre-requisites

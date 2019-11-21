@@ -1,4 +1,4 @@
-Model Server for Apache MXNet
+Multi Model Server
 =======
 
 TESTING CI again
@@ -7,7 +7,7 @@ TESTING CI again
 |---------|---------|
 | ![Python3 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoicGZ6dXFmMU54UGxDaGsxUDhXclJLcFpHTnFMNld6cW5POVpNclc4Vm9BUWJNamZKMGdzbk1lOU92Z0VWQVZJTThsRUttOW8rUzgxZ2F0Ull1U1VkSHo0PSIsIml2UGFyYW1ldGVyU3BlYyI6IkJJaFc1QTEwRGhwUXY1dDgiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) | ![Python2 Build Status](https://codebuild.us-east-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiYVdIajEwVW9uZ3cvWkZqaHlaRGNUU2M0clE2aUVjelJranJoYTI3S1lHT3R5THJXdklzejU2UVM5NWlUTWdwaVVJalRwYi9GTnJ1aUxiRXIvTGhuQ2g0PSIsIml2UGFyYW1ldGVyU3BlYyI6IjArcHVCaFgvR1pTN1JoSG4iLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) |
 
-Model Server for Apache MXNet (MMS) is a flexible and easy to use tool for serving deep learning models trained using any ML/DL framework.
+Multi Model Server (MMS) is a flexible and easy to use tool for serving deep learning models trained using any ML/DL framework.
 
 
 Use the MMS Server CLI, or the pre-configured Docker images, to start a service that sets up HTTP endpoints to handle model inference requests.
@@ -33,9 +33,9 @@ Join our [<img src='docs/images/slack.png' width='20px' /> slack channel](https:
 ### Prerequisites
 Before proceeding further with this document, make sure you have the following prerequisites.
 1. Ubuntu, CentOS, or macOS. Windows support is experimental. The following instructions will focus on Linux and macOS only.
-1. Python     - MXNet model server requires python to run the workers.
+1. Python     - Multi Model Server requires python to run the workers.
 1. pip        - Pip is a python package management system.
-1. Java 8     - MXNet Model Server requires Java 8 to start. You have the following options for installing Java 8:
+1. Java 8     - Multi Model Server requires Java 8 to start. You have the following options for installing Java 8:
 
     For Ubuntu:
     ```bash
@@ -54,13 +54,13 @@ Before proceeding further with this document, make sure you have the following p
     brew cask install java8
     ```
 
-### Installing MXNet Model Server with pip
+### Installing Multi Model Server with pip
 
 #### Setup
 
 **Step 1:** Setup a Virtual Environment
 
-We recommend installing and running MXNet Model Server in a virtual environment. It's a good practice to run and install all of the Python dependencies in virtual environments. This will provide isolation of the dependencies and ease dependency management.
+We recommend installing and running Multi Model Server in a virtual environment. It's a good practice to run and install all of the Python dependencies in virtual environments. This will provide isolation of the dependencies and ease dependency management.
 
 One option is to use Virtualenv. This is used to create virtual Python environments. You may install and activate a virtualenv for Python 2.7 as follows:
 
@@ -84,14 +84,14 @@ MMS won't install the MXNet engine by default. If it isn't already installed in 
 For CPU inference, `mxnet-mkl` is recommended. Install it as follows:
 
 ```bash
-# Recommended for running MXNet Model Server on CPU hosts
+# Recommended for running Multi Model Server on CPU hosts
 pip install mxnet-mkl
 ```
 
 For GPU inference, `mxnet-cu92mkl` is recommended. Install it as follows:
 
 ```bash
-# Recommended for running MXNet Model Server on GPU hosts
+# Recommended for running Multi Model Server on GPU hosts
 pip install mxnet-cu92mkl
 ```
 

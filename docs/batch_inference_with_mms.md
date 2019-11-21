@@ -316,7 +316,7 @@ that resnet-152 is already registered and scaled-up on MMS. We had done this reg
 
 ## Performance benchmarking
 We benchmarked MMS with batch-inference enabled Resnet-152 on a *P3.8xlarge* instance, which is a AWS provided GPU EC2 instance. 
-We ran MMS in our [GPU container](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/tags) which hosted the above resnet-152 model. 
+We ran MMS in our [GPU container](https://hub.docker.com/r/awsdeeplearningteam/multi-model-server/tags) which hosted the above resnet-152 model. 
 We ran the tests for batch sizes 1, 8 and 16 and captured the results. 
 We saw a significant gain in throughput and also saw that the GPU resources were utilized more optimally. Attached is the graph showing the throughput gains. The 
 experiment was done with the following configuration. To understand the details of this configuration please refer the [Configuration document](configuration.md)

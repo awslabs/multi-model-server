@@ -39,13 +39,13 @@ Let the show begin...
 With the current release of [MMS, 1.0](https://github.com/awslabs/multi-model-server/releases/tag/v1.0.0), 
 Official pre-configured, optimized container images of MMS are provided on [Docker hub](https://hub.docker.com).
 
-* [awsdeeplearningteam/mxnet-model-server](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server)
+* [awsdeeplearningteam/multi-model-server](https://hub.docker.com/r/awsdeeplearningteam/multi-model-server)
 
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server
+docker pull awsdeeplearningteam/multi-model-server
 
 # for gpu image use following command:
-docker pull awsdeeplearningteam/mxnet-model-server:latest-gpu
+docker pull awsdeeplearningteam/multi-model-server:latest-gpu
 ```
 In our article we are going to use the official CPU container image.
 

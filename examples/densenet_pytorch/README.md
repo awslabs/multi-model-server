@@ -17,7 +17,7 @@ Run the container that you have built in previous step.
 
 Start the server from inside the container:
 ```bash
-  mxnet-model-server --models densenet161_pytorch=https://s3.amazonaws.com/model-server/model_archive_1.0/examples/PyTorch+models/densenet/densenet161_pytorch.mar
+  multi-model-server --models densenet161_pytorch=https://s3.amazonaws.com/model-server/model_archive_1.0/examples/PyTorch+models/densenet/densenet161_pytorch.mar
 ```
 
 Now we can download a sample flower's image

@@ -202,7 +202,7 @@ There are separate `Dockerfile` configuration files for CPU and GPU. They are na
 
 The container image consists of MXNet, Java, MMS and all related python libraries.
 
-We can build the MXNet Model Server image based on the Dockerfile as follows:  
+We can build the Multi Model Server image based on the Dockerfile as follows:  
 
 ```bash
 # Building the MMS CPU image
@@ -248,7 +248,7 @@ of localhost. Here are some handy test links for common configurations:
 * [http://localhost/api-description](http://localhost/api-description)
 * [http://localhost/ping](http://localhost/ping)
 
-If `config.properties` file is used as is, the following commands can be run to verify that the MXNet Model Server is running.
+If `config.properties` file is used as is, the following commands can be run to verify that the Multi Model Server is running.
 
 ```bash
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg

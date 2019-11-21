@@ -1,6 +1,6 @@
 # Single Shot Multi Object Detection Inference Service
 
-In this example, we show how to use a pre-trained Single Shot Multi Object Detection (SSD) MXNet model for performing real time inference using MMS
+In this example, we show how to use a pre-trained Single Shot Multi Object Detection (SSD) Multi model for performing real time inference using MMS
 
 The pre-trained model is trained on the [Pascal VOC 2012 dataset](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html) The network is a SSD model built on Resnet50 as base network to extract image features. The model is trained to detect the following entities (classes): ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']. For more details about the model, you can refer [here](https://github.com/apache/incubator-mxnet/tree/master/example/ssd).
 

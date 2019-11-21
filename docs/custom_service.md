@@ -8,7 +8,7 @@
 
 ## Introduction
 
-A custom service , is the code that is packaged into model archive, that is executed by Model Server for Apache MXNet (MMS). 
+A custom service , is the code that is packaged into model archive, that is executed by Multi Model Server (MMS). 
 The custom service is responsible for handling incoming data and passing on to engine for inference. The output of the custom service is returned back as response by MMS.
 
 ## Requirements for custom service file

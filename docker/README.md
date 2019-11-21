@@ -1,8 +1,8 @@
 [//]: # "All the references in this file should be actual links because this file would be used by docker hub. DO NOT use relative links or section tagging."
 
-# Using Containers with MXNet Model Server
+# Using Containers with Multi Model Server
 
-MXNet Model Server (MMS) can be used with any container service. In this guide, you will learn how to run MMS with Docker.
+Multi Model Server (MMS) can be used with any container service. In this guide, you will learn how to run MMS with Docker.
 
 ## Contents of this Document
 * [Quickstart](https://github.com/awslabs/multi-model-server/blob/master/docker/README.md#quickstart)
@@ -26,14 +26,14 @@ MXNet Model Server (MMS) can be used with any container service. In this guide, 
     * [Build custom MMS containers images to serve your Deep learning models](https://github.com/awslabs/multi-model-server/blob/master/docs/mms_on_fargate.md#customize-the-containers-to-server-your-custom-deep-learning-models)
 
 ## Quickstart
-Running MXNet Model Server with Docker in two steps:
+Running Multi Model Server with Docker in two steps:
 
 **Step 1: Run the Docker image.**
 
 This will download the MMS Docker image and run its default configuration, serving a SqueezeNet model.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/mxnet-model-server multi-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+docker run -itd --name mms -p 80:8080 -p 8081:8081 awsdeeplearningteam/multi-model-server multi-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 With the `-p` flag, we're setting it up so you can run the Predict API on your host computer's port `80`. This maps to the Docker image's port `8080`.
@@ -67,7 +67,7 @@ docker rm -f mms
 ```
 
 ## Available pre-built containers
-We have following container tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/).
+We have following container tags available on [Docker Hub](https://hub.docker.com/r/awsdeeplearningteam/multi-model-server/).
 1. *latest*: This is the latest officially released MMS CPU container. This is based on the latest [Dockerfile.cpu](https://github.com/awslabs/multi-model-server/blob/master/docker/Dockerfile.cpu).
 2. *latest-gpu*: This is the latest officially released MMS GPU container. This is based on the latest [Dockerfile.gpu](https://github.com/awslabs/multi-model-server/blob/master/docker/Dockerfile.gpu).
 3. *(MMS Release Tag)-mxnet-cpu*: Each released version since MMS 1.0.0 has an individual release tagged CPU MXNet container. These containers are based on [Dockerfile.cpu](https://github.com/awslabs/multi-model-server/blob/master/docker/Dockerfile.cpu), in that MMS release.
@@ -88,27 +88,27 @@ To pull the a particular container, run the following command
 #### Pulling the latest CPU container:
 Docker pull by default pulls the latest tag. This tag is associated with latest released MMS CPU container. This tag isn't available until after an official release. 
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server 
+docker pull awsdeeplearningteam/multi-model-server 
 ``` 
 
 #### Pulling the latest GPU container:
 To pull a official latest released MMS GPU container run the following command. This tag isn't available until after an official release. 
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server:latest-gpu
+docker pull awsdeeplearningteam/multi-model-server:latest-gpu
 ``` 
 
 #### Pulling the `nightly-mxnet-cpu` tag:
 To pull a latest nigthtly MMS CPU container run the following command. This track the pre-release version of MMS.
 We do not recommend running this container in production setup.
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server:nightly-mxnet-cpu
+docker pull awsdeeplearningteam/multi-model-server:nightly-mxnet-cpu
 ``` 
 
 #### Pulling the `nightly-mxnet-gpu` tag:
 To pull a latest nigthtly MMS CPU container run the following command. This track the pre-release version of MMS.
 We do not recommend running this container in production setup.
 ```bash
-docker pull awsdeeplearningteam/mxnet-model-server:nightly-mxnet-gpu
+docker pull awsdeeplearningteam/multi-model-server:nightly-mxnet-gpu
 ``` 
 
 ## Configuring MMS with Docker
@@ -175,7 +175,7 @@ When you run the following command, the `-v` argument and path values of `/tmp/m
 MMS will then be able to use the local model file.
 
 ```bash
-docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/mxnet-model-server multi-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
+docker run -itd --name mms -p 80:8080 -p 8081:8081 -v /tmp/models/:/models awsdeeplearningteam/multi-model-server multi-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar
 ```
 
 **NOTE**: If you modify the inference_address or the management_address in the configuration file,

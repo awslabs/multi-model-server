@@ -24,7 +24,7 @@
   </scm>
   <developers>
     <developer>
-      <name>Multi model server</name>
+      <name>Multi Model Server</name>
       <url>https://github.com/awslabs/multi-model-server</url>
       <id>modelserver.io</id>
     </developer>

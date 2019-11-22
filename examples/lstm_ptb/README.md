@@ -9,7 +9,7 @@ This model uses [MXNet Bucketing Module](https://mxnet.incubator.apache.org/how_
 ## Step 1 - Download the pre-trained LSTM model files, signature file and vocabulary dictionary file
 
 ```bash
-cd mxnet-model-server/examples/lstm_ptb
+cd multi-model-server/examples/lstm_ptb
 
 curl -O https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-symbol.json
 curl -O https://s3.amazonaws.com/model-server/models/lstm_ptb/lstm_ptb-0100.params
@@ -53,7 +53,7 @@ We provide custom service class template code in [model_service_template](../mod
 2. [mxnet_utils](../model_service_template/mxnet_utils) - A python package that contains utility classes.
 
 ```bash
-cd mxnet-model-server/examples
+cd multi-model-server/examples
 
 cp model_service_template/model_handler.py lstm_ptb/
 cp -r model_service_template/mxnet_utils lstm_ptb/
@@ -79,7 +79,7 @@ pip install model-archiver
 This tool creates a .mar file that will be provided to MMS for serving inference requests. In following command line, we specify 'lstm_ptb_service:handle' as model archive entry point.
 
 ```bash
-cd mxnet-model-server/examples
+cd multi-model-server/examples
 model-archiver --model-name lstm_ptb --model-path lstm_ptb --handler lstm_ptb_service:handle
 ```
 
@@ -90,9 +90,9 @@ Start the inference service by providing the 'lstm_ptb.mar' file we created in S
 By default, the server is started on the localhost at port 8080.
 
 ```bash
-cd mxnet-model-server
+cd multi-model-server
 
-mxnet-model-server --start --model-store examples --models lstm_ptb.mar
+multi-model-server --start --model-store examples --models lstm_ptb.mar
 ```
 
 ## Test inference service

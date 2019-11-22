@@ -9,7 +9,7 @@
 # permissions and limitations under the License.
 
 """
-This module parses the arguments given through the mxnet-model-server command-line. This is used by model-server
+This module parses the arguments given through the multi-model-server command-line. This is used by model-server
 at runtime.
 """
 
@@ -19,15 +19,15 @@ import argparse
 # noinspection PyTypeChecker
 class ArgParser(object):
     """
-    Argument parser for mxnet-model-server and mxnet-model-export commands
-    More detailed example is available at https://github.com/awslabs/mxnet-model-server/blob/master/README.md
+    Argument parser for multi-model-server and multi-model-export commands
+    More detailed example is available at https://github.com/awslabs/multi-model-server/blob/master/README.md
     """
     @staticmethod
     def mms_parser():
         """
-        Argument parser for mxnet-model-server start service
+        Argument parser for multi-model-server start service
         """
-        parser = argparse.ArgumentParser(prog='mxnet-model-server', description='MXNet Model Server')
+        parser = argparse.ArgumentParser(prog='multi-model-server', description='Multi Model Server')
 
         sub_parse = parser.add_mutually_exclusive_group(required=False)
         sub_parse.add_argument('--start', action='store_true', help='Start the model-server')

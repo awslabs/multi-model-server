@@ -9,7 +9,7 @@
 
 ## Overview
 
-MXNet Model Server can be used for many types of inference in production settings. It provides an easy-to-use command line interface and utilizes  [REST based APIs](rest_api.md) handle state prediction requests. Support for models from a wide range of deep learning frameworks is achieved through its [ONNX model](https://onnx.ai) export feature.
+Multi Model Server can be used for many types of inference in production settings. It provides an easy-to-use command line interface and utilizes  [REST based APIs](rest_api.md) handle state prediction requests. Support for models from a wide range of deep learning frameworks is achieved through its [ONNX model](https://onnx.ai) export feature.
 
 For example, you want to make an app that lets your users snap a picture, and it will tell them what objects were detected in the scene and predictions on what the objects might be. You can use MMS to serve a prediction endpoint for a object detection and identification model that intakes images, then returns predictions. You can also modify MMS behavior with custom services and run multiple models. There are examples of custom services in the [examples](../examples) folder.
 
@@ -20,7 +20,7 @@ Now that you have a high level view of MMS, let's get a little into the weeds. M
 To try out MMS serving now, you can load the SqueezeNet model, which is under 5 MB, with this example:
 
 ```bash
-mxnet-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+multi-model-server --start --models squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 With the command above executed, you have MMS running on your host, listening for inference requests.
@@ -83,15 +83,15 @@ The rest of this topic focus on serving of model files without much discussion o
 ## Command Line Interface
 
 ```bash
-$ mxnet-model-server --help
-usage: mxnet-model-server [-h] [--start]
+$ multi-model-server --help
+usage: multi-model-server [-h] [--start]
                           [--stop]
                           [--mms-config MMS_CONFIG]
                           [--model-store MODEL_STORE]
                           [--models MODEL_PATH1 MODEL_NAME=MODEL_PATH2... [MODEL_PATH1 MODEL_NAME=MODEL_PATH2... ...]]
                           [--log-config LOG_CONFIG]
 
-MXNet Model Server
+Multi Model Server
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -114,7 +114,7 @@ optional arguments:
 Example where no models are loaded at start time:
 
 ```bash
-mxnet-model-server
+multi-model-server
 ```
 
 There are no default required arguments to start the server
@@ -143,7 +143,7 @@ This topic is covered in much more detail on the [custom service documentation p
 Let's say you have a model named `super-fancy-net.mar` in `/models` folder, which can detect a lot of things, but you want an API endpoint that detects only hotdogs. You would use a name that makes sense for it, such as the "not-hot-dog" API. In this case we might invoke MMS like this:
 
 ```bash
-mxnet-model-server --start  --model-store /models --models not-hot-dog=super-fancy-net.mar
+multi-model-server --start  --model-store /models --models not-hot-dog=super-fancy-net.mar
 ```
 
 This would serve a prediction endpoint at `predictions/not-hot-dog/` and run your custom service code in the archive, the manifest in archive would point to the entry point.
@@ -153,19 +153,19 @@ This would serve a prediction endpoint at `predictions/not-hot-dog/` and run you
 Example multiple model usage:
 
 ```bash
-mxnet-model-server --start --model-store /models --models name=model_location name2=model_location2
+multi-model-server --start --model-store /models --models name=model_location name2=model_location2
 ```
 
 Here's an example for running the resnet-18 and the vgg16 models using local model files.
 
 ```bash
-mxnet-model-server --start --model-store /models --models resnet-18=resnet-18.mar squeezenet=squeezenet_v1.1.mar
+multi-model-server --start --model-store /models --models resnet-18=resnet-18.mar squeezenet=squeezenet_v1.1.mar
 ```
 
 If you don't have the model files locally, then you can call MMS using URLs to the model files.
 
 ```bash
-mxnet-model-server --models resnet=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+multi-model-server --models resnet=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar squeezenet=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
 ```
 
 This will setup a local host serving resnet-18 model and squeezenet model on the same port, using the default 8080. Check http://127.0.0.1:8081/models to see that each model has an endpoint for prediction. In this case you would see `predictions/resnet` and `predictions/squeezenet`

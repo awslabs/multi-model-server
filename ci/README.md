@@ -22,7 +22,7 @@ Following files in this folder is used to create the docker images
 To make it easy for developer debug build issue locally, MMS support AWS codebuild local.
 Developer can use following command to build MMS locally:
 ```bash
-$ cd mxnet-model-server
+$ cd multi-model-server
 $ ./run_ci_tests.sh
 ```
 

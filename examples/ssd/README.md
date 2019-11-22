@@ -1,6 +1,6 @@
 # Single Shot Multi Object Detection Inference Service
 
-In this example, we show how to use a pre-trained Single Shot Multi Object Detection (SSD) MXNet model for performing real time inference using MMS
+In this example, we show how to use a pre-trained Single Shot Multi Object Detection (SSD) Multi model for performing real time inference using MMS
 
 The pre-trained model is trained on the [Pascal VOC 2012 dataset](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html) The network is a SSD model built on Resnet50 as base network to extract image features. The model is trained to detect the following entities (classes): ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']. For more details about the model, you can refer [here](https://github.com/apache/incubator-mxnet/tree/master/example/ssd).
 
@@ -16,7 +16,7 @@ The inference service would return the response in the format - '[(object_class,
 You will need the model files to use for the export. Check this example's directory in case they're already downloaded. Otherwise, you can `curl` the files or download them via your browser:
 
 ```bash
-cd mxnet-model-server/examples/ssd
+cd multi-model-server/examples/ssd
 
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/ssd/resnet50_ssd_model-symbol.json
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/ssd/resnet50_ssd_model-0000.params
@@ -88,7 +88,7 @@ The list of classes in synset.txt will be loaded by MMS as list of labels in inf
 
 You can use `curl` to download it.
 ```bash
-cd mxnet-model-server/examples/ssd
+cd multi-model-server/examples/ssd
 
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/ssd/synset.txt
 ```
@@ -108,7 +108,7 @@ We provided custom service class template code in [template](../template) folder
 In this example, you can simple copy them into ssd folder, as use provided mxnet_vision_service.py as user model archive entry point.
 
 ```bash
-cd mxnet-model-server/examples
+cd multi-model-server/examples
 cp -r model_service_template/* ssd/
 ```
 
@@ -132,7 +132,7 @@ pip install model-archiver
 This tool create a .mar file that will be provided to MMS for serving inference requests. In following command line, we specify 'ssd_service:handle' as model archive entry point.
 
 ```bash
-cd mxnet-model-server/examples
+cd multi-model-server/examples
 model-archiver --model-name resnet50_ssd_model --model-path ssd --handler ssd_service:handle
 ```
 
@@ -145,8 +145,8 @@ MMS then extracts the resources (signature, synset, model symbol and params) we 
 By default, the server is started on the localhost at port 8080.
 
 ```bash
-cd mxnet-model-server
-mxnet-model-server --start --model-store examples --models ssd=resnet50_ssd_model.mar
+cd multi-model-server
+multi-model-server --start --model-store examples --models ssd=resnet50_ssd_model.mar
 ```
 
 Awesome! we have successfully exported a pre-trained MXNet model, extended MMS with custom preprocess/postprocess and started a inference service.
@@ -163,7 +163,7 @@ You can also use this image of three dogs on a beach.
 Use curl to make a prediction call by passing the downloaded image as input to the prediction request.
 
 ```bash
-cd mxnet-model-server
+cd multi-model-server
 curl -X POST http://127.0.0.1:8080/predictions/ssd -T docs/images/3dogs.jpg
 ```
 

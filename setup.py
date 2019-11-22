@@ -143,14 +143,14 @@ if __name__ == '__main__':
     requirements = ['Pillow', 'psutil', 'future', 'model-archiver']
 
     setup(
-        name='mxnet-model-server',
+        name='multi-model-server',
         version=version,
-        description='Model Server for Apache MXNet is a tool for serving neural net models for inference',
-        author='MXNet SDK team',
+        description='Multi Model Server is a tool for serving neural net models for inference',
+        author='Trinity team',
         author_email='noreply@amazon.com',
         long_description=pypi_description(),
-        url='https://github.com/awslabs/mxnet-model-server',
-        keywords='MXNet Model Server Serving Deep Learning Inference AI',
+        url='https://github.com/awslabs/multi-model-server',
+        keywords='Multi Model Server Serving Deep Learning Inference AI',
         packages=pkgs,
         cmdclass={
             'build_frontend': BuildFrontEnd,
@@ -165,8 +165,9 @@ if __name__ == '__main__':
         },
         entry_points={
             'console_scripts': [
-                'mxnet-model-server=mms.model_server:start',
-                'mxnet-model-export=mms.export_model:main'
+                'multi-model-server=mms.model_server:start',
+                'mxnet-model-server=mms.model_server:old_start',
+                'multi-model-export=mms.export_model:main'
             ]
         },
         include_package_data=True,

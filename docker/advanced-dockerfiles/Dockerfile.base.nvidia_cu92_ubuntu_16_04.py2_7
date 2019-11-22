@@ -19,7 +19,7 @@ RUN apt-get update && \
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
 
-RUN pip install --no-cache-dir mxnet-model-server 
+RUN pip install --no-cache-dir multi-model-server
 
 RUN mkdir -p /home/model-server/tmp
 

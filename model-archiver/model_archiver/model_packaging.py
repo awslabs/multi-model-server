@@ -9,7 +9,7 @@
 # permissions and limitations under the License.
 
 """
-Command line interface to export model files to be used for inference by MXNet Model Server
+Command line interface to export model files to be used for inference by Multi Model Server
 """
 
 import logging

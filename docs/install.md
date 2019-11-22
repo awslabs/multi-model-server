@@ -3,7 +3,7 @@
 
 ## Prerequisites
 
-* **Python**: Required. Model Server for Apache MXNet (MMS) works with Python 2 or 3.  When installing MMS, we recommend that you use a Python and Conda environment to avoid conflicts with your other Apache MXNet or Open Neural Network Exchange (ONNX) installations.
+* **Python**: Required. Multi Model Server (MMS) works with Python 2 or 3.  When installing MMS, we recommend that you use a Python and Conda environment to avoid conflicts with your other Apache MXNet or Open Neural Network Exchange (ONNX) installations.
 
 * **java 8**: Required. MMS use java to serve HTTP requests. You must install java 8 (or later) and make sure java is on available in $PATH environment variable *before* installing MMS. If you have multiple java installed, you can use $JAVA_HOME environment vairable to control which java to use.
 
@@ -48,13 +48,13 @@ pip install mxnet-cu90-mkl
 To install MMS for the first time, install Python, then run the following command:
 
 ```bash
-pip install mxnet-model-server
+pip install multi-model-server
 ```
 
 To upgrade from a previous version of MMS, run:
 
 ```bash
-pip install -U mxnet-model-server
+pip install -U multi-model-server
 ```
 
 ## Install MMS from Source Code
@@ -66,7 +66,7 @@ If you prefer, you can clone MMS from source code. First, run the following comm
 
 
 ```bash
-git clone https://github.com/awslabs/mxnet-model-server.git && cd mxnet-model-server
+git clone https://github.com/awslabs/multi-model-server.git && cd multi-model-server
 ```
 
 To install MMS, run:

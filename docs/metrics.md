@@ -13,7 +13,7 @@ Metrics are collected by default at:
 * System metrics - log_directory/mms_metrics.log
 * Custom metrics - log directory/model_metrics.log
 
-The location of log files and metric files can be configured at [log4j.properties](https://github.com/awslabs/mxnet-model-server/blob/master/frontend/server/src/main/resources/log4j.properties) file.
+The location of log files and metric files can be configured at [log4j.properties](https://github.com/awslabs/multi-model-server/blob/master/frontend/server/src/main/resources/log4j.properties) file.
 
 
 ## System Metrics
@@ -41,7 +41,7 @@ CPUUtilization.Percent:0.0|#Level:Host|#hostname:my_machine_name
 MemoryUsed.Megabytes:13840.328125|#Level:Host|#hostname:my_machine_name    
 ```
 
-To enable metric logging in JSON format, we can modify the log formatter in [log4j.properties](https://github.com/awslabs/mxnet-model-server/blob/master/frontend/server/src/main/resources/log4j.properties), This is explained in the logging [document](https://github.com/awslabs/mxnet-model-server/blob/master/docs/logging.md).
+To enable metric logging in JSON format, we can modify the log formatter in [log4j.properties](https://github.com/awslabs/multi-model-server/blob/master/frontend/server/src/main/resources/log4j.properties), This is explained in the logging [document](https://github.com/awslabs/multi-model-server/blob/master/docs/logging.md).
 
 to enable JSON formatting for metrics change it to 
 
@@ -83,7 +83,7 @@ Once enabled the format emitted to logs, will look as follows
 
 MMS enables the custom service code to emit metrics, that are then logged by the system
 
-The custom service code is provided with a [context](https://github.com/awslabs/mxnet-model-server/blob/master/mms/context.py) of the current request.
+The custom service code is provided with a [context](https://github.com/awslabs/multi-model-server/blob/master/mms/context.py) of the current request.
 
 Which has metrics object.
 

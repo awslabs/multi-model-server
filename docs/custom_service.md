@@ -8,7 +8,7 @@
 
 ## Introduction
 
-A custom service , is the code that is packaged into model archive, that is executed by Model Server for Apache MXNet (MMS). 
+A custom service , is the code that is packaged into model archive, that is executed by Multi Model Server (MMS). 
 The custom service is responsible for handling incoming data and passing on to engine for inference. The output of the custom service is returned back as response by MMS.
 
 ## Requirements for custom service file
@@ -121,13 +121,13 @@ Here the ``` handle()``` method is our entry point that will be invoked by MMS, 
 ```handle()``` method itself. The ```initialize()``` method is used to initialize the model at load time, so after first time, the service need not be re-initialized in the the life cycle of the relevant worker.
  We recommend using a ```initialize()``` method, avoid initialization at prediction time.
  
- This entry point is engaged in two cases: (1) when MMS is asked to scale a model up, to increase the number of backend workers (it is done either via a ```PUT /models/{model_name}``` request or a ```POST /models``` request with `initial-workers` option or during MMS startup when you use `--models` option (```mxnet-model-server --start --models {model_name=model.mar}```), ie., you provide model(s) to load) or (2) when MMS gets a ```POST /predictions/{model_name}``` request. (1) is used to scale-up or scale-down workers for a model. (2) is used as a standard way to run inference against a model. (1) is also known as model load time, and that is where you would normally want to put code for model initialization. You can find out more about these and other MMS APIs in [MMS Management API](./management_api.md) and [MMS Inference API](./inference_api.md)
+ This entry point is engaged in two cases: (1) when MMS is asked to scale a model up, to increase the number of backend workers (it is done either via a ```PUT /models/{model_name}``` request or a ```POST /models``` request with `initial-workers` option or during MMS startup when you use `--models` option (```multi-model-server --start --models {model_name=model.mar}```), ie., you provide model(s) to load) or (2) when MMS gets a ```POST /predictions/{model_name}``` request. (1) is used to scale-up or scale-down workers for a model. (2) is used as a standard way to run inference against a model. (1) is also known as model load time, and that is where you would normally want to put code for model initialization. You can find out more about these and other MMS APIs in [MMS Management API](./management_api.md) and [MMS Inference API](./inference_api.md)
 
 ## Creating model archive with entry point 
 
 MMS, identifies the entry point to the custom service, from the manifest file. Thus file creating the model archive, one needs to mention the entry point using the ```--handler``` option. 
 
-The [model-archiver](https://github.com/awslabs/mxnet-model-server/blob/master/model-archiver/README.md) tool enables the create to an archive understood by MMS.
+The [model-archiver](https://github.com/awslabs/multi-model-server/blob/master/model-archiver/README.md) tool enables the create to an archive understood by MMS.
 
 ```python
 model-archiver --model-name <model-name> --handler model_handler:handle --export-path <output-dir> --model-path <model_dir> --runtime python3

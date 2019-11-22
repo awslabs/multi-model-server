@@ -1,4 +1,4 @@
-# MXNet Model Server Benchmarking
+# Multi Model Server Benchmarking
 
 The benchmarks measure the performance of MMS on various models and benchmarks.  It supports either a number of built-in models or a custom model passed in as a path or URL to the .model file.  It also runs various benchmarks using these models (see benchmarks section below).  The benchmarks are run through a python3 script on the user machine through jmeter.  MMS is run on the same machine in a docker instance to avoid network latencies.  The benchmark must be run from within the context of the full MMS repo because it executes the local code as the version of MMS (and it is recompiled between runs) for ease of development.
 
@@ -26,10 +26,10 @@ The benchmarking script requires the following to run:
 
 ## Models
 
-The pre-loaded models for the benchmark can be mostly found in the [MMS model zoo](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md).  We currently support the following:
-- [resnet: ResNet-18 (Default)](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md#resnet-18)
-- [squeezenet: SqueezeNet V1.1](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md#squeezenet_v1.1)
-- [lstm: lstm-ptb](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md#lstm-ptb)
+The pre-loaded models for the benchmark can be mostly found in the [MMS model zoo](https://github.com/awslabs/multi-model-server/blob/master/docs/model_zoo.md).  We currently support the following:
+- [resnet: ResNet-18 (Default)](https://github.com/awslabs/multi-model-server/blob/master/docs/model_zoo.md#resnet-18)
+- [squeezenet: SqueezeNet V1.1](https://github.com/awslabs/multi-model-server/blob/master/docs/model_zoo.md#squeezenet_v1.1)
+- [lstm: lstm-ptb](https://github.com/awslabs/multi-model-server/blob/master/docs/model_zoo.md#lstm-ptb)
 - [noop: noop-v1.0](https://s3.amazonaws.com/model-server/models/noop/noop-v1.0.model) Simple Noop model which returns "Hello world" to any input specified.
 - [noop_echo: noop_echo-v1.0](https://s3.amazonaws.com/model-server/models/noop/noop_echo-v1.0.model) Simple Noop model which returns whatever input is given to it.
 

@@ -14,6 +14,16 @@ import psutil
 from mms.arg_parser import ArgParser
 
 
+def old_start():
+    """
+    This is the entry point for model server when using the old CLI name (mxnet-model-server).
+    Please migrate to multi-model-server in the future
+    :return:
+    """
+
+    print("Warning: Calling MMS with mxnet-model-server. Please move to multi-model-server.")
+    start()
+
 def start():
     """
     This is the entry point for model server
@@ -49,7 +59,7 @@ def start():
         if pid is not None:
             try:
                 psutil.Process(pid)
-                print("Model server is already running, please use mxnet-model-server --stop to stop MMS.")
+                print("Model server is already running, please use multi-model-server --stop to stop MMS.")
                 exit(1)
             except psutil.Error:
                 print("Removing orphan pid file.")

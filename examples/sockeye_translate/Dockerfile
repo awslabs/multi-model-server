@@ -23,7 +23,7 @@ RUN python3 -m venv venv && \
     . venv/bin/activate && \
     pip install --upgrade pip setuptools wheel && \
     pip install sockeye --no-deps -r requirements/sockeye/requirements.gpu-cu92.txt && \
-    pip install --no-cache-dir mxnet-model-server && \
+    pip install --no-cache-dir multi-model-server && \
     pip install -r requirements/sockeye-serving/requirements.txt
 
 COPY config/config.properties /home/model-server

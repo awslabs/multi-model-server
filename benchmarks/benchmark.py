@@ -103,7 +103,7 @@ JMX_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jmx')
 CONFIG_PROP = os.path.join(MMS_BASE, 'benchmarks', 'config.properties')
 CONFIG_PROP_TEMPLATE = os.path.join(MMS_BASE, 'benchmarks', 'config_template.properties')
 
-DOCKER_MMS_BASE = "/mxnet-model-server"
+DOCKER_MMS_BASE = "/multi-model-server"
 DOCKER_CONFIG_PROP = os.path.join(DOCKER_MMS_BASE, 'benchmarks', 'config.properties')
 
 # Commenting our NOOPs for now since there's a bug on MMS model loading for .mar files
@@ -187,8 +187,8 @@ def run_single_benchmark(jmx, jmeter_args=dict(), threads=100, out_dir=None):
         # Start MMS
         docker = 'nvidia-docker' if pargs.gpus else 'docker'
         container = 'mms_benchmark_gpu' if pargs.gpus else 'mms_benchmark_cpu'
-        docker_path = 'awsdeeplearningteam/mxnet-model-server:nightly-mxnet-gpu' \
-            if pargs.gpus else 'awsdeeplearningteam/mxnet-model-server:nightly-mxnet-cpu'
+        docker_path = 'awsdeeplearningteam/multi-model-server:nightly-mxnet-gpu' \
+            if pargs.gpus else 'awsdeeplearningteam/multi-model-server:nightly-mxnet-cpu'
         if pargs.docker:
             container = 'mms_benchmark_{}'.format(pargs.docker[0].split('/')[1])
             docker_path = pargs.docker[0]
@@ -438,7 +438,7 @@ def modify_config_props_for_mms(pargs):
 
 if __name__ == '__main__':
     benchmark_name_options = [f for f in dir(Benchmarks) if callable(getattr(Benchmarks, f)) and f[0] != '_']
-    parser = argparse.ArgumentParser(prog='mxnet-model-server-benchmarks', description='Benchmark MXNet Model Server')
+    parser = argparse.ArgumentParser(prog='multi-model-server-benchmarks', description='Benchmark Multi Model Server')
 
     target = parser.add_mutually_exclusive_group(required=True)
     target.add_argument('name', nargs='?', type=str, choices=benchmark_name_options, help='The name of the benchmark to run')

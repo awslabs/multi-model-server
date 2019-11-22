@@ -35,8 +35,8 @@ To support batching of inference requests, MMS needs the following:
 
 In this section we will go over the configuration of MMS to handle batching and the actual code changes required at the model level to handle batching. 
 
-Lets begin with the "Model Handler Code" component and see how we can convert an existing Resnet-152 model from the [MMS Model Zoo](https://github.com/awslabs/mxnet-model-server/blob/master/docs/model_zoo.md#resnet-152)
-into a model which can process a batch of requests. For a full working code, refer to [mxnet_vision_batching.py](https://github.com/awslabs/mxnet-model-server/blob/master/examples/model_service_template/mxnet_vision_batching.py)
+Lets begin with the "Model Handler Code" component and see how we can convert an existing Resnet-152 model from the [MMS Model Zoo](https://github.com/awslabs/multi-model-server/blob/master/docs/model_zoo.md#resnet-152)
+into a model which can process a batch of requests. For a full working code, refer to [mxnet_vision_batching.py](https://github.com/awslabs/multi-model-server/blob/master/examples/model_service_template/mxnet_vision_batching.py)
 
 ### Model Handler a.k.a. entry-point
 
@@ -197,7 +197,7 @@ for the actual requests coming from external clients.
 
 
 ### MMS Model Configuration
-To configure MMS to use the batching feature, you would have to provide the batch configuration information through [**POST /models** API](https://github.com/awslabs/mxnet-model-server/blob/master/docs/management_api.md#register-a-model).
+To configure MMS to use the batching feature, you would have to provide the batch configuration information through [**POST /models** API](https://github.com/awslabs/multi-model-server/blob/master/docs/management_api.md#register-a-model).
 The configuration that we are interested in is the following: 
 1. `batch_size`: This is the maximum batch size that a model is expected to handle. 
 2. `max_batch_delay`: This is the maximum batch delay time MMS waits to receive `batch_size` number of requests. If MMS doesn't receive `batch_size` number of requests
@@ -218,7 +218,7 @@ These configurations are used both in MMS and in the model's custom-service-code
 In this section lets bring up model server and launch Resnet-152 model, which has been built to handle a batch of request. 
 
 ### Pre-requisites
-Follow the main [Readme](https://github.com/awslabs/mxnet-model-server/blob/master/README.md) and install all the required packages including "mxnet-model-server"
+Follow the main [Readme](https://github.com/awslabs/multi-model-server/blob/master/README.md) and install all the required packages including "multi-model-server"
 
 ### Loading Resnet-152 which handles batch inferences
 * Start the model server. In this example, we are starting the model server to run on inference port 8080 and management port 8081.
@@ -228,7 +228,7 @@ $ cat config.properties
 inference_address=http://0.0.0.0:8080
 management_address=http://0.0.0.0:8081
 ...
-$ mxnet-model-server --start
+$ multi-model-server --start
 ```
 
 * Verify that the MMS is up and running
@@ -316,7 +316,7 @@ that resnet-152 is already registered and scaled-up on MMS. We had done this reg
 
 ## Performance benchmarking
 We benchmarked MMS with batch-inference enabled Resnet-152 on a *P3.8xlarge* instance, which is a AWS provided GPU EC2 instance. 
-We ran MMS in our [GPU container](https://hub.docker.com/r/awsdeeplearningteam/mxnet-model-server/tags) which hosted the above resnet-152 model. 
+We ran MMS in our [GPU container](https://hub.docker.com/r/awsdeeplearningteam/multi-model-server/tags) which hosted the above resnet-152 model. 
 We ran the tests for batch sizes 1, 8 and 16 and captured the results. 
 We saw a significant gain in throughput and also saw that the GPU resources were utilized more optimally. Attached is the graph showing the throughput gains. The 
 experiment was done with the following configuration. To understand the details of this configuration please refer the [Configuration document](configuration.md)

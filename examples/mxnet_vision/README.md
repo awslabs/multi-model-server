@@ -17,7 +17,7 @@ The inference service would return the response in the json format.
 You will need the model files in this example. Check this example's directory in case they're already downloaded. Otherwise, you can `curl` the files or download them via your browser:
 
 ```bash
-cd mxnet-model-server/examples/mxnet_vision
+cd multi-model-server/examples/mxnet_vision
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-symbol.json
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-0000.params
 ```
@@ -74,7 +74,7 @@ In this pre-trained model, input name is 'data' and shape is '(1,3,224,224)'. Wh
 
 You can use `curl` to download it.
 ```bash
-cd mxnet-model-server/examples/mxnet_vision
+cd multi-model-server/examples/mxnet_vision
 
 curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/synset.txt
 ```
@@ -93,7 +93,7 @@ We provided custom service class template code in [model_service_template](../mo
 In this example, you can simple copy them into mxnet_vision folder, as use provided mxnet_vision_service.py as user model archive entry point.
 
 ```bash
-cd mxnet-model-server/examples
+cd multi-model-server/examples
 cp -r model_service_template/* mxnet_vision/
 ```
 
@@ -115,7 +115,7 @@ pip install model-archiver
 This tool create a .mar file that will be provided to MMS for serving inference requests. In following command line, we specify 'mxnet_model_service:handle' as model archive entry point.
 
 ```bash
-cd mxnet-model-server/examples
+cd multi-model-server/examples
 model-archiver --model-name squeezenet_v1.1 --model-path mxnet_vision --handler mxnet_vision_service:handle
 ```
 
@@ -126,8 +126,8 @@ Start the inference service by providing the 'squeezenet_v1.1.mar' file we creat
 By default, the server is started on the localhost at port 8080.
 
 ```bash
-cd mxnet-model-server
-mxnet-model-server --start --model-store examples --models squeezenet_v1.1.mar
+cd multi-model-server
+multi-model-server --start --model-store examples --models squeezenet_v1.1.mar
 ```
 
 Awesome! we have successfully packaged a pre-trained MXNet model and started a inference service.
@@ -139,7 +139,7 @@ Awesome! we have successfully packaged a pre-trained MXNet model and started a i
 Let us try the inference server we just started. Use curl to make a prediction call by passing a JPEG image as input to the prediction request.
 
 ```bash
-cd mxnet-model-server
+cd multi-model-server
 curl -X POST http://127.0.0.1:8080/predictions/squeezenet_v1.1 -T docs/images/kitten_small.jpg
 ```
 
@@ -180,5 +180,5 @@ You can clean up temp directory by unregister model and use CLI to stop MMS
 ```bash
 curl -X DELETE http://127.0.0.1:8081/models/squeezenet_v1.1
 
-mxnet-model-server --stop
+multi-model-server --stop
 ```

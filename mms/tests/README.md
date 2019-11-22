@@ -11,8 +11,8 @@ pip install mock pytest pylint
 You will also need the source for the project, so clone the project first.
 
 ```bash
-git clone https://github.com/awslabs/mxnet-model-server.git
-cd mxnet-model-server
+git clone https://github.com/awslabs/multi-model-server.git
+cd multi-model-server
 ```
 
 ## Unit Tests

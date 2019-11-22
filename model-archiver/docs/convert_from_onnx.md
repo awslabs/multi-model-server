@@ -51,7 +51,7 @@ To create a model archive for MMS, you can get `.onnx` file and optionally a lab
 * [label file](https://s3.amazonaws.com/model-server/model_archive_1.0/examples/onnx-squeezenet/synset.txt): has the labels for 1,000 ImageNet classes
 
 ```bash
-cd mxnet-model-server/examples
+cd multi-model-server/examples
 mkdir onnx-squeezenet
 cd onnx-squeezenet
 
@@ -64,7 +64,7 @@ curl -O https://s3.amazonaws.com/model-server/model_archive_1.0/examples/onnx-sq
 You can implement your own model customer service code as model archive entry point. In this example we just copy provided mxnet vision service template:
 
 ```bash
-cd mxnet-model-server/examples
+cd multi-model-server/examples
 
 cp -r model_service_template/* onnx-squeezenet/
 ```
@@ -73,7 +73,7 @@ The mxnet_vision_service.py assume there is a signature.json file that describes
 
 
 ```bash
-cd mxnet-model-server/examples/onnx-squeezenet
+cd multi-model-server/examples/onnx-squeezenet
 
 curl -o signature.json https://s3.amazonaws.com/model-server/model_archive_1.0/examples/onnx-squeezenet/signature.json
 ```
@@ -85,7 +85,7 @@ Since the model has the `.onnx` extension, it will be detected and the converted
 Now you can use the `model-archiver` command to output `onnx-squeezenet.mar` file.
 
 ```bash
-cd mxnet-model-server/examples
+cd multi-model-server/examples
 
 model-archiver --model-name onnx-squeezenet --model-path onnx-squeezenet --handler mxnet_vision_service:handle
 ```
@@ -93,9 +93,9 @@ model-archiver --model-name onnx-squeezenet --model-path onnx-squeezenet --handl
 Now start the server:
 
 ```bash
-cd mxnet-model-server
+cd multi-model-server
 
-mxnet-model-server --start --model-store examples --models squeezenet=onnx-squeezenet.mar
+multi-model-server --start --model-store examples --models squeezenet=onnx-squeezenet.mar
 ```
 
 After your server starts, you can use the following command to see the prediction results.

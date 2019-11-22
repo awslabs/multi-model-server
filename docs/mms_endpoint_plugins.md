@@ -127,7 +127,7 @@ plugins_path=/tmp/plugins
 ```
 * Start model server with this configuration file
 ```bash
-mxnet-model-server --start --mms-config config.properties
+multi-model-server --start --mms-config config.properties
 ```
 * MMS will load the endpoints configured in this directory and be ready to serve requests to this endpoint.
 

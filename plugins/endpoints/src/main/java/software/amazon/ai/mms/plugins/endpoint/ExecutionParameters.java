@@ -1,9 +1,9 @@
 package software.amazon.ai.mms.plugins.endpoint;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.SerializedName;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Properties;
 import software.amazon.ai.mms.servingsdk.Context;
 import software.amazon.ai.mms.servingsdk.ModelServerEndpoint;
@@ -17,14 +17,16 @@ import software.amazon.ai.mms.servingsdk.http.Response;
         endpointType = EndpointTypes.INFERENCE,
         description = "Execution parameters endpoint")
 public class ExecutionParameters extends ModelServerEndpoint {
+
     @Override
     public void doGet(Request req, Response rsp, Context ctx) throws IOException {
         Properties prop = ctx.getConfig();
-        HashMap<String, String> r = new HashMap<>();
-        r.put("MAX_CONCURRENT_TRANSFORMS", prop.getProperty("NUM_WORKERS", "1"));
-        r.put("BATCH_STRATEGY", "SINGLE_RECORD");
-        r.put("MAX_PAYLOAD_IN_MB", prop.getProperty("max_request_size"));
-        r.put("BATCH", "true");
+        // 6 * 1024 * 1024
+        int maxRequestSize = Integer.parseInt(prop.getProperty("max_request_size", "6291456"));
+        ExecutionParametersResponse r = new ExecutionParametersResponse();
+        r.setMaxConcurrentTransforms(Integer.parseInt(prop.getProperty("NUM_WORKERS", "1")));
+        r.setBatchStrategy("MULTI_RECORD");
+        r.setMaxPayloadInMB(maxRequestSize / (1024 * 1024));
         rsp.getOutputStream()
                 .write(
                         new GsonBuilder()
@@ -32,5 +34,47 @@ public class ExecutionParameters extends ModelServerEndpoint {
                                 .create()
                                 .toJson(r)
                                 .getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Response for Model server endpoint */
+    public static class ExecutionParametersResponse {
+        @SerializedName("MaxConcurrentTransforms")
+        private int maxConcurrentTransforms;
+
+        @SerializedName("BatchStrategy")
+        private String batchStrategy;
+
+        @SerializedName("MaxPayloadInMB")
+        private int maxPayloadInMB;
+
+        public ExecutionParametersResponse() {
+            maxConcurrentTransforms = 4;
+            batchStrategy = "MULTI_RECORD";
+            maxPayloadInMB = 6;
+        }
+
+        public int getMaxConcurrentTransforms() {
+            return maxConcurrentTransforms;
+        }
+
+        public String getBatchStrategy() {
+            return batchStrategy;
+        }
+
+        public int getMaxPayloadInMB() {
+            return maxPayloadInMB;
+        }
+
+        public void setMaxConcurrentTransforms(int newMaxConcurrentTransforms) {
+            maxConcurrentTransforms = newMaxConcurrentTransforms;
+        }
+
+        public void setBatchStrategy(String newBatchStrategy) {
+            batchStrategy = newBatchStrategy;
+        }
+
+        public void setMaxPayloadInMB(int newMaxPayloadInMB) {
+            maxPayloadInMB = newMaxPayloadInMB;
+        }
     }
 }

@@ -20,7 +20,7 @@ In short, SqueezeNet is a model that allows you to recognize objects in a pictur
 
 Now that we have the model chosen, let's discuss at a high level what our pure-container based solution will look like:
 
-![architecture](https://s3.amazonaws.com/mxnet-model-server/mms-github-docs/MMS+with+Fargate+Article/AWS+Fargate+MMS.jpg)
+![architecture](https://s3.amazonaws.com/multi-model-server/mms-github-docs/MMS+with+Fargate+Article/AWS+Fargate+MMS.jpg)
 
 In this document we are going to walk you through all the steps of setting up MMS 1.0 on Amazon Fargate services.
 The steps in this process are as follows:
@@ -131,11 +131,11 @@ curl, http://127.0.0.1:8080/ping
 
 The healthcheck portion of your container configuration should look like the image below:
 
-![](https://s3.amazonaws.com/mxnet-model-server/mms-github-docs/MMS+with+Fargate+Article/add+container+healthcheck.png)
+![](https://s3.amazonaws.com/multi-model-server/mms-github-docs/MMS+with+Fargate+Article/add+container+healthcheck.png)
 
 After configuring the health-checks, you can go onto configuring the environment, with the entry point that we have discussed earlier:
 
-![](https://s3.amazonaws.com/mxnet-model-server/mms-github-docs/MMS+with+Fargate+Article/environtment.png)
+![](https://s3.amazonaws.com/multi-model-server/mms-github-docs/MMS+with+Fargate+Article/environtment.png)
 
 Everything else can be left as default. So feel free to click `Create` to create your very first AWS Fargate-task. 
 If everything is ok, you should now be able to see your task in the list of task definitions.

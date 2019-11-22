@@ -161,14 +161,14 @@ multi-model-server --models duc=https://s3.amazonaws.com/model-server/model_arch
 
 * **Get the test image**:
 ```bash
-curl -O https://s3.amazonaws.com/mxnet-model-server/onnx-duc/city1.jpg
+curl -O https://s3.amazonaws.com/multi-model-server/onnx-duc/city1.jpg
 ```
 
 * **Download inference script**:
 
 The script makes an inference call to the server using the test image, displays the colorized segmentation map and prints the confidence score.
 ```bash
-curl -O https://s3.amazonaws.com/mxnet-model-server/onnx-duc/duc-inference.py
+curl -O https://s3.amazonaws.com/multi-model-server/onnx-duc/duc-inference.py
 ```
 
 * **Run Prediction**:

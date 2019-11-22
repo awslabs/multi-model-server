@@ -72,60 +72,60 @@ public class ModelInfo {
         new ModelInfo(true, "nin"),
         new ModelInfo(
                 "onnx-arcface-resnet100",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-arcface/arcface-resnet100.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-arcface/arcface-resnet100.model"),
         new ModelInfo(
                 "onnx-duc",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-duc/ResNet_DUC_HDC.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-duc/ResNet_DUC_HDC.model"),
         new ModelInfo(
                 "onnx-inception_v1",
                 "https://s3.amazonaws.com/model-server/models/onnx-inception_v1/inception_v1.model"),
         new ModelInfo(
                 "onnx-mobilenet",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-mobilenet/mobilenetv2-1.0.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-mobilenet/mobilenetv2-1.0.model"),
         new ModelInfo(
                 "onnx-resnet101v1",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet101v1.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv1/resnet101v1.model"),
         new ModelInfo(
                 "onnx-resnet101v2",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet101v2.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv2/resnet101v2.model"),
         new ModelInfo(
                 "onnx-resnet152v1",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet152v1.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv1/resnet152v1.model"),
         new ModelInfo(
                 "onnx-resnet152v2",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet152v2.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv2/resnet152v2.model"),
         new ModelInfo(
                 "onnx-resnet18v1",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet18v1.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv1/resnet18v1.model"),
         new ModelInfo(
                 "onnx-resnet18v2",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet18v2.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv2/resnet18v2.model"),
         new ModelInfo(
                 "onnx-resnet34v1",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet34v1.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv1/resnet34v1.model"),
         new ModelInfo(
                 "onnx-resnet34v2",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet34v2.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv2/resnet34v2.model"),
         new ModelInfo(
                 "onnx-resnet50v1",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv1/resnet50v1.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv1/resnet50v1.model"),
         new ModelInfo(
                 "onnx-resnet50v2",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-resnetv2/resnet50v2.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-resnetv2/resnet50v2.model"),
         new ModelInfo(
                 "onnx-squeezenet",
                 "https://s3.amazonaws.com/model-server/models/onnx-squeezenet/squeezenet.model"),
         new ModelInfo(
-                "onnx-vgg16", "https://s3.amazonaws.com/mxnet-model-server/onnx-vgg16/vgg16.model"),
+                "onnx-vgg16", "https://s3.amazonaws.com/multi-model-server/onnx-vgg16/vgg16.model"),
         new ModelInfo(
                 "onnx-vgg16_bn",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-vgg16_bn/vgg16_bn.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-vgg16_bn/vgg16_bn.model"),
         new ModelInfo(
                 "onnx-vgg19",
                 "https://s3.amazonaws.com/model-server/models/onnx-vgg19/vgg19.model"),
         new ModelInfo(
                 "onnx-vgg19_bn",
-                "https://s3.amazonaws.com/mxnet-model-server/onnx-vgg19_bn/vgg19_bn.model"),
+                "https://s3.amazonaws.com/multi-model-server/onnx-vgg19_bn/vgg19_bn.model"),
         new ModelInfo(true, "resnet-152"),
         new ModelInfo(true, "resnet-18"),
         new ModelInfo(

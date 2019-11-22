@@ -67,11 +67,11 @@ public final class Cts {
                             "kitten.jpg");
             player1 =
                     loadImage(
-                            "https://s3.amazonaws.com/mxnet-model-server/onnx-arcface/input1.jpg",
+                            "https://s3.amazonaws.com/multi-model-server/onnx-arcface/input1.jpg",
                             "player1.jpg");
             player2 =
                     loadImage(
-                            "https://s3.amazonaws.com/mxnet-model-server/onnx-arcface/input2.jpg",
+                            "https://s3.amazonaws.com/multi-model-server/onnx-arcface/input2.jpg",
                             "player1.jpg");
 
             HttpClient client = new HttpClient(8081, 8080);

@@ -61,7 +61,8 @@ public class WorkerThread implements Runnable {
     };
 
     static final long WORKER_TIMEOUT = ConfigManager.getInstance().isDebug() ? Long.MAX_VALUE : 2L;
-    static final ModelRequestEncoder ENCODER = new ModelRequestEncoder();
+    static final ModelRequestEncoder ENCODER =
+            new ModelRequestEncoder(ConfigManager.getInstance().getPreferDirectBuffer());
 
     private EventLoopGroup backendEventGroup;
     private int port;
@@ -233,6 +234,7 @@ public class WorkerThread implements Runnable {
             // WorkerThread is running in thread pool, the thread will be assigned to next
             // Runnable once this worker is finished. If currentThread keep holding the reference
             // of the thread, currentThread.interrupt() might kill next worker.
+            backendChannel.disconnect();
             currentThread.set(null);
             Integer exitValue = lifeCycle.getExitValue();
 

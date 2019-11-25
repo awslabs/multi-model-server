@@ -1,4 +1,4 @@
-# PyToch serving  
+# PyTorch serving  
 This example shows how to serve PyTorch trained models for flower species recognition..
 The custom handler is implemented in `densenet_service.py`.
 For simplicity, we'll use a pre-trained model. For simplicity we will use docker container to run Model Server.

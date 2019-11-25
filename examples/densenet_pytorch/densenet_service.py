@@ -1,23 +1,11 @@
 import os
 import io
-
-
-import torch
-import time
 import json
-import copy
 import numpy as np
-import PIL
 from PIL import Image
-from collections import OrderedDict
 import torch
-from torch import nn, optim
-from torch.optim import lr_scheduler
 from torch.autograd import Variable
-import torchvision
-from torchvision import datasets, models, transforms
-from torch.utils.data.sampler import SubsetRandomSampler
-import torch.nn as nn
+from torchvision import transforms
 import torch.nn.functional as F
 
 
@@ -54,9 +42,7 @@ class PyTorchImageClassifier():
         model.classifier = checkpoint['classifier']
         model.load_state_dict(checkpoint['state_dict'])
         model.class_to_idx = checkpoint['class_to_idx']
-        optimizer = checkpoint['optimizer']
-        epochs = checkpoint['epochs']
-        
+
         for param in model.parameters():
             param.requires_grad = False
         

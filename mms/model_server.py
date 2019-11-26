@@ -65,6 +65,10 @@ def start():
                 print("Removing orphan pid file.")
                 os.remove(pid_file)
 
+        if (os.environ.get("OMP_NUM_THREADS") == None):
+            print("Warning: setting OMP_NUM_THREADS to 1")
+            os.environ["OMP_NUM_THREADS"] = "1"
+
         java_home = os.environ.get("JAVA_HOME")
         java = "java" if not java_home else "{}/bin/java".format(java_home)
 

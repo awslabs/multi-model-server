@@ -17,7 +17,7 @@ The custom service file should define a method that acts as an entry point for e
 The function can have any name, not necessarily handle, however this function should accept, the following parameters
     
 * **data** - The input data from the incoming request
-* **context** - Is the MMS [context](https://github.com/awslabs/mxnet-model-server/blob/master/mms/context.py) information passed for use with the custom service if required. 
+* **context** - Is the MMS [context](https://github.com/awslabs/multi-model-server/blob/master/mms/context.py) information passed for use with the custom service if required. 
 
 
 The signature of a entry point function is:

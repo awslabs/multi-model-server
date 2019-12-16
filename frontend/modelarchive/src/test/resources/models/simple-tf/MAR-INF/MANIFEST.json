@@ -1,0 +1,18 @@
+{
+  "specificationVersion": "1.0",
+  "implementationVersion": "1.0",
+  "description": "simple tf v1.0",
+  "modelServerVersion": "1.0",
+  "license": "Apache 2.0",
+  "runtime": "python",
+  "model": {
+    "modelName": "simple",
+    "description": "simple tensorflow model",
+    "modelVersion": "1.0",
+    "handler": "simple:handle"
+  },
+  "publisher": {
+    "author": "AWS Neo team",
+    "email": "noreply@amazon.com"
+  }
+}

@@ -181,7 +181,7 @@ class MXNetModelServiceWorker(object):
             finally:
                 cl_socket.shutdown(socket.SHUT_RDWR)
                 cl_socket.close()
-                os._exit(1)
+                sys.exit(0)
 
     def run_server(self):
         """

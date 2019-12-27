@@ -197,7 +197,7 @@ class MXNetModelServiceWorker(object):
 
         self.sock.listen(128)
         logging.info("[PID] %d", os.getpid())
-        logging.info("MXNet worker started.")
+        logging.info("Backend worker started.")
         logging.info("Python runtime: %s", platform.python_version())
         while True:
             if self.service is None and self.preload is True:

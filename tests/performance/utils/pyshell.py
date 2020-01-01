@@ -38,9 +38,20 @@ def run_process(cmd, wait=True):
             if not line:
                 break
             lines.append(line)
+            if len(lines) > 20:
+                lines = lines[1:]
             logger.info(line)
 
-        return process.returncode, '\n'.join(lines)
+        process.communicate()
+        code = process.returncode
+        error_msg = ""
+        if code:
+            error_msg = "Error (error_code={}) while executing command : {}. ".format(code, cmd)
+            logger.info(error_msg)
+            error_msg += "\n\n$$$$Here are the last 20 lines of the logs." \
+                         " For more details refer log file.$$$$\n\n"
+            error_msg += '\n'.join(lines)
+        return code, error_msg
     else:
         process = subprocess.Popen(cmd, shell=True)
         return process.returncode, ''

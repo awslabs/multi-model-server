@@ -33,7 +33,7 @@ def get_sub_dirs(dir, exclude_list=['comp_data'], include_pattern='*', exclude_p
 
     pattern_list = glob.glob(dir + "/" + include_pattern)
     exclude_pattern_list = glob.glob(dir + "/" + exclude_pattern) if exclude_pattern is not None else []
-    return list([x for x in os.listdir(dir) if os.path.isdir(dir + "/" + x)
+    return sorted(list([x for x in os.listdir(dir) if os.path.isdir(dir + "/" + x)
                  and x not in exclude_list
                  and dir + "/" + x in pattern_list
-                 and dir + "/" + x not in exclude_pattern_list])
+                 and dir + "/" + x not in exclude_pattern_list]))

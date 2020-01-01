@@ -51,4 +51,4 @@
     timeframe: 1s
     fail: true
     stop: true
-    diff_percent : ${TOTAL_WORKERS_FDS_DIFF}
+    diff_percent_previous : ${TOTAL_WORKERS_FDS_DIFF}

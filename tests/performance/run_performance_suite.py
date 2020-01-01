@@ -100,6 +100,8 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
 
                     update_taurus_metric_files(suite_artifacts_dir, test_file)
 
+    sys.exit(prt.exit_code)
+
 
 if __name__ == "__main__":
     run_test_suite()

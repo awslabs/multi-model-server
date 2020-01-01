@@ -34,9 +34,18 @@ def get_mon_metrics_list(test_yaml_path):
     return metrics
 
 
-def get_compare_metric_list(dir, sub_dir):
+def parse_criterion_sec(criterion):
+    subject = criterion["subject"]
+    metric = subject.rsplit('/', 1)
+    metric = metric[1] if len(metric) == 2 else metric[0]
+    diff_percent_prev = criterion.get("diff_percent_previous", None)
+    diff_percent_run = criterion.get("diff_percent_run", None)
+
+    return [metric, diff_percent_prev, diff_percent_run]
+
+
+def get_compare_metric_list_taurus(dir, sub_dir):
     """Utility method to get list of compare monitoring metrics identified by diff_percent property"""
-    diff_percents = []
     metrics = []
     test_yaml = os.path.join(dir, sub_dir, "effective.yml")
     with open(test_yaml) as test_yaml:
@@ -45,12 +54,20 @@ def get_compare_metric_list(dir, sub_dir):
             if rep_section.get('module', None) == 'passfail':
                 for criterion in rep_section.get('criteria', []):
                     if isinstance(criterion, dict) and 'monitoring' in criterion.get('class', ''):
-                        subject = criterion["subject"]
-                        metric = subject.rsplit('/', 1)
-                        metric = metric[1] if len(metric) == 2 else metric[0]
-                        diff_percent_prev = criterion.get("diff_percent_previuos", None)
-                        diff_percent_run = criterion.get("diff_percent_run", None)
-
-                        metrics.append([metric, diff_percent_prev, diff_percent_run])
+                        metrics.append(parse_criterion_sec(criterion))
 
     return metrics
+
+
+def get_compare_metric_list(dir, sub_dir):
+    """Utility method to get list of compare monitoring metrics identified by diff_percent property"""
+    metrics = []
+    test_yaml = os.path.join(dir, sub_dir, "effective.yml")
+    with open(test_yaml) as test_yaml:
+        test_yaml = yaml.safe_load(test_yaml)
+        for criterion in test_yaml.get('compare_criteria', []):
+            metrics.append(parse_criterion_sec(criterion))
+
+    return metrics
+
+

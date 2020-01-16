@@ -180,6 +180,7 @@ public class ModelServerTest {
         testPredictionsNoManifest(channel, managementChannel);
         testModelRegisterWithDefaultWorkers(managementChannel);
         testLogging(channel, managementChannel);
+        testLoggingUnload(channel, managementChannel);
         testLoadingMemoryError();
         testPredictionMemoryError();
         testMetricManager();
@@ -1297,6 +1298,25 @@ public class ModelServerTest {
         logger.info("testLogging, found {}, min expected {}.", count, expected);
         Assert.assertTrue(count >= expected);
         unloadTests(mgmtChannel, "logging");
+    }
+
+    private void testLoggingUnload(Channel inferChannel, Channel mgmtChannel)
+            throws NoSuchFieldException, IllegalAccessException, InterruptedException, IOException {
+        setConfiguration("default_workers_per_model", "2");
+        loadTests(mgmtChannel, "logging", "logging");
+        unloadTests(mgmtChannel, "logging");
+        int expected = 1;
+        int count = 0;
+        File logfile = new File("build/logs/mms_log.log");
+        Assert.assertTrue(logfile.exists());
+        Scanner logscanner = new Scanner(logfile, "UTF-8");
+        while (logscanner.hasNextLine()) {
+            String line = logscanner.nextLine();
+            if (line.contains("LoggingService exit")) {
+                count = count + 1;
+            }
+        }
+        Assert.assertTrue(count >= expected);
     }
 
     private Channel connect(boolean management) {

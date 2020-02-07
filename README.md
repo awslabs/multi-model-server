@@ -49,7 +49,7 @@ Before proceeding further with this document, make sure you have the following p
     ```bash
     brew tap homebrew/cask-versions
     brew update
-    brew cask install java8
+    brew cask install adoptopenjdk8
     ```
 
 ### Installing Multi Model Server with pip

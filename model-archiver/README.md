@@ -128,10 +128,10 @@ Further details and specifications are found on the [custom service](../docs/cus
 ```bash
 mkdir squeezenet
 
-curl -o squeezenet https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-symbol.json
-curl -o squeezenet https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-0000.params
-curl -o squeezenet https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/signature.json
-curl -o squeezenet https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/synset.txt
+curl -o squeezenet/squeezenet_v1.1-symbol.json https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-symbol.json
+curl -o squeezenet/squeezenet_v1.1-0000.params https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/squeezenet_v1.1-0000.params
+curl -o squeezenet/signature.json https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/signature.json
+curl -o squeezenet/synset.txt https://s3.amazonaws.com/model-server/model_archive_1.0/examples/squeezenet_v1.1/synset.txt
 ```
 
 The downloaded model artifact files are:

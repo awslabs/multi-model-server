@@ -80,14 +80,16 @@ curl -o signature.json https://s3.amazonaws.com/model-server/model_archive_1.0/e
 
 ### Create a `.mar` file from onnx model
 
-Since the model has the `.onnx` extension, it will be detected and the converted to mxnet models accordingly.
+The model file in this example contains`.onnx` extension.
+
+In order to convert the model with `.onnx` extension to an MXNet model, we would need to use the `-c` option of the model-archiver tool.
 
 Now you can use the `model-archiver` command to output `onnx-squeezenet.mar` file.
 
 ```bash
 cd multi-model-server/examples
 
-model-archiver --model-name onnx-squeezenet --model-path onnx-squeezenet --handler mxnet_vision_service:handle
+model-archiver --model-name onnx-squeezenet --model-path onnx-squeezenet --handler mxnet_vision_service:handle -c -f
 ```
 
 Now start the server:

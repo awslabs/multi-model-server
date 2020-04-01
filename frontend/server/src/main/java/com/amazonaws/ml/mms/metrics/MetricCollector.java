@@ -117,10 +117,14 @@ public class MetricCollector implements Runnable {
                     if (tokens.length != 2) {
                         continue;
                     }
-
-                    Integer pid = Integer.valueOf(tokens[0]);
-                    WorkerThread worker = workerMap.get(pid);
-                    worker.setMemory(Long.parseLong(tokens[1]));
+                    try {
+                        Integer pid = Integer.valueOf(tokens[0]);
+                        WorkerThread worker = workerMap.get(pid);
+                        worker.setMemory(Long.parseLong(tokens[1]));
+                    } catch (NumberFormatException e) {
+                        logger.warn("Failed to parse memory utilization metrics: " + line);
+                        continue;
+                    }
                 }
             }
         } catch (IOException e) {

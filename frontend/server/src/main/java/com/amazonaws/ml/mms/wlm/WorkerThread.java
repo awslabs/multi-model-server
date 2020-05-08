@@ -87,6 +87,9 @@ public class WorkerThread implements Runnable {
 
     private WorkerLifeCycle lifeCycle;
     private boolean serverThread;
+    private RandomAccessFile out;
+    private RandomAccessFile err;
+    private Connector connector;
 
     public WorkerState getState() {
         return state;
@@ -161,11 +164,11 @@ public class WorkerThread implements Runnable {
                 case LOAD:
                     String message = reply.getMessage();
                     String tmpdir = System.getProperty("java.io.tmpdir");
-                    RandomAccessFile out =
+                    out =
                             new RandomAccessFile(
                                     tmpdir + '/' + backendChannel.id().asLongText() + "-stdout",
                                     "rw");
-                    RandomAccessFile err =
+                    err =
                             new RandomAccessFile(
                                     tmpdir + '/' + backendChannel.id().asLongText() + "-stderr",
                                     "rw");
@@ -286,7 +289,7 @@ public class WorkerThread implements Runnable {
 
         final int responseBufferSize = ConfigManager.getInstance().getMaxResponseSize();
         try {
-            Connector connector = new Connector(port);
+            connector = new Connector(port);
             Bootstrap b = new Bootstrap();
             b.group(backendEventGroup)
                     .channel(connector.getClientChannel())
@@ -380,6 +383,22 @@ public class WorkerThread implements Runnable {
         if (backendChannel != null) {
             model.removeJobQueue(backendChannel.id().asLongText());
             backendChannel.close();
+        }
+        if (this.serverThread && this.connector != null) {
+            logger.debug("Cleaning connector socket");
+            this.connector.clean();
+        }
+        logger.debug("Terminating IOStreams for worker thread shutdown");
+        lifeCycle.terminateIOStreams();
+        try {
+            if (out != null) {
+                out.close();
+            }
+            if (err != null) {
+                err.close();
+            }
+        } catch (IOException e) {
+            logger.error("Failed to close IO file handles", e);
         }
         Thread thread = currentThread.getAndSet(null);
         if (thread != null) {

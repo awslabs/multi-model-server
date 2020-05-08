@@ -113,6 +113,9 @@ public class WorkLoadManager {
             if (minWorker == 0) {
                 threads = workers.remove(model.getModelName());
                 if (threads == null) {
+                    if (maxWorker == 0) {
+                        return shutdownServerThread(model, future);
+                    }
                     future.complete(HttpResponseStatus.OK);
                     return future;
                 }
@@ -129,35 +132,38 @@ public class WorkLoadManager {
                     thread.shutdown();
                 }
                 if (maxWorker == 0) {
-                    model.getServerThread().shutdown();
-                    WorkerLifeCycle lifecycle = model.getServerThread().getLifeCycle();
-                    Process workerProcess = lifecycle.getProcess();
-                    if (workerProcess.isAlive()) {
-                        boolean workerDestroyed = false;
-                        workerProcess.destroyForcibly();
-                        try {
-                            workerDestroyed =
-                                    workerProcess.waitFor(
-                                            configManager.getUnregisterModelTimeout(),
-                                            TimeUnit.SECONDS);
-                        } catch (InterruptedException e) {
-                            logger.warn(
-                                    "WorkerThread interrupted during waitFor, possible asynch resource cleanup.");
-                            future.complete(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-                            return future;
-                        }
-                        if (!workerDestroyed) {
-                            logger.warn(
-                                    "WorkerThread timed out while cleaning, please resend request.");
-                            future.complete(HttpResponseStatus.REQUEST_TIMEOUT);
-                            return future;
-                        }
-                    }
+                    return shutdownServerThread(model, future);
                 }
                 future.complete(HttpResponseStatus.OK);
             }
             return future;
         }
+    }
+
+    private CompletableFuture<HttpResponseStatus> shutdownServerThread(
+            Model model, CompletableFuture<HttpResponseStatus> future) {
+        model.getServerThread().shutdown();
+        WorkerLifeCycle lifecycle = model.getServerThread().getLifeCycle();
+        Process workerProcess = lifecycle.getProcess();
+        if (workerProcess.isAlive()) {
+            boolean workerDestroyed = false;
+            workerProcess.destroyForcibly();
+            try {
+                workerDestroyed =
+                        workerProcess.waitFor(
+                                configManager.getUnregisterModelTimeout(), TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn(
+                        "WorkerThread interrupted during waitFor, possible asynch resource cleanup.");
+                future.complete(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            }
+            if (!workerDestroyed) {
+                logger.warn("WorkerThread timed out while cleaning, please resend request.");
+                future.complete(HttpResponseStatus.REQUEST_TIMEOUT);
+            }
+        }
+        future.complete(HttpResponseStatus.OK);
+        return future;
     }
 
     public void addServerThread(Model model, CompletableFuture<HttpResponseStatus> future)

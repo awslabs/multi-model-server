@@ -156,10 +156,12 @@ public class WorkLoadManager {
                 logger.warn(
                         "WorkerThread interrupted during waitFor, possible asynch resource cleanup.");
                 future.complete(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                return future;
             }
             if (!workerDestroyed) {
                 logger.warn("WorkerThread timed out while cleaning, please resend request.");
                 future.complete(HttpResponseStatus.REQUEST_TIMEOUT);
+                return future;
             }
         }
         future.complete(HttpResponseStatus.OK);

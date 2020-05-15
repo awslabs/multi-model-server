@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -217,7 +218,7 @@ public class WorkerLifeCycle {
         private InputStream is;
         private boolean error;
         private WorkerLifeCycle lifeCycle;
-        private boolean isRunning = true;
+        private AtomicBoolean isRunning = new AtomicBoolean(true);
         static final org.apache.log4j.Logger loggerModelMetrics =
                 org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
 
@@ -229,13 +230,13 @@ public class WorkerLifeCycle {
         }
 
         public void terminate() {
-            isRunning = false;
+            isRunning.set(false);
         }
 
         @Override
         public void run() {
             try (Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
-                while (isRunning && scanner.hasNext()) {
+                while (isRunning.get() && scanner.hasNext()) {
                     String result = scanner.nextLine();
                     if (result == null) {
                         break;

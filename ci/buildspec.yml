@@ -10,7 +10,7 @@ phases:
       - pip install pip -U
       - pip install future
       - pip install Pillow
-      - pip install pytest
+      - pip install pytest==4.0.0
       - pip install wheel
       - pip install twine
       - pip install pytest-mock -U

@@ -1312,7 +1312,7 @@ public class ModelServerTest {
         Scanner logscanner = new Scanner(logfile, "UTF-8");
         while (logscanner.hasNextLine()) {
             String line = logscanner.nextLine();
-            if (line.contains("LoggingService exit")) {
+            if (line.contains("Model logging unregistered")) {
                 count = count + 1;
             }
         }

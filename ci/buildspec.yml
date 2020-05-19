@@ -10,12 +10,13 @@ phases:
       - pip install pip -U
       - pip install future
       - pip install Pillow
-      - pip install pytest
+      - pip install pytest==4.0.0
       - pip install wheel
       - pip install twine
       - pip install pytest-mock -U
       - pip install requests
-      - pip install -U -e .[mxnet]
+      - pip install -U -e .
+      - pip install mxnet==1.5.0
       - cd model-archiver/ && pip install -U -e . && cd ../
 
   build:

@@ -101,7 +101,7 @@ There are multiple ways you can specify your test scenario.
     Use command Taurus command below to run the test yaml.
     
     ```bash
-    bzt inference_test.yaml
+    bzt inference.yaml
     ```
 
 #### 2. Metrics to monitor
@@ -148,7 +148,7 @@ Metrics can be monitored in two ways:
 2. Taurus local monitoring plugin
 
     If your test client is running on the server itself, you may want to use this method.
-    We have provided a custom Taurus plugin as metrics_monitoring_taurus.py. Make sure that the benchmarks/monitoring folder 
+    We have provided a custom Taurus plugin as [metrics_monitoring_taurus.py](metrics_monitoring_taurus.py). Make sure that the benchmarks/monitoring folder 
     is in PYTHONPATH. You need to specify the monitoring class.
     
     Use command below to add update PYTHONPATH.

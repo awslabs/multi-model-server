@@ -1,0 +1,15 @@
+---
+execution:
+- concurrency: 1
+  ramp-up: 1s
+  hold-for: 20s
+  scenario: Inference
+scenarios:
+  Inference:
+    script: imageInputModelPlan.jmx
+modules:
+  jmeter:
+    properties:
+      input_filepath : kitten.jpg
+      model_name : squeezenet
+

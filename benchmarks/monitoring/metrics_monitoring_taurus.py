@@ -83,8 +83,3 @@ class ServerLocalMonitor(monitoring.LocalMonitor):
          server_process = get_server_processes(server_pid)
          result.update(get_metrics(server_process, get_child_processes(server_process)))
          return result
-
-
-
-
-

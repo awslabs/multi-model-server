@@ -22,19 +22,18 @@ from bzt import  TaurusConfigError
 from bzt.utils import dehumanize_time
 from bzt.six import PY3
 
-from metrics_collector import get_metrics, get_mms_processes
+from metrics_collector import get_metrics, get_mms_processes, AVAILABLE_METRICS as MMS_AVAILABLE_METRICS
 
 
 class Monitor(monitoring.Monitoring):
     def __init__(self):
         super(Monitor, self).__init__()
-
         self.client_classes.update({'MMS_local': MMSLocalClient})
 
 
 class MMSLocalClient(monitoring.LocalClient):
-    AVAILABLE_METRICS = monitoring.LocalClient.AVAILABLE_METRICS + ["sum_cpu_percent", "sum_memory_percent",
-                                                     "sum_num_handles", "mms_workers"]
+    AVAILABLE_METRICS = monitoring.LocalClient.AVAILABLE_METRICS + \
+                        MMS_AVAILABLE_METRICS
 
     def __init__(self, parent_log, label, config, engine=None):
 

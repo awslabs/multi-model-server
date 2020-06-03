@@ -11,7 +11,7 @@
 # permissions and limitations under the License.
 
 """
-MMS server monitoring script over the socket
+Server monitoring script over the socket
 """
 # pylint: disable=redefined-builtin
 
@@ -23,8 +23,13 @@ from gevent import monkey
 monkey.patch_select()
 monkey.patch_socket()
 
-from perf_monitor import start_perf_mon
+from metrics_collector import start_metric_collection
+from process import find_procs_by_name, get_process_pid_from_file, get_child_processes, get_server_processes
 
+# TODO - move these variables to config
+TMP_DIR = "/var/folders/04/6_v1bbs55mb_hrpkphh46xcc0000gn/T"
+# TODO - use tempfile. Currently there is an issue with sudo
+SERVER_PID_FILE = "{}/.model_server.pid".format(TMP_DIR)  # MMS specific
 HOST = ''
 SOCKET_LIST = []
 RECV_BUFFER = 4096
@@ -37,8 +42,8 @@ def perf_server():
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((HOST, PORT))
     server_socket.listen(10)
-
     SOCKET_LIST.append(server_socket)
+    logging.log(logging.INFO, "Started metrics monitoring server on port {}".format(PORT))
 
     while True:
         ready_to_read, ready_to_write, in_error = select.select(SOCKET_LIST, [], [], 0)
@@ -48,7 +53,7 @@ def perf_server():
             if sock == server_socket:
                 sockfd, addr = server_socket.accept()
                 SOCKET_LIST.append(sockfd)
-                logging.log("client ({}, {}) connected".format(addr[0], addr[1]))
+                logging.log(logging.INFO, "client ({}, {}) connected".format(addr[0], addr[1]))
 
             # a message from a client, not a new connection
             else:
@@ -68,7 +73,9 @@ def perf_server():
                                 send_message(sock, "In-correct interval data")
                         elif data.startswith('metrics'):
                              metrics = data[:-1].split("metrics:")[1].split("\t")
-                             start_perf_mon(sock, interval, metrics)
+                             server_pid = get_process_pid_from_file(SERVER_PID_FILE)
+                             server_process = get_server_processes(server_pid)
+                             start_metric_collection(server_process, metrics, interval, sock)
                         else:
                             # TODO - decide what to do here
                             pass

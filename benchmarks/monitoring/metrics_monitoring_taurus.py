@@ -11,8 +11,9 @@
 # permissions and limitations under the License.
 
 """
-Taurus local plugin for MMS monitoring.
-This file should be placed in Python Path along with metrics_collector.py file
+Taurus local plugin for server monitoring.
+Should be used when server and Taurus are running on same machine.
+This file should be placed in Python Path along with monitoring package.
 """
 # pylint: disable=redefined-builtin
 
@@ -22,23 +23,29 @@ from bzt import  TaurusConfigError
 from bzt.utils import dehumanize_time
 from bzt.six import PY3
 
-from metrics_collector import get_metrics, get_mms_processes, AVAILABLE_METRICS as MMS_AVAILABLE_METRICS
+from metrics import get_metrics, AVAILABLE_METRICS as AVAILABLE_SERVER_METRICS
+from process import get_process_pid_from_file, get_server_processes, get_child_processes
+
+# TODO - move these variables to config
+TMP_DIR = "/var/folders/04/6_v1bbs55mb_hrpkphh46xcc0000gn/T"
+# TODO - use tempfile. Currently there is an issue with sudo
+SERVER_PID_FILE = "{}/.model_server.pid".format(TMP_DIR)  # MMS specific
 
 
 class Monitor(monitoring.Monitoring):
     def __init__(self):
         super(Monitor, self).__init__()
-        self.client_classes.update({'MMS_local': MMSLocalClient})
+        self.client_classes.update({'ServerLocalClient': ServerLocalClient})
 
 
-class MMSLocalClient(monitoring.LocalClient):
+class ServerLocalClient(monitoring.LocalClient):
     AVAILABLE_METRICS = monitoring.LocalClient.AVAILABLE_METRICS + \
-                        MMS_AVAILABLE_METRICS
+                        AVAILABLE_SERVER_METRICS
 
     def __init__(self, parent_log, label, config, engine=None):
 
-        super(MMSLocalClient, self).__init__(parent_log, label, config, engine=engine)
-        self.label = 'MMSLocalClient'
+        super(ServerLocalClient, self).__init__(parent_log, label, config, engine=engine)
+        self.label = 'ServerLocalClient'
 
     def connect(self):
         exc = TaurusConfigError('Metric is required in Local monitoring client')
@@ -54,7 +61,7 @@ class MMSLocalClient(monitoring.LocalClient):
 
         self.metrics = list(set(good_list))
 
-        self.monitor = MMSLocalMonitor(self.log, self.metrics, self.engine)
+        self.monitor = ServerLocalMonitor(self.log, self.metrics, self.engine)
         self.interval = dehumanize_time(self.config.get("interval", self.engine.check_interval))
 
         if self.config.get("logging", False):
@@ -68,12 +75,13 @@ class MMSLocalClient(monitoring.LocalClient):
                     logs_writer.writerow(metrics)
 
 
-class MMSLocalMonitor(monitoring.LocalMonitor):
+class ServerLocalMonitor(monitoring.LocalMonitor):
 
      def _calc_resource_stats(self, interval):
          result =super()._calc_resource_stats(interval)
-         get_mms_processes()
-         result.update(get_metrics())
+         server_pid = get_process_pid_from_file(SERVER_PID_FILE)
+         server_process = get_server_processes(server_pid)
+         result.update(get_metrics(server_process, get_child_processes(server_process)))
          return result
 
 

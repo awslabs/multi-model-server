@@ -1,0 +1,49 @@
+
+execution:
+- concurrency: 4
+  ramp-up: 1s
+  hold-for: 20s
+  scenario: Inference
+scenarios:
+  Inference:
+    requests:
+    - follow-redirects: true
+      label: Inference Request
+      method: POST
+      url: ${__P(protocol,http)}://${__P(hostname,127.0.0.1)}:${__P(port,8080)}/predictions/${model}
+    store-cache: false
+    store-cookie: false
+    use-dns-cache-mgr: false
+    variables:
+      model: ${__P(model_name,squeezenet_v1.1)}
+
+modules:
+  jmeter:
+    properties:
+      input_filepath : kitten.jpg
+      model_name : squeezenet
+
+
+services:
+  - module: monitoring
+    server-agent:
+      - address: localhost:9009 # metric monitoring service address
+        label: mms-inference-server  # if you specify label, it will be used in reports instead of ip:port
+        interval: 1s    # polling interval
+        logging: True # those logs will be saved to "SAlogs_192.168.0.1_9009.csv" in the artifacts dir
+        metrics: # metrics should be supported by monitoring service
+          - sum_cpu_percent # cpu percent used by all the mms server processes and workers
+          - sum_memory_percent
+          - sum_num_handles
+          - server_workers # no of mms workers
+
+reporting:
+- module: passfail
+  criteria:
+  - class: bzt.modules.monitoring.MonitoringCriteria
+    subject: mms-inference-server/sum_num_handles
+    condition: '>'
+    threshold: 180
+    timeframe: 1s
+    fail: true
+    stop: true

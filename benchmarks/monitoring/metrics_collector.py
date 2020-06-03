@@ -11,7 +11,7 @@
 # permissions and limitations under the License.
 
 """
-MMS server metrics collector
+Server metrics collector
 """
 # pylint: disable=redefined-builtin
 
@@ -23,49 +23,21 @@ import psutil
 import gevent
 import argparse
 
-TMP_DIR = "/var/folders/04/6_v1bbs55mb_hrpkphh46xcc0000gn/T"
-METRICS_LOG_FILE = "{}/mms_metrics_{}.log".format(TMP_DIR, int(time.time()))
-MMS_PID_FILE = "{}/.model_server.pid".format(TMP_DIR)
+import tempfile
+from process import find_procs_by_name, get_process_pid_from_file, get_child_processes, get_server_processes
+from metrics import AVAILABLE_METRICS, get_metrics
+
+
+# TODO - move these variables to config file
+TMP_DIR = "/var/folders/04/6_v1bbs55mb_hrpkphh46xcc0000gn/T" # TODO - use tempfile. Currently there is an issue with sudo
+METRICS_LOG_FILE = "{}/server_metrics_{}.log".format(TMP_DIR, int(time.time()))
+SERVER_PID_FILE = "{}/.model_server.pid".format(TMP_DIR)  # MMS specific
 METRICS_COLLECTOR_PID_FILE = "{}/.metrics_collector.pid".format(TMP_DIR)
 MONITOR_INTERVAL = 1
-PID_LIST_INTERVAL = 2
-AVAILABLE_METRICS = ["sum_cpu_percent",
-                     "sum_memory_percent",
-                     "sum_num_handles",
-                     "mms_workers"]
-
-child_processes = set()
-mms_process = None
-
-
-def find_procs_by_name(name):
-    """Return a list of processes matching 'name'."""
-    ls = []
-    for p in psutil.process_iter(["name", "exe", "cmdline"]):
-        if name == p.info['name'] or \
-                p.info['exe'] and os.path.basename(p.info['exe']) == name or \
-                p.info['cmdline'] and p.info['cmdline'][0] == name:
-            ls.append(p)
-
-    if len(ls) > 1:
-        raise Exception("Multiple processes found with name {}.".format(name))
-
-    return ls[0]
-
-
-def get_process_pid_from_file(file_path):
-    """Get the process pid from pid file.
-    """
-    if os.path.isfile(file_path):
-        with open(file_path, "r") as f:
-            pid = int(f.readline())
-    else:
-        raise Exception("Invalid file {}".format(file_path))
-
-    return pid
 
 
 def store_metrics_collector_pid():
+    """ Stores the process id of metrics collector process"""
     metrics_collector_process = psutil.Process(METRICS_COLLECTOR_PID_FILE)
     pid_file = os.path.join()
     with open(pid_file, "w") as pf:
@@ -82,96 +54,46 @@ def stop_metrics_collector_process():
         try:
             process = psutil.Process(pid)
             if process.is_running():
-                logging.info("Process with pid {} is running. Killing it.".format(process.pid))
+                logging.info(logging.INFO, "Process with pid {} is running. Killing it.".format(process.pid))
                 process.kill()
         except Exception as e:
             pass
         else:
-            logging.info("Dead process with pid {} found in '{}'.".format(process.pid, METRICS_COLLECTOR_PID_FILE))
+            logging.info(logging.INFO, "Dead process with pid {} found in '{}'.".format(process.pid, METRICS_COLLECTOR_PID_FILE))
 
-        logging.info("Removing pid file '{}'.".format(METRICS_COLLECTOR_PID_FILE))
+        logging.info(logging.INFO, "Removing pid file '{}'.".format(METRICS_COLLECTOR_PID_FILE))
         os.remove(METRICS_COLLECTOR_PID_FILE)
 
 
-def get_child_processes(process):
-    """Get all running child processes recursively"""
-    child_processes = []
-    for p in process.children(recursive=True):
-        if p.status() == 'running':
-            child_processes.append(p)
-    return child_processes
-
-
-def get_metrics():
-    """ Get MMS processes specific metrics
+def monitor_processes(server_process, metrics, interval, socket):
+    """ Monitor the metrics of server_process and its child processes
     """
-
-    # TODO - make this modular may be a diff function for each metric
-    # TODO - allow users to add new metrics easliy
-    # TODO - make sure available metric list is maintained
-
-    sum_cpu_percent = 0
-    sum_memory_percent = 0
-    sum_num_handles = 0
-    mms_workers = 0
-    metrics = {}
-    for process in [mms_process] + list(get_child_processes(mms_process)):
-        try:
-            process.cpu_percent()  # to warm-up
-        except:
-            pass
-        else:
-            cpu_percent = process.cpu_percent()
-            memory_percent = process.memory_percent()
-            sum_cpu_percent += cpu_percent
-            sum_memory_percent += memory_percent
-            sum_num_handles += process.num_fds()
-            mms_workers += 1
-
-    metrics["sum_cpu_percent"] = sum_cpu_percent
-    metrics["sum_memory_percent"] = sum_memory_percent
-    metrics["sum_num_handles"] = sum_num_handles
-    metrics["mms_workers"] = mms_workers
-
-
-    return metrics
-
-
-def monitor_processes(socket, interval, metrics):
     while True:
         message = []
-        collected_metrics = get_metrics()
+        collected_metrics = get_metrics(server_process, get_child_processes(server_process))
         for metric in metrics:
            message.append(str(collected_metrics.get(metric, 0)))
         message = "\t".join(message)+"\n"
 
         if socket:
             socket.send(message.encode("latin-1"))
+
+        # TODO - log metrics to a file METRICS_LOG_FILE if METRICS_LOG_FILE is provided
         gevent.sleep(interval)
 
 
-def get_mms_processes():
-    """ It caches the MMS and child processes at module level.
-    Ensure that you call this process so that MMS process
-    """
+def start_metric_collection(server_process, metrics, interval, socket):
+    bad_metrics = set(metrics) - set(AVAILABLE_METRICS)
+    if bad_metrics:
+        raise Exception("Metrics not available for monitoring {}.".format(bad_metrics))
 
-    global mms_process
-    global child_processes
-    mms_pid = get_process_pid_from_file()
-    if not mms_pid:
-        print("MMS process not found11.")
-        exit()
-
-    try:
-        mms_process = psutil.Process(mms_pid)
-    except Exception as e:
-        print("MMS process not found. Error: {}".format(str(e)))
-        raise
-
-    child_processes = set(get_child_processes(mms_process))
+    logging.log(logging.INFO, "Started metric collection for target server processes.....")
+    thread = gevent.spawn(monitor_processes, server_process, metrics, interval, socket)
+    gevent.joinall([thread])
 
 
 def start_metric_collector_process():
+    """Spawn a metric collection process and keep on monitoring """
     metric_collector_pid = get_process_pid_from_file(METRICS_COLLECTOR_PID_FILE)
     if metric_collector_pid:
         try:
@@ -183,17 +105,9 @@ def start_metric_collector_process():
                 raise Exception("Performance monitoring script already running. "
                                 "Stop it using stop option.")
     store_metrics_collector_pid()
-
-
-def start_metric_collection(socket, interval, metrics):
-    bad_metrics = set(metrics) - set(AVAILABLE_METRICS)
-    if bad_metrics:
-        raise Exception("Metrics not available for monitoring {}.".format(bad_metrics))
-
-    get_mms_processes()
-    print("Started metric collection for MMS processes.....")
-    thread2 = gevent.spawn(monitor_processes, socket, interval, metrics)
-    gevent.joinall([thread2])
+    server_pid = get_process_pid_from_file(SERVER_PID_FILE)
+    server_process = get_server_processes(server_pid)
+    start_metric_collection(server_process, AVAILABLE_METRICS, MONITOR_INTERVAL, None)
 
 
 if __name__ == "__main__":
@@ -206,6 +120,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.start:
-        start_perf_mon()
+        start_metric_collector_process()
     elif args.stop:
-        stop_perf_mon_process()
+        stop_metrics_collector_process()

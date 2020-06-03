@@ -1,0 +1,43 @@
+---
+execution:
+- concurrency: 1
+  ramp-up: 5s
+  hold-for: 20s
+  scenario: Inference
+scenarios:
+  Inference:
+    default-address: ${__P(protocol,https)}://${__P(hostname,127.0.0.1)}:${__P(port,8443)}/
+    requests:
+    - follow-redirects: true
+      label: Inference Request
+      method: POST
+      upload-files:
+      - mime-type: image/jpeg
+        param: data
+        path: ${__P(input_filepath)}
+      url: ${__P(protocol,http)}://${__P(hostname,127.0.0.1)}:${__P(port,8080)}/predictions/${model}
+    store-cache: false
+    store-cookie: false
+    use-dns-cache-mgr: false
+    variables:
+      model: ${__P(model_name,squeezenet_v1.1)}
+
+modules:
+  jmeter:
+    properties:
+      input_filepath : kitten.jpg
+      model_name : squeezenet
+  server_local_monitoring:
+    # metrics_monitoring_taurus and dependencies should be in python path
+    class : metrics_monitoring_taurus.Monitor # monitoring class.
+
+services:
+  - module: server_local_monitoring # should be added in modules section
+    ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
+    - interval: 1s
+      metrics:
+      - cpu
+      - disk-space
+      - mem
+      - sum_memory_percent
+

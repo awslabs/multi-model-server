@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -11,7 +11,7 @@
 # permissions and limitations under the License.
 
 """
-Taurus local plugin for server monitoring.
+Taurus Local plugin for server monitoring.
 Should be used when server and Taurus are running on same machine.
 This file should be placed in Python Path along with monitoring package.
 """
@@ -24,13 +24,8 @@ from bzt.utils import dehumanize_time
 from bzt.six import PY3
 
 from metrics import get_metrics, AVAILABLE_METRICS as AVAILABLE_SERVER_METRICS
-from process import get_process_pid_from_file, get_server_processes, get_child_processes
-
-# TODO - move these variables to config
-TMP_DIR = "/var/folders/04/6_v1bbs55mb_hrpkphh46xcc0000gn/T"
-# TODO - use tempfile. Currently there is an issue with sudo
-SERVER_PID_FILE = "{}/.model_server.pid".format(TMP_DIR)  # MMS specific
-
+from process import get_process_pid_from_file, get_server_processes, \
+    get_child_processes, get_server_pidfile
 
 class Monitor(monitoring.Monitoring):
     def __init__(self):
@@ -78,8 +73,8 @@ class ServerLocalClient(monitoring.LocalClient):
 class ServerLocalMonitor(monitoring.LocalMonitor):
 
      def _calc_resource_stats(self, interval):
-         result =super()._calc_resource_stats(interval)
-         server_pid = get_process_pid_from_file(SERVER_PID_FILE)
+         result = super()._calc_resource_stats(interval)
+         server_pid = get_process_pid_from_file(get_server_pidfile())
          server_process = get_server_processes(server_pid)
          result.update(get_metrics(server_process, get_child_processes(server_process)))
          return result

@@ -34,10 +34,9 @@ modules:
 services:
   - module: server_local_monitoring # should be added in modules section
     ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
-    - interval: 1s
-      metrics:
-      - cpu
-      - disk-space
-      - mem
-      - sum_memory_percent
-
+      - interval: 1s
+        metrics:
+          - cpu
+          - disk-space
+          - mem
+          - sum_memory_percent

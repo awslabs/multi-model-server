@@ -111,13 +111,18 @@ Metrics can be monitored in two ways:
 1. Standalone monitoring server
 
     If your server is hosted on different machine, you will be using this method. Before running the test case
-    you have to start a [metric_monitoring_server.py](metrics_monitoring_server.py) script. It will be communicating with Taurus test client over sockets.
+    you have to start a [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will be communicating with Taurus test client over sockets.
     The address and port(default=9009) of the monitoring script should be specified in test case yaml. 
     
+    To install monitoring server dependencies, use the following command
+    ```bash   
+    pip install -r requirements.txt
+    ```    
+   
     To start monitoring script on server use command below:
     
-    ```bash
-    sudo python3 benchmarks/monitoring/metric_monitoring_server.py
+    ```bash   
+    python benchmarks/monitoring/metrics_monitoring_server.py
     ```
     
     Test yaml with monitoring section config. Complete yaml can be found [here](tests/inference_server_monitoring.yaml)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -17,7 +17,8 @@ Utility methods for process related information
 
 import os
 import psutil
-
+import tempfile
+import configuration
 
 def find_procs_by_name(name):
     """Return a list of processes matching 'name'."""
@@ -65,3 +66,7 @@ def get_server_processes(server_process_pid):
         print("Server process not found. Error: {}".format(str(e)))
         raise
     return server_process
+
+
+def get_server_pidfile():
+    return "{0}/.{1}".format(tempfile.gettempdir(), configuration.get('server', 'pid_file', 'model_server.pid'))

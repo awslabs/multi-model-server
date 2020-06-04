@@ -36,17 +36,17 @@ services:
     ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
     - interval: 1s
       metrics:
-      - cpu
-      - disk-space
-      - mem
-      - sum_memory_percent
+        - cpu
+        - disk-space
+        - mem
+        - sum_memory_percent
 
 reporting:
 - module: passfail
   criteria:
-  - class: bzt.modules.monitoring.MonitoringCriteria
-    subject: ServerLocalClient/sum_memory_percent
-    condition: '>'
-    threshold: 14
-    timeframe: 1s
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_memory_percent
+      condition: '>'
+      threshold: 14
+      timeframe: 1s
 

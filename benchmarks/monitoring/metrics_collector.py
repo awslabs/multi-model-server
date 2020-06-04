@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -22,17 +22,18 @@ import logging
 import psutil
 import gevent
 import argparse
-
 import tempfile
-from process import find_procs_by_name, get_process_pid_from_file, get_child_processes, get_server_processes
+
+logger = logging.getLogger(__name__)
+
+from process import find_procs_by_name, get_process_pid_from_file, get_child_processes, \
+    get_server_processes, get_server_pidfile
 from metrics import AVAILABLE_METRICS, get_metrics
 
-
-# TODO - move these variables to config file
-TMP_DIR = "/var/folders/04/6_v1bbs55mb_hrpkphh46xcc0000gn/T" # TODO - use tempfile. Currently there is an issue with sudo
+TMP_DIR = tempfile.gettempdir()
 METRICS_LOG_FILE = "{}/server_metrics_{}.log".format(TMP_DIR, int(time.time()))
-SERVER_PID_FILE = "{}/.model_server.pid".format(TMP_DIR)  # MMS specific
 METRICS_COLLECTOR_PID_FILE = "{}/.metrics_collector.pid".format(TMP_DIR)
+
 MONITOR_INTERVAL = 1
 
 
@@ -105,7 +106,7 @@ def start_metric_collector_process():
                 raise Exception("Performance monitoring script already running. "
                                 "Stop it using stop option.")
     store_metrics_collector_pid()
-    server_pid = get_process_pid_from_file(SERVER_PID_FILE)
+    server_pid = get_process_pid_from_file(get_server_pidfile())
     server_process = get_server_processes(server_pid)
     start_metric_collection(server_process, AVAILABLE_METRICS, MONITOR_INTERVAL, None)
 

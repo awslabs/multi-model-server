@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
 # A copy of the License is located at
@@ -11,7 +11,7 @@
 # permissions and limitations under the License.
 
 """
-Server monitoring script over the socket
+Remote server monitoring script
 """
 # pylint: disable=redefined-builtin
 
@@ -20,22 +20,22 @@ import sys
 from gevent import socket
 from gevent import select
 from gevent import monkey
+
 monkey.patch_select()
 monkey.patch_socket()
 
 from metrics_collector import start_metric_collection
-from process import find_procs_by_name, get_process_pid_from_file, get_child_processes, get_server_processes
+from process import find_procs_by_name, get_process_pid_from_file, \
+    get_child_processes, get_server_processes, get_server_pidfile
+import configuration
 
-# TODO - move these variables to config
-TMP_DIR = "/var/folders/04/6_v1bbs55mb_hrpkphh46xcc0000gn/T"
-# TODO - use tempfile. Currently there is an issue with sudo
-SERVER_PID_FILE = "{}/.model_server.pid".format(TMP_DIR)  # MMS specific
-HOST = ''
+HOST = str(configuration.get('monitoring','HOST'))
+PORT = int(configuration.get('monitoring','PORT', 9009))
+
 SOCKET_LIST = []
 RECV_BUFFER = 4096
-PORT = 9009
-interval = 1
 
+interval = 1
 
 def perf_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -73,7 +73,7 @@ def perf_server():
                                 send_message(sock, "In-correct interval data")
                         elif data.startswith('metrics'):
                              metrics = data[:-1].split("metrics:")[1].split("\t")
-                             server_pid = get_process_pid_from_file(SERVER_PID_FILE)
+                             server_pid = get_process_pid_from_file(get_server_pidfile())
                              server_process = get_server_processes(server_pid)
                              start_metric_collection(server_process, metrics, interval, sock)
                         else:

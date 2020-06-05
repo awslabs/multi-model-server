@@ -2,24 +2,24 @@
 Model Server uses CircleCI for builds. This folder contains the config and scripts that are needed for CircleCI.
 
 ## config.yml
-config.yml contains MMS build logic which will be used by CircleCI.
+_config.yml_ contains MMS build logic which will be used by CircleCI.
 
 ## Jobs
 Currently following jobs are executed under "**build_and_test**" workflow
-1. **build** - Builds a frontend/model-server.jar and executes gradle tests
-2. **python_tests** - Executes pytests from mms/tests/unit_tests/
+1. **build** - Builds _frontend/model-server.jar_ and executes tests from gradle
+2. **python_tests** - Executes pytests from _mms/tests/unit_tests/_
 3. **api_tests** - (NEW!) Executes newman test suite for API testing
 4. **benchmark** - Executes latency benchmark using resnet-18 model
 5. **taurus** - (NEW!) Executes taurus tests for performance
 
 ## scripts
-Instead of using inline commands inside config.yml, job steps are configured as shell scripts.
+Instead of using inline commands inside _config.yml_, job steps are configured as shell scripts.  
 This is easier for maintenance and reduces chances of error in config.yml
 
-## images
-MMS uses customized docker image for its CircleCI build. To make sure MMS is compatible with
- both Python2 and Python3, we use two build projects. We published two code build docker
- images on docker hub:
+## images (WIP)
+MMS uses customized docker image for its CircleCI build.  
+To make sure MMS is compatible with both Python2 and Python3, we use two build projects.  
+We have published two docker images on docker hub for code build
 * --------/mms-build:python2.7
 * --------/mms-build:python3.6
 
@@ -36,7 +36,7 @@ To make it easy for developers to debug build issues locally, MMS supports Circl
 3. docker
 
 #### Command
-Developers can use the following command to build MMS locally:
+Developers can use the following command to build MMS locally:  
 **_./run_circleci_tests.py <workflow_name> <job_name>_**
 ```bash
 $ cd multi-model-server

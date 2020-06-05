@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Make sure you have following dependencies installed on your local machine
 # 1. PyYAML (pip install PyYaml)
 # 2. CircleCI cli from - https://circleci.com/docs/2.0/local-cli/#installation
@@ -13,9 +15,9 @@ workflow = 'build_and_test'
 job = 'python_tests'
 
 circleci_config_file = '.circleci/config.yml'
-processed_file = 'processed.yml'
+processed_file = '.circleci/processed.yml'
 processed_config = {}
-xformed_file = 'xformed.yml'
+xformed_file = '.circleci/xformed.yml'
 xformed_config = {}
 xformed_job_name = 'mms_xformed_job'
 blacklisted_steps = ['persist_to_workspace', 'attach_workspace', 'store_artifacts']

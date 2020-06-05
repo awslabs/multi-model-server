@@ -25,9 +25,10 @@ To make it easy for developers to debug build issues locally, MMS supports Circl
 
 #### Command
 Developers can use the following command to build MMS locally:
+**_./run_circleci_tests.py <workflow_name> <job_name>_**
 ```bash
 $ cd multi-model-server
-$ ./run_circleci_tests.py <workspace_name> <job_name>
+$ ./run_circleci_tests.py build_and_test python_tests
 ```
 
 > To avoid Pull Request build failure on github, developer should always make sure local build can pass.

@@ -8,16 +8,22 @@
 import subprocess
 import yaml
 import copy
+import argparse
 from collections import OrderedDict
 from functools import reduce
 
-workflow = 'build_and_test'
-job = 'python_tests'
+parser = argparse.ArgumentParser(description='Execute circleci jobs in a container on local machine')
+parser.add_argument('workflow', type=str, help='Workflow name from config.yml')
+parser.add_argument('job', type=str, help='Job name from config.yml')
+args = parser.parse_args()
+
+workflow = args.workflow
+job = args.job
 
 circleci_config_file = '.circleci/config.yml'
 processed_file = '.circleci/processed.yml'
-processed_config = {}
 xformed_file = '.circleci/xformed.yml'
+processed_config = {}
 xformed_config = {}
 xformed_job_name = 'mms_xformed_job'
 blacklisted_steps = ['persist_to_workspace', 'attach_workspace', 'store_artifacts']

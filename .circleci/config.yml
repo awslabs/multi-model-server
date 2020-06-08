@@ -119,6 +119,21 @@ jobs:
             path: /tmp/cci-taurus/
             destination: taurus-results
 
+    modelarchiver_lint_and_unit_tests:
+      executor: docker-python-3
+      steps:
+        - attach-mms-workspace
+        - run:
+            name: Execute lint and unit tests
+            command: .circleci/scripts/linux_test_modelarchiver_lint_and_units.sh
+
+    modelarchiver_integration_tests:
+      executor: docker-python-3
+      steps:
+        - attach-mms-workspace
+        - run:
+            name: Execute integration tests
+            command: .circleci/scripts/linux_test_modelarchiver_integration.sh
 
 workflows:
   version: 2
@@ -137,3 +152,7 @@ workflows:
       - taurus:
           requires:
             - build
+      - modelarchiver_lint_and_unit_tests
+      - modelarchiver_integration_tests
+          requires:
+            - modelarchiver_lint_and_unit_tests

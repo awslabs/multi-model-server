@@ -119,7 +119,7 @@ jobs:
             path: /tmp/cci-taurus/
             destination: taurus-results
 
-    modelarchiver_tests:
+    modelarchiver:
       executor: docker-python-3
       steps:
         - checkout
@@ -135,17 +135,17 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-#      - build
-#      - python_tests:
-#          requires:
-#            - build
-#      - api_tests:
-#          requires:
-#            - build
-#      - benchmark:
-#          requires:
-#            - build
-#      - taurus:
-#          requires:
-#            - build
-      - modelarchiver_tests
+      - build
+      - modelarchiver
+      - python_tests:
+          requires:
+            - build
+      - api_tests:
+          requires:
+            - build
+      - benchmark:
+          requires:
+            - build
+      - taurus:
+          requires:
+            - build

@@ -122,26 +122,26 @@ jobs:
     modelarchiver_tests:
       executor: docker-python-3
       steps:
-        - attach-mms-workspace
+        - checkout
         - run:
-            name: Execute lint and unit tests
+            name: Execute lint, unit and integration tests
             command: .circleci/scripts/linux_test_modelarchiver.sh
 
 workflows:
   version: 2
   build_and_test:
     jobs:
-      - build
-      - python_tests:
-          requires:
-            - build
-      - api_tests:
-          requires:
-            - build
-      - benchmark:
-          requires:
-            - build
-      - taurus:
-          requires:
-            - build
+#      - build
+#      - python_tests:
+#          requires:
+#            - build
+#      - api_tests:
+#          requires:
+#            - build
+#      - benchmark:
+#          requires:
+#            - build
+#      - taurus:
+#          requires:
+#            - build
       - modelarchiver_tests

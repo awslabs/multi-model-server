@@ -126,6 +126,14 @@ jobs:
         - run:
             name: Execute lint, unit and integration tests
             command: .circleci/scripts/linux_test_modelarchiver.sh
+        - store_artifacts:
+            name: Store unit tests results from model archiver tests
+            path: model-archiver/results_units
+            destination: units
+        - store_artifacts:
+            name: Store integration tests results from model archiver tests
+            path: model-archiver/results_integration
+            destination: integration
 
 workflows:
   version: 2

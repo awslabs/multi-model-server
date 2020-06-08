@@ -13,4 +13,5 @@ python -m pytest --cov-report html:results_units --cov=./ model_archiver/tests/u
 pip install .
 
 # Execute integration tests
-python -m pytest --cov-report html:results_integration --cov=./ model_archiver/tests/integ_tests
+python -m pytest model_archiver/tests/integ_tests
+# ToDo - Report for Integration tests ?

@@ -10,7 +10,7 @@ sleep 10
 cd benchmarks/monitoring
 
 # Install dependencies
-pip install requirements.txt
+pip install -r requirements.txt
 
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
 ./run_perfomance_suite.py --artifacts-dir=/tmp/mms-performance-regression/ --jmeter-path=/opt/apache-jmeter-5.3/bin/jmeter

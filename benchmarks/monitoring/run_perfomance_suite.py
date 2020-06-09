@@ -58,18 +58,19 @@ def get_test_yamls(dir_path=None, pattern="*.yaml"):
     return glob.glob(path_pattern)
 
 
-def get_options(artifacts_dir):
-    options = []
+def get_options(artifacts_dir, jmeter_path=None):
+    options=[]
+    if jmeter_path:
+        options.append('-o modules.jmeter.path={}'.format(jmeter_path))
     options.append('-o settings.artifacts-dir={}'.format(artifacts_dir))
     options.append('-o modules.console.disable=true')
     options.append('-o settings.env.BASEDIR={}'.format(artifacts_dir))
-
     options_str = ' '.join(options)
 
     return options_str
 
 
-def run_test_suite(artifacts_dir, test_dir, pattern):
+def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     if os.path.exists(artifacts_dir):
         artifacts_dir = "{}_{}".format(artifacts_dir, str(int(time.time())))
     path = pathlib.Path(__file__).parent.absolute()
@@ -83,7 +84,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern):
         suite_start = int(time.time())
         suite_name = os.path.basename(test_file).rsplit('.', 1)[0]
         suit_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
-        options_str = get_options(suit_artifacts_dir)
+        options_str = get_options(suit_artifacts_dir, jmeter_path)
         code, err = run_process("{} bzt {} {} ".format(pre_command, options_str, test_file))
         suite_end = int(time.time())
         suite_time = suite_end - suite_start # context manager to do timing
@@ -159,5 +160,8 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--pattern', nargs=1, type=str, dest='pattern', default=["*.yaml"],
                            help='Test case file name pattern. example *.yaml')
 
+    parser.add_argument('-j', '--jmeter-path', nargs=1, type=str, dest='jmeter_path', default=[None],
+                        help='JMeter executable bin path')
+
     args = parser.parse_args()
-    run_test_suite(args.artifacts[0], args.test_dir[0], args.pattern[0])
+    run_test_suite(args.artifacts[0], args.test_dir[0], args.pattern[0], args.jmeter_path[0])

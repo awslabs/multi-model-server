@@ -119,7 +119,7 @@ jobs:
             path: /tmp/mms-performance-regression/
         - store_test_results:
             name: Store Taurus test results
-            path: /tmp/mms-performance-regression/
+            path: /tmp/mms-performance-regression/report/
 
     modelarchiver:
       executor: docker-python-3

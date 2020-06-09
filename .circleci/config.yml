@@ -4,7 +4,7 @@ version: 2.1
 executors:
   docker-python-3:
     docker:
-      - image: prashantsail/mms-build:latest
+      - image: prashantsail/mms-build:python3.6@sha256:ea8ad58cc1740587f062d3b149175563e783d420d61ff242f9280a2550457853
     environment:
       _JAVA_OPTIONS: "-Xmx2048m"
 
@@ -100,7 +100,7 @@ jobs:
             path: /tmp/MMSBenchmark/out/latency/resnet-18/report/
             destination: benchmark-latency-resnet-18
 
-    taurus:
+    performance_regression:
       executor: docker-python-3
       steps:
         - attach-mms-workspace
@@ -115,9 +115,11 @@ jobs:
             name: Store server logs from Taurus tests
             path: mms.log
         - store_artifacts:
-            name: Store Taurus results
-            path: /tmp/cci-taurus/
-            destination: taurus-results
+            name: Store Taurus test results as artifacts
+            path: /tmp/mms-performance-regression/
+        - store_test_results:
+            name: Store Taurus test results
+            path: /tmp/mms-performance-regression/report/
 
     modelarchiver:
       executor: docker-python-3
@@ -136,16 +138,16 @@ workflows:
   build_and_test:
     jobs:
       - build
-      - modelarchiver
-      - python_tests:
-          requires:
-            - build
-      - api_tests:
-          requires:
-            - build
-      - benchmark:
-          requires:
-            - build
-      - taurus:
+#      - modelarchiver
+#      - python_tests:
+#          requires:
+#            - build
+#      - api_tests:
+#          requires:
+#            - build
+#      - benchmark:
+#          requires:
+#            - build
+      - performance_regression:
           requires:
             - build

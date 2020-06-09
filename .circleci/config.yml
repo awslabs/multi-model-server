@@ -115,7 +115,10 @@ jobs:
             name: Store server logs from Taurus tests
             path: mms.log
         - store_artifacts:
-            name: Store Taurus results
+            name: Store Taurus test results as artifacts
+            path: /tmp/mms-performance-regression/
+        - store_test_results:
+            name: Store Taurus test results
             path: /tmp/mms-performance-regression/
 
     modelarchiver:
@@ -135,16 +138,16 @@ workflows:
   build_and_test:
     jobs:
       - build
-      - modelarchiver
-      - python_tests:
-          requires:
-            - build
-      - api_tests:
-          requires:
-            - build
-      - benchmark:
-          requires:
-            - build
+#      - modelarchiver
+#      - python_tests:
+#          requires:
+#            - build
+#      - api_tests:
+#          requires:
+#            - build
+#      - benchmark:
+#          requires:
+#            - build
       - performance_regression:
           requires:
             - build

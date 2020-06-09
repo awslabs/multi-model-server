@@ -23,10 +23,27 @@ import argparse
 import glob
 import pathlib
 import subprocess
+import socket
+from tqdm import tqdm
 from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
 
 logger = logging.getLogger(__name__)
 code = 0
+
+
+class Timer(object):
+    def __init__(self, description):
+        self.description = description
+
+    def __enter__(self):
+        self.start = int(time.time())
+        return self
+
+    def __exit__(self, type, value, traceback):
+        logger.info(f"{self.description}: {self.diff()}s")
+
+    def diff(self):
+        return int(time.time()) - self.start
 
 
 def run_process(cmd, wait=True):
@@ -74,20 +91,21 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     if os.path.exists(artifacts_dir):
         artifacts_dir = "{}_{}".format(artifacts_dir, str(int(time.time())))
     path = pathlib.Path(__file__).parent.absolute()
-    start_monitoring_server = "python {}/metrics_monitoring_server.py --start".format(path)
+    start_monitoring_server = "python3 {}/metrics_monitoring_server.py --start".format(path)
     run_process(start_monitoring_server, wait=False)
 
     junit_xml = JUnitXml()
     pre_command = 'export PYTHONPATH={}:$PYTHONPATH; '.format(str(path))
 
-    for test_file in get_test_yamls(test_dir, pattern):
-        suite_start = int(time.time())
+    test_yamls = get_test_yamls(test_dir, pattern)
+    for test_file in tqdm(test_yamls, desc="Test Suites"):
         suite_name = os.path.basename(test_file).rsplit('.', 1)[0]
-        suit_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
-        options_str = get_options(suit_artifacts_dir, jmeter_path)
-        code, err = run_process("{} bzt {} {} ".format(pre_command, options_str, test_file))
-        suite_end = int(time.time())
-        suite_time = suite_end - suite_start # context manager to do timing
+        with Timer("Test suit {} execution time".format(suite_name)) as t:
+            suit_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
+            options_str = get_options(suit_artifacts_dir, jmeter_path)
+            code, err = run_process("{} bzt {} {} ".format(pre_command, options_str, test_file))
+            suite_time = t.diff()
+            suite_start = t.start
 
         # Assumes default file name
         xunit_file = "{}/xunit.xml".format(suit_artifacts_dir)
@@ -126,13 +144,14 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
                 tc.system_out = err[:-4]
             ts.add_testcase(tc)
 
-        ts.hostname = "localhost" #config.ini?
+        ts.hostname = socket.gethostname()
         ts.timestamp = suite_start
         ts.time = suite_time
         ts.tests = tests
         ts.failures = failures
         ts.skipped = skipped
         ts.errors = errors
+        ts.update_statistics()
         junit_xml.add_testsuite(ts)
 
     junit_xml.update_statistics()
@@ -141,7 +160,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     junit_xml.write(junit_xml_path)
     run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
-    stop_monitoring_server = "python {}/metrics_monitoring_server.py --stop".format(path)
+    stop_monitoring_server = "python3 {}/metrics_monitoring_server.py --stop".format(path)
     run_process(stop_monitoring_server)
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
@@ -150,7 +169,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
-    parser = argparse.ArgumentParser(prog='run_perf_suite', description='Perf Suite Runner')
+    parser = argparse.ArgumentParser(prog='run_perfomance_suite.py', description='Performance Test Suite Runner')
     parser.add_argument('-a', '--artifacts-dir', nargs=1, type=str, dest='artifacts', required=True,
                            help='A artifacts directory')
 

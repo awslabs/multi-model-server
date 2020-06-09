@@ -3,6 +3,16 @@
 This test suite helps in running the load tests and monitoring the process, sub-process and system wide metrics. It allows to specify the pass/fail criteria for metrics in the test case.
 We use Taurus test automation framework to run the test cases and metrics monitoring.
 
+## How to run the test suite
+To run the test suite just invoke the [run_perfomance_suite.py](run_perfomance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
+You can specify test cases to be run by providing 'test-dir' (default='monitoring/tests') and 'pattern' (default='*.yaml'). For other options use '--help' option.   
+The script starts the server monitoring agent, collects all the test cases, executes them and then produces Junit XML and HTML report in artifacts-dir.
+
+```bash
+python run_perfomance_suite.py --artifacts-dir='<path>'
+```
+
+#### To know more about the Test Suite follow the guide below:
 
 ## Taurus
 
@@ -20,9 +30,6 @@ To run a metrics monitoring test case, you need to specify below in Taurus test 
 2. Metrics to monitor
 3. Pass/fail criteria
 
-#### Assumptions made in this guide
-1. For some of the test cases, it is assumed that you have started the MMS server with squeezenet model registered
- and workers are assigned to it.
 
 #### 1. Load test case scenario
 You can specify the test scenarios, in the scenario section of the yaml.
@@ -98,7 +105,7 @@ There are multiple ways you can specify your test scenario.
     
     ```
 
-    Use command Taurus command below to run the test yaml.
+    Use command Taurus command below to run the test yaml. Note this test script assumes squeezenet model is already registered.
     
     ```bash
     bzt inference.yaml

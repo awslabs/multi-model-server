@@ -40,12 +40,13 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - \
     && sudo npm install -g newman newman-reporter-html
 
 # Install jmeter for benchmark
+# ToDo: Remove --no-check-certificate; temporarily added to bypass jmeter-plugins.org's expired certificate
 RUN cd /opt \
     && wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.3.tgz \
     && tar -xzf apache-jmeter-5.3.tgz \
     && cd apache-jmeter-5.3 \
     && ln -s /opt/apache-jmeter-5.3/bin/jmeter /usr/local/bin/jmeter \
-    && wget https://jmeter-plugins.org/get/ -O lib/ext/jmeter-plugins-manager-1.4.jar \
+    && wget --no-check-certificate https://jmeter-plugins.org/get/ -O lib/ext/jmeter-plugins-manager-1.4.jar \
     && wget http://search.maven.org/remotecontent?filepath=kg/apc/cmdrunner/2.2/cmdrunner-2.2.jar -O lib/cmdrunner-2.2.jar \
     && java -cp lib/ext/jmeter-plugins-manager-1.4.jar org.jmeterplugins.repository.PluginManagerCMDInstaller \
     && bin/PluginsManagerCMD.sh install jpgc-synthesis=2.1,jpgc-filterresults=2.1,jpgc-mergeresults=2.1,jpgc-cmd=2.1,jpgc-perfmon=2.1

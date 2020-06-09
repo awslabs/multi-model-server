@@ -4,7 +4,12 @@ version: 2.1
 executors:
   docker-python-3:
     docker:
-#      - image: prashantsail/mms-build:python3.6@sha256:ea8ad58cc1740587f062d3b149175563e783d420d61ff242f9280a2550457853
+      - image: prashantsail/mms-build:python3.6@sha256:ea8ad58cc1740587f062d3b149175563e783d420d61ff242f9280a2550457853
+    environment:
+      _JAVA_OPTIONS: "-Xmx2048m"
+
+  docker-python-2:
+    docker:
       - image: prashantsail/mms-build:python2.7@sha256:ea8ad58cc1740587f062d3b149175563e783d420d61ff242f9280a2550457853
     environment:
       _JAVA_OPTIONS: "-Xmx2048m"
@@ -45,7 +50,10 @@ commands:
 
 jobs:
     build:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - checkout
         - run:
@@ -63,7 +71,10 @@ jobs:
               - .
 
     python_tests:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - attach-mms-workspace
         - run:
@@ -74,7 +85,10 @@ jobs:
             path: htmlcov
 
     api_tests:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - attach-mms-workspace
         - install-mms-server
@@ -86,7 +100,10 @@ jobs:
             collection: https
 
     benchmark:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - attach-mms-workspace
         - install-mms-server
@@ -102,7 +119,10 @@ jobs:
             destination: benchmark-latency-resnet-18
 
     performance_regression:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - attach-mms-workspace
         - install-mms-server
@@ -120,7 +140,10 @@ jobs:
             path: /tmp/mms-performance-regression/
 
     modelarchiver:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - checkout
         - run:
@@ -131,21 +154,51 @@ jobs:
             path: model-archiver/results_units
             destination: units
 
+
 workflows:
   version: 2
-  build_and_test:
+  build_and_test_python36:
     jobs:
-      - build
-      - modelarchiver
+      - build:
+          executor: docker-python-3
+      - modelarchiver:
+          executor: docker-python-3
       - python_tests:
+          executor: docker-python-3
           requires:
             - build
       - api_tests:
+          executor: docker-python-3
           requires:
             - build
       - benchmark:
+          executor: docker-python-3
           requires:
             - build
       - performance_regression:
+          executor: docker-python-3
+          requires:
+            - build
+
+  build_and_test_python27:
+    jobs:
+      - build:
+          executor: docker-python-2
+      - modelarchiver:
+          executor: docker-python-2
+      - python_tests:
+          executor: docker-python-2
+          requires:
+            - build
+      - api_tests:
+          executor: docker-python-2
+          requires:
+            - build
+      - benchmark:
+          executor: docker-python-2
+          requires:
+            - build
+      - performance_regression:
+          executor: docker-python-2
           requires:
             - build

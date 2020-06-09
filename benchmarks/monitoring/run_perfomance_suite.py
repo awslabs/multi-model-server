@@ -161,7 +161,7 @@ if __name__ == "__main__":
                            help='Test case file name pattern. example *.yaml')
 
     parser.add_argument('-j', '--jmeter-path', nargs=1, type=str, dest='jmeter_path', default=[None],
-                        help='Test case file name pattern. example *.yaml')
+                        help='JMeter executable bin path')
 
     args = parser.parse_args()
     run_test_suite(args.artifacts[0], args.test_dir[0], args.pattern[0], args.jmeter_path[0])

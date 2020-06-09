@@ -132,16 +132,16 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
 
                     tc = TestCase(name)
                     tc.result = result
-                    tc.system_err = err_txt[:-4]
+                    # tc.system_err = err_txt[:-4]
                     ts.add_testcase(tc)
         else:
             tc = TestCase(suite_name)
             if code:
                 tc.result = Error("Suite run failed", "Error")
-                tc.system_err = err[:-4]
+                # tc.system_err = err[:-4]
             else:
                 tc.result = Skipped()
-                tc.system_out = err[:-4]
+                # tc.system_out = err[:-4]
             ts.add_testcase(tc)
 
         ts.hostname = socket.gethostname()

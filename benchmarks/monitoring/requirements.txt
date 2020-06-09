@@ -1,4 +1,5 @@
 gevent==20.5.2
 junitparser==1.4.1
 vjunit==0.6.1
+tqdm==4.40.0
 pathlib

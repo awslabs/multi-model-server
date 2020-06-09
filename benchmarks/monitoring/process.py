@@ -38,11 +38,10 @@ def find_procs_by_name(name):
 def get_process_pid_from_file(file_path):
     """Get the process pid from pid file.
     """
+    pid = None
     if os.path.isfile(file_path):
         with open(file_path, "r") as f:
             pid = int(f.readline())
-    else:
-        raise Exception("Invalid file {}".format(file_path))
 
     return pid
 

@@ -6,22 +6,15 @@ execution:
   scenario: Inference
 scenarios:
   Inference:
-    requests:
-    - follow-redirects: true
-      label: Inference Request
-      method: POST
-      url: ${__P(protocol,http)}://${__P(hostname,127.0.0.1)}:${__P(port,8080)}/predictions/${model}
-    store-cache: false
-    store-cookie: false
-    use-dns-cache-mgr: false
-    variables:
-      model: ${__P(model_name,squeezenet_v1.1)}
+    script: register_and_inference.jmx
 
 modules:
   jmeter:
     properties:
+      port : 8080
+      management_port : 8081
+      protocol : http
       input_filepath : kitten.jpg
-      model_name : squeezenet
 
 
 services:
@@ -37,13 +30,27 @@ services:
           - sum_num_handles
           - server_workers # no of mms workers
 
+
 reporting:
 - module: passfail
   criteria:
+  - fail of s2_fail >50%, stop as failed
+  - p90 of s2_p90 >250ms  , stop as failed
+  - avg-rt of s2_avg_rt >1s , stop as failed
   - class: bzt.modules.monitoring.MonitoringCriteria
     subject: mms-inference-server/sum_num_handles
     condition: '>'
-    threshold: 180
+    threshold: 80
     timeframe: 1s
     fail: true
     stop: true
+- module: junit-xml
+  data-source: pass-fail
+- module: junit-xml
+  data-source: sample-labels
+- module: final-stats
+  dump-csv : ${BASEDIR}/final_stats.csv
+
+setting:
+  env:
+    BASEDIR : '.'

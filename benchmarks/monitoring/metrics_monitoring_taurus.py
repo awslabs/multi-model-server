@@ -21,11 +21,15 @@ import csv
 from bzt.modules import monitoring
 from bzt import  TaurusConfigError
 from bzt.utils import dehumanize_time
-from bzt.six import PY3
+import sys
+
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
 
 from metrics import get_metrics, AVAILABLE_METRICS as AVAILABLE_SERVER_METRICS
 from process import get_process_pid_from_file, get_server_processes, \
     get_child_processes, get_server_pidfile
+
 
 class Monitor(monitoring.Monitoring):
     def __init__(self):
@@ -40,7 +44,10 @@ class ServerLocalClient(monitoring.LocalClient):
     def __init__(self, parent_log, label, config, engine=None):
 
         super(ServerLocalClient, self).__init__(parent_log, label, config, engine=engine)
-        self.label = 'ServerLocalClient'
+        if label:
+            self.label = label
+        else:
+            self.label = 'ServerLocalClient'
 
     def connect(self):
         exc = TaurusConfigError('Metric is required in Local monitoring client')

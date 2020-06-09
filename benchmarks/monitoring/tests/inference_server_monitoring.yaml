@@ -6,22 +6,15 @@ execution:
   scenario: Inference
 scenarios:
   Inference:
-    requests:
-    - follow-redirects: true
-      label: Inference Request
-      method: POST
-      url: ${__P(protocol,http)}://${__P(hostname,127.0.0.1)}:${__P(port,8080)}/predictions/${model}
-    store-cache: false
-    store-cookie: false
-    use-dns-cache-mgr: false
-    variables:
-      model: ${__P(model_name,squeezenet_v1.1)}
+    script: register_and_inference.jmx
 
 modules:
   jmeter:
     properties:
+      port : 8080
+      management_port : 8081
+      protocol : http
       input_filepath : kitten.jpg
-      model_name : squeezenet
 
 
 services:
@@ -36,3 +29,16 @@ services:
           - sum_memory_percent
           - sum_num_handles
           - server_workers # no of mms workers
+
+reporting:
+- module: passfail # this is to enable passfail module
+- module: junit-xml
+  data-source: pass-fail
+- module: junit-xml
+  data-source: sample-labels
+- module: final-stats
+  dump-csv : ${BASEDIR}/final_stats.csv
+
+setting:
+  env:
+    BASEDIR : '.'

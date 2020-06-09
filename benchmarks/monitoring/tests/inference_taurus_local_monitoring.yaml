@@ -6,27 +6,15 @@ execution:
   scenario: Inference
 scenarios:
   Inference:
-    default-address: ${__P(protocol,https)}://${__P(hostname,127.0.0.1)}:${__P(port,8443)}/
-    requests:
-    - follow-redirects: true
-      label: Inference Request
-      method: POST
-      upload-files:
-      - mime-type: image/jpeg
-        param: data
-        path: ${__P(input_filepath)}
-      url: ${__P(protocol,http)}://${__P(hostname,127.0.0.1)}:${__P(port,8080)}/predictions/${model}
-    store-cache: false
-    store-cookie: false
-    use-dns-cache-mgr: false
-    variables:
-      model: ${__P(model_name,squeezenet_v1.1)}
+    script: register_and_inference.jmx
 
 modules:
   jmeter:
     properties:
+      port : 8080
+      management_port : 8081
+      protocol : http
       input_filepath : kitten.jpg
-      model_name : squeezenet
   server_local_monitoring:
     # metrics_monitoring_taurus and dependencies should be in python path
     class : metrics_monitoring_taurus.Monitor # monitoring class.
@@ -40,3 +28,21 @@ services:
           - disk-space
           - mem
           - sum_memory_percent
+  - module: monitoring
+    ~local:
+      - interval: 20s   # polling interval
+        logging: True # local monitoring logs will be saved to "local_monitoring_logs.csv" in the artifacts dir
+        metrics:
+          - cpu
+reporting:
+- module: passfail # this is to enable passfail module
+- module: junit-xml
+  data-source: pass-fail
+- module: junit-xml
+  data-source: sample-labels
+- module: final-stats
+  dump-csv : ${BASEDIR}/final_stats.csv
+
+setting:
+  env:
+    BASEDIR : '.'

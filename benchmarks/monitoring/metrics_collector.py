@@ -37,33 +37,58 @@ METRICS_COLLECTOR_PID_FILE = "{}/.metrics_collector.pid".format(TMP_DIR)
 MONITOR_INTERVAL = 1
 
 
-def store_metrics_collector_pid():
-    """ Stores the process id of metrics collector process"""
-    metrics_collector_process = psutil.Process(METRICS_COLLECTOR_PID_FILE)
-    pid_file = os.path.join()
+def store_pid(pid_file):
+    """ Store the current process id to pid_file"""
+    process = psutil.Process()
+    pid_file = os.path.join(pid_file)
     with open(pid_file, "w") as pf:
-        pf.write(str(metrics_collector_process.pid))
+        pf.write(str(process.pid))
 
 
-def stop_metrics_collector_process():
-    """This will stop already running metrics collector process.
+def stop_process(pid_file):
+    """This will stop already running process .
        Note at a time only one pid file will be available.
     """
-
-    pid = get_process_pid_from_file(METRICS_COLLECTOR_PID_FILE)
+    pid = get_process_pid_from_file(pid_file)
     if pid:
         try:
             process = psutil.Process(pid)
             if process.is_running():
-                logging.info(logging.INFO, "Process with pid {} is running. Killing it.".format(process.pid))
+                logger.info("Process with pid {} is running. Killing it.".format(process.pid))
                 process.kill()
         except Exception as e:
             pass
         else:
-            logging.info(logging.INFO, "Dead process with pid {} found in '{}'.".format(process.pid, METRICS_COLLECTOR_PID_FILE))
+            logger.info("Dead process with pid {} found in '{}'.".format(process.pid, pid_file))
 
-        logging.info(logging.INFO, "Removing pid file '{}'.".format(METRICS_COLLECTOR_PID_FILE))
-        os.remove(METRICS_COLLECTOR_PID_FILE)
+        logger.info("Removing pid file '{}'.".format(pid_file))
+        os.remove(pid_file)
+
+
+def check_is_running(pid_file):
+    pid = get_process_pid_from_file(pid_file)
+    if pid:
+        try:
+            perf_mon_process = psutil.Process(pid)
+        except Exception as e:
+            stop_process(pid_file)
+        else:
+            if perf_mon_process.is_running():
+                logger.error("Performance monitoring script already running. "
+                                "Stop it using stop option.")
+                sys.exit()
+
+
+def store_metrics_collector_pid():
+    """ Store the process id of metrics collector process"""
+    store_pid(METRICS_COLLECTOR_PID_FILE)
+
+
+def stop_metrics_collector_process():
+    """This will stop already running metrics collector process.
+        Note at a time only one pid file will be available.
+     """
+    stop_process(METRICS_COLLECTOR_PID_FILE)
 
 
 def monitor_processes(server_process, metrics, interval, socket):
@@ -88,23 +113,15 @@ def start_metric_collection(server_process, metrics, interval, socket):
     if bad_metrics:
         raise Exception("Metrics not available for monitoring {}.".format(bad_metrics))
 
-    logging.log(logging.INFO, "Started metric collection for target server processes.....")
+    logger.info("Started metric collection for target server processes.....")
     thread = gevent.spawn(monitor_processes, server_process, metrics, interval, socket)
     gevent.joinall([thread])
 
 
 def start_metric_collector_process():
     """Spawn a metric collection process and keep on monitoring """
-    metric_collector_pid = get_process_pid_from_file(METRICS_COLLECTOR_PID_FILE)
-    if metric_collector_pid:
-        try:
-            perf_mon_process = psutil.Process(metric_collector_pid)
-        except Exception as e:
-            stop_metrics_collector_process()
-        else:
-            if perf_mon_process.is_running():
-                raise Exception("Performance monitoring script already running. "
-                                "Stop it using stop option.")
+
+    check_is_running(METRICS_COLLECTOR_PID_FILE)
     store_metrics_collector_pid()
     server_pid = get_process_pid_from_file(get_server_pidfile())
     server_process = get_server_processes(server_pid)

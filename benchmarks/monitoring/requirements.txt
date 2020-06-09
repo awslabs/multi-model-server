@@ -1,1 +1,2 @@
 gevent==20.5.2
+junitparser==1.4.1

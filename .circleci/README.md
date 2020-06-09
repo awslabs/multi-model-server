@@ -10,7 +10,7 @@ Currently following jobs are executed under "**build_and_test**" workflow
 2. **python_tests** - Executes pytests from _mms/tests/unit_tests/_
 3. **api_tests** - (NEW!) Executes newman test suite for API testing
 4. **benchmark** - Executes latency benchmark using resnet-18 model
-5. **taurus** - (NEW!) Executes taurus tests for performance
+5. **performance_regression** - (NEW!) Executes performance tests using taurus/jmeter 
 
 ## scripts
 Instead of using inline commands inside _config.yml_, job steps are configured as shell scripts.  

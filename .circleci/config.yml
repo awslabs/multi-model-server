@@ -100,7 +100,7 @@ jobs:
             path: /tmp/MMSBenchmark/out/latency/resnet-18/report/
             destination: benchmark-latency-resnet-18
 
-    taurus:
+    performance_regression:
       executor: docker-python-3
       steps:
         - attach-mms-workspace
@@ -116,8 +116,7 @@ jobs:
             path: mms.log
         - store_artifacts:
             name: Store Taurus results
-            path: /tmp/cci-taurus/
-            destination: taurus-results
+            path: /tmp/mms-performance-regression/
 
     modelarchiver:
       executor: docker-python-3
@@ -146,6 +145,6 @@ workflows:
       - benchmark:
           requires:
             - build
-      - taurus:
+      - performance_regression:
           requires:
             - build

@@ -109,13 +109,13 @@ jobs:
             name: Install Taurus
             command: pip install bzt
         - run:
-            name: Start MMS, Execute Taurus testcases, Stop MMS
+            name: Start MMS, Execute performance regression testcases, Stop MMS
             command: .circleci/scripts/linux_test_taurus.sh
         - store_artifacts:
-            name: Store server logs from Taurus tests
+            name: Store server logs
             path: mms.log
         - store_artifacts:
-            name: Store Taurus results
+            name: Store artifacts from performance regression run
             path: /tmp/mms-performance-regression/
 
     modelarchiver:

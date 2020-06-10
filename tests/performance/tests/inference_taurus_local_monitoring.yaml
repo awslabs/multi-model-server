@@ -1,0 +1,48 @@
+---
+execution:
+- concurrency: 1
+  ramp-up: 5s
+  hold-for: 20s
+  scenario: Inference
+scenarios:
+  Inference:
+    script: register_and_inference.jmx
+
+modules:
+  jmeter:
+    properties:
+      port : 8080
+      management_port : 8081
+      protocol : http
+      input_filepath : kitten.jpg
+  server_local_monitoring:
+    # metrics_monitoring_taurus and dependencies should be in python path
+    class : metrics_monitoring_taurus.Monitor # monitoring class.
+
+services:
+  - module: server_local_monitoring # should be added in modules section
+    ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
+      - interval: 1s
+        metrics:
+          - cpu
+          - disk-space
+          - mem
+          - sum_memory_percent
+  - module: monitoring
+    ~local:
+      - interval: 20s   # polling interval
+        logging: True # local monitoring logs will be saved to "local_monitoring_logs.csv" in the artifacts dir
+        metrics:
+          - cpu
+reporting:
+- module: passfail # this is to enable passfail module
+- module: junit-xml
+  data-source: pass-fail
+- module: junit-xml
+  data-source: sample-labels
+- module: final-stats
+  dump-csv : ${BASEDIR}/final_stats.csv
+
+setting:
+  env:
+    BASEDIR : '.'

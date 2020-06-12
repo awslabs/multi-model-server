@@ -15,7 +15,8 @@ Script does the following:
 
 ### A. Installation Prerequisites
 1. Install Taurus. The Taurus needs Python3 but since your tests and MMS instance can run in different virtual environement or machine, 
-you can configure system such that tests are running on Python3 and MMS instance can run on Python 2 or 3.
+you can configure system such that tests are running on Python3 and MMS instance can run on Python 2 or 3.  
+Refer the [link](https://gettaurus.org/docs/Installation/) for more details on installation.
    ```bash   
     pip install bzt # Needs python3.6+
     ``` 

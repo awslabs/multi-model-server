@@ -4,17 +4,11 @@ execution:
   ramp-up: 1s
   hold-for: 20s
   scenario: Inference
+
 scenarios:
   Inference:
     script: register_and_inference.jmx
 
-modules:
-  jmeter:
-    properties:
-      port : 8080
-      management_port : 8081
-      protocol : http
-      input_filepath : kitten.jpg
 
 
 services:
@@ -30,15 +24,3 @@ services:
           - sum_num_handles
           - server_workers # no of mms workers
 
-reporting:
-- module: passfail # this is to enable passfail module
-- module: junit-xml
-  data-source: pass-fail
-- module: junit-xml
-  data-source: sample-labels
-- module: final-stats
-  dump-csv : ${BASEDIR}/final_stats.csv
-
-settings:
-  env:
-    BASEDIR : '.'

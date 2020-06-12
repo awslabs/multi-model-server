@@ -9,17 +9,14 @@ You can specify test cases to be run by providing 'test-dir' (default='monitorin
 
 The script starts the server monitoring agent, collects all the test cases, executes them and then produces Junit XML and HTML report in artifacts-dir.  
 
-**Note**: The script assumes that Model Server is already started. The different JMeter test case parameters such as Model Server Host, Port, image path are specified in test yamls. Modify as per your setup.
-In future, a global config file will be provided for commonly used parameters.
-
-```bash   
-pip install -r requirements.txt
-```  
-
-To install monitoring server dependencies, use the following command.
-```bash   
-pip install -r requirements.txt
-```  
+#### Check below things before running the test suite
+1. Multi Model Server is running
+2. Check [global_config.yaml](tests/common/global_config.yaml) for different parameters and set them as per your environment. Ideally you need to not to change anything as all default values are being used.
+3. Make sure all the pip dependencies are installed.
+   ```bash   
+    pip install -r requirements.txt
+    ```    
+4. This guide assumes you are running scripts from this directory.
 
 To run the test suite. 
 ```bash
@@ -57,7 +54,7 @@ There are multiple ways you can specify your test scenario.
     
     To get you started quickly, we have provided a sample JMeter script and a Taurus yaml file [here](tests/register_and_inference.jmx) and [here](tests/call_jmx.yaml) .
     
-    Here is how the call_jmx.yaml looks like. Adjust the module/jmeter/properties section as per your environment. 
+    Here is how the sample call_jmx.yaml looks like. Adjust the module/jmeter/properties section as per your environment. 
     
     ```yaml
     execution:
@@ -82,13 +79,13 @@ There are multiple ways you can specify your test scenario.
     Use Taurus command below to run the test case:
     
     ```bash
-    bzt call_jmx.yaml
+    bzt call_jmx.yaml tests/common/global_config.yaml
     ```
 
 2. Write a Taurus script
 
     You can also write a Taurus script for a specific executor type.
-    For quick reference, we have provided a Taurus script with JMeter executor [here](tests/inference.yaml).
+    For quick reference, we have provided a Taurus script with JMeter executor.
     
     Below is the yaml. 
     
@@ -122,7 +119,7 @@ There are multiple ways you can specify your test scenario.
     Use command Taurus command below to run the test yaml. Note this test script assumes squeezenet model is already registered.
     
     ```bash
-    bzt inference.yaml
+    bzt inference.yaml 
     ```
 
 #### 2. Metrics to monitor
@@ -169,7 +166,7 @@ Metrics can be monitored in two ways:
     Use command Taurus command below to run the test yaml and observe the Metrics widget on CLI live report.
     
     ```bash
-    bzt inference_server_monitoring.yaml
+    bzt inference_server_monitoring.yaml tests/common/global_config.yaml
     ```
 
 
@@ -177,9 +174,11 @@ Metrics can be monitored in two ways:
 
     If your test client is running on the server itself, you may want to use this method.
     We have provided a custom Taurus plugin as [metrics_monitoring_taurus.py](metrics_monitoring_taurus.py). Make sure that the benchmarks/monitoring folder 
-    is in PYTHONPATH. You need to specify the monitoring class.
+    is in PYTHONPATH. You need to specify the monitoring class. 
     
-    Use command below to add update PYTHONPATH.
+    **Note**: To know the list of supported/available metrics check [here](metrics/__init__.py)  
+    
+    Use commands below to add update PYTHONPATH.
     
     ```bash
      export MMS_HOME=<MMS_HOME_PATH>
@@ -229,6 +228,6 @@ Test yamls can be found [here](tests/inference_server_monitoring_criteria.yaml) 
 Use command below to run the test case
 
 ```bash
-bzt inference_server_monitoring_criteria.yaml
-bzt inference_taurus_local_monitoring_criteria.yaml
+bzt inference_server_monitoring_criteria.yaml tests/common/global_config.yaml
+bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.yaml
 ```

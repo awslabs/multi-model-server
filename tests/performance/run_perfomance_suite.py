@@ -97,6 +97,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     start_monitoring_server = "python {}/metrics_monitoring_server.py --start".format(path)
     run_process(start_monitoring_server, wait=False)
 
+    global_config_file = "{}/tests/common/global_config.yaml".format(path)
     junit_xml = JUnitXml()
     pre_command = 'export PYTHONPATH={}:$PYTHONPATH; '.format(str(path))
 
@@ -106,7 +107,8 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
         with Timer("Test suite {} execution time".format(suite_name)) as t:
             suit_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
             options_str = get_options(suit_artifacts_dir, jmeter_path)
-            code, err = run_process("{} bzt {} {} ".format(pre_command, options_str, test_file))
+            code, err = run_process("{} bzt {} {} {}".format(pre_command, options_str,
+                                                             test_file, global_config_file))
             suite_time = t.diff()
             suite_start = t.start
 
@@ -182,9 +184,6 @@ if __name__ == "__main__":
                            help='Test case file name pattern. example *.yaml')
 
     parser.add_argument('-j', '--jmeter-path', nargs=1, type=str, dest='jmeter_path', default=[None],
-                        help='JMeter executable bin path')
-
-    parser.add_argument('-t', '--taurus-console', nargs=1, type=bool, dest='taurus_console', default=[None],
                         help='JMeter executable bin path')
 
     args = parser.parse_args()

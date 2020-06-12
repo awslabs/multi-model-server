@@ -1,3 +1,4 @@
+taurus
 gevent==20.5.2
 junitparser==1.4.1
 git+https://github.com/maheshambule/vjunit.git#egg=vjunit

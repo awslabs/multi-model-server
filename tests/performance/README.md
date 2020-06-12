@@ -13,7 +13,7 @@ Script does the following:
 3. Executes test yamls
 4. Generates Junit XML and HTML report in artifacts-dir.  
 
-### a.Installation Prerequisites
+### 1. Installation Prerequisites
 1. Install Taurus. The Taurus needs Python3 but since your tests and MMS instance can run in different virtual environement or machine, 
 you can configure system such that tests are running on Python3 and MMS instance can run on Python 2 or 3.
    ```bash   
@@ -25,32 +25,33 @@ you can configure system such that tests are running on Python3 and MMS instance
     pip install -r $MMS_HOME/tests/performance/requirements.txt
     ``` 
 
-### b.Running the test suite
+### 2. Running the test suite
 1. Run MMS server
 2. Make sure parameters set in the [global_config.yaml](tests/common/global_config.yaml) are correct.
 3. Run the test suite runner script
 4. Check the console logs, $artifacts-dir$/junit.html report and other artifacts.
 
-**steps are provided below**
-```bash
-export MMS_HOME=<MMS_HOME_PATH>
-cd $MMS_HOME/tests/performance
+    **steps are provided below**
+    ```bash
+    export MMS_HOME=<MMS_HOME_PATH>
+    cd $MMS_HOME/tests/performance
+    
+    # Run the command below in different terminal to start MMS
+    # multi-model-server --start 
+    
+    # check variables
+    #vi tests/common/global_config.yaml 
+    # jpeg download command for quick reference. Set input_filepath in global_config.yaml
+    #curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
+    
+    python run_perfomance_suite.py --artifacts-dir='<path>' --pattern='*criteria*.yaml'
+    ```
 
-# Run the command below in different terminal to start MMS
-# multi-model-server --start 
-
-# check variables
-#vi tests/common/global_config.yaml 
-# jpeg download command for quick reference. Set input_filepath in global_config.yaml
-#curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
-
-python run_perfomance_suite.py --artifacts-dir='<path>' --pattern='*criteria*.yaml'
-```
-
-### c.Understanding the test suite artifacts and reports
+### 3. Understanding the test suite artifacts and reports
 1. The $artifacts-dir$/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
 test suite. Different criteria in the yaml are treated as test cases. If criteria is not specified in the yaml, test suite is marked as skipped with 0 test cases.
-2. For each test yaml a sub-directory is created with artifacts for it.
+2. For each test yaml a sub-directory is created with artifacts for it.  
+
 
 
 ## How to add test case to test suite.

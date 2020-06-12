@@ -4,7 +4,13 @@ version: 2.1
 executors:
   docker-python-3:
     docker:
-      - image: prashantsail/mms-build:python3.6@sha256:ea8ad58cc1740587f062d3b149175563e783d420d61ff242f9280a2550457853
+      - image: prashantsail/mms-build:python3.6
+    environment:
+      _JAVA_OPTIONS: "-Xmx2048m"
+
+  docker-python-2:
+    docker:
+      - image: prashantsail/mms-build:python2.7
     environment:
       _JAVA_OPTIONS: "-Xmx2048m"
 
@@ -44,7 +50,10 @@ commands:
 
 jobs:
     build:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - checkout
         - run:
@@ -62,7 +71,10 @@ jobs:
               - .
 
     python_tests:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - attach-mms-workspace
         - run:
@@ -73,7 +85,10 @@ jobs:
             path: htmlcov
 
     api_tests:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - attach-mms-workspace
         - install-mms-server
@@ -85,7 +100,10 @@ jobs:
             collection: https
 
     benchmark:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - attach-mms-workspace
         - install-mms-server
@@ -101,28 +119,28 @@ jobs:
             destination: benchmark-latency-resnet-18
 
     performance_regression:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - attach-mms-workspace
         - install-mms-server
         - run:
-            name: Install Taurus
-            command: pip install bzt
-        - run:
-            name: Start MMS, Execute Taurus testcases, Stop MMS
+            name: Start MMS, Execute performance regression testcases, Stop MMS
             command: .circleci/scripts/linux_test_taurus.sh
         - store_artifacts:
-            name: Store server logs from Taurus tests
+            name: Store server logs
             path: mms.log
         - store_artifacts:
-            name: Store Taurus test results as artifacts
+            name: Store artifacts from performance regression run
             path: /tmp/mms-performance-regression/
-        - store_test_results:
-            name: Store Taurus test results
-            path: /tmp/mms-performance-regression/report/
 
     modelarchiver:
-      executor: docker-python-3
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
       steps:
         - checkout
         - run:
@@ -133,21 +151,51 @@ jobs:
             path: model-archiver/results_units
             destination: units
 
+
 workflows:
   version: 2
-  build_and_test:
-    jobs:
-      - build
-#      - modelarchiver
+#  build_and_test_python36:
+#    jobs:
+#      - build:
+#          executor: docker-python-3
+#      - modelarchiver:
+#          executor: docker-python-3
 #      - python_tests:
+#          executor: docker-python-3
 #          requires:
 #            - build
 #      - api_tests:
+#          executor: docker-python-3
 #          requires:
 #            - build
 #      - benchmark:
+#          executor: docker-python-3
+#          requires:
+#            - build
+#      - performance_regression:
+#          executor: docker-python-3
+#          requires:
+#            - build
+
+  build_and_test_python27:
+    jobs:
+      - build:
+          executor: docker-python-2
+#      - modelarchiver:
+#          executor: docker-python-2
+#      - python_tests:
+#          executor: docker-python-2
+#          requires:
+#            - build
+#      - api_tests:
+#          executor: docker-python-2
+#          requires:
+#            - build
+#      - benchmark:
+#          executor: docker-python-2
 #          requires:
 #            - build
       - performance_regression:
+          executor: docker-python-2
           requires:
             - build

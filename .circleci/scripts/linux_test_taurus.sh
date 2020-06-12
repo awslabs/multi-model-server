@@ -8,11 +8,17 @@ JMETER_PATH='/opt/apache-jmeter-5.3/bin/jmeter'
 multi-model-server --start >> mms.log 2>&1
 sleep 10
 
-#cd test suite
 cd tests/performance
+
+# Hack to use python 3.6.5 for bzt installation and execution on a Python 2.7 environment
+# ToDo: Update condition to be more specific - check if python 2 is installed by default
+if hash pyenv 2>/dev/null; then
+  pyenv local 3.6.5
+fi
 
 # Install dependencies
 pip install -r requirements.txt
+pip install bzt
 
 # Execute performance test suite and store exit code
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg

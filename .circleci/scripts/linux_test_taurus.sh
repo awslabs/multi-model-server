@@ -8,8 +8,8 @@ JMETER_PATH='/opt/apache-jmeter-5.3/bin/jmeter'
 multi-model-server --start >> mms.log 2>&1
 sleep 10
 
-#cd taurus
-cd benchmarks/monitoring
+#cd test suite
+cd tests/performance
 
 # Install dependencies
 pip install -r requirements.txt

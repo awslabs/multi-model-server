@@ -62,4 +62,4 @@ RUN curl https://pyenv.run | bash \
     && echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bashrc \
     && . ~/.bashrc \
     && pyenv install 3.6.5
-ENV PATH="/root/.pyenv/bin:$PATH"
+ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:$PATH"

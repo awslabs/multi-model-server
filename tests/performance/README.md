@@ -5,7 +5,7 @@ We use Taurus with JMeter as a test automation framework to run the test cases a
 
 ## How to run the test suite
 To run the test suite you need to execute the [run_perfomance_suite.py](run_perfomance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
-You can specify test cases to be run by providing 'test-dir'(default='$MMS_HOME/tests/performance/tests') and 'pattern' (default='*.yaml'). For other options use '--help' option.   
+You can specify test cases to be run by providing 'test-dir' with default as '$MMS_HOME/tests/performance/tests' and 'pattern' with default as '*.yaml'. For other options use '--help' option.   
 
 Script does the following:  
 1. Optionally but by default starts the metrics monitoring server
@@ -115,8 +115,7 @@ Metrics can be monitored in two ways:
    
     Sample yaml with monitoring section config. Complete yaml can be found [here](tests/inference_server_monitoring.yaml)
     
-    ```yaml 
-    
+    ```yaml
     services:
       - module: monitoring
         server-agent:
@@ -157,7 +156,7 @@ Metrics can be monitored in two ways:
     
     Relevant test yaml sections. Test yaml can be found [here](tests/inference_taurus_local_monitoring.yaml)
     
-    ```
+    ```yaml
     modules:
       server_local_monitoring:
         # metrics_monitoring_taurus and dependencies should be in python path

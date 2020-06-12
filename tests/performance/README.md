@@ -5,17 +5,17 @@ We use Taurus with JMeter as a test automation framework to run the test cases a
 
 ## How to run the test suite
 To run the test suite you need to execute the [run_perfomance_suite.py](run_perfomance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
-You can specify test cases to be run by providing 'test-dir' (default='$MMS_HOME/tests/performance/tests') and 'pattern' (default='\*criteria\*.yaml'). For other options use '--help' option.   
+You can specify test cases to be run by providing 'test-dir'(default='$MMS_HOME/tests/performance/tests') and 'pattern' (default='*.yaml'). For other options use '--help' option.   
 
 Script does the following:  
-1. Optionally but by default start the metrics monitoring server
-2. Collect all the test yamls from test-dir satisfying the pattern
-3. Execute test yamls
-4. Generate Junit XML and HTML report in artifacts-dir.  
+1. Optionally but by default starts the metrics monitoring server
+2. Collects all the test yamls from test-dir satisfying the pattern
+3. Executes test yamls
+4. Generates Junit XML and HTML report in artifacts-dir.  
 
 ## Installation Prerequisites
-1. Install Taurus. While Taurus needs Python3, you can run test suite in Python3 environment on same or different machine while your MMS instance is running on
-Python2 or Python3 on same or different machine. 
+1. Install Taurus. The Taurus needs Python3 but since your tests and MMS instance can run in different virtual environement or machine, 
+you can configure system such that tests are running on Python3 and MMS instance can run on Python 2 or 3.
    ```bash   
     pip install bzt # Needs python3.6+
     ``` 
@@ -29,26 +29,26 @@ Python2 or Python3 on same or different machine.
 1. Run MMS server
 2. Make sure parameters set in the [global_config.yaml](tests/common/global_config.yaml) are correct.
 3. Run the test suite runner script
-4. Check the console logs, <artifacts-dir>/junit.html report and other artifacts.
+4. Check the console logs, $artifacts-dir$/junit.html report and other artifacts.
 
 **steps are provided below**
 ```bash
 export MMS_HOME=<MMS_HOME_PATH>
 cd $MMS_HOME/tests/performance
 
-# assumes multi-model-server is in path
-multi-model-server --start 
+# Run the command below in different terminal to start MMS
+# multi-model-server --start 
 
 # check variables
 #vi tests/common/global_config.yaml 
 # jpeg download command for quick reference. Set input_filepath in global_config.yaml
 #curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
 
-python run_perfomance_suite.py --artifacts-dir='<path>'
+python run_perfomance_suite.py --artifacts-dir='<path>' --pattern='*criteria*.yaml'
 ```
 
 ## Understanding the test suite artifacts and reports
-1. The <artifacts-dir>/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
+1. The $artifacts-dir$/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
 test suite. Different criteria in the yaml are treated as test cases. If criteria is not specified in the yaml, test suite is marked as skipped with 0 test cases.
 2. For each test yaml a sub-directory is created with artifacts for it.
 
@@ -65,7 +65,7 @@ To add test case follow steps below.
 You can specify the test scenarios, in the scenario section of the yaml.
 To get you started quickly, we have provided a sample JMeter script and a Taurus yaml file [here](tests/register_and_inference.jmx) and [here](tests/call_jmx.yaml) .
     
-Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in global_config.yaml file.
+Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [global_config.yaml](tests/common/global_config.yaml) file.
     
     ```yaml
     execution:
@@ -95,11 +95,11 @@ Details about how to run an existing JMeter script are provided [here](https://g
 
 
 #### 2. Add metrics to monitor
-You can specify the different metrics to monitor in services/monitoring section of the yaml.
+You can specify different metrics in services/monitoring section of the yaml.
 Metrics can be monitored in two ways:
 1. Standalone monitoring server
 
-    If your server is hosted on different machine, you will be using this method. Before running the test case
+    If your MMS server is hosted on different machine, you will be using this method. Before running the test case
     you have to start a [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will be communicating with Taurus test client over sockets.
     The address and port(default=9009) of the monitoring script should be specified in test case yaml. 
     
@@ -110,7 +110,7 @@ Metrics can be monitored in two ways:
     ```bash 
     export MMS_HOME=<MMS_HOME_PATH>
     pip install -r $MMS_HOME/tests/performance/requirements.txt
-    python $MMS_HOME/tests/performance/metrics_monitoring_server.py
+    python $MMS_HOME/tests/performance/metrics_monitoring_server.py --start
     ```     
    
     Sample yaml with monitoring section config. Complete yaml can be found [here](tests/inference_server_monitoring.yaml)
@@ -213,7 +213,7 @@ bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.y
 ```
 
 
-##Work in Progress
+## Work in Progress
 1. Add more metrics for cpu and gpu both. Add documentation around those.
 2. Add hooks to add custom metrics. Add a metrics registry.
 3. Better reporting and artifact management

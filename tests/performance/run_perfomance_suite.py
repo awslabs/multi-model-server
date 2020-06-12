@@ -93,24 +93,27 @@ def get_options(artifacts_dir, jmeter_path=None):
 
 
 def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monitoring_server):
-    path = pathlib.Path(__file__).parent.absolute()
+    if os.path.exists(artifacts_dir):
+        raise Exception("Artifacts dir '{}' already exists. Provide different one.".format(artifacts_dir))
 
-    if monitoring_server:
-        start_monitoring_server = "python {}/metrics_monitoring_server.py --start".format(path)
-        code, output = run_process(start_monitoring_server, wait=False)
-        if code:
-            raise Exception("Issue while staring monitoring server. Exiting..")
+    path = pathlib.Path(__file__).parent.absolute()
 
     global_config_file = "{}/tests/common/global_config.yaml".format(path)
     with open(global_config_file) as conf_file:
-        global_config = yaml.load(conf_file)
-
-    server_props = global_config["modules"]["jmeter"]
+        global_config = yaml.safe_load(conf_file)
+    server_props = global_config["modules"]["jmeter"]["properties"]
     server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"], server_props["port"])
     try:
         requests.get(server_ping_url)
     except requests.exceptions.ConnectionError:
-        raise Exception("Server is not running. Exiting..")
+        raise Exception("Server is not running. Pinged url {}. Exiting..".format(server_ping_url))
+
+    if monitoring_server:
+        start_monitoring_server = "python {}/metrics_monitoring_server.py --start".format(path)
+        code, output = run_process(start_monitoring_server, wait=False)
+        time.sleep(2)
+
+        ## TODO -  Add check if server started
 
     junit_xml = JUnitXml()
     pre_command = 'export PYTHONPATH={}:$PYTHONPATH; '.format(str(path))
@@ -179,7 +182,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monitoring_ser
     run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
     if monitoring_server:
-        stop_monitoring_server = "python {}/metrics_monitoring_server.py --stop".format(path)
+        stop_monitoring_server = "python3 {}/metrics_monitoring_server.py --stop".format(path)
         run_process(stop_monitoring_server)
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:

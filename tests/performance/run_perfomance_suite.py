@@ -19,11 +19,12 @@ import os
 import sys
 import time
 import logging
+import socket
 import argparse
 import glob
 import pathlib
 import subprocess
-import socket
+from subprocess import PIPE, STDOUT
 from tqdm import tqdm
 from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
 
@@ -50,16 +51,18 @@ def run_process(cmd, wait=True):
     print("running command : {}".format(cmd))
 
     if wait:
-        try:
-            output = subprocess.check_output(
-                cmd, stderr=subprocess.STDOUT, shell=True, timeout=30*60,
-                universal_newlines=True)
-        except subprocess.CalledProcessError as exc:
-            print("Status : FAIL", exc.returncode, exc.output)
-            return exc.returncode, exc.output
-        else:
-            print("Output: \n{}\n".format(output))
-            return 0, output
+        os.environ["PYTHONUNBUFFERED"] = "1"
+        p = subprocess.Popen(cmd, stdout=PIPE, stderr=STDOUT,
+                              shell=True)
+        lines =[]
+        while True:
+            line = p.stdout.readline().decode('utf-8').rstrip()
+            if not line: break
+            lines.append(line)
+            print(line)
+
+        return p.returncode, ''.join(lines)
+
 
     else:
         p = subprocess.Popen(cmd, shell=True)
@@ -91,7 +94,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     if os.path.exists(artifacts_dir):
         artifacts_dir = "{}_{}".format(artifacts_dir, str(int(time.time())))
     path = pathlib.Path(__file__).parent.absolute()
-    start_monitoring_server = "python {}/metrics_monitoring_server.py --start".format(path)
+    start_monitoring_server = "python3 {}/metrics_monitoring_server.py --start".format(path)
     run_process(start_monitoring_server, wait=False)
 
     junit_xml = JUnitXml()
@@ -100,7 +103,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     test_yamls = get_test_yamls(test_dir, pattern)
     for test_file in tqdm(test_yamls, desc="Test Suites"):
         suite_name = os.path.basename(test_file).rsplit('.', 1)[0]
-        with Timer("Test suit {} execution time".format(suite_name)) as t:
+        with Timer("Test suite {} execution time".format(suite_name)) as t:
             suit_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
             options_str = get_options(suit_artifacts_dir, jmeter_path)
             code, err = run_process("{} bzt {} {} ".format(pre_command, options_str, test_file))
@@ -109,7 +112,6 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
 
         # Assumes default file name
         xunit_file = "{}/xunit.xml".format(suit_artifacts_dir)
-
         tests, failures, skipped, errors = 0, 0, 0, 0
         err_txt = ""
         ts = TestSuite(suite_name)
@@ -160,7 +162,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     junit_xml.write(junit_xml_path)
     run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
-    stop_monitoring_server = "python {}/metrics_monitoring_server.py --stop".format(path)
+    stop_monitoring_server = "python3 {}/metrics_monitoring_server.py --stop".format(path)
     run_process(stop_monitoring_server)
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
@@ -180,6 +182,9 @@ if __name__ == "__main__":
                            help='Test case file name pattern. example *.yaml')
 
     parser.add_argument('-j', '--jmeter-path', nargs=1, type=str, dest='jmeter_path', default=[None],
+                        help='JMeter executable bin path')
+
+    parser.add_argument('-t', '--taurus-console', nargs=1, type=bool, dest='taurus_console', default=[None],
                         help='JMeter executable bin path')
 
     args = parser.parse_args()

@@ -51,6 +51,6 @@ reporting:
 - module: final-stats
   dump-csv : ${BASEDIR}/final_stats.csv
 
-setting:
+settings:
   env:
     BASEDIR : '.'

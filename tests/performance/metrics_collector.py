@@ -102,7 +102,11 @@ def monitor_processes(server_process, metrics, interval, socket):
         message = "\t".join(message)+"\n"
 
         if socket:
-            socket.send(message.encode("latin-1"))
+            try:
+                socket.send(message.encode("latin-1"))
+            except BrokenPipeError:
+                logger.info("Stopping monitoring as socket connection is closed.")
+                break
 
         # TODO - log metrics to a file METRICS_LOG_FILE if METRICS_LOG_FILE is provided
         gevent.sleep(interval)

@@ -7,6 +7,9 @@ We use Taurus test automation framework to run the test cases and metrics monito
 To run the test suite just invoke the [run_perfomance_suite.py](run_perfomance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
 You can specify test cases to be run by providing 'test-dir' (default='monitoring/tests') and 'pattern' (default='*.yaml'). For other options use '--help' option.   
 The script starts the server monitoring agent, collects all the test cases, executes them and then produces Junit XML and HTML report in artifacts-dir.
+Note: It assumes that Model Server is already started. The different JMeter test case parameters such as Model Server Host, Port, image path are specified in test yamls. Modify as per your setup.
+In future a global config file will be provided for commonly used parameters.
+
 
 ```bash
 python run_perfomance_suite.py --artifacts-dir='<path>'

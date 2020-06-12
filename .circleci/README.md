@@ -54,8 +54,8 @@ $ ./run_circleci_tests.py build_and_test_python36 api_tests
 ###### Checklist
 > 1. Make sure docker is running before you start local execution.  
 > 2. Docker containers to have **at least 4GB RAM, 2 CPU**.  
-> 3. If you are on a network with low bandwidth availability, pull the images beforehand using -  
-> docker pull prashantsail/mms-build:python3.6@sha256:ea8ad58cc1740587f062d3b149175563e783d420d61ff242f9280a2550457853  
-> docker pull prashantsail/mms-build:python2.7@sha256:9d18782939652917bbcc8b0181639529f582560dd42589a965e59708e9fd6306  
+> 3. If you are on a network with low bandwidth availability, explicitly pull the docker images beforehand using -  
+> docker pull prashantsail/mms-build:python2.7  
+> docker pull prashantsail/mms-build:python3.6  
 
 > To avoid Pull Request build failures on github, developers should always make sure that their local builds pass.

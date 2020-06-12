@@ -4,13 +4,13 @@ version: 2.1
 executors:
   docker-python-3:
     docker:
-      - image: prashantsail/mms-build:python3.6@sha256:ea8ad58cc1740587f062d3b149175563e783d420d61ff242f9280a2550457853
+      - image: prashantsail/mms-build:python3.6
     environment:
       _JAVA_OPTIONS: "-Xmx2048m"
 
   docker-python-2:
     docker:
-      - image: prashantsail/mms-build:python2.7@sha256:9d18782939652917bbcc8b0181639529f582560dd42589a965e59708e9fd6306
+      - image: prashantsail/mms-build:python2.7
     environment:
       _JAVA_OPTIONS: "-Xmx2048m"
 

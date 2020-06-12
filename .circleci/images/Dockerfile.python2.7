@@ -57,9 +57,9 @@ RUN cd /opt \
 # Only the for the performance regression suite, Python 3.6.5 will be local installed using "pyenv local 3.6.5"
 # !! MMS server will continue using Python 2.7 !!
 RUN curl https://pyenv.run | bash \
-    && echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> ~/.bashrc \
+    && echo 'export PATH="/root/.pyenv/bin:$PATH"' >> ~/.bashrc \
     && echo 'eval "$(pyenv init -)"' >> ~/.bashrc \
     && echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bashrc \
     && . ~/.bashrc \
     && pyenv install 3.6.5
-ENV PATH="$HOME/.pyenv/bin:$PATH"
+ENV PATH="/root/.pyenv/bin:$PATH"

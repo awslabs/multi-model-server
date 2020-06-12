@@ -13,7 +13,7 @@ Script does the following:
 3. Executes test yamls
 4. Generates Junit XML and HTML report in artifacts-dir.  
 
-## Installation Prerequisites
+### Installation Prerequisites
 1. Install Taurus. The Taurus needs Python3 but since your tests and MMS instance can run in different virtual environement or machine, 
 you can configure system such that tests are running on Python3 and MMS instance can run on Python 2 or 3.
    ```bash   
@@ -25,7 +25,7 @@ you can configure system such that tests are running on Python3 and MMS instance
     pip install -r $MMS_HOME/tests/performance/requirements.txt
     ``` 
 
-## Running the test suite
+### Running the test suite
 1. Run MMS server
 2. Make sure parameters set in the [global_config.yaml](tests/common/global_config.yaml) are correct.
 3. Run the test suite runner script
@@ -47,7 +47,7 @@ cd $MMS_HOME/tests/performance
 python run_perfomance_suite.py --artifacts-dir='<path>' --pattern='*criteria*.yaml'
 ```
 
-## Understanding the test suite artifacts and reports
+### Understanding the test suite artifacts and reports
 1. The $artifacts-dir$/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
 test suite. Different criteria in the yaml are treated as test cases. If criteria is not specified in the yaml, test suite is marked as skipped with 0 test cases.
 2. For each test yaml a sub-directory is created with artifacts for it.

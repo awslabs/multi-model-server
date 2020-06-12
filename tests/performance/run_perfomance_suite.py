@@ -61,7 +61,7 @@ def run_process(cmd, wait=True):
             lines.append(line)
             print(line)
 
-        return p.returncode, ''.join(lines)
+        return p.returncode, '\n'.join(lines)
 
 
     else:
@@ -94,7 +94,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     if os.path.exists(artifacts_dir):
         artifacts_dir = "{}_{}".format(artifacts_dir, str(int(time.time())))
     path = pathlib.Path(__file__).parent.absolute()
-    start_monitoring_server = "python3 {}/metrics_monitoring_server.py --start".format(path)
+    start_monitoring_server = "python {}/metrics_monitoring_server.py --start".format(path)
     run_process(start_monitoring_server, wait=False)
 
     junit_xml = JUnitXml()
@@ -162,7 +162,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     junit_xml.write(junit_xml_path)
     run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
-    stop_monitoring_server = "python3 {}/metrics_monitoring_server.py --stop".format(path)
+    stop_monitoring_server = "python {}/metrics_monitoring_server.py --stop".format(path)
     run_process(stop_monitoring_server)
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:

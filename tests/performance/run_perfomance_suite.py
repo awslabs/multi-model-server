@@ -24,6 +24,8 @@ import argparse
 import glob
 import pathlib
 import subprocess
+import yaml
+import requests
 from subprocess import PIPE, STDOUT
 from tqdm import tqdm
 from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
@@ -66,7 +68,7 @@ def run_process(cmd, wait=True):
 
     else:
         p = subprocess.Popen(cmd, shell=True)
-        return 1, ''
+        return p.returncode, ''
 
 
 def get_test_yamls(dir_path=None, pattern="*.yaml"):
@@ -90,14 +92,26 @@ def get_options(artifacts_dir, jmeter_path=None):
     return options_str
 
 
-def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
-    if os.path.exists(artifacts_dir):
-        artifacts_dir = "{}_{}".format(artifacts_dir, str(int(time.time())))
+def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monitoring_server):
     path = pathlib.Path(__file__).parent.absolute()
-    start_monitoring_server = "python {}/metrics_monitoring_server.py --start".format(path)
-    run_process(start_monitoring_server, wait=False)
+
+    if monitoring_server:
+        start_monitoring_server = "python {}/metrics_monitoring_server.py --start".format(path)
+        code, output = run_process(start_monitoring_server, wait=False)
+        if code:
+            raise Exception("Issue while staring monitoring server. Exiting..")
 
     global_config_file = "{}/tests/common/global_config.yaml".format(path)
+    with open(global_config_file) as conf_file:
+        global_config = yaml.load(conf_file)
+
+    server_props = global_config["modules"]["jmeter"]
+    server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"], server_props["port"])
+    try:
+        requests.get(server_ping_url)
+    except requests.exceptions.ConnectionError:
+        raise Exception("Server is not running. Exiting..")
+
     junit_xml = JUnitXml()
     pre_command = 'export PYTHONPATH={}:$PYTHONPATH; '.format(str(path))
 
@@ -164,8 +178,9 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path):
     junit_xml.write(junit_xml_path)
     run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
-    stop_monitoring_server = "python {}/metrics_monitoring_server.py --stop".format(path)
-    run_process(stop_monitoring_server)
+    if monitoring_server:
+        stop_monitoring_server = "python {}/metrics_monitoring_server.py --stop".format(path)
+        run_process(stop_monitoring_server)
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
         sys.exit(3)
@@ -186,5 +201,9 @@ if __name__ == "__main__":
     parser.add_argument('-j', '--jmeter-path', nargs=1, type=str, dest='jmeter_path', default=[None],
                         help='JMeter executable bin path')
 
+    parser.add_argument('-m', '--monitoring-server', nargs=1, type=bool, dest='monitoring_server', default=[True],
+                        help='Whether to start monitoring server')
+
     args = parser.parse_args()
-    run_test_suite(args.artifacts[0], args.test_dir[0], args.pattern[0], args.jmeter_path[0])
+    run_test_suite(args.artifacts[0], args.test_dir[0], args.pattern[0], args.jmeter_path[0],
+                   args.monitoring_server[0])

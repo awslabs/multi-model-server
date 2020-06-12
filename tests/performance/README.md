@@ -1,61 +1,71 @@
 # Performance Regression Suite
 
-This test suite helps in running the load tests and monitoring the process, sub-process and system wide metrics. It allows to specify the pass/fail criteria for metrics in the test case.
-We use Taurus test automation framework to run the test cases and metrics monitoring.
+This test suite helps in running the load tests and monitoring the process and system wide metrics. It allows to specify the pass/fail criteria for metrics in the test case.
+We use Taurus with JMeter as a test automation framework to run the test cases and metrics monitoring.
 
 ## How to run the test suite
 To run the test suite you need to execute the [run_perfomance_suite.py](run_perfomance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
-You can specify test cases to be run by providing 'test-dir' (default='monitoring/tests') and 'pattern' (default='*.yaml'). For other options use '--help' option.   
+You can specify test cases to be run by providing 'test-dir' (default='$MMS_HOME/tests/performance/tests') and 'pattern' (default='\*criteria\*.yaml'). For other options use '--help' option.   
 
-The script starts the server monitoring agent, collects all the test cases, executes them and then produces Junit XML and HTML report in artifacts-dir.  
+Script does the following:  
+1. Optionally but by default start the metrics monitoring server
+2. Collect all the test yamls from test-dir satisfying the pattern
+3. Execute test yamls
+4. Generate Junit XML and HTML report in artifacts-dir.  
 
-#### Ensure below things before running the test suite:
-1. Multi Model Server is running
-2. Check [global_config.yaml](tests/common/global_config.yaml) for different parameters and set them as per your environment. Ideally you need to not to change anything as all default values are being used.
-3. Make sure all the pip dependencies are installed.
+## Installation Prerequisites
+1. Install Taurus. While Taurus needs Python3, you can run test suite in Python3 environment on same or different machine while your MMS instance is running on
+Python2 or Python3 on same or different machine. 
    ```bash   
-    pip install -r requirements.txt
-    ```    
-4. This guide assumes you are running scripts from this directory.
+    pip install bzt # Needs python3.6+
+    ``` 
+2. Install other dependencies.
+   ```bash 
+    export MMS_HOME=<MMS_HOME_PATH>
+    pip install -r $MMS_HOME/tests/performance/requirements.txt
+    ``` 
 
-**Finally To run the test suite.**
+## Running the test suite
+1. Run MMS server
+2. Make sure parameters set in the [global_config.yaml](tests/common/global_config.yaml) are correct.
+3. Run the test suite runner script
+4. Check the console logs, <artifacts-dir>/junit.html report and other artifacts.
+
+**steps are provided below**
 ```bash
+export MMS_HOME=<MMS_HOME_PATH>
+cd $MMS_HOME/tests/performance
+
+# assumes multi-model-server is in path
+multi-model-server --start 
+
+# check variables
+#vi tests/common/global_config.yaml 
+# jpeg download command for quick reference. Set input_filepath in global_config.yaml
+#curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
+
 python run_perfomance_suite.py --artifacts-dir='<path>'
 ```
 
-
-## To know more about the Test Suite and to add test cases follow the guide below:
-
-## Taurus
-
-[Taurus](https://gettaurus.org) is Apache 2.0 Licenced, test automation framework which extends and abstracts
-different popular load testing frameworks such as JMeter, Locust etc. Taurus simplifies creating, running and analyzing the 
-performance tests.
-
-## Installation
-Refer the Taurus installation guide [here](https://gettaurus.org/install/Installation/).
+## Understanding the test suite artifacts and reports
+1. The <artifacts-dir>/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
+test suite. Different criteria in the yaml are treated as test cases. If criteria is not specified in the yaml, test suite is marked as skipped with 0 test cases.
+2. For each test yaml a sub-directory is created with artifacts for it.
 
 
-## How to create and run tests
-To run a metrics monitoring test case, you need to specify below in Taurus test case yaml.
-1. Load test case scenario
-2. Metrics to monitor
-3. Pass/fail criteria
+## How to add test case to test suite.
+
+To add test case follow steps below.
+1. Add scenario
+2. Add metrics to monitor
+3. Add pass/fail criteria
 
 
-#### 1. Load test case scenario
+#### 1. Add scenario
 You can specify the test scenarios, in the scenario section of the yaml.
-
-There are multiple ways you can specify your test scenario.
-1. Use existing JMeter/locust test script
-
-    Taurus provides support for different executors such as JMeter. You can use test script written in those frameworks as it is.
-    Details about executor types are provided [here](https://gettaurus.org/docs/ExecutionSettings/).
-    Details about how to run an existing JMeter script are provided [here](https://gettaurus.org/docs/JMeter/). 
+To get you started quickly, we have provided a sample JMeter script and a Taurus yaml file [here](tests/register_and_inference.jmx) and [here](tests/call_jmx.yaml) .
     
-    To get you started quickly, we have provided a sample JMeter script and a Taurus yaml file [here](tests/register_and_inference.jmx) and [here](tests/call_jmx.yaml) .
-    
-    Here is how the sample call_jmx.yaml looks like. Adjust the module/jmeter/properties section as per your environment. 
+Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in global_config.yaml file.
     
     ```yaml
     execution:
@@ -63,69 +73,29 @@ There are multiple ways you can specify your test scenario.
       ramp-up: 1s
       hold-for: 40s
       scenario: Inference
+
     scenarios:
       Inference:
         script: register_and_inference.jmx
-    modules:
-      jmeter:
-        properties:
-          hostname : 127.0.0.1
-          port : 8080
-          management_port : 8081
-          protocol : http
-          input_filepath : kitten.jpg
     
     ```
     
-    Use Taurus command below to run the test case:
+To run this individual test using Taurus(bzt) run commands below:
     
     ```bash
-    bzt call_jmx.yaml tests/common/global_config.yaml
+    export MMS_HOME=<MMS_HOME_PATH>
+    cd $MMS_HOME/tests/performance
+    bzt tests/call_jmx.yaml tests/common/global_config.yaml
     ```
 
-2. Write a Taurus script
+**Note**:
+Taurus provides support for different executors such as JMeter. You can use test script written in those frameworks as it is.
+Details about executor types are provided [here](https://gettaurus.org/docs/ExecutionSettings/).
+Details about how to run an existing JMeter script are provided [here](https://gettaurus.org/docs/JMeter/). 
 
-    You can also write a Taurus script for a specific executor type.
-    For quick reference, we have provided a Taurus script with JMeter executor.
-    
-    Below is the yaml. 
-    
-    ```yaml
-    execution:
-    - concurrency: 4
-      ramp-up: 1s
-      hold-for: 20s
-      scenario: Inference
-    scenarios:
-      Inference:
-        requests:
-        - follow-redirects: true
-          label: Inference Request
-          method: POST
-          url: ${__P(protocol,http)}://${__P(hostname,127.0.0.1)}:${__P(port,8080)}/predictions/${model}
-        store-cache: false
-        store-cookie: false
-        use-dns-cache-mgr: false
-        variables:
-          model: ${__P(model_name,squeezenet_v1.1)}
-    
-    modules:
-      jmeter:
-        properties:
-          input_filepath : kitten.jpg
-          model_name : squeezenet
-    
-    ```
 
-    Use command Taurus command below to run the test yaml. Note this test script assumes squeezenet model is already registered.
-    
-    ```bash
-    bzt inference.yaml 
-    ```
-
-#### 2. Metrics to monitor
+#### 2. Add metrics to monitor
 You can specify the different metrics to monitor in services/monitoring section of the yaml.
-
 Metrics can be monitored in two ways:
 1. Standalone monitoring server
 
@@ -134,19 +104,16 @@ Metrics can be monitored in two ways:
     The address and port(default=9009) of the monitoring script should be specified in test case yaml. 
     
     **Note**: For available metrics check AVAILABLE_METRICS in the script [metric/__init__.py](metrics/__init__.py).  
+    **Note**: While running Test suite runner script, no need to manually start the monitoring server. The scripts optionally but by default starts and stops it in setup and teardown.
     
-    To install monitoring server dependencies, use the following command
-    ```bash   
-    pip install -r requirements.txt
-    ```    
+    To start monitoring server run commands below:
+    ```bash 
+    export MMS_HOME=<MMS_HOME_PATH>
+    pip install -r $MMS_HOME/tests/performance/requirements.txt
+    python $MMS_HOME/tests/performance/metrics_monitoring_server.py
+    ```     
    
-    To start monitoring script on server use command below:
-    
-    ```bash   
-    python benchmarks/monitoring/metrics_monitoring_server.py
-    ```
-    
-    Test yaml with monitoring section config. Complete yaml can be found [here](tests/inference_server_monitoring.yaml)
+    Sample yaml with monitoring section config. Complete yaml can be found [here](tests/inference_server_monitoring.yaml)
     
     ```yaml 
     
@@ -164,26 +131,28 @@ Metrics can be monitored in two ways:
               - server_workers # no of mms workers
     ```
     
-    Use command Taurus command below to run the test yaml and observe the Metrics widget on CLI live report.
+    Use Taurus command below to run the test yaml and observe the Metrics widget on CLI live report.
     
     ```bash
-    bzt inference_server_monitoring.yaml tests/common/global_config.yaml
+    export MMS_HOME=<MMS_HOME_PATH>
+    cd $MMS_HOME/tests/performance
+    bzt tests/inference_server_monitoring.yaml tests/common/global_config.yaml
     ```
 
 
 2. Taurus local monitoring plugin
 
     If your test client is running on the server itself, you may want to use this method.
-    We have provided a custom Taurus plugin as [metrics_monitoring_taurus.py](metrics_monitoring_taurus.py). Make sure that the benchmarks/monitoring folder 
-    is in PYTHONPATH. You need to specify the monitoring class. 
+    We have provided a custom Taurus plugin as [metrics_monitoring_taurus.py](metrics_monitoring_taurus.py). 
     
-    **Note**: To know the list of supported/available metrics check [here](metrics/__init__.py)  
+    **Note**: To know the list of supported/available metrics check [here](metrics_monitoring_taurus.py)  
+    **Note**: While running Test suite runner script, no need to manually update the PYTHONPATH. The scripts updates it.
     
-    Use commands below to add update PYTHONPATH.
+    Use commands below to update PYTHONPATH so that plugin gets picked up by Taurus.
     
     ```bash
      export MMS_HOME=<MMS_HOME_PATH>
-     export PYTHONPATH=$MMS_HOME/benchmarks/monitoring:$PYTHONPATH
+     export PYTHONPATH=$MMS_HOME/tests/performance:$PYTHONPATH
     ```
     
     Relevant test yaml sections. Test yaml can be found [here](tests/inference_taurus_local_monitoring.yaml)
@@ -206,7 +175,15 @@ Metrics can be monitored in two ways:
     
     ```
 
-#### 3. Pass/Fail criteria
+    Use Taurus command below to run the test yaml and observe the Metrics widget on CLI live report.
+    
+    ```bash
+    export MMS_HOME=<MMS_HOME_PATH>
+    cd $MMS_HOME/tests/performance
+    bzt tests/inference_taurus_local_monitoring.yaml tests/common/global_config.yaml
+    ```
+    
+#### 3. Add pass/fail criteria
 You can specify the pass/fail criteria for the test cases.
 Read more about it [here](https://gettaurus.org/docs/PassFail/)
 
@@ -229,7 +206,17 @@ Test yamls can be found [here](tests/inference_server_monitoring_criteria.yaml) 
 Use command below to run the test case
 
 ```bash
+export MMS_HOME=<MMS_HOME_PATH>
+cd $MMS_HOME/tests/performance
 bzt inference_server_monitoring_criteria.yaml tests/common/global_config.yaml
 bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.yaml
 ```
 
+
+##Work in Progress
+1. Add more metrics for cpu and gpu both. Add documentation around those.
+2. Add hooks to add custom metrics. Add a metrics registry.
+3. Better reporting and artifact management
+4. Enhance framework to add better abstraction to hide Taurus and other scripts.
+5. Auto threshold calculation, environment profiles
+6. Comparison between runs and environments

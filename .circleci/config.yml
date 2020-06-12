@@ -127,9 +127,6 @@ jobs:
         - attach-mms-workspace
         - install-mms-server
         - run:
-            name: Install Taurus
-            command: pip install bzt
-        - run:
             name: Start MMS, Execute performance regression testcases, Stop MMS
             command: .circleci/scripts/linux_test_taurus.sh
         - store_artifacts:

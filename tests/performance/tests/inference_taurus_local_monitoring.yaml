@@ -1,0 +1,30 @@
+---
+execution:
+- concurrency: 1
+  ramp-up: 5s
+  hold-for: 20s
+  scenario: Inference
+scenarios:
+  Inference:
+    script: register_and_inference.jmx
+
+modules:
+  server_local_monitoring:
+    # metrics_monitoring_taurus and dependencies should be in python path
+    class : metrics_monitoring_taurus.Monitor # monitoring class.
+
+services:
+  - module: server_local_monitoring # should be added in modules section
+    ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
+      - interval: 1s
+        metrics:
+          - cpu
+          - disk-space
+          - mem
+          - sum_memory_percent
+  - module: monitoring
+    ~local:
+      - interval: 20s   # polling interval
+        logging: True # local monitoring logs will be saved to "local_monitoring_logs.csv" in the artifacts dir
+        metrics:
+          - cpu

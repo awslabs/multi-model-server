@@ -1,0 +1,26 @@
+modules:
+  jmeter:
+    # These are JMeter test case properties. These variables are used in jmx files.
+    # Change the vaues as per your setup
+    properties:
+      hostname : 127.0.0.1 # MMS properties
+      port : 8080
+      management_port : 8081
+      protocol : http
+      input_filepath : kitten.jpg # make sure jpg is available at this path
+      # if relative path is provided this will be relative to current working directory
+
+# DO-NOT change properties below unless you know what you are doing.
+# They are needed for performance test suite runner script.
+reporting:
+- module: passfail # this is to enable passfail module
+- module: junit-xml
+  data-source: pass-fail
+- module: junit-xml
+  data-source: sample-labels
+- module: final-stats
+  dump-csv : ${BASEDIR}/final_stats.csv
+
+settings:
+  env:
+    BASEDIR : '.'

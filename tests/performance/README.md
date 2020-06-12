@@ -4,12 +4,12 @@ This test suite helps in running the load tests and monitoring the process, sub-
 We use Taurus test automation framework to run the test cases and metrics monitoring.
 
 ## How to run the test suite
-To run the test suite just invoke the [run_perfomance_suite.py](run_perfomance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
+To run the test suite you need to execute the [run_perfomance_suite.py](run_perfomance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
 You can specify test cases to be run by providing 'test-dir' (default='monitoring/tests') and 'pattern' (default='*.yaml'). For other options use '--help' option.   
 
 The script starts the server monitoring agent, collects all the test cases, executes them and then produces Junit XML and HTML report in artifacts-dir.  
 
-#### Check below things before running the test suite
+#### Ensure below things before running the test suite:
 1. Multi Model Server is running
 2. Check [global_config.yaml](tests/common/global_config.yaml) for different parameters and set them as per your environment. Ideally you need to not to change anything as all default values are being used.
 3. Make sure all the pip dependencies are installed.
@@ -18,12 +18,13 @@ The script starts the server monitoring agent, collects all the test cases, exec
     ```    
 4. This guide assumes you are running scripts from this directory.
 
-To run the test suite. 
+**Finally To run the test suite.**
 ```bash
 python run_perfomance_suite.py --artifacts-dir='<path>'
 ```
 
-#### To know more about the Test Suite follow the guide below:
+
+## To know more about the Test Suite and to add test cases follow the guide below:
 
 ## Taurus
 
@@ -231,3 +232,4 @@ Use command below to run the test case
 bzt inference_server_monitoring_criteria.yaml tests/common/global_config.yaml
 bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.yaml
 ```
+

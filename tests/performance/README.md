@@ -12,7 +12,16 @@ The script starts the server monitoring agent, collects all the test cases, exec
 **Note**: The script assumes that Model Server is already started. The different JMeter test case parameters such as Model Server Host, Port, image path are specified in test yamls. Modify as per your setup.
 In future, a global config file will be provided for commonly used parameters.
 
+```bash   
+pip install -r requirements.txt
+```  
 
+To install monitoring server dependencies, use the following command.
+```bash   
+pip install -r requirements.txt
+```  
+
+To run the test suite. 
 ```bash
 python run_perfomance_suite.py --artifacts-dir='<path>'
 ```
@@ -125,6 +134,8 @@ Metrics can be monitored in two ways:
     If your server is hosted on different machine, you will be using this method. Before running the test case
     you have to start a [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will be communicating with Taurus test client over sockets.
     The address and port(default=9009) of the monitoring script should be specified in test case yaml. 
+    
+    **Note**: For available metrics check AVAILABLE_METRICS in the script [metric/__init__.py](metrics/__init__.py).  
     
     To install monitoring server dependencies, use the following command
     ```bash   

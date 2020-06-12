@@ -50,3 +50,15 @@ RUN cd /opt \
     && wget http://search.maven.org/remotecontent?filepath=kg/apc/cmdrunner/2.2/cmdrunner-2.2.jar -O lib/cmdrunner-2.2.jar \
     && java -cp lib/ext/jmeter-plugins-manager-1.4.jar org.jmeterplugins.repository.PluginManagerCMDInstaller \
     && bin/PluginsManagerCMD.sh install jpgc-synthesis=2.1,jpgc-filterresults=2.1,jpgc-mergeresults=2.1,jpgc-cmd=2.1,jpgc-perfmon=2.1
+
+# bzt is used for performance regression test suite
+# bzt requires python 3.6 runtime.
+# Install pyenv to manage both python versions (2.7 and 3.6.5)
+# Only the for the performance regression suite, Python 3.6.5 will be local installed using "pyenv local 3.6.5"
+# !! MMS server will continue using Python 2.7 !!
+RUN curl https://pyenv.run | bash \
+    && echo 'export PATH="/root/.pyenv/bin:$PATH"' >> ~/.bashrc \
+    && echo 'eval "$(pyenv init -)"' >> ~/.bashrc \
+    && echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bashrc \
+    && . ~/.bashrc \
+    && pyenv install 3.6.5

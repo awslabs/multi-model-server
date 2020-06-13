@@ -113,7 +113,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monitoring_ser
         code, output = run_process(start_monitoring_server, wait=False)
         time.sleep(2)
 
-        ## TODO -  Add check if server started
+        # TODO -  Add check if server started
 
     junit_xml = JUnitXml()
     pre_command = 'export PYTHONPATH={}:$PYTHONPATH; '.format(str(path))
@@ -153,16 +153,17 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monitoring_ser
 
                     tc = TestCase(name)
                     tc.result = result
-                    tc.system_err = err_txt[:-4]
+                    # TODO Fix html report with system_err
+                    # tc.system_err = err_txt[:-4]
                     ts.add_testcase(tc)
         else:
             tc = TestCase(suite_name)
             if code:
                 tc.result = Error("Suite run failed", "Error")
-                tc.system_err = err[:-4]
+                # tc.system_err = err[:-4]
             else:
                 tc.result = Skipped()
-                tc.system_out = err[:-4]
+                # tc.system_out = err[:-4]
             ts.add_testcase(tc)
 
         ts.hostname = socket.gethostname()

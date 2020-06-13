@@ -1,25 +1,18 @@
 # MMS Regression Tests
 
-This folder contains nightly regression tests execututed against MMS master.These tests use [POSTMAN](https://www.postman.com/downloads/) for exercising all the Management & Inference APIs.
-
-### Latest Test Run Status
-
+This folder contains regression tests executed against MMS master.These tests use [POSTMAN](https://www.postman.com/downloads/) for exercising all the Management & Inference APIs.
 
 ### Running the test manually.
 
-Clone Torch Serve Repo & Build the Docker Image for the execition env.
-
+Pull multi-model-server pre build docker image
 ```
-git clone https://github.com/awslabs/multi-model-server.git
-
-run mms docker
-
+docker pull awsdeeplearningteam/multi-model-server
 ```
 
-This would build a docker Image with a pytorch/torchserve:latest in which we would run our Regression Tests.
+This would build a docker Image with a awsdeeplearningteam/multi-model-server:latest in which we would run our Regression Tests.
 
 ```
-docker run -it --user root pytorch/mms:latest /bin/bash
+docker run -it --user root  awsdeeplearningteam/multi-model-server:latest /bin/bash
 ```
 
 In the Docker CLI execute the following cmds.
@@ -28,7 +21,7 @@ In the Docker CLI execute the following cmds.
 apt-get update 
 apt-get install -y git wget sudo 
 git clone https://github.com/awslabs/multi-model-server.git
-cd serve 
+cd multi-model-server
 ```
 To execute tests on master run: 
 
@@ -39,11 +32,11 @@ To execute tests on different run:
 `./test/regression_tests.sh <branch_name>`
 
 
-You can view the logs for Test execution & the Torch serve in the /tmp dir.
+You can view the logs for Test execution & the Multi-model-server in the /tmp dir.
 
 ```
 cat /tmp/test_exec.log
-cat /tmp/ts.log 
+cat /tmp/mms.log 
 ```
 
 ### Adding tests

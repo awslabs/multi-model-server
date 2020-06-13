@@ -154,47 +154,47 @@ jobs:
 
 workflows:
   version: 2
-#  build_and_test_python36:
-#    jobs:
-#      - build:
-#          executor: docker-python-3
-#      - modelarchiver:
-#          executor: docker-python-3
-#      - python_tests:
-#          executor: docker-python-3
-#          requires:
-#            - build
-#      - api_tests:
-#          executor: docker-python-3
-#          requires:
-#            - build
-#      - benchmark:
-#          executor: docker-python-3
-#          requires:
-#            - build
-#      - performance_regression:
-#          executor: docker-python-3
-#          requires:
-#            - build
+  build_and_test_python36:
+    jobs:
+      - build:
+          executor: docker-python-3
+      - modelarchiver:
+          executor: docker-python-3
+      - python_tests:
+          executor: docker-python-3
+          requires:
+            - build
+      - api_tests:
+          executor: docker-python-3
+          requires:
+            - build
+      - benchmark:
+          executor: docker-python-3
+          requires:
+            - build
+      - performance_regression:
+          executor: docker-python-3
+          requires:
+            - build
 
   build_and_test_python27:
     jobs:
       - build:
           executor: docker-python-2
-#      - modelarchiver:
-#          executor: docker-python-2
-#      - python_tests:
-#          executor: docker-python-2
-#          requires:
-#            - build
-#      - api_tests:
-#          executor: docker-python-2
-#          requires:
-#            - build
-#      - benchmark:
-#          executor: docker-python-2
-#          requires:
-#            - build
+      - modelarchiver:
+          executor: docker-python-2
+      - python_tests:
+          executor: docker-python-2
+          requires:
+            - build
+      - api_tests:
+          executor: docker-python-2
+          requires:
+            - build
+      - benchmark:
+          executor: docker-python-2
+          requires:
+            - build
       - performance_regression:
           executor: docker-python-2
           requires:

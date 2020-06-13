@@ -90,7 +90,7 @@ class BuildFrontEnd(setuptools.command.build_py.build_py):
             rmtree('build/lib/')
 
         try:
-            subprocess.check_call('frontend/gradlew -p frontend clean assemble', shell=True)
+            subprocess.check_call('frontend/gradlew -p frontend clean build', shell=True)
         except OSError:
             assert 0, "build failed"
         copy2(self.source_server_file, self.dest_file_name)

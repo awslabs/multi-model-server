@@ -10,9 +10,11 @@ sleep 10
 
 cd tests/performance
 
-# Hack to use python 3.6.5 for bzt installation and execution on a Python 2.7 environment
-# ToDo: Update condition to be more specific - check if python 2 is installed by default
-if hash pyenv 2>/dev/null; then
+# Only on a python 2 environment -
+PY_MAJOR_VER=$(python -c 'import sys; major = sys.version_info.major; print(major);')
+if [ $PY_MAJOR_VER -eq 2 ]; then
+  # Hack to use python 3.6.5 for bzt installation and execution
+  export PATH="/root/.pyenv/bin:/root/.pyenv/shims:$PATH"
   pyenv local 3.6.5
 fi
 

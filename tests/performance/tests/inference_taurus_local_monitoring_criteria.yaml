@@ -26,7 +26,7 @@ services:
         - cpu
         - disk-space
         - mem
-        - sum_memory_percent
+        - sum_workers_memory_rss
 
 reporting:
 - module: passfail
@@ -35,9 +35,9 @@ reporting:
     - p90 of s2_p90 >250ms  , stop as failed
     - avg-rt of s2_avg_rt >1s , stop as failed
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/sum_memory_percent
+      subject: ServerLocalClient/sum_workers_memory_rss
       condition: '>'
-      threshold: 4
+      threshold: 132000000
       timeframe: 1s
       stop : true
       fail : true

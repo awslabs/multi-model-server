@@ -27,82 +27,82 @@ class ProcessType(Enum):
 
 
 result = {
-    'sum_cpu_percent': None,
-    'avg_cpu_percent': None,
-    'min_cpu_percent': None,
-    'max_cpu_percent': None,
+    # 'sum_cpu_percent': None,
+    # 'avg_cpu_percent': None,
+    # 'min_cpu_percent': None,
+    # 'max_cpu_percent': None,
+    #
+    # 'sum_memory_percent': None,
+    # 'avg_memory_percent': None,
+    # 'min_memory_percent': None,
+    # 'max_memory_percent': None,
+    #
+    # 'sum_cpu_user_time': None,
+    # 'avg_cpu_user_time': None,
+    # 'min_cpu_user_time': None,
+    # 'max_cpu_user_time': None,
+    #
+    # 'sum_cpu_system_time': None,
+    # 'avg_cpu_system_time': None,
+    # 'min_cpu_system_time': None,
+    # 'max_cpu_system_time': None,
+    #
+    # 'sum_cpu_iowait_time': None,
+    # 'avg_cpu_iowait_time': None,
+    # 'min_cpu_iowait_time': None,
+    # 'max_cpu_iowait_time': None,
+    #
+    # 'sum_memory_rss': None,
+    # 'avg_memory_rss': None,
+    # 'min_memory_rss': None,
+    # 'max_memory_rss': None,
+    #
+    # 'sum_memory_vms': None,
+    # 'avg_memory_vms': None,
+    # 'min_memory_vms': None,
+    # 'max_memory_vms': None,
+    #
+    # 'sum_io_read_count': None,
+    # 'avg_io_read_count': None,
+    # 'min_io_read_count': None,
+    # 'max_io_read_count': None,
+    #
+    # 'sum_io_write_count': None,
+    # 'avg_io_write_count': None,
+    # 'min_io_write_count': None,
+    # 'max_io_write_count': None,
+    #
+    # 'sum_io_read_bytes': None,
+    # 'avg_io_read_bytes': None,
+    # 'min_io_read_bytes': None,
+    # 'max_io_read_bytes': None,
+    #
+    # 'sum_io_write_bytes': None,
+    # 'avg_io_write_bytes': None,
+    # 'min_io_write_bytes': None,
+    # 'max_io_write_bytes': None,
+    #
+    # 'sum_file_descriptors': None,
+    # 'avg_file_descriptors': None,
+    # 'min_file_descriptors': None,
+    # 'max_file_descriptors': None,
+    #
+    # 'sum_threads': None,
+    # 'avg_threads': None,
+    # 'min_threads': None,
+    # 'max_threads': None,
+    #
+    # 'sum_processes': None,
+    #
+    #
+    # 'system_disk_used': None,
+    # 'system_memory_used': None,
+    # 'system_read_count': None,
+    # 'system_read_bytes': None,
+    # 'system_write_bytes': None,
 
-    'sum_memory_percent': None,
-    'avg_memory_percent': None,
-    'min_memory_percent': None,
-    'max_memory_percent': None,
-
-    'sum_cpu_user_time': None,
-    'avg_cpu_user_time': None,
-    'min_cpu_user_time': None,
-    'max_cpu_user_time': None,
-
-    'sum_cpu_system_time': None,
-    'avg_cpu_system_time': None,
-    'min_cpu_system_time': None,
-    'max_cpu_system_time': None,
-
-    'sum_cpu_iowait_time': None,
-    'avg_cpu_iowait_time': None,
-    'min_cpu_iowait_time': None,
-    'max_cpu_iowait_time': None,
-
-    'sum_memory_rss': None,
-    'avg_memory_rss': None,
-    'min_memory_rss': None,
-    'max_memory_rss': None,
-
-    'sum_memory_vms': None,
-    'avg_memory_vms': None,
-    'min_memory_vms': None,
-    'max_memory_vms': None,
-
-    'sum_io_read_count': None,
-    'avg_io_read_count': None,
-    'min_io_read_count': None,
-    'max_io_read_count': None,
-
-    'sum_io_write_count': None,
-    'avg_io_write_count': None,
-    'min_io_write_count': None,
-    'max_io_write_count': None,
-
-    'sum_io_read_bytes': None,
-    'avg_io_read_bytes': None,
-    'min_io_read_bytes': None,
-    'max_io_read_bytes': None,
-
-    'sum_io_write_bytes': None,
-    'avg_io_write_bytes': None,
-    'min_io_write_bytes': None,
-    'max_io_write_bytes': None,
-
-    'sum_file_descriptors': None,
-    'avg_file_descriptors': None,
-    'min_file_descriptors': None,
-    'max_file_descriptors': None,
-
-    'sum_threads': None,
-    'avg_threads': None,
-    'min_threads': None,
-    'max_threads': None,
-
-    'sum_processes': None,
-
-
-    'system_disk_used': None,
-    'system_memory_used': None,
-    'system_read_count': None,
-    'system_read_bytes': None,
-    'system_write_bytes': None,
-
-    'frontend_rss': None,
-    'sum_workers_rss': None
+    'frontend_memory_rss': None,
+    'sum_workers_memory_rss': None
 }
 AVAILABLE_METRICS = list(result)
 
@@ -136,9 +136,27 @@ def get_metrics(server_process, child_processes):
 
     ### PROCESS METRICS ###
 
-    metrics = {}
-    metrics['cpu_percent'] = lambda p: p.get('cpu_percent', 0)
-    metrics['rss'] = lambda p: getattr(p.get('memory_info', {}), 'rss', 0)
+    metrics = {
+        'cpu_percent': lambda p: p.get('cpu_percent', 0),
+
+        'memory_percent': lambda p: p.get('memory_percent', 0),
+
+        'cpu_user_time': lambda p: getattr(p.get('cpu_times', {}), 'user', 0),
+        'cpu_system_time': lambda p: getattr(p.get('cpu_times', {}), 'system', 0),
+        'cpu_iowait_time': lambda p: getattr(p.get('cpu_times', {}), 'iowait', 0),
+
+        'memory_rss': lambda p: getattr(p.get('memory_info', {}), 'rss', 0),
+        'memory_vms': lambda p: getattr(p.get('memory_info', {}), 'vms', 0),
+
+        'io_read_count': lambda p: getattr(p.get('io_counters', {}), 'read_count', 0),
+        'io_write_count': lambda p: getattr(p.get('io_counters', {}), 'write_count', 0),
+        'io_read_bytes': lambda p: getattr(p.get('io_counters', {}), 'read_bytes', 0),
+        'io_write_bytes': lambda p: getattr(p.get('io_counters', {}), 'write_bytes', 0),
+
+        'file_descriptors': lambda p: p.get('num_fds', 0),
+
+        'threads': lambda p: p.get('num_threads', 0)
+    }
 
     for k in metrics:
 
@@ -165,8 +183,8 @@ def get_metrics(server_process, child_processes):
     result["system_read_bytes"] = system_disk_io_counters.read_bytes
     result["system_write_bytes"] = system_disk_io_counters.write_bytes
 
-    # print('frontend_rss    :', result["frontend_rss"])
-    # print('sum_workers_rss :', result["sum_workers_rss"])
-    # print()
+    print('frontend_memory_rss    :', result["frontend_memory_rss"])
+    print('sum_workers_memory_rss :', result["sum_workers_memory_rss"])
+    print()
 
     return result

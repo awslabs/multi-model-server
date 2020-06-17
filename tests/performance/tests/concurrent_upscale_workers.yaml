@@ -1,0 +1,42 @@
+---
+execution:
+- concurrency: 3
+  ramp-up: 5s
+  iterations: 5
+  scenario: Inference
+
+scenarios:
+  Inference:
+    script: concurrent_upscale_workers.jmx
+
+modules:
+  server_local_monitoring:
+    # metrics_monitoring_taurus and dependencies should be in python path
+    class : metrics_monitoring_taurus.Monitor # monitoring class.
+  new_passfail:
+    class: new_passfail.PassFailStatus
+
+
+
+services:
+  - module: server_local_monitoring # should be added in modules section
+    ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
+    - interval: 1s
+      metrics:
+        - cpu
+        - disk-space
+        - mem
+        - total_workers
+#        - sum_worker_memomry_rss
+#        - frontend_memory_rss
+
+reporting:
+- module: passfail
+  criteria:
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_workers
+      condition: '>'
+      threshold: 4
+      timeframe: 1s
+      stop : true
+      fail : true

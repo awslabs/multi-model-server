@@ -101,6 +101,7 @@ result = {
     # 'system_read_bytes': None,
     # 'system_write_bytes': None,
 
+    'total_workers': 0,
     'frontend_memory_rss': None,
     'sum_workers_memory_rss': None
 }
@@ -116,17 +117,18 @@ def get_metrics(server_process, child_processes):
 
     def update_metric(name, type, stats):
         if type == ProcessType.WORKER:
+            result['total_workers'] = len(stats) - 1
             type = "workers"
-        elif type == ProcessType.FRONTEND :
+        elif type == ProcessType.FRONTEND:
             result['frontend_' + name] = stats[0]
             return
         else:
             type="all"
 
-        result['sum_'+type+'_'+ name] = sum(stats)
-        result['avg_'+type+'_'+ name] = mean(stats)
-        result['min_'+type+'_'+ name] = min(stats)
-        result['max_'+type+'_'+ name] = max(stats)
+        result['sum_' + type+'_' + name] = sum(stats)
+        result['avg_' + type+'_' + name] = mean(stats)
+        result['min_' + type+'_' + name] = min(stats)
+        result['max_' + type+'_' + name] = max(stats)
 
     processes_stats = []
     processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
@@ -183,8 +185,8 @@ def get_metrics(server_process, child_processes):
     result["system_read_bytes"] = system_disk_io_counters.read_bytes
     result["system_write_bytes"] = system_disk_io_counters.write_bytes
 
+    print('total_workers          :', result["total_workers"])
     print('frontend_memory_rss    :', result["frontend_memory_rss"])
     print('sum_workers_memory_rss :', result["sum_workers_memory_rss"])
-    print()
 
     return result

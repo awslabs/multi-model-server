@@ -1,13 +1,13 @@
 ---
 execution:
-- concurrency: 1
+- concurrency: 3
   ramp-up: 5s
-  hold-for: 20s
-  scenario: Inference
+  iterations: 20
+  scenario: Downscale
 
 scenarios:
-  Inference:
-    script: register_and_inference.jmx
+  Downscale:
+    script: downscale_workers.jmx
 
 modules:
   server_local_monitoring:
@@ -26,18 +26,15 @@ services:
         - cpu
         - disk-space
         - mem
-        - sum_workers_memory_rss
+        - total_workers
 
 reporting:
 - module: passfail
   criteria:
-    - fail of s2_fail >50%, stop as failed
-    - p90 of s2_p90 >250ms  , stop as failed
-    - avg-rt of s2_avg_rt >1s , stop as failed
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/sum_workers_memory_rss
+      subject: ServerLocalClient/total_workers
       condition: '>'
-      threshold: 132000000
-      timeframe: 1s
+      threshold: 2
+      timeframe: 5s
       stop : true
       fail : true

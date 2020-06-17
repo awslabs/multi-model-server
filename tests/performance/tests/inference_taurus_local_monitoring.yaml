@@ -21,10 +21,4 @@ services:
           - cpu
           - disk-space
           - mem
-          - sum_memory_percent
-  - module: monitoring
-    ~local:
-      - interval: 20s   # polling interval
-        logging: True # local monitoring logs will be saved to "local_monitoring_logs.csv" in the artifacts dir
-        metrics:
-          - cpu
+          - sum_workers_memory_percent

@@ -183,7 +183,7 @@ Metrics can be monitored in two ways:
     cd $MMS_HOME/tests/performance
     bzt tests/inference_taurus_local_monitoring.yaml tests/common/global_config.yaml
     ```
-    
+
 #### 3. Add pass/fail criteria
 You can specify the pass/fail criteria for the test cases.
 Read more about it [here](https://gettaurus.org/docs/PassFail/)
@@ -213,6 +213,41 @@ bzt inference_server_monitoring_criteria.yaml tests/common/global_config.yaml
 bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.yaml
 ```
 
+## Metrics that you can use for monitoring \ passfail criteria  
+  **System Metrics**
+  > disk_used, memory_percent, read_count, write_count, read_bytes, write_byte
+
+  | Syntax | Examples |
+  | ------ | -------- |
+  | system_{metricname} | system_disk_used, system_memory_percent, system_write_count |
+
+
+  **Process Metrics**
+  > cpu_percent, memory_percent, cpu_user_time, cpu_system_time, cpu_iowait_time, memory_rss, memory_vms, io_read_count, io_write_count, io_read_bytes, io_write_bytes, file_descriptors, threads
+
+  - Frontend  
+    It is a single java process
+
+    | Syntax | Examples |
+    | ------ | -------- |
+    | frontend_{metricname} | frontend_cpu_percent, frontend_memory_percent, frontend_cpu_iowait_time, frontend_memory_rss, frontend_io_write_bytes, frontend_threads |
+
+  - Workers  
+    These are python processes. MMS can have more than one worker  
+    Metrics for worker(s) are always available with an aggregate  
+    > Aggregates  
+    > sum, avg, min, max
+
+    | Syntax | Examples |
+    | ------ | -------- |
+    | {aggregate}\_workers\_{metricname} | total_workers, sum_workers_memory_percent, avg_workers_iowait_time, min_workers_io_write_bytes, max_workers_threads |
+
+  - All (Frontend + Workers)  
+    We can also aggregate metrics for both frontend and worker processes together
+  
+    | Syntax | Examples |
+    | ------ | -------- |
+    | {aggreagate}\_all\_{metricname} | total_processes, sum_all_memory_percent, avg_all_iowait_time, min_all_io_write_bytes, max_all_threads |
 
 ## Work in Progress
 1. Add more metrics for cpu and gpu both. Add documentation around those.

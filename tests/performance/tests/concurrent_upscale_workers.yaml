@@ -27,8 +27,6 @@ services:
         - disk-space
         - mem
         - total_workers
-#        - sum_worker_memomry_rss
-#        - frontend_memory_rss
 
 reporting:
 - module: passfail

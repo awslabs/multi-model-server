@@ -16,7 +16,7 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="cnn_url" elementType="Argument">
             <stringProp name="Argument.name">cnn_url</stringProp>
-            <stringProp name="Argument.value">https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model</stringProp>
+            <stringProp name="Argument.value">https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
             <stringProp name="Argument.desc">The url from where to fetch noop model from</stringProp>
           </elementProp>

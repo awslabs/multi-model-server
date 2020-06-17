@@ -3,11 +3,11 @@ execution:
 - concurrency: 3
   ramp-up: 5s
   iterations: 20
-  scenario: Upscale
+  scenario: Downscale
 
 scenarios:
-  Upscale:
-    script: upscale_workers.jmx
+  Downscale:
+    script: downscale_workers.jmx
 
 modules:
   server_local_monitoring:
@@ -34,7 +34,7 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_workers
       condition: '>'
-      threshold: 4
-      timeframe: 1s
+      threshold: 2
+      timeframe: 5s
       stop : true
       fail : true

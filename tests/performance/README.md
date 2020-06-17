@@ -240,14 +240,14 @@ bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.y
 
     | Syntax | Examples |
     | ------ | -------- |
-    | {aggregate}\_workers\_{metricname} | sum_workers_memory_percent, avg_workers_iowait_time, min_workers_io_write_bytes, max_workers_threads |
+    | {aggregate}\_workers\_{metricname} | total_workers, sum_workers_memory_percent, avg_workers_iowait_time, min_workers_io_write_bytes, max_workers_threads |
 
   - All (Frontend + Workers)  
     We can also aggregate metrics for both frontend and worker processes together
   
     | Syntax | Examples |
     | ------ | -------- |
-    | {aggreagate}\_all\_{metricname} | sum_all_memory_percent, avg_all_iowait_time, min_all_io_write_bytes, max_all_threads |
+    | {aggreagate}\_all\_{metricname} | total_processes, sum_all_memory_percent, avg_all_iowait_time, min_all_io_write_bytes, max_all_threads |
 
 ## Work in Progress
 1. Add more metrics for cpu and gpu both. Add documentation around those.

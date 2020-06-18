@@ -1,13 +1,30 @@
 ---
 execution:
-- concurrency: 3
-  ramp-up: 5s
-  iterations: 20
+- concurrency: 1
+  ramp-up: 0s
+  iterations: 1
   scenario: Downscale
 
 scenarios:
   Downscale:
     script: downscale_workers.jmx
+
+services:
+  - module: shellexec
+    prepare:
+    - bzt tests/common/setup.jmx tests/common/global_config.yaml
+    # startup:
+    # - echo 1 > tmp_guy/bla.txt
+    # - echo 2 >> tmp_guy/bla.txt
+    # shutdown:
+    # - echo "shutdown time is $(date)" >> tmp/bla.txt
+    post-process:
+    - bzt tests/common/teardown.jmx tests/common/global_config.yaml
+  - module: server_local_monitoring # should be added in modules section
+    ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
+    - interval: 1s
+      metrics:
+        - total_workers
 
 modules:
   server_local_monitoring:
@@ -16,25 +33,13 @@ modules:
   new_passfail:
     class: new_passfail.PassFailStatus
 
-
-
-services:
-  - module: server_local_monitoring # should be added in modules section
-    ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
-    - interval: 1s
-      metrics:
-        - cpu
-        - disk-space
-        - mem
-        - total_workers
-
 reporting:
 - module: passfail
   criteria:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_workers
-      condition: '>'
+      condition: '<'
       threshold: 2
-      timeframe: 5s
+      timeframe: 1s
       stop : true
       fail : true

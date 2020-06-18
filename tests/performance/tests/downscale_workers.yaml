@@ -12,9 +12,9 @@ scenarios:
 services:
   - module: shellexec
     prepare:
-    - bzt tests/common/setup.jmx tests/common/global_config.yaml
+    - bzt tests/common/setup.jmx tests/common/global_config.yaml -o settings.artifacts-dir=/tmp/mms_perf/
     post-process:
-    - bzt tests/common/teardown.jmx tests/common/global_config.yaml
+    - bzt tests/common/teardown.jmx tests/common/global_config.yaml -o settings.artifacts-dir=/tmp/mms_perf/
   - module: server_local_monitoring
     ServerLocalClient:
     - interval: 1s

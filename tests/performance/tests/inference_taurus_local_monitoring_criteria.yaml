@@ -22,6 +22,7 @@ services:
   - module: server_local_monitoring # should be added in modules section
     ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
     - interval: 1s
+      logging : True
       metrics:
         - cpu
         - disk-space
@@ -41,3 +42,4 @@ reporting:
       timeframe: 1s
       stop : true
       fail : true
+      diff_percent : 30

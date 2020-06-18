@@ -28,9 +28,9 @@ monkey.patch_socket()
 
 logger = logging.getLogger(__name__)
 from metrics_collector import start_metric_collection, stop_process, store_pid, check_is_running
-from utils.process import get_process_pid_from_file, \
+from process import get_process_pid_from_file, \
     get_server_processes, get_server_pidfile
-from utils import configuration
+import configuration
 
 TMP_DIR = tempfile.gettempdir()
 METRICS_MON_SERVER_PID_FILE = "{}/.metrics_monitoring_server.pid".format(TMP_DIR)

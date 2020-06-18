@@ -26,7 +26,7 @@ import tempfile
 
 logger = logging.getLogger(__name__)
 
-from utils.process import get_process_pid_from_file, get_child_processes, \
+from process import get_process_pid_from_file, get_child_processes, \
     get_server_processes, get_server_pidfile
 from metrics import AVAILABLE_METRICS, get_metrics
 

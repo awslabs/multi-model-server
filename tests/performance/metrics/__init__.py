@@ -33,25 +33,23 @@ operators = {
 }
 
 process_metrics = {
-    'cpu_percent': lambda p: p.get('cpu_percent', 0),
-
-    'memory_percent': lambda p: p.get('memory_percent', 0),
-
-    'cpu_user_time': lambda p: getattr(p.get('cpu_times', {}), 'user', 0),
-    'cpu_system_time': lambda p: getattr(p.get('cpu_times', {}), 'system', 0),
-    'cpu_iowait_time': lambda p: getattr(p.get('cpu_times', {}), 'iowait', 0),
-
-    'memory_rss': lambda p: getattr(p.get('memory_info', {}), 'rss', 0),
-    'memory_vms': lambda p: getattr(p.get('memory_info', {}), 'vms', 0),
-
-    'io_read_count': lambda p: getattr(p.get('io_counters', {}), 'read_count', 0),
-    'io_write_count': lambda p: getattr(p.get('io_counters', {}), 'write_count', 0),
-    'io_read_bytes': lambda p: getattr(p.get('io_counters', {}), 'read_bytes', 0),
-    'io_write_bytes': lambda p: getattr(p.get('io_counters', {}), 'write_bytes', 0),
-
-    'file_descriptors': lambda p: p.get('num_fds', 0),
-
-    'threads': lambda p: p.get('num_threads', 0)
+    # cpu
+    'cpu_percent': lambda p : p.get('cpu_percent', 0),
+    'cpu_user_time': lambda p : getattr(p.get('cpu_times', {}), 'user', 0),
+    'cpu_system_time': lambda p : getattr(p.get('cpu_times', {}), 'system', 0),
+    'cpu_iowait_time': lambda p : getattr(p.get('cpu_times', {}), 'iowait', 0),
+    # memory
+    'memory_percent': lambda p : p.get('memory_percent', 0),
+    'memory_rss': lambda p : getattr(p.get('memory_info', {}), 'rss', 0),
+    'memory_vms': lambda p : getattr(p.get('memory_info', {}), 'vms', 0),
+    # io
+    'io_read_count': lambda p : getattr(p.get('io_counters', {}), 'read_count', 0),
+    'io_write_count': lambda p : getattr(p.get('io_counters', {}), 'write_count', 0),
+    'io_read_bytes': lambda p : getattr(p.get('io_counters', {}), 'read_bytes', 0),
+    'io_write_bytes': lambda p : getattr(p.get('io_counters', {}), 'write_bytes', 0),
+    'file_descriptors': lambda p : p.get('num_fds', 0),
+    # processes
+    'threads': lambda p : p.get('num_threads', 0)
 }
 
 system_metrics = {
@@ -66,30 +64,25 @@ system_metrics = {
 }
 
 AVAILABLE_METRICS = list(system_metrics)
+
 for metric in list(process_metrics):
     for ptype in list(ProcessType):
         if ptype == ProcessType.WORKER:
+            type = 'workers'
             for op in list(operators):
-                type = 'workers'
-                AVAILABLE_METRICS.append('{}_{}_{}'.format(op,type,metric))
+                AVAILABLE_METRICS.append('{}_{}_{}'.format(op, type,metric))
         elif ptype == ProcessType.FRONTEND:
             type = 'frontend'
             AVAILABLE_METRICS.append('{}_{}'.format(type, metric))
         else:
             type = 'all'
             for op in list(operators):
-                type = 'all'
-                AVAILABLE_METRICS.append('{}_{}_{}'.format(op,type,metric))
+                AVAILABLE_METRICS.append('{}_{}_{}'.format(op, type,metric))
 
 
 def get_metrics(server_process, child_processes):
     """ Get Server processes specific metrics
     """
-
-    # TODO - make this modular may be a diff function for each metric
-    # TODO - allow users to add new metrics easily
-    # TODO - make sure available metric list is maintained
-
     result = {}
 
     def update_metric(metric_name, type, stats):
@@ -113,12 +106,11 @@ def get_metrics(server_process, child_processes):
         processes_stats.append({'type': ProcessType.WORKER, 'stats' : process.as_dict()})
 
     ### PROCESS METRICS ###
+    worker_stats = list(map(lambda x: x['stats'], filter(lambda x: x['type'] == ProcessType.WORKER, processes_stats)))
+    all_stats = list(map(lambda x: x['stats'], processes_stats))
+    server_stats = list(map(lambda x: x['stats'], filter(lambda x: x['type'] == ProcessType.FRONTEND, processes_stats)))
+
     for k in process_metrics:
-
-        worker_stats = list(map(lambda x: x['stats'], filter(lambda x: x['type'] == ProcessType.WORKER, processes_stats)))
-        all_stats = list(map(lambda x: x['stats'], processes_stats))
-        server_stats = list(map(lambda x: x['stats'], filter(lambda x: x['type'] == ProcessType.FRONTEND, processes_stats)))
-
         update_metric(k, ProcessType.WORKER, list(map(process_metrics[k], worker_stats)))
         update_metric(k, ProcessType.ALL, list(map(process_metrics[k], all_stats)))
         update_metric(k, ProcessType.FRONTEND, list(map(process_metrics[k], server_stats)))
@@ -130,9 +122,7 @@ def get_metrics(server_process, child_processes):
 
     ### SYSTEM METRICS ###
     result['system_disk_used'] = psutil.disk_usage('/').used
-
     result['system_memory_percent'] = psutil.virtual_memory().percent
-
     system_disk_io_counters = psutil.disk_io_counters()
     result['system_read_count'] = system_disk_io_counters.read_count
     result['system_write_count'] = system_disk_io_counters.write_count

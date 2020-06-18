@@ -26,7 +26,6 @@ import pathlib
 import subprocess
 import yaml
 import requests
-import configuration
 from subprocess import PIPE, STDOUT
 from tqdm import tqdm
 from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
@@ -110,7 +109,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monitoring_ser
         raise Exception("Server is not running. Pinged url {}. Exiting..".format(server_ping_url))
 
     if monitoring_server:
-        start_monitoring_server = "python {}/agents/metrics_monitoring_server.py --start".format(path)
+        start_monitoring_server = "python3 {}/agents/metrics_monitoring_server.py --start".format(path)
         code, output = run_process(start_monitoring_server, wait=False)
         time.sleep(2)
 
@@ -184,7 +183,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monitoring_ser
     run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
     if monitoring_server:
-        stop_monitoring_server = "python {}/agents/metrics_monitoring_server.py --stop".format(path)
+        stop_monitoring_server = "python3 {}/agents/metrics_monitoring_server.py --stop".format(path)
         run_process(stop_monitoring_server)
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:

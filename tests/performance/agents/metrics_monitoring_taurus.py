@@ -27,7 +27,7 @@ PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 
 from metrics import get_metrics, AVAILABLE_METRICS as AVAILABLE_SERVER_METRICS
-from process import get_process_pid_from_file, get_server_processes, \
+from utils.process import get_process_pid_from_file, get_server_processes, \
     get_child_processes, get_server_pidfile
 
 

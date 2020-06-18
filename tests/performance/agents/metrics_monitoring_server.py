@@ -28,15 +28,15 @@ monkey.patch_socket()
 
 logger = logging.getLogger(__name__)
 from metrics_collector import start_metric_collection, stop_process, store_pid, check_is_running
-from process import find_procs_by_name, get_process_pid_from_file, \
-    get_child_processes, get_server_processes, get_server_pidfile
-import configuration
+from utils.process import get_process_pid_from_file, \
+    get_server_processes, get_server_pidfile
+from utils import configuration
 
 TMP_DIR = tempfile.gettempdir()
 METRICS_MON_SERVER_PID_FILE = "{}/.metrics_monitoring_server.pid".format(TMP_DIR)
 
-HOST = str(configuration.get('monitoring','HOST'))
-PORT = int(configuration.get('monitoring','PORT', 9009))
+HOST = str(configuration.get('monitoring', 'HOST'))
+PORT = int(configuration.get('monitoring', 'PORT', 9009))
 
 
 SOCKET_LIST = []

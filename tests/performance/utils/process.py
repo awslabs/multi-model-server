@@ -18,7 +18,8 @@ Utility methods for process related information
 import os
 import psutil
 import tempfile
-import configuration
+from utils import configuration
+
 
 def find_procs_by_name(name):
     """Return a list of processes matching 'name'."""

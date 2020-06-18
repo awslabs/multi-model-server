@@ -45,7 +45,7 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
     # jpeg download command for quick reference. Set input_filepath in global_config.yaml
     #curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
     
-    python run_performance_suite.py --artifacts-dir='<path>' --pattern='*criteria*.yaml'
+    python -m run_performance_suite --artifacts-dir='<path>' --pattern='*criteria*.yaml'
     ```
 
 ### C. Understanding the test suite artifacts and reports

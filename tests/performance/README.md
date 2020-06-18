@@ -4,7 +4,7 @@ This test suite helps in running the load tests and monitoring the process and s
 We use Taurus with JMeter as a test automation framework to run the test cases and metrics monitoring.
 
 ## How to run the test suite
-To run the test suite you need to execute the [run_perfomance_suite.py](run_perfomance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
+To run the test suite you need to execute the [run_performance_suite.py](run_performance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
 You can specify test cases to be run by providing 'test-dir' with default as '$MMS_HOME/tests/performance/tests' and 'pattern' with default as '*.yaml'. For other options use '--help' option.   
 
 Script does the following:  
@@ -45,7 +45,7 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
     # jpeg download command for quick reference. Set input_filepath in global_config.yaml
     #curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
     
-    python run_perfomance_suite.py --artifacts-dir='<path>' --pattern='*criteria*.yaml'
+    python run_performance_suite.py --artifacts-dir='<path>' --pattern='*criteria*.yaml'
     ```
 
 ### C. Understanding the test suite artifacts and reports

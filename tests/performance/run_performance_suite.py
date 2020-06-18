@@ -26,10 +26,6 @@ import pathlib
 import subprocess
 import yaml
 import requests
-import csv
-import psutil
-import pandas as pd
-import boto3
 import configuration
 from subprocess import PIPE, STDOUT
 from tqdm import tqdm
@@ -38,7 +34,6 @@ from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
 logger = logging.getLogger(__name__)
 code = 0
 
-S3_BUCKET = configuration.get('suite', 's3_bucket')
 
 class Timer(object):
     def __init__(self, description):

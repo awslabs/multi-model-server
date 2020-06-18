@@ -13,22 +13,16 @@ services:
   - module: shellexec
     prepare:
     - bzt tests/common/setup.jmx tests/common/global_config.yaml
-    # startup:
-    # - echo 1 > tmp_guy/bla.txt
-    # - echo 2 >> tmp_guy/bla.txt
-    # shutdown:
-    # - echo "shutdown time is $(date)" >> tmp/bla.txt
     post-process:
     - bzt tests/common/teardown.jmx tests/common/global_config.yaml
-  - module: server_local_monitoring # should be added in modules section
-    ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
+  - module: server_local_monitoring
+    ServerLocalClient:
     - interval: 1s
       metrics:
         - total_workers
 
 modules:
   server_local_monitoring:
-    # metrics_monitoring_taurus and dependencies should be in python path
     class : metrics_monitoring_taurus.Monitor # monitoring class.
   new_passfail:
     class: new_passfail.PassFailStatus

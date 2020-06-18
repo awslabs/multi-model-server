@@ -104,8 +104,7 @@ Metrics can be monitored in two ways:
     If your MMS server is hosted on different machine, you will be using this method. Before running the test case
     you have to start a [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will be communicating with Taurus test client over sockets.
     The address and port(default=9009) of the monitoring script should be specified in test case yaml. 
-    
-    **Note**: For available metrics check AVAILABLE_METRICS in the script [metric/__init__.py](metrics/__init__.py).  
+      
     **Note**: While running Test suite runner script, no need to manually start the monitoring server. The scripts optionally but by default starts and stops it in setup and teardown.
     
     To start monitoring server run commands below:

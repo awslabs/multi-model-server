@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+""" Customised system and mms process metrics for monitoring and pass-fail criteria in taurus"""
 
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
@@ -10,19 +11,16 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import psutil
 from statistics import mean
 from enum import Enum
+import psutil
 
-"""
-Custom metrics
-"""
-# pylint: disable=redefined-builtin
 
 class ProcessType(Enum):
+    """ Type of MMS processes to compute metrics on """
     FRONTEND = 1
     WORKER = 2
-    ALL  = 3
+    ALL = 3
 
 
 operators = {
@@ -33,24 +31,22 @@ operators = {
 }
 
 process_metrics = {
+    # cpu
     'cpu_percent': lambda p: p.get('cpu_percent', 0),
-
-    'memory_percent': lambda p: p.get('memory_percent', 0),
-
     'cpu_user_time': lambda p: getattr(p.get('cpu_times', {}), 'user', 0),
     'cpu_system_time': lambda p: getattr(p.get('cpu_times', {}), 'system', 0),
     'cpu_iowait_time': lambda p: getattr(p.get('cpu_times', {}), 'iowait', 0),
-
+    # memory
+    'memory_percent': lambda p: p.get('memory_percent', 0),
     'memory_rss': lambda p: getattr(p.get('memory_info', {}), 'rss', 0),
     'memory_vms': lambda p: getattr(p.get('memory_info', {}), 'vms', 0),
-
+    # io
     'io_read_count': lambda p: getattr(p.get('io_counters', {}), 'read_count', 0),
     'io_write_count': lambda p: getattr(p.get('io_counters', {}), 'write_count', 0),
     'io_read_bytes': lambda p: getattr(p.get('io_counters', {}), 'read_bytes', 0),
     'io_write_bytes': lambda p: getattr(p.get('io_counters', {}), 'write_bytes', 0),
-
     'file_descriptors': lambda p: p.get('num_fds', 0),
-
+    # processes
     'threads': lambda p: p.get('num_threads', 0)
 }
 
@@ -66,45 +62,41 @@ system_metrics = {
 }
 
 AVAILABLE_METRICS = list(system_metrics)
+
 for metric in list(process_metrics):
     for ptype in list(ProcessType):
         if ptype == ProcessType.WORKER:
+            PNAME = 'workers'
             for op in list(operators):
-                type = 'workers'
-                AVAILABLE_METRICS.append('{}_{}_{}'.format(op,type,metric))
+                AVAILABLE_METRICS.append('{}_{}_{}'.format(op, PNAME, metric))
         elif ptype == ProcessType.FRONTEND:
-            type = 'frontend'
-            AVAILABLE_METRICS.append('{}_{}'.format(type, metric))
+            PNAME = 'frontend'
+            AVAILABLE_METRICS.append('{}_{}'.format(PNAME, metric))
         else:
-            type = 'all'
+            PNAME = 'all'
             for op in list(operators):
-                type = 'all'
-                AVAILABLE_METRICS.append('{}_{}_{}'.format(op,type,metric))
+                AVAILABLE_METRICS.append('{}_{}_{}'.format(op, PNAME, metric))
 
 
 def get_metrics(server_process, child_processes):
     """ Get Server processes specific metrics
     """
-
-    # TODO - make this modular may be a diff function for each metric
-    # TODO - allow users to add new metrics easily
-    # TODO - make sure available metric list is maintained
-
     result = {}
 
-    def update_metric(metric_name, type, stats):
+    def update_metric(metric_name, proc_type, stats):
         stats = stats if stats else [0]
 
-        if type == ProcessType.WORKER:
-            type = 'workers'
-        elif type == ProcessType.FRONTEND:
-            result['frontend_' + metric_name] = stats[0]
+        if proc_type == ProcessType.WORKER:
+            proc_name = 'workers'
+        elif proc_type == ProcessType.FRONTEND:
+            proc_name = 'frontend'
+            result[proc_name+ '_' + metric_name] = stats[0]
             return
         else:
-            type='all'
+            proc_name = 'all'
 
         for op_name in operators:
-            result['{}_{}_{}'.format(op_name, type, metric_name)] = operators[op_name](stats)
+            result['{}_{}_{}'.format(op_name, proc_name, metric_name)] = operators[op_name](stats)
 
     # as_dict() gets all stats in one shot
     processes_stats = []
@@ -113,12 +105,13 @@ def get_metrics(server_process, child_processes):
         processes_stats.append({'type': ProcessType.WORKER, 'stats' : process.as_dict()})
 
     ### PROCESS METRICS ###
+    worker_stats = list(map(lambda x: x['stats'], \
+                            filter(lambda x: x['type'] == ProcessType.WORKER, processes_stats)))
+    server_stats = list(map(lambda x: x['stats'], \
+                            filter(lambda x: x['type'] == ProcessType.FRONTEND, processes_stats)))
+    all_stats = list(map(lambda x: x['stats'], processes_stats))
+
     for k in process_metrics:
-
-        worker_stats = list(map(lambda x: x['stats'], filter(lambda x: x['type'] == ProcessType.WORKER, processes_stats)))
-        all_stats = list(map(lambda x: x['stats'], processes_stats))
-        server_stats = list(map(lambda x: x['stats'], filter(lambda x: x['type'] == ProcessType.FRONTEND, processes_stats)))
-
         update_metric(k, ProcessType.WORKER, list(map(process_metrics[k], worker_stats)))
         update_metric(k, ProcessType.ALL, list(map(process_metrics[k], all_stats)))
         update_metric(k, ProcessType.FRONTEND, list(map(process_metrics[k], server_stats)))
@@ -130,9 +123,7 @@ def get_metrics(server_process, child_processes):
 
     ### SYSTEM METRICS ###
     result['system_disk_used'] = psutil.disk_usage('/').used
-
     result['system_memory_percent'] = psutil.virtual_memory().percent
-
     system_disk_io_counters = psutil.disk_io_counters()
     result['system_read_count'] = system_disk_io_counters.read_count
     result['system_write_count'] = system_disk_io_counters.write_count

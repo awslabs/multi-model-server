@@ -24,6 +24,7 @@ import time
 
 import gevent
 import psutil
+from tabulate import tabulate
 
 logger = logging.getLogger(__name__)
 
@@ -100,9 +101,15 @@ def monitor_processes(server_process, metrics, interval, socket):
     while True:
         message = []
         collected_metrics = get_metrics(server_process, get_child_processes(server_process))
+        #table = {}
         for metric in metrics:
            message.append(str(collected_metrics.get(metric, 0)))
+           #if collected_metrics.get(metric) is not None:
+           #    table[metric] = [collected_metrics.get(metric, 0)]
+
+
         message = "\t".join(message)+"\n"
+        #logger.info("\n{}".format(tabulate(table, headers=table.keys(), tablefmt="pretty")))
 
         if socket:
             try:

@@ -1,0 +1,62 @@
+---
+execution:
+- concurrency: 10
+  ramp-up: 1s
+  hold-for: 30s
+  scenario: scaleup
+
+scenarios:
+  scaleup:
+    script: scale_up_workers.jmx
+
+modules:
+  server_local_monitoring:
+    class : metrics_monitoring_taurus.Monitor
+  new_passfail:
+    class: new_passfail.PassFailStatus
+
+services:
+  - module: shellexec
+    prepare:
+      - curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+    post-process:
+      - curl -s -X DELETE http://localhost:8081/models/squeezenet_v1.1
+  - module: server_local_monitoring
+    ServerLocalClient:
+      - interval: 1s
+        metrics:
+          - total_workers
+          - sum_workers_file_descriptors
+          - orphans
+
+reporting:
+- module: passfail
+  criteria:
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_workers
+      condition: '>'
+      threshold: 4
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '<'
+      threshold: 4
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '>'
+      threshold: 38
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/orphans
+      condition: '>'
+      threshold: 0
+      timeframe: 1s
+      stop : true
+      fail : true

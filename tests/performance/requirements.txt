@@ -5,3 +5,5 @@ tqdm==4.40.0
 pathlib
 boto
 aws
+click
+tabulate

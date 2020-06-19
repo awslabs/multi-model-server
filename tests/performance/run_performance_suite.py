@@ -41,8 +41,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
 
-
-
 code = 0
 metrics_monitoring_server = "agents/metrics_monitoring_server.py"
 base_file_path = pathlib.Path(__file__).parent.absolute()
@@ -364,10 +362,8 @@ def get_options(artifacts_dir, jmeter_path=None):
 def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_name, compare_local):
     commit_id = subprocess.check_output('git rev-parse --short HEAD'.split()).decode("utf-8")[:-1]
     artifacts_folder_name = "{}_{}_{}".format(env_name, commit_id, int(time.time()))
-    store_local = False
     if artifacts_dir is None:
         artifacts_dir = "{}/{}".format(run_artifacts_path, artifacts_folder_name)
-        store_local = True
     else:
         artifacts_dir = os.path.abspath(artifacts_dir)
         artifacts_dir = "{}/{}".format(artifacts_dir, artifacts_folder_name)
@@ -393,7 +389,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
         run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
     if compare_local:
-        compare_dir, run_name = get_latest_dir(run_artifacts_path, env_name)
+        compare_dir, run_name = get_latest_dir(pathlib.Path(artifacts_dir).parent, env_name)
     else:
         compare_dir, run_name = download_s3_files(env_name, "{}/comp_data".format(artifacts_dir))
 
@@ -401,7 +397,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
     if compare_dir:
         compare_result = compare_artifacts(artifacts_dir, compare_dir, artifacts_dir, artifacts_folder_name, run_name)
 
-    if not store_local:
+    if not compare_local:
         run_process("aws s3 cp {} s3://{}/{}  --recursive".format(artifacts_dir, S3_BUCKET, artifacts_folder_name))
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:

@@ -11,7 +11,7 @@ scenarios:
 
 modules:
   server_local_monitoring:
-    class : metrics_monitoring_taurus.Monitor # monitoring class.
+    class : metrics_monitoring_taurus.Monitor
   new_passfail:
     class: new_passfail.PassFailStatus
 

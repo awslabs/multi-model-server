@@ -27,6 +27,7 @@ services:
         metrics:
           - total_workers
           - sum_workers_file_descriptors
+          - orphans
 
 reporting:
 - module: passfail

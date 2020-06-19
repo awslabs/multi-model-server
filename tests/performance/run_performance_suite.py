@@ -15,7 +15,6 @@ Run Tarus test cases and generate the Junit XML report
 """
 # pylint: disable=redefined-builtin
 
-import argparse
 import glob
 import logging
 import os
@@ -24,6 +23,7 @@ import socket
 import subprocess
 import sys
 import time
+import click
 from subprocess import PIPE, STDOUT
 
 import requests
@@ -32,9 +32,12 @@ from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
-code = 0
-metrics_monitoring_server = "agents/metrics_monitoring_server.py"
+logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
+PATH = pathlib.Path(__file__).parent.absolute()
+GLOBAL_CONFIG_PATH = "{}/tests/common/global_config.yaml".format(PATH)
+
+code = 0
 
 class Timer(object):
     def __init__(self, description):
@@ -49,6 +52,87 @@ class Timer(object):
 
     def diff(self):
         return int(time.time()) - self.start
+
+class Monitoring(object):
+    def __init__(self, path, use = True):
+        self.path = "{}/{}".format(path, "agents/metrics_monitoring_server.py")
+        self.use = use
+
+    def __enter__(self):
+        with open(GLOBAL_CONFIG_PATH) as conf_file:
+            global_config = yaml.safe_load(conf_file)
+        server_props = global_config["modules"]["jmeter"]["properties"]
+        server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"],
+                                                   server_props["port"])
+        try:
+            requests.get(server_ping_url)
+        except requests.exceptions.ConnectionError:
+            raise Exception("Server is not running. Pinged url {}. Exiting...".format(server_ping_url))
+
+        if self.use:
+            start_monitoring_server = "python {} --start".format(self.path)
+            run_process(start_monitoring_server, wait=False)
+            time.sleep(2)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self.use:
+            stop_monitoring_server = "python {} --stop".format(self.path)
+            run_process(stop_monitoring_server)
+
+class Suite(object):
+    def __init__(self, name, artifacts_dir, junit_xml, timer):
+        self.ts = TestSuite(name)
+        self.name = name
+        self.junit_xml = junit_xml
+        self.timer = timer
+        self.artifacts_dir = artifacts_dir
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        xunit_file = "{}/xunit.xml".format(self.artifacts_dir)
+        tests, failures, skipped, errors = 0, 0, 0, 0
+        err_txt = ""
+        if os.path.exists(xunit_file):
+            xml = JUnitXml.fromfile(xunit_file)
+            for i, suite in enumerate(xml):  # tqqdm
+                for case in suite:
+                    name = "scenario_{}: {}".format(i, case.name)
+                    result = case.result
+                    if isinstance(result, Error):
+                        errors += 1
+                        err_txt = self.err
+                    elif isinstance(result, Failure):
+                        failures += 1
+                        err_txt = self.err
+                    elif isinstance(result, Skipped):
+                        skipped += 1
+                    else:
+                        tests += 1
+
+                    tc = TestCase(name)
+                    tc.result = result
+                    self.ts.add_testcase(tc)
+        else:
+            tc = TestCase(self.name)
+            if code:
+                tc.result = Error("Suite run failed", "Error")
+            else:
+                tc.result = Skipped()
+            self.ts.add_testcase(tc)
+
+
+        self.ts.hostname = socket.gethostname()
+        self.ts.timestamp = self.timer.start
+        self.ts.time = self.timer.diff()
+        self.ts.tests = tests
+        self.ts.failures = failures
+        self.ts.skipped = skipped
+        self.ts.errors = errors
+        self.ts.update_statistics()
+        self.junit_xml.add_testsuite(self.ts)
 
 
 def run_process(cmd, wait=True):
@@ -66,8 +150,6 @@ def run_process(cmd, wait=True):
             print(line)
 
         return p.returncode, '\n'.join(lines)
-
-
     else:
         p = subprocess.Popen(cmd, shell=True)
         return p.returncode, ''
@@ -75,8 +157,7 @@ def run_process(cmd, wait=True):
 
 def get_test_yamls(dir_path=None, pattern="*.yaml"):
     if not dir_path:
-        path = pathlib.Path(__file__).parent.absolute()
-        dir_path = str(path) + "/tests"
+        dir_path = str(PATH) + "/tests"
 
     path_pattern = "{}/{}".format(dir_path, pattern)
     return glob.glob(path_pattern)
@@ -93,123 +174,38 @@ def get_options(artifacts_dir, jmeter_path=None):
 
     return options_str
 
-
-def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monitoring_server):
+@click.command()
+@click.option('-a', '--artifacts-dir', help='Directory to store artifacts.', type=click.Path(writable=True), required=True)
+@click.option('-t', '--test-dir', help='Directory containing tests.', type=click.Path(exists=True), default=None)
+@click.option('-p', '--pattern', help='Test case file name pattern. Example --> *.yaml', default="*.yaml")
+@click.option('-j', '--jmeter-path', help='JMeter executable path.')
+@click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
+def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit):
     if os.path.exists(artifacts_dir):
-        raise Exception("Artifacts dir '{}' already exists. Provide different one.".format(artifacts_dir))
+        msg = "Artifacts dir '{}' already exists... Please provide a new directory.".format(artifacts_dir)
+        raise Exception(msg)
 
-    path = pathlib.Path(__file__).parent.absolute()
+    with Monitoring(PATH, monit):
+        junit_xml = JUnitXml()
+        pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(PATH))
+        test_yamls = get_test_yamls(test_dir, pattern)
+        for test_file in tqdm(test_yamls, desc="Test Suites"):
+            suite_name = os.path.basename(test_file).rsplit('.', 1)[0]
+            with Timer("Test suite {} execution time".format(suite_name)) as t:
+                suite_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
+                options_str = get_options(suite_artifacts_dir, jmeter_path)
+                with Suite(suite_name, suite_artifacts_dir, junit_xml, t) as s:
+                    s.code, s.err = run_process("{} bzt {} {} {}".format(pre_command, options_str,
+                                                                     test_file, GLOBAL_CONFIG_PATH))
 
-    global_config_file = "{}/tests/common/global_config.yaml".format(path)
-    with open(global_config_file) as conf_file:
-        global_config = yaml.safe_load(conf_file)
-    server_props = global_config["modules"]["jmeter"]["properties"]
-    server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"], server_props["port"])
-    try:
-        requests.get(server_ping_url)
-    except requests.exceptions.ConnectionError:
-        raise Exception("Server is not running. Pinged url {}. Exiting..".format(server_ping_url))
-
-    if monitoring_server:
-        start_monitoring_server = "python {}/{} --start".format(path, metrics_monitoring_server)
-        code, output = run_process(start_monitoring_server, wait=False)
-        time.sleep(2)
-
-        # TODO -  Add check if server started
-
-    junit_xml = JUnitXml()
-    pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(path))
-
-    test_yamls = get_test_yamls(test_dir, pattern)
-    for test_file in tqdm(test_yamls, desc="Test Suites"):
-        suite_name = os.path.basename(test_file).rsplit('.', 1)[0]
-        with Timer("Test suite {} execution time".format(suite_name)) as t:
-            suit_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
-            options_str = get_options(suit_artifacts_dir, jmeter_path)
-            code, err = run_process("{} bzt {} {} {}".format(pre_command, options_str,
-                                                             test_file, global_config_file))
-            suite_time = t.diff()
-            suite_start = t.start
-
-        # Assumes default file name
-        xunit_file = "{}/xunit.xml".format(suit_artifacts_dir)
-        tests, failures, skipped, errors = 0, 0, 0, 0
-        err_txt = ""
-        ts = TestSuite(suite_name)
-        if os.path.exists(xunit_file):
-            xml = JUnitXml.fromfile(xunit_file)
-            for i, suite in enumerate(xml): #tqqdm
-                for case in suite:
-                    name = "scenario_{}: {}".format(i, case.name)
-                    result = case.result
-                    if isinstance(result, Error):
-                        errors += 1
-                        err_txt = err
-                    elif isinstance(result, Failure):
-                        failures += 1
-                        err_txt = err
-                    elif isinstance(result, Skipped):
-                        skipped += 1
-                    else:
-                        tests +=1
-
-                    tc = TestCase(name)
-                    tc.result = result
-                    # TODO Fix html report with system_err
-                    # tc.system_err = err_txt[:-4]
-                    ts.add_testcase(tc)
-        else:
-            tc = TestCase(suite_name)
-            if code:
-                tc.result = Error("Suite run failed", "Error")
-                # tc.system_err = err[:-4]
-            else:
-                tc.result = Skipped()
-                # tc.system_out = err[:-4]
-            ts.add_testcase(tc)
-
-        ts.hostname = socket.gethostname()
-        ts.timestamp = suite_start
-        ts.time = suite_time
-        ts.tests = tests
-        ts.failures = failures
-        ts.skipped = skipped
-        ts.errors = errors
-        ts.update_statistics()
-        junit_xml.add_testsuite(ts)
-
-    junit_xml.update_statistics()
-    junit_xml_path = '{}/junit.xml'.format(artifacts_dir)
-    junit_html_path = '{}/junit.html'.format(artifacts_dir)
-    junit_xml.write(junit_xml_path)
-    run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
-
-    if monitoring_server:
-        stop_monitoring_server = "python {}/{} --stop".format(path, metrics_monitoring_server)
-        run_process(stop_monitoring_server)
+        junit_xml.update_statistics()
+        junit_xml_path = '{}/junit.xml'.format(artifacts_dir)
+        junit_html_path = '{}/junit.html'.format(artifacts_dir)
+        junit_xml.write(junit_xml_path)
+        run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
         sys.exit(3)
 
-
 if __name__ == "__main__":
-    logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
-    parser = argparse.ArgumentParser(prog='run_performance_suite.py', description='Performance Test Suite Runner')
-    parser.add_argument('-a', '--artifacts-dir', nargs=1, type=str, dest='artifacts', required=True,
-                           help='A artifacts directory')
-
-    parser.add_argument('-d', '--test-dir', nargs=1, type=str, dest='test_dir', default=[None],
-                           help='A test dir')
-
-    parser.add_argument('-p', '--pattern', nargs=1, type=str, dest='pattern', default=["*.yaml"],
-                           help='Test case file name pattern. example *.yaml')
-
-    parser.add_argument('-j', '--jmeter-path', nargs=1, type=str, dest='jmeter_path', default=[None],
-                        help='JMeter executable bin path')
-
-    parser.add_argument('-m', '--monitoring-server', nargs=1, type=bool, dest='monitoring_server', default=[True],
-                        help='Whether to start monitoring server')
-
-    args = parser.parse_args()
-    run_test_suite(args.artifacts[0], args.test_dir[0], args.pattern[0], args.jmeter_path[0],
-                   args.monitoring_server[0])
+    run_test_suite()

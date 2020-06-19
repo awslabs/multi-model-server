@@ -78,11 +78,13 @@ for metric in list(process_metrics):
             for op in list(operators):
                 AVAILABLE_METRICS.append('{}_{}_{}'.format(op, PNAME, metric))
 
+__CHILDREN = set()
 
 def get_metrics(server_process, child_processes):
     """ Get Server processes specific metrics
     """
     result = {}
+    __CHILDREN.update(child_processes)
 
     def update_metric(metric_name, proc_type, stats):
         stats = stats if stats else [0]
@@ -119,8 +121,9 @@ def get_metrics(server_process, child_processes):
 
 
     # Total processes
-    result['total_processes'] = len([server_process] + child_processes)
-    result['total_workers'] = len(child_processes) - 1 if len(child_processes) else 0
+    result['total_processes'] = len(child_processes) + 1
+    result['total_workers'] = max(len(child_processes) - 1, 0)
+    result['orphans'] = len(list(filter(lambda p : p['ppid'] == 1, worker_stats)))
 
     ### SYSTEM METRICS ###
     result['system_disk_used'] = psutil.disk_usage('/').used

@@ -353,7 +353,7 @@ def get_options(artifacts_dir, jmeter_path=None):
 @click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
 @click.option('--env-name', help='Unique machine id on which MMS server is running', default=socket.gethostname())
 @click.option('--compare-local/--no-compare-local', help='Compare with previous run with files stored'
-                                                         ' in run_artifacts directory', default=True)
+                                                         ' in artifacts directory', default=True)
 def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_name, compare_local):
     commit_id = subprocess.check_output('git rev-parse --short HEAD'.split()).decode("utf-8")[:-1]
     artifacts_folder_name = "{}_{}_{}".format(env_name, commit_id, int(time.time()))

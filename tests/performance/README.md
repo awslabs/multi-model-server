@@ -25,12 +25,14 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
     export MMS_HOME=<MMS_HOME_PATH>
     pip install -r $MMS_HOME/tests/performance/requirements.txt
     ``` 
+3. Git is installed.
+Make sure that you have git installed and you are in MMS git repository while running the test suite.
 
 ### B. Running the test suite
 1. Run MMS server
 2. Make sure parameters set in the [tests/common/global_config.yaml](tests/common/global_config.yaml) are correct.
 3. Run the test suite runner script
-4. Check the console logs, $artifacts-dir$/junit.html report and other artifacts.
+4. Check the console logs, $artifacts-dir$/<run-dir>/junit.html report, comparison.csv and other artifacts.
 
     **Steps are provided below**
     ```bash
@@ -48,11 +50,28 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
     python -m run_performance_suite --artifacts-dir='<path>' --pattern='*criteria*.yaml'
     ```
 
-### C. Understanding the test suite artifacts and reports
+### C. Understanding comparison between different runs:
+At the end, the test suite runner script compares the monitoring metric with values from previous run which was executed on same environment. 
+Note you should have a one test suite run on same environment in order to do the comparison.
+The previous run results from S3 bucket or a local directory can be used. See compare-local option below. The comparison happens for the 
+monitoring metrics criteria for which 'diff_percent' properties is specified. See pass/fail criteria [section](#3-add-passfail-criteria)
+Below are different options used by run_performance_suite script for coparison.
+1. **artifacts-dir**:
+This is an optional parameter. The default is './run_artifacts' directory.
+A sub directory with '{env_name}_{git_commit_id}_{timestamp}' gets created in the artifacts dir.
+2. **env-name**:
+This is an optional parameter. The default is current hostname. This should be unique it is used while doing comparison between runs.
+Comparison should happen between the runs of same environment.
+3. **compare-local/no-compare-local**:
+This is an optional parameter. The default is compare-local. If compare-local is on previous run results from './run_artifacts' will be used used otherwise results from 
+S3 bucket will be used. Note that other users will also be uploading the results to same S3 bucket.
+
+
+### D. Understanding the test suite artifacts and reports
 1. The $artifacts-dir$/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
 test suite. Different criteria in the yaml are treated as test cases. If criteria is not specified in the yaml, test suite is marked as skipped with 0 test cases.
 2. For each test yaml a sub-directory is created with artifacts for it.  
-
+3. The comparison.csv contains diff for monitoring metrics between an ongoing run and a previous run which was ran for same MMS server. 
 
 
 ## How to add test case to test suite.
@@ -187,6 +206,8 @@ Metrics can be monitored in two ways:
 You can specify the pass/fail criteria for the test cases.
 Read more about it [here](https://gettaurus.org/docs/PassFail/)
 
+**Note** The diff_percent is used by run_performance_suite script to compare the metric across different runs. 
+
 Relevant test yaml section:
 ```yaml
 reporting:
@@ -199,6 +220,7 @@ reporting:
     timeframe: 1s
     fail: true
     stop: true
+    diff_percent : 30
 
 ```
 
@@ -211,6 +233,7 @@ cd $MMS_HOME/tests/performance
 bzt inference_server_monitoring_criteria.yaml tests/common/global_config.yaml
 bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.yaml
 ```
+
 
 ## Metrics that you can use for monitoring \ passfail criteria  
   **System Metrics**
@@ -260,4 +283,3 @@ bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.y
 3. Better reporting and artifact management
 4. Enhance framework to add better abstraction to hide Taurus and other scripts.
 5. Auto threshold calculation, environment profiles
-6. Comparison between runs and environments

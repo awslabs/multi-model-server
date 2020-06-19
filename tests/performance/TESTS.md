@@ -11,17 +11,15 @@
 |I   |Demonstrate that operations rollback in case request cannot be satisifed            |Ongoing inference should complete before scaledown operation is allowed to start                                                           |
 |J   |Demonstrate that operations are idempotent                                          |Multiple simultaneous scale operations with the same parameter value should result in the same system state                                |
 
-|API|CODE                                                                                |YAML                                                                                                                                       |
-|---|------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-|Register Model|A,B,F,J                                                                             |                                                                                                                                           |
-|Inference|A,B,C                                                                               |                                                                                                                                           |
-|Batch Inference|A,B,C                                                                               |                                                                                                                                           |
-|Custom Model Handlers|C                                                                                   |                                                                                                                                           |
-|Scale Workers - UP/DOWN|D,G,I,F,J                                                                           |                                                                                                                                           |
-|Unregister Models|D,G,I,J                                                                             |                                                                                                                                           |
-|List Models|A,B,E                                                                               |                                                                                                                                           |
-|Health Check|A,B,E                                                                               |                                                                                                                                           |
-|API Description|A,B,E                                                                               |                                                                                                                                           |
-|Model Describe|A,B,E                                                                               |                                                                                                                                           |
-|List Models|A,B,E                                                                               |                                                                                                                                           |
-
+|API|CODE|YAML|
+|---|----|---|
+|Register Model|A,B,F,J|[WIP] [register_unregister.yaml](tests/register_unregister.yaml)|
+|Inference|A,B,C|[WIP] [inference_single_worker.yaml](tests/inference_single_worker.yaml), [inference_multiple_worker.yaml](tests/inference_multiple_worker.yaml)|
+|Batch Inference|A,B,C||
+|Custom Model Handlers|C||
+|Scale Workers - UP/DOWN|D,G,I,F,J|[WIP] [scale_up_workers.yaml](tests/scale_up_workers.yaml), [scale_down_workers.yaml](tests/scale_down_workers.yaml)|
+|Unregister Models|D,G,I,J|[WIP] [register_unregister.yaml](tests/register_unregister.yaml)|
+|Health Check|A,B,E|[WIP] [health_check.yaml](tests/health_check.yaml)|
+|API Description|A,B,E|[WIP] [api_description.yaml](tests/api_description.yaml)|
+|Model Describe|A,B,E|[WIP] [model_description.yaml](tests/model_description.yaml)|
+|List Models|A,B,E|[WIP] [list_models.yaml](tests/list_models.yaml)|

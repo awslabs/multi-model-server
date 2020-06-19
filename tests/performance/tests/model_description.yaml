@@ -1,0 +1,68 @@
+---
+execution:
+- concurrency: 10
+  ramp-up: 1s
+  hold-for: 30s
+  scenario: model_description
+
+scenarios:
+  model_description:
+    script: model_description.jmx
+
+modules:
+  server_local_monitoring:
+    class : metrics_monitoring_taurus.Monitor
+
+services:
+  - module: shellexec
+    prepare:
+      - curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+      - curl -s -X PUT  http://localhost:8081/models/squeezenet_v1.1?min_worker=1&synchronous=true
+    post-process:
+      - curl -s -X DELETE http://localhost:8081/models/squeezenet_v1.1
+  - module: server_local_monitoring
+    ServerLocalClient:
+      - interval: 1s
+        metrics:
+          - total_workers
+          - sum_workers_file_descriptors
+          - orphans
+
+reporting:
+- module: passfail
+  criteria:
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_workers
+      condition: '>'
+      threshold: 1
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_workers
+      condition: '<'
+      threshold: 1
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '>'
+      threshold: 11
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '<'
+      threshold: 11
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/orphans
+      condition: '>'
+      threshold: 0
+      timeframe: 1s
+      stop : true
+      fail : true

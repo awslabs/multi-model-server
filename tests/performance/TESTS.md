@@ -19,8 +19,7 @@
 |Custom Model Handlers|C||
 |Scale Workers - UP/DOWN|D,G,I,F,J|[scale_up_workers.yaml](tests/scale_up_workers.yaml), [scale_down_workers.yaml](tests/scale_down_workers.yaml)|
 |Unregister Models|D,G,I,J|[register_unregister.yaml](tests/register_unregister.yaml)|
-|List Models|A,B,E||
 |Health Check|A,B,E||
 |API Description|A,B,E||
-|Model Describe|A,B,E||
+|Model Describe|A,B,E|[model_description.yaml](tests/model_description.yaml)|
 |List Models|A,B,E||

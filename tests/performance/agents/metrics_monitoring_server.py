@@ -15,25 +15,27 @@ Remote server monitoring script
 """
 # pylint: disable=redefined-builtin
 
+import argparse
 import logging
 import sys
-from gevent import socket
-from gevent import select
-from gevent import monkey
-import argparse
 import tempfile
+
+from gevent import monkey
+from gevent import select
+from gevent import socket
 
 monkey.patch_select()
 monkey.patch_socket()
 
 logger = logging.getLogger(__name__)
 from metrics_collector import start_metric_collection, stop_process, store_pid, check_is_running
-from process import get_process_pid_from_file, \
+from utils.process import get_process_pid_from_file, \
     get_server_processes, get_server_pidfile
 import configuration
 
 TMP_DIR = tempfile.gettempdir()
 METRICS_MON_SERVER_PID_FILE = "{}/.metrics_monitoring_server.pid".format(TMP_DIR)
+PID_FILE = configuration.get('server', 'pid_file', 'model_server.pid')
 
 HOST = str(configuration.get('monitoring', 'HOST'))
 PORT = int(configuration.get('monitoring', 'PORT', 9009))
@@ -80,9 +82,9 @@ def perf_server():
                             except Exception:
                                 send_message(sock, "In-correct interval data")
                         elif data.startswith('metrics'):
-                             metrics = data[:-1].split("metrics:")[1].split("\t")
-                             server_pid = get_process_pid_from_file(get_server_pidfile())
-                             server_process = get_server_processes(server_pid)
+                            metrics = data[:-1].split("metrics:")[1].split("\t")
+                            server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
+                            server_process = get_server_processes(server_pid)
                              start_metric_collection(server_process, metrics, interval, sock)
                         else:
                             # TODO - decide what to do here

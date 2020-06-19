@@ -16,9 +16,9 @@ Utility methods for process related information
 # pylint: disable=redefined-builtin
 
 import os
-import psutil
 import tempfile
-import configuration
+
+import psutil
 
 
 def find_procs_by_name(name):
@@ -68,5 +68,5 @@ def get_server_processes(server_process_pid):
     return server_process
 
 
-def get_server_pidfile():
-    return "{0}/.{1}".format(tempfile.gettempdir(), configuration.get('server', 'pid_file', 'model_server.pid'))
+def get_server_pidfile(file):
+    return "{0}/.{1}".format(tempfile.gettempdir(), file)

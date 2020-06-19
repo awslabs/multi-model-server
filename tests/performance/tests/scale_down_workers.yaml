@@ -3,19 +3,19 @@ execution:
 - concurrency: 10
   ramp-up: 1s
   hold-for: 30s
-#  iterations: 200
-  scenario: Downscale
+  scenario: scaledown
 
 scenarios:
-  Downscale:
-    script: downscale_workers.jmx
+  scaledown:
+    script: scale_down_workers.jmx
 
 services:
   - module: shellexec
     prepare:
-    - bzt tests/common/setup.jmx tests/common/global_config.yaml -o settings.artifacts-dir=/tmp/mms_perf/
+    - curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+    - curl -s -X PUT  http://localhost:8081/models/squeezenet_v1.1?min_worker=4&synchronous=true
     post-process:
-    - bzt tests/common/teardown.jmx tests/common/global_config.yaml -o settings.artifacts-dir=/tmp/mms_perf/
+    - curl -s -X DELETE http://localhost:8081/models/squeezenet_v1.1
   - module: server_local_monitoring
     ServerLocalClient:
     - interval: 1s
@@ -57,6 +57,13 @@ reporting:
       subject: ServerLocalClient/sum_workers_file_descriptors
       condition: '<'
       threshold: 21
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/orphans
+      condition: '<'
+      threshold: 1
       timeframe: 1s
       stop : true
       fail : true

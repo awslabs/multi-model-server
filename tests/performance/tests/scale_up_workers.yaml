@@ -3,11 +3,11 @@ execution:
 - concurrency: 3
   ramp-up: 5s
   iterations: 20
-  scenario: Upscale
+  scenario: scaleup
 
 scenarios:
-  Upscale:
-    script: upscale_workers.jmx
+  scaleup:
+    script: scale_up_workers.jmx
 
 modules:
   server_local_monitoring:

@@ -24,7 +24,7 @@ import socket
 import subprocess
 import yaml
 import requests
-import configuration
+from agents import configuration
 import csv
 import pandas as pd
 import boto3
@@ -40,8 +40,11 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 code = 0
 metrics_monitoring_server = "agents/metrics_monitoring_server.py"
+base_file_path = pathlib.Path(__file__).parent.absolute()
+run_artifacts_path = "{}/run_artifacts/".format(base_file_path)
 
 S3_BUCKET = configuration.get('suite', 's3_bucket')
+
 
 class Timer(object):
     def __init__(self, description):
@@ -180,8 +183,7 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
                     for rep_section in  test_yaml1['reporting']:
                         if rep_section.get('module', None) == 'passfail' :
                             for criterion in rep_section.get('criteria', []):
-                                if isinstance(criterion, dict) and\
-                                    'monitoring' in criterion.get('class', ''):
+                                if isinstance(criterion, dict) and 'monitoring' in criterion.get('class', ''):
                                     subject = criterion["subject"]
                                     metric = subject.rsplit('/',1)
                                     metric = metric[1] if len(metric) == 1 else metric[0]
@@ -194,8 +196,6 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
                 return metrics1, diff_percents1
 
             metrics1, diff_percents1 = get_metrics_diff(dir1)
-            metrics2, diff_percents2 = get_metrics_diff(dir2)
-
 
             metrics_file1 = glob.glob("{}/{}/SAlogs_*".format(dir1, sub_dir1))
             metrics_file2 = glob.glob("{}/{}/SAlogs_*".format(dir2, sub_dir1))
@@ -208,21 +208,21 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
                     rows.append([sub_dir1, "log_file", "NA", "NA", "NA", "pass"])
                     continue
 
-            metrics1 = pd.read_csv(metrics_file1[0])
-            metrics2 = pd.read_csv(metrics_file2[0])
+            metrics_from_file1 = pd.read_csv(metrics_file1[0])
+            metrics_from_file2 = pd.read_csv(metrics_file2[0])
 
-            for col in metrics1.columns[1:]:
+            for col, diff_percent in zip(metrics1.columns, diff_percents1):
                 for agg_func in aggregates:
                     name = "{}_{}".format(agg_func, str(col))
                     try:
-                        val1 = getattr(metrics1[str(col)], agg_func)()
+                        val1 = getattr(metrics_from_file1[str(col)], agg_func)()
                     except TypeError:
                         val1 = "NULL"
                         print(col)
 
-                    if str(col) in metrics2:
+                    if str(col) in metrics_from_file2:
                         try:
-                            val2 = getattr(metrics2[str(col)], agg_func)()
+                            val2 = getattr(metrics_from_file2[str(col)], agg_func)()
                         except TypeError:
                             val2 = "NULL"
                     else:
@@ -269,13 +269,23 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
 
 
 def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path,
-                   monitoring_server, env_name, diff_percent):
+                   monitoring_server, env_name, diff_percent, compare_local):
+
+    commit_id = subprocess.check_output('git rev-parse --short HEAD'.split()).decode("utf-8")[:-1]
+    artifacts_folder_name = "{}_{}_{}".format(env_name, commit_id, int(time.time()))
+
+    store_local = False
+    if artifacts_dir is None:
+        artifacts_dir = "{}/{}".format(artifacts_folder_name, run_artifacts_path)
+        logger.info("Using artifacts dir as {}".format(artifacts_dir))
+        store_local = True
+
     if os.path.exists(artifacts_dir):
         raise Exception("Artifacts dir '{}' already exists. Provide different one.".format(artifacts_dir))
 
-    path = pathlib.Path(__file__).parent.absolute()
 
-    global_config_file = "{}/tests/common/global_config.yaml".format(path)
+
+    global_config_file = "{}/tests/common/global_config.yaml".format(base_file_path)
     with open(global_config_file) as conf_file:
         global_config = yaml.safe_load(conf_file)
     server_props = global_config["modules"]["jmeter"]["properties"]
@@ -286,14 +296,14 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path,
         raise Exception("Server is not running. Pinged url {}. Exiting..".format(server_ping_url))
 
     if monitoring_server:
-        start_monitoring_server = "python {}/{} --start".format(path, metrics_monitoring_server)
+        start_monitoring_server = "python3 {}/{} --start".format(base_file_path, metrics_monitoring_server)
         code, output = run_process(start_monitoring_server, wait=False)
         time.sleep(2)
 
         # TODO -  Add check if server started
 
     junit_xml = JUnitXml()
-    pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(path))
+    pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(base_file_path))
 
     test_yamls = get_test_yamls(test_dir, pattern)
     out_report_rows = []
@@ -364,7 +374,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path,
     run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
     if monitoring_server:
-        stop_monitoring_server = "python {}/{} --stop".format(path, metrics_monitoring_server)
+        stop_monitoring_server = "python3 {}/{} --stop".format(base_file_path, metrics_monitoring_server)
         run_process(stop_monitoring_server)
 
     with open('final_report.csv', 'w', newline='') as csvfile:
@@ -372,22 +382,16 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path,
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
         csv_writer.writerows(out_report_rows)
 
-    path = pathlib.Path(artifacts_dir)
-    commit_id = subprocess.check_output('git rev-parse --short HEAD'.split()).decode("utf-8")[:-1]
-    new_name = "{}_{}_{}".format(env_name, commit_id, suite_start)
+    if compare_local:
+        compare_dir = get_latest_dir(run_artifacts_path, env_name)
+    else:
+        compare_dir = download_s3_files(env_name, "{}/comp_data".format(artifacts_dir))
 
-    # new_name_path = "{}/{}/".format(path.parent, new_name)
-    # os.rename(artifacts_dir, new_name_path)
-
-    # latest_dir = get_latest_dir("{}/comp_data".format(artifacts_dir) , env_name)
-    # result = compare_artifacts(artifacts_dir, latest_dir, artifacts_dir, diff_percent=diff_percent)
-
-    compare_dir = download_s3_files(env_name, "{}/comp_data".format(artifacts_dir))
     compare_result = True
     if compare_dir:
         compare_result = compare_artifacts(artifacts_dir, compare_dir, artifacts_dir, diff_percent=diff_percent)
 
-    run_process("aws s3 cp {} s3://{}/{}  --recursive".format(artifacts_dir, S3_BUCKET, new_name))
+    run_process("aws s3 cp {} s3://{}/{}  --recursive".format(artifacts_dir, S3_BUCKET, artifacts_folder_name))
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
         sys.exit(3)
@@ -395,7 +399,9 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path,
     if not compare_result:
         sys.exit(4)
 
+
 if __name__ == "__main__":
+    exit()
     logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser(prog='run_performance_suite.py', description='Performance Test Suite Runner')
     parser.add_argument('-a', '--artifacts-dir', nargs=1, type=str, dest='artifacts', required=True,

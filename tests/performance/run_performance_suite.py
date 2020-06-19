@@ -203,7 +203,7 @@ def download_s3_files(env_id, tgt_path, bucket_name=S3_BUCKET):
     latest_run = get_latest(run_names, env_id)
     if not latest_run:
         logger.info("No run found for env_id {}".format(env_id))
-        return False
+        return '', ''
 
     if not os.path.exists(tgt_path):
         os.makedirs(tgt_path)

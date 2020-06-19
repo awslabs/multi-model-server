@@ -165,8 +165,8 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
         return False
 
     over_all_pass = True
-    sub_dirs_1 = list([x[0].rsplit('/',1)[1] for x in os.walk(dir1) if x[0] != dir1])
-    sub_dirs_2 = list([x[0].rsplit('/',1)[1] for x in os.walk(dir2) if x[0] != dir2])
+    sub_dirs_1 = list([x for x in os.listdir(dir1) if os.path.isdir(dir1+"/"+x) and x not in [dir1, 'comp_data']])
+    sub_dirs_2 = list([x for x in os.listdir(dir2) if os.path.isdir(dir2+"/"+x) and x not in [dir2, 'comp_data']])
 
     aggregates = ["mean", "max", "min"]
     header = ["test_suite", "metric", "run1", "run2", "percentage_diff", "result"]
@@ -180,13 +180,13 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
                 test_yaml1 = "{}/{}/{}.yaml".format(dir1, sub_dir1, sub_dir1)
                 with open(test_yaml1) as test_yaml1:
                     test_yaml1 = yaml.safe_load(test_yaml1)
-                    for rep_section in  test_yaml1['reporting']:
+                    for rep_section in test_yaml1.get('reporting',[]):
                         if rep_section.get('module', None) == 'passfail' :
                             for criterion in rep_section.get('criteria', []):
                                 if isinstance(criterion, dict) and 'monitoring' in criterion.get('class', ''):
                                     subject = criterion["subject"]
                                     metric = subject.rsplit('/',1)
-                                    metric = metric[1] if len(metric) == 1 else metric[0]
+                                    metric = metric[1] if len(metric) == 2 else metric[0]
                                     diff_percent = criterion.get("diff_percent", None)
 
                                     if diff_percent:
@@ -211,7 +211,7 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
             metrics_from_file1 = pd.read_csv(metrics_file1[0])
             metrics_from_file2 = pd.read_csv(metrics_file2[0])
 
-            for col, diff_percent in zip(metrics1.columns, diff_percents1):
+            for col, diff_percent in zip(metrics1, diff_percents1):
                 for agg_func in aggregates:
                     name = "{}_{}".format(agg_func, str(col))
                     try:
@@ -219,6 +219,8 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
                     except TypeError:
                         val1 = "NULL"
                         print(col)
+                    except Exception as e:
+                        print(e)
 
                     if str(col) in metrics_from_file2:
                         try:
@@ -247,9 +249,11 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
                                 pass_fail = "pass" if diff < diff_percent else "fail"
                             else: # special case of 0
                                 pass_fail = "pass"
+                                diff = 0
 
                         except Exception as e:
                             logger.info("error while calculating the diff {}".format(str(e)))
+                            diff = "NA"
                             pass_fail = "fail"
 
                     if over_all_pass:
@@ -276,7 +280,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path,
 
     store_local = False
     if artifacts_dir is None:
-        artifacts_dir = "{}/{}".format(artifacts_folder_name, run_artifacts_path)
+        artifacts_dir = "{}/{}".format(run_artifacts_path, artifacts_folder_name)
         logger.info("Using artifacts dir as {}".format(artifacts_dir))
         store_local = True
 
@@ -401,10 +405,9 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path,
 
 
 if __name__ == "__main__":
-    exit()
     logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser(prog='run_performance_suite.py', description='Performance Test Suite Runner')
-    parser.add_argument('-a', '--artifacts-dir', nargs=1, type=str, dest='artifacts', required=True,
+    parser.add_argument('-a', '--artifacts-dir', nargs=1, type=str, dest='artifacts', required=False, default=[None],
                            help='A artifacts directory')
 
     parser.add_argument('-e', '--env-name', nargs=1, type=bool, dest='env_name', default=[socket.gethostname()],
@@ -422,9 +425,12 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--monitoring-server', nargs=1, type=bool, dest='monitoring_server', default=[True],
                         help='Whether to start monitoring server')
 
+    parser.add_argument('-l', '--compare-local', nargs=1, type=bool, dest='compare_local', default=[False],
+                        help='Whether to do a comparison with local files otherwise s3 files are used')
+
     parser.add_argument('-c', '--diff-percent', nargs=1, type=float, dest='diff_percent', default=[None],
                         help='Acceptable percentage difference between metrics from previous runs')
 
     args = parser.parse_args()
     run_test_suite(args.artifacts[0], args.test_dir[0], args.pattern[0], args.jmeter_path[0],
-                   args.monitoring_server[0], args.env_name[0], args.diff_percent[0])
+                   args.monitoring_server[0], args.env_name[0], args.diff_percent[0], args.compare_local[0])

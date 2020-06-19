@@ -88,10 +88,12 @@ class ServerLocalMonitor(monitoring.LocalMonitor):
          server_process = get_server_processes(server_pid)
          result.update(get_metrics(server_process, get_child_processes(server_process)))
 
+         '''
          table = {}
          for key in self.metrics:
              if result.get(key) is not None:
                 table[key] = [result[key]]
          self.log.info("\n{0}".format(tabulate(table, headers=table.keys(), tablefmt="pretty")))
+         '''
 
          return result

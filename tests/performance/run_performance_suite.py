@@ -40,13 +40,14 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
-PATH = pathlib.Path(__file__).parent.absolute()
-GLOBAL_CONFIG_PATH = "{}/tests/common/global_config.yaml".format(PATH)
+
+
 
 code = 0
 metrics_monitoring_server = "agents/metrics_monitoring_server.py"
 base_file_path = pathlib.Path(__file__).parent.absolute()
 run_artifacts_path = "{}/run_artifacts/".format(base_file_path)
+GLOBAL_CONFIG_PATH = "{}/tests/common/global_config.yaml".format(base_file_path)
 
 S3_BUCKET = configuration.get('suite', 's3_bucket')
 
@@ -331,7 +332,7 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
 
 def get_test_yamls(dir_path=None, pattern="*.yaml"):
     if not dir_path:
-        dir_path = str(PATH) + "/tests"
+        dir_path = str(base_file_path) + "/tests"
 
     path_pattern = "{}/{}".format(dir_path, pattern)
     return glob.glob(path_pattern)
@@ -369,9 +370,9 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
         artifacts_dir = "{}/{}".format(artifacts_dir, artifacts_folder_name)
     logger.info("Artifacts will be stored in directory {}".format(artifacts_dir))
 
-    with Monitoring(PATH, monit):
+    with Monitoring(base_file_path, monit):
         junit_xml = JUnitXml()
-        pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(PATH))
+        pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(base_file_path))
         test_yamls = get_test_yamls(test_dir, pattern)
         for test_file in tqdm(test_yamls, desc="Test Suites"):
             suite_name = os.path.basename(test_file).rsplit('.', 1)[0]

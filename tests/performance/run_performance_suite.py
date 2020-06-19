@@ -256,9 +256,7 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
     header = ["run_name1", "run_name2", "test_suite", "metric", "run1", "run2", "percentage_diff", "result"]
     rows = [header]
     for sub_dir1 in sub_dirs_1:
-        row = [run_name1, run_name2]
         if sub_dir1 in sub_dirs_2:
-
             metrics_file1 = glob.glob("{}/{}/SAlogs_*".format(dir1, sub_dir1))
             metrics_file2 = glob.glob("{}/{}/SAlogs_*".format(dir2, sub_dir1))
             if not (metrics_file1 and metrics_file2):
@@ -266,7 +264,7 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
                 metrics_file2 = glob.glob("{}/{}/local_*".format(dir2, sub_dir1))
                 if not (metrics_file1 and metrics_file2):
                     logger.info("Metrics monitoring logs are not captured for {} in either of the runs.".format(sub_dir1))
-                    row.extend([sub_dir1, "log_file", sub_dir1, sub_dir1, "metrics are not captured for either of the runs", "pass"])
+                    rows.append([run_name1, run_name2, sub_dir1, "log_file", sub_dir1, sub_dir1, "metrics are not captured for either of the runs", "pass"])
                     continue
             metrics_from_file1 = pd.read_csv(metrics_file1[0])
             metrics_from_file2 = pd.read_csv(metrics_file2[0])
@@ -316,17 +314,14 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
 
                     if over_all_pass:
                         over_all_pass = pass_fail == "pass"
-                    row.extend([sub_dir1, name, val1, val2, diff, pass_fail])
+                    rows.append([run_name1, run_name2, sub_dir1, name, val1, val2, diff, pass_fail])
         else:
-            row.extend([sub_dir1, "log_file", "log file available", "log file not available", "NA", "pass"])
-
-        rows.append(row)
+            rows.append([run_name1, run_name2, sub_dir1, "log_file", "log file available", "log file not available", "NA", "pass"])
 
     out_path = "{}/comparison.csv".format(out_dir)
     logger.info("Writing comparison report to log file {}".format(out_path))
-    with open(out_path, 'w', newline='') as csvfile:
-        csv_writer = csv.writer(csvfile, delimiter=',',
-                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    with open(out_path, 'w') as csvfile:
+        csv_writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         csv_writer.writerows(rows)
     return over_all_pass
 

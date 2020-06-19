@@ -81,33 +81,13 @@ for metric in list(process_metrics):
             for op in list(operators):
                 AVAILABLE_METRICS.append('{}_{}_{}'.format(op, PNAME, metric))
 
-children = set()
+__CHILDREN = set()
 
 def get_metrics(server_process, child_processes):
     """ Get Server processes specific metrics
     """
     result = {}
-    children.update(child_processes)
-
-    # as_dict() gets all stats in one shot
-    processes_stats = []
-    reclaimed_pids = []
-    processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
-    for process in children:
-        if len(list(filter(lambda p: p == server_process.pid, process.parents()))) == 0:
-            reclaimed_pids.append(process)
-        else:
-            processes_stats.append({'type': ProcessType.WORKER, 'stats' : process.as_dict()})
-
-    for p in reclaimed_pids:
-        children.remove(p)
-
-    ### PROCESS METRICS ###
-    worker_stats = list(map(lambda x: x['stats'], \
-                            filter(lambda x: x['type'] == ProcessType.WORKER, processes_stats)))
-    server_stats = list(map(lambda x: x['stats'], \
-                            filter(lambda x: x['type'] == ProcessType.FRONTEND, processes_stats)))
-    all_stats = list(map(lambda x: x['stats'], processes_stats))
+    __CHILDREN.update(child_processes)
 
     def update_metric(metric_name, proc_type, stats):
         stats = stats if stats else [0]
@@ -124,14 +104,28 @@ def get_metrics(server_process, child_processes):
         for op_name in operators:
             result['{}_{}_{}'.format(op_name, proc_name, metric_name)] = operators[op_name](stats)
 
+    # as_dict() gets all stats in one shot
+    processes_stats = []
+    processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
+    for process in child_processes:
+        processes_stats.append({'type': ProcessType.WORKER, 'stats' : process.as_dict()})
+
+    ### PROCESS METRICS ###
+    worker_stats = list(map(lambda x: x['stats'], \
+                            filter(lambda x: x['type'] == ProcessType.WORKER, processes_stats)))
+    server_stats = list(map(lambda x: x['stats'], \
+                            filter(lambda x: x['type'] == ProcessType.FRONTEND, processes_stats)))
+    all_stats = list(map(lambda x: x['stats'], processes_stats))
+
     for k in process_metrics:
         update_metric(k, ProcessType.WORKER, list(map(process_metrics[k], worker_stats)))
         update_metric(k, ProcessType.ALL, list(map(process_metrics[k], all_stats)))
         update_metric(k, ProcessType.FRONTEND, list(map(process_metrics[k], server_stats)))
 
+
     # Total processes
-    result['total_processes'] = len(worker_stats) + 1
-    result['total_workers'] = max(len(worker_stats) - 1, 0)
+    result['total_processes'] = len(child_processes) + 1
+    result['total_workers'] = max(len(child_processes) - 1, 0)
     result['orphans'] = len(list(filter(lambda p : p['ppid'] == 1, worker_stats)))
 
     ### SYSTEM METRICS ###

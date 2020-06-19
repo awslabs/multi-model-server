@@ -16,7 +16,6 @@ from statistics import mean
 
 import psutil
 
-
 class ProcessType(Enum):
     """ Type of MMS processes to compute metrics on """
     FRONTEND = 1

@@ -34,7 +34,6 @@ reporting:
   - class: bzt.modules.monitoring.MonitoringCriteria
     subject: mms-inference-server/sum_workers_file_descriptors
     condition: '>'
-    threshold: 80
     timeframe: 1s
     fail: true
     stop: true

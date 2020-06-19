@@ -169,7 +169,7 @@ def compare_artifacts(dir1, dir2, out_dir, diff_percent=None):
     sub_dirs_2 = list([x for x in os.listdir(dir2) if os.path.isdir(dir2+"/"+x) and x not in [dir2, 'comp_data']])
 
     aggregates = ["mean", "max", "min"]
-    header = ["test_suite", "metric", "run1", "run2", "percentage_diff", "result"]
+    header = ["run_name1", "run_name2", "test_suite", "metric", "run1", "run2", "percentage_diff", "result"]
     rows = [header]
     for sub_dir1 in sub_dirs_1:
         if sub_dir1 in sub_dirs_2:
@@ -287,8 +287,6 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path,
     if os.path.exists(artifacts_dir):
         raise Exception("Artifacts dir '{}' already exists. Provide different one.".format(artifacts_dir))
 
-
-
     global_config_file = "{}/tests/common/global_config.yaml".format(base_file_path)
     with open(global_config_file) as conf_file:
         global_config = yaml.safe_load(conf_file)
@@ -395,7 +393,8 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path,
     if compare_dir:
         compare_result = compare_artifacts(artifacts_dir, compare_dir, artifacts_dir, diff_percent=diff_percent)
 
-    run_process("aws s3 cp {} s3://{}/{}  --recursive".format(artifacts_dir, S3_BUCKET, artifacts_folder_name))
+    if not store_local:
+        run_process("aws s3 cp {} s3://{}/{}  --recursive".format(artifacts_dir, S3_BUCKET, artifacts_folder_name))
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
         sys.exit(3)

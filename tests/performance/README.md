@@ -28,11 +28,11 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
 
 ### B. Running the test suite
 1. Run MMS server
-2. Make sure parameters set in the [global_config.yaml](tests/common/global_config.yaml) are correct.
+2. Make sure parameters set in the [tests/common/global_config.yaml](tests/common/global_config.yaml) are correct.
 3. Run the test suite runner script
 4. Check the console logs, $artifacts-dir$/junit.html report and other artifacts.
 
-    **steps are provided below**
+    **Steps are provided below**
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
@@ -41,9 +41,9 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
     # multi-model-server --start 
     
     # check variables
-    #vi tests/common/global_config.yaml 
+    # vi tests/common/global_config.yaml 
     # jpeg download command for quick reference. Set input_filepath in global_config.yaml
-    #curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
+    # curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
     
     python -m run_performance_suite --artifacts-dir='<path>' --pattern='*criteria*.yaml'
     ```
@@ -67,7 +67,7 @@ To add test case follow steps below.
 You can specify the test scenarios, in the scenario section of the yaml.
 To get you started quickly, we have provided a sample JMeter script and a Taurus yaml file [here](tests/register_and_inference.jmx) and [here](tests/call_jmx.yaml) .
     
-Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [global_config.yaml](tests/common/global_config.yaml) file.
+Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [tests/common/global_config.yaml](tests/common/global_config.yaml) file.
     
     ```yaml
     execution:
@@ -246,7 +246,13 @@ bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.y
   
     | Syntax | Examples |
     | ------ | -------- |
-    | {aggreagate}\_all\_{metricname} | total_processes, sum_all_memory_percent, avg_all_iowait_time, min_all_io_write_bytes, max_all_threads |
+    | {aggregate}\_all\_{metricname} | sum_all_memory_percent, avg_all_iowait_time, min_all_io_write_bytes, max_all_threads |
+
+  - Miscellaneous
+     * total_processes - Total number of processes spawned for frontend & workers
+     * total_workers - Total number of workers spawned
+     * orphans - Total number of orphan processes
+  
 
 ## Work in Progress
 1. Add more metrics for cpu and gpu both. Add documentation around those.

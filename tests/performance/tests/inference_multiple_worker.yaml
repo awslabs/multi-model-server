@@ -2,12 +2,13 @@
 execution:
 - concurrency: 10
   ramp-up: 1s
-  hold-for: 30s
-  scenario: scaleup
+  hold-for: 1m
+  iterations: 100
+  scenario: inference
 
 scenarios:
-  scaleup:
-    script: scale_up_workers.jmx
+  inference:
+    script: inference_multiple_worker.jmx
 
 modules:
   server_local_monitoring:
@@ -17,6 +18,7 @@ services:
   - module: shellexec
     prepare:
       - curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
+      - curl -s -X PUT  http://localhost:8081/models/squeezenet_v1.1?min_worker=4&synchronous=true
     post-process:
       - curl -s -X DELETE http://localhost:8081/models/squeezenet_v1.1
   - module: server_local_monitoring
@@ -38,17 +40,24 @@ reporting:
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/sum_workers_file_descriptors
+      subject: ServerLocalClient/total_workers
       condition: '<'
       threshold: 4
-      timeframe: 5s
+      timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_file_descriptors
       condition: '>'
       threshold: 38
-      timeframe: 5s
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '<'
+      threshold: 38
+      timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria

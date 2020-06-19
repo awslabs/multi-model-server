@@ -27,6 +27,7 @@ from bzt.utils import dehumanize_time
 from metrics import get_metrics, AVAILABLE_METRICS as AVAILABLE_SERVER_METRICS
 from utils.process import get_process_pid_from_file, get_server_processes, \
     get_child_processes, get_server_pidfile
+from tabulate import tabulate
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
@@ -86,4 +87,11 @@ class ServerLocalMonitor(monitoring.LocalMonitor):
          server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
          server_process = get_server_processes(server_pid)
          result.update(get_metrics(server_process, get_child_processes(server_process)))
+
+         table = {}
+         for key in self.metrics:
+             if result.get(key) is not None:
+                table[key] = [result[key]]
+         self.log.info("\n{0}".format(tabulate(table, headers=table.keys(), tablefmt="pretty")))
+
          return result

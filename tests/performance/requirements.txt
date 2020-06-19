@@ -4,3 +4,4 @@ git+https://github.com/maheshambule/vjunit.git#egg=vjunit
 tqdm==4.40.0
 pathlib
 click
+tabulate

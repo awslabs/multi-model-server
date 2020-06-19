@@ -15,9 +15,11 @@ Read configuration file
 """
 # pylint: disable=redefined-builtin
 import configparser
+import pathlib
 
 config = configparser.ConfigParser()
-config.read('./config.ini')
+path = pathlib.Path(__file__).parent.absolute()
+config.read('{}/config.ini'.format(path))
 
 def get(section, key, default=''):
     try:

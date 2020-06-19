@@ -1,0 +1,245 @@
+---
+cli:
+  linter:
+    disable: false
+    ignored-warnings: []
+    lint-and-exit: false
+    warn-on-unfamiliar-fields: false
+cli-aliases:
+  cloud:
+    provisioning: cloud
+  detach:
+    modules:
+      cloud:
+        detach: true
+  func:
+    modules:
+      console:
+        disable: true
+    settings:
+      aggregator: functional-consolidator
+  gui:
+    modules:
+      jmeter:
+        gui: true
+  install-tools:
+    services:
+    - install-checker
+  lint:
+    cli:
+      linter:
+        lint-and-exit: true
+  local:
+    provisioning: local
+  locations:
+    modules:
+      cloud:
+        dump-locations: true
+    provisioning: cloud
+  nolint:
+    cli:
+      linter:
+        disable: true
+  public:
+    modules:
+      blazemeter:
+        public-report: true
+  report:
+    reporting:
+    - blazemeter
+  sequential:
+    modules:
+      local:
+        sequential: true
+execution:
+- concurrency:
+    local: 1
+  executor: jmeter
+  iterations: 1
+  ramp-up: 0s
+  scenario: Downscale
+  throughput: {}
+included-configs: []
+modules:
+  ab:
+    class: bzt.modules.ab.ApacheBenchmarkExecutor
+  android-emulator:
+    class: bzt.modules.services.AndroidEmulatorLoader
+  apiritif:
+    class: bzt.modules.apiritif.ApiritifNoseExecutor
+  appium:
+    class: bzt.modules.services.AppiumLoader
+  blazemeter:
+    class: bzt.modules.blazemeter.BlazeMeterUploader
+  capturehar:
+    class: bzt.modules.blazemeter.ServiceStubCaptureHAR
+  cloud:
+    class: bzt.modules.blazemeter.CloudProvisioning
+    default-location: us-central1-a
+  console:
+    class: bzt.modules.console.ConsoleStatusReporter
+    disable: true
+  consolidator:
+    class: bzt.modules.aggregator.ConsolidatingAggregator
+    percentiles:
+    - 0.0
+    - 50.0
+    - 90.0
+    - 95.0
+    - 99.0
+    - 99.9
+    - 100.0
+  external-results-loader:
+    class: bzt.modules.external.ExternalResultsLoader
+  final-stats:
+    class: bzt.modules.reporting.FinalStatus
+  final_stats:
+    class: bzt.modules.reporting.FinalStatus
+  functional-consolidator:
+    class: bzt.modules.functional.FunctionalAggregator
+  gatling:
+    class: bzt.modules.gatling.GatlingExecutor
+    properties:
+      gatling.data.file.bufferSize: 256
+  grinder:
+    class: bzt.modules.grinder.GrinderExecutor
+    properties:
+      grinder.useConsole: false
+  install-checker:
+    class: bzt.modules.services.InstallChecker
+  jmeter:
+    class: bzt.modules.jmeter.JMeterExecutor
+    path: /Users/mahesh/.bzt/jmeter-taurus/5.2.1/bin/jmeter.sh
+    plugins:
+    - jpgc-casutg
+    - jpgc-dummy
+    - jpgc-ffw
+    - jpgc-fifo
+    - jpgc-functions
+    - jpgc-json
+    - jpgc-perfmon
+    - jpgc-prmctl
+    - jpgc-tst
+    properties:
+      hostname: 127.0.0.1
+      input_filepath: kitten.jpg
+      jmeter.save.saveservice.autoflush: 'true'
+      jmeter.save.saveservice.connect_time: 'true'
+      jmeterengine.force.system.exit: 'true'
+      management_port: 8081
+      port: 8080
+      protocol: http
+      summariser.name: ''
+    protocol-handlers:
+      http: bzt.jmx.http.HTTPProtocolHandler
+    version: 5.2.1
+  junit:
+    class: bzt.modules.java.JUnitTester
+  junit-xml:
+    class: bzt.modules.reporting.JUnitXMLReporter
+  local:
+    class: bzt.modules.provisioning.Local
+  locust:
+    class: bzt.modules.locustio.LocustIOExecutor
+  mocha:
+    class: bzt.modules.javascript.MochaTester
+  molotov:
+    class: bzt.modules.molotov.MolotovExecutor
+  monitoring:
+    class: bzt.modules.monitoring.Monitoring
+  new_passfail:
+    class: new_passfail.PassFailStatus
+  newman:
+    class: bzt.modules.javascript.NewmanExecutor
+  nunit:
+    class: bzt.modules.csharp.NUnitExecutor
+  passfail:
+    class: bzt.modules.passfail.PassFailStatus
+  pbench:
+    class: bzt.modules.pbench.PBenchExecutor
+  proxy2jmx:
+    class: bzt.modules.proxy2jmx.Proxy2JMX
+  pytest:
+    class: bzt.modules.pytest.PyTestExecutor
+  robot:
+    class: bzt.modules.robot.RobotExecutor
+  rspec:
+    class: bzt.modules.ruby.RSpecTester
+  screenshoter:
+    class: bzt.modules.blazemeter.ServiceStubScreenshoter
+  selenium:
+    class: bzt.modules.selenium.SeleniumExecutor
+  server_local_monitoring:
+    class: metrics_monitoring_taurus.Monitor
+  shellexec:
+    class: bzt.modules.shellexec.ShellExecutor
+  siege:
+    class: bzt.modules.siege.SiegeExecutor
+  testng:
+    class: bzt.modules.java.TestNGTester
+  tsung:
+    class: bzt.modules.tsung.TsungExecutor
+  unpacker:
+    class: bzt.modules.services.Unpacker
+  virtual-display:
+    class: bzt.modules.services.VirtualDisplay
+  wdio:
+    class: bzt.modules.javascript.WebdriverIOExecutor
+provisioning: local
+reporting:
+- module: final-stats
+- module: console
+- criteria:
+  - class: bzt.modules.monitoring.MonitoringCriteria
+    condition: <
+    fail: true
+    stop: true
+    subject: ServerLocalClient/total_workers
+    threshold: 2
+    timeframe: 1s
+  module: passfail
+- module: passfail
+- data-source: pass-fail
+  filename: /Users/mahesh/git/multi-model-server/tests/performance/tmp/run345/downscale_workers/xunit.xml
+  module: junit-xml
+- data-source: sample-labels
+  filename: /Users/mahesh/git/multi-model-server/tests/performance/tmp/run345/downscale_workers/xunit-1.xml
+  module: junit-xml
+- dump-csv: tmp/run345/downscale_workers/final_stats.csv
+  module: final-stats
+scenarios:
+  Downscale:
+    script: /Users/mahesh/git/multi-model-server/tests/performance/tests/downscale_workers.jmx
+services:
+- local:
+  - metrics:
+    - cpu
+    - mem
+    - bytes-sent
+    - bytes-recv
+    - disk-read
+    - disk-write
+    - disk-space
+    - engine-loop
+    - conn-all
+  module: monitoring
+- module: shellexec
+  post-process:
+  - command: bzt tests/common/teardown.jmx tests/common/global_config.yaml -o settings.artifacts-dir=/tmp/mms_perf/
+  prepare:
+  - command: bzt tests/common/setup.jmx tests/common/global_config.yaml -o settings.artifacts-dir=/tmp/mms_perf/
+- ServerLocalClient:
+  - interval: 1s
+    metrics:
+    - total_workers
+  module: server_local_monitoring
+settings:
+  aggregator: consolidator
+  artifacts-dir: tmp/run345/downscale_workers
+  default-executor: jmeter
+  env:
+    BASEDIR: tmp/run345/downscale_workers
+    OBJC_DISABLE_INITIALIZE_FORK_SAFETY: 'YES'
+    TAURUS_ARTIFACTS_DIR: /Users/mahesh/git/multi-model-server/tests/performance/tmp/run345/downscale_workers
+version: 1.14.2
+

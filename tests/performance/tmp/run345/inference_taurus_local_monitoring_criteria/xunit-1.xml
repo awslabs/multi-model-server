@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="sample_labels" package_name="bzt">
+    <testcase classname="bzt-291456381" name="Inference Request">
+      <error message="Non HTTP response message: Socket closed" type="Error">Non HTTP response message: Socket closed
+(status code is Non HTTP response code: java.net.SocketException)
+(total errors of this type: 1)</error>
+    </testcase>
+    <testcase classname="bzt-291456381" name="Scale Down squeezenet_v1.1"/>
+    <testcase classname="bzt-291456381" name="Scale Up squeezenet_v1.1 Model"/>
+    <testcase classname="bzt-291456381" name="Setup squeezenet_v1.1 Model"/>
+  </testsuite>
+</testsuites>

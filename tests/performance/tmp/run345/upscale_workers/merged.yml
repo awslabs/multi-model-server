@@ -1,0 +1,51 @@
+---
+execution:
+- concurrency: 3
+  iterations: 20
+  ramp-up: 5s
+  scenario: Upscale
+modules:
+  jmeter:
+    properties:
+      hostname: 127.0.0.1
+      input_filepath: kitten.jpg
+      management_port: 8081
+      port: 8080
+      protocol: http
+  new_passfail:
+    class: new_passfail.PassFailStatus
+  server_local_monitoring:
+    class: metrics_monitoring_taurus.Monitor
+reporting:
+- criteria:
+  - class: bzt.modules.monitoring.MonitoringCriteria
+    condition: '>'
+    fail: true
+    stop: true
+    subject: ServerLocalClient/total_workers
+    threshold: 4
+    timeframe: 1s
+  module: passfail
+- module: passfail
+- data-source: pass-fail
+  module: junit-xml
+- data-source: sample-labels
+  module: junit-xml
+- dump-csv: ${BASEDIR}/final_stats.csv
+  module: final-stats
+scenarios:
+  Upscale:
+    script: upscale_workers.jmx
+services:
+- ServerLocalClient:
+  - interval: 1s
+    metrics:
+    - cpu
+    - disk-space
+    - mem
+    - total_workers
+  module: server_local_monitoring
+settings:
+  env:
+    BASEDIR: .
+

@@ -1,0 +1,2 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,success,bytes,grpThreads,allThreads,Latency,Hostname,Connect
+1592497989661,54,Unregister squeezenet_v1.1,200,OK,Tear Down 1-1,true,323,1,1,52,BRL06570.local,32

@@ -1,0 +1,84 @@
+{
+ "execution": [
+  {
+   "concurrency": 3,
+   "ramp-up": "5s",
+   "iterations": 20,
+   "scenario": "Upscale"
+  }
+ ],
+ "scenarios": {
+  "Upscale": {
+   "script": "upscale_workers.jmx"
+  }
+ },
+ "modules": {
+  "server_local_monitoring": {
+   "class": "metrics_monitoring_taurus.Monitor"
+  },
+  "new_passfail": {
+   "class": "new_passfail.PassFailStatus"
+  },
+  "jmeter": {
+   "properties": {
+    "hostname": "127.0.0.1",
+    "port": 8080,
+    "management_port": 8081,
+    "protocol": "http",
+    "input_filepath": "kitten.jpg"
+   }
+  }
+ },
+ "services": [
+  {
+   "module": "server_local_monitoring",
+   "ServerLocalClient": [
+    {
+     "interval": "1s",
+     "metrics": [
+      "cpu",
+      "disk-space",
+      "mem",
+      "total_workers"
+     ]
+    }
+   ]
+  }
+ ],
+ "reporting": [
+  {
+   "module": "passfail",
+   "criteria": [
+    {
+     "class": "bzt.modules.monitoring.MonitoringCriteria",
+     "subject": "ServerLocalClient/total_workers",
+     "condition": ">",
+     "threshold": 4,
+     "timeframe": "1s",
+     "stop": true,
+     "fail": true
+    }
+   ]
+  },
+  {
+   "module": "passfail"
+  },
+  {
+   "module": "junit-xml",
+   "data-source": "pass-fail"
+  },
+  {
+   "module": "junit-xml",
+   "data-source": "sample-labels"
+  },
+  {
+   "module": "final-stats",
+   "dump-csv": "${BASEDIR}/final_stats.csv"
+  }
+ ],
+ "settings": {
+  "env": {
+   "BASEDIR": "."
+  }
+ }
+}

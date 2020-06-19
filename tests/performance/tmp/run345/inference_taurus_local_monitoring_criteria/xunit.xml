@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="bzt_pass_fail" package_name="bzt">
+    <testcase classname="bzt-291456381" name="fail of s2_fail &gt;50%"/>
+    <testcase classname="bzt-291456381" name="p90 of s2_p90 &gt;250ms"/>
+    <testcase classname="bzt-291456381" name="avg-rt of s2_avg_rt &gt;1s"/>
+    <testcase classname="bzt-291456381" name="ServerLocalClient/sum_workers_memory_rss&gt;132000000 for 1s">
+      <error message="Failed: ServerLocalClient/sum_workers_memory_rss&gt;132000000 for 1 sec" type="pass/fail criteria triggered"/>
+    </testcase>
+  </testsuite>
+</testsuites>

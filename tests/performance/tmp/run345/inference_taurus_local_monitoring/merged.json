@@ -1,0 +1,67 @@
+{
+ "execution": [
+  {
+   "concurrency": 1,
+   "ramp-up": "5s",
+   "hold-for": "20s",
+   "scenario": "Inference"
+  }
+ ],
+ "scenarios": {
+  "Inference": {
+   "script": "register_and_inference.jmx"
+  }
+ },
+ "modules": {
+  "server_local_monitoring": {
+   "class": "metrics_monitoring_taurus.Monitor"
+  },
+  "jmeter": {
+   "properties": {
+    "hostname": "127.0.0.1",
+    "port": 8080,
+    "management_port": 8081,
+    "protocol": "http",
+    "input_filepath": "kitten.jpg"
+   }
+  }
+ },
+ "services": [
+  {
+   "module": "server_local_monitoring",
+   "ServerLocalClient": [
+    {
+     "interval": "1s",
+     "metrics": [
+      "cpu",
+      "disk-space",
+      "mem",
+      "sum_workers_memory_percent"
+     ]
+    }
+   ]
+  }
+ ],
+ "reporting": [
+  {
+   "module": "passfail"
+  },
+  {
+   "module": "junit-xml",
+   "data-source": "pass-fail"
+  },
+  {
+   "module": "junit-xml",
+   "data-source": "sample-labels"
+  },
+  {
+   "module": "final-stats",
+   "dump-csv": "${BASEDIR}/final_stats.csv"
+  }
+ ],
+ "settings": {
+  "env": {
+   "BASEDIR": "."
+  }
+ }
+}

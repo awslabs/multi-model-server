@@ -1,0 +1,3 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,success,bytes,grpThreads,allThreads,Latency,Hostname,Connect
+1592497898337,78092,Register squeezenet_v1.1 Model,200,OK,Register and Scale Up squeezenet_v1.1 Workers 1-1,true,321,1,1,78090,BRL06570.local,33
+1592497976431,4,Scale Up squeezenet_v1.1 Model,202,Accepted,Register and Scale Up squeezenet_v1.1 Workers 1-1,true,319,1,1,4,BRL06570.local,2

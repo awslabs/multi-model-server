@@ -1,0 +1,53 @@
+---
+execution:
+- concurrency: 1
+  iterations: 1
+  ramp-up: 0s
+  scenario: Downscale
+modules:
+  jmeter:
+    properties:
+      hostname: 127.0.0.1
+      input_filepath: kitten.jpg
+      management_port: 8081
+      port: 8080
+      protocol: http
+  new_passfail:
+    class: new_passfail.PassFailStatus
+  server_local_monitoring:
+    class: metrics_monitoring_taurus.Monitor
+reporting:
+- criteria:
+  - class: bzt.modules.monitoring.MonitoringCriteria
+    condition: <
+    fail: true
+    stop: true
+    subject: ServerLocalClient/total_workers
+    threshold: 2
+    timeframe: 1s
+  module: passfail
+- module: passfail
+- data-source: pass-fail
+  module: junit-xml
+- data-source: sample-labels
+  module: junit-xml
+- dump-csv: ${BASEDIR}/final_stats.csv
+  module: final-stats
+scenarios:
+  Downscale:
+    script: downscale_workers.jmx
+services:
+- module: shellexec
+  post-process:
+  - bzt tests/common/teardown.jmx tests/common/global_config.yaml -o settings.artifacts-dir=/tmp/mms_perf/
+  prepare:
+  - bzt tests/common/setup.jmx tests/common/global_config.yaml -o settings.artifacts-dir=/tmp/mms_perf/
+- ServerLocalClient:
+  - interval: 1s
+    metrics:
+    - total_workers
+  module: server_local_monitoring
+settings:
+  env:
+    BASEDIR: .
+

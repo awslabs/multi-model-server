@@ -1,0 +1,10 @@
+{
+ "execution": [
+  {
+   "executor": "jmeter",
+   "scenario": {
+    "script": "tests/common/setup.jmx"
+   }
+  }
+ ]
+}

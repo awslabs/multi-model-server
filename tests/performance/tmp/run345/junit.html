@@ -1,0 +1,962 @@
+<html>
+    <head>
+        <meta charset="utf-8" />        
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.9/semantic.min.css"/>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.9/semantic.min.js"></script>
+        <style>
+            .divider{margin:5 0px !important}
+            i.icon.success:before{content: "\f00c"; color: #17A589}
+            i.icon.failure:before {content: "\f00d"; color: #CD6155}
+            i.icon.error:before {content: "\f129"; color: #922B21}
+            i.icon.skipped:before {content: "\f05e"; color: #BFC9CA}
+            .item {
+                word-wrap: break-word;
+                line-height: 17px !important;
+            }
+            .footer {
+                width: 100%;
+                padding:10px;
+                margin-bottom: 20px;
+            }
+            details {
+                margin-bottom: 23px;
+            }
+            summary {
+                cursor: pointer;
+                list-style-type: circle;
+                margin-bottom: 10px;
+                list-style-position: outside;
+            }
+            summary::-webkit-details-marker {
+                display: none
+              }
+            summary:before {
+                content: "[+]  ";
+              }
+            details[open] summary:before {
+                content: "[-]  ";
+              }
+            details pre,  details code{
+                padding-left: 15px;
+            }
+            pre {
+                white-space: pre-wrap;
+                white-space: -moz-pre-wrap;
+                white-space: -pre-wrap;
+                white-space: -o-pre-wrap;
+                word-wrap: break-word;
+            }
+        </style>
+        <script>
+            $(document).ready(function(){
+                $('.ui.accordion').accordion();
+                $('.menu .item').tab();
+                $('.menu .item').on('click', function() {
+                    $("html,body").scrollTop(0);
+                });
+
+                $('[name=testcase]').on('click', function() {
+                    window.location.hash = $(this).children(":first")[0].id;
+                });
+
+                $('[tab="status"]').on('click', function() {        
+                    var testsuite = $(this).attr('testsuite');
+                    var name = $(this).attr('name');
+                    
+                    $('[tab="status"][testsuite="' + testsuite + '"]').removeClass('active');
+
+                    $(this).addClass('active');
+                    if (name == "all") {
+                        $("[name=testcase][testsuite='" + testsuite + "']").show();
+                    } else {
+                        $("[name=testcase][testsuite='" + testsuite + "']").show();
+                        $("[name=testcase][testsuite='" + testsuite + "'][status!='"+ name +"']").hide();
+                    }
+                });
+
+                var hash = window.location.hash;
+                if (hash) {
+                    let testcaseId = hash.substring(1);
+                    let testsuiteId = testcaseId.split("-")[0]
+                    $("#"+ testsuiteId).click()
+                    let element = $("#"+ testcaseId)[0];
+                    if (element) {
+                        element.click();
+                    }
+                }
+            });
+            
+        </script>
+    </head>
+    <body>
+        
+            <div class="ui container" style="margin-top:30px">
+        
+
+            <div class="ui stackable grid">
+                
+                    <div class="four wide column">
+                        <div class="ui secondary vertical pointing menu">
+                            
+                                <a id="1" name="testsuite" class="active item" data-tab="testsuite.1">
+                                    <i class="skipped icon"></i> inference_server_monitoring
+                                </a>
+                            
+                                <a id="2" name="testsuite" class=" item" data-tab="testsuite.2">
+                                    <i class="success icon"></i> downscale_workers
+                                </a>
+                            
+                                <a id="3" name="testsuite" class=" item" data-tab="testsuite.3">
+                                    <i class="success icon"></i> upscale_workers
+                                </a>
+                            
+                                <a id="4" name="testsuite" class=" item" data-tab="testsuite.4">
+                                    <i class="skipped icon"></i> inference_taurus_local_monitoring
+                                </a>
+                            
+                                <a id="5" name="testsuite" class=" item" data-tab="testsuite.5">
+                                    <i class="error icon"></i> inference_taurus_local_monitoring_criteria
+                                </a>
+                            
+                                <a id="6" name="testsuite" class=" item" data-tab="testsuite.6">
+                                    <i class="skipped icon"></i> call_jmx
+                                </a>
+                            
+                                <a id="7" name="testsuite" class=" item" data-tab="testsuite.7">
+                                    <i class="success icon"></i> inference_server_monitoring_criteria
+                                </a>
+                            
+                        </div><br><br>
+                        <div class="footer">
+                            <p style="font-size:12px; color:#95A5A6">Generated by <a href="https://github.com/ahelsayd/vjunit">vjunit</a></p>
+                        </div>
+                    </div>
+                
+
+                <div class="twelve wide stretched column">
+                    
+
+                        <div class="ui tab active" data-tab="testsuite.1">
+                            <h2><i class="skipped icon"></i>  inference_server_monitoring</h2>
+
+                            <div class="ui accordion">
+                                <div class="title">
+                                    <i class="dropdown icon"></i><a>See more details</a>
+                                </div>
+                                <div class="content">
+                                    <table class="ui very basic collapsing celled compact table">
+                                        <tbody>
+                                            
+                                                <tr>
+                                                    <td><code>name</code></td>
+                                                    <td><code>inference_server_monitoring</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>hostname</code></td>
+                                                    <td><code>BRL06570.local</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>timestamp</code></td>
+                                                    <td><code>1592498979</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>time</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>tests</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>failures</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>skipped</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>errors</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>status</code></td>
+                                                    <td><code>skipped</code></td>
+                                                </tr>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div><br>
+
+                            <div class="ui secondary menu">
+                                <a tab="status" name="all" testsuite="testsuite.1" class="active item">All &nbsp; 0</a>
+                                <a tab="status" name="failure" testsuite="testsuite.1" class="item">Failed &nbsp; 0</a>
+                                <a tab="status" name="error" testsuite="testsuite.1" class="item">Errored &nbsp; 0</a>
+                                <a tab="status" name="skipped" testsuite="testsuite.1" class="item">Skipped &nbsp; 0</a>
+                            </div>
+
+                            
+                            <div class="ui styled fluid accordion" style="box-shadow:none;">
+                                
+                            </div>
+                        </div>
+                    
+
+                        <div class="ui tab " data-tab="testsuite.2">
+                            <h2><i class="success icon"></i>  downscale_workers</h2>
+
+                            <div class="ui accordion">
+                                <div class="title">
+                                    <i class="dropdown icon"></i><a>See more details</a>
+                                </div>
+                                <div class="content">
+                                    <table class="ui very basic collapsing celled compact table">
+                                        <tbody>
+                                            
+                                                <tr>
+                                                    <td><code>name</code></td>
+                                                    <td><code>downscale_workers</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>tests</code></td>
+                                                    <td><code>1</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>errors</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>failures</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>skipped</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>time</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>hostname</code></td>
+                                                    <td><code>BRL06570.local</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>timestamp</code></td>
+                                                    <td><code>1592499057</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>status</code></td>
+                                                    <td><code>success</code></td>
+                                                </tr>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div><br>
+
+                            <div class="ui secondary menu">
+                                <a tab="status" name="all" testsuite="testsuite.2" class="active item">All &nbsp; 1</a>
+                                <a tab="status" name="failure" testsuite="testsuite.2" class="item">Failed &nbsp; 0</a>
+                                <a tab="status" name="error" testsuite="testsuite.2" class="item">Errored &nbsp; 0</a>
+                                <a tab="status" name="skipped" testsuite="testsuite.2" class="item">Skipped &nbsp; 0</a>
+                            </div>
+
+                            
+                            <div class="ui styled fluid accordion" style="box-shadow:none;">
+                                
+                                    <div name="testcase" testsuite="testsuite.2" status="success">
+                                        <div id="2-1" class="title">
+                                            <i class="success icon"></i>  scenario_0: ServerLocalClient/total_workers&lt;2 for 1s
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                            </div>
+                        </div>
+                    
+
+                        <div class="ui tab " data-tab="testsuite.3">
+                            <h2><i class="success icon"></i>  upscale_workers</h2>
+
+                            <div class="ui accordion">
+                                <div class="title">
+                                    <i class="dropdown icon"></i><a>See more details</a>
+                                </div>
+                                <div class="content">
+                                    <table class="ui very basic collapsing celled compact table">
+                                        <tbody>
+                                            
+                                                <tr>
+                                                    <td><code>name</code></td>
+                                                    <td><code>upscale_workers</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>tests</code></td>
+                                                    <td><code>1</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>errors</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>failures</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>skipped</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>time</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>hostname</code></td>
+                                                    <td><code>BRL06570.local</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>timestamp</code></td>
+                                                    <td><code>1592499121</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>status</code></td>
+                                                    <td><code>success</code></td>
+                                                </tr>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div><br>
+
+                            <div class="ui secondary menu">
+                                <a tab="status" name="all" testsuite="testsuite.3" class="active item">All &nbsp; 1</a>
+                                <a tab="status" name="failure" testsuite="testsuite.3" class="item">Failed &nbsp; 0</a>
+                                <a tab="status" name="error" testsuite="testsuite.3" class="item">Errored &nbsp; 0</a>
+                                <a tab="status" name="skipped" testsuite="testsuite.3" class="item">Skipped &nbsp; 0</a>
+                            </div>
+
+                            
+                            <div class="ui styled fluid accordion" style="box-shadow:none;">
+                                
+                                    <div name="testcase" testsuite="testsuite.3" status="success">
+                                        <div id="3-1" class="title">
+                                            <i class="success icon"></i>  scenario_0: ServerLocalClient/total_workers&gt;4 for 1s
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                            </div>
+                        </div>
+                    
+
+                        <div class="ui tab " data-tab="testsuite.4">
+                            <h2><i class="skipped icon"></i>  inference_taurus_local_monitoring</h2>
+
+                            <div class="ui accordion">
+                                <div class="title">
+                                    <i class="dropdown icon"></i><a>See more details</a>
+                                </div>
+                                <div class="content">
+                                    <table class="ui very basic collapsing celled compact table">
+                                        <tbody>
+                                            
+                                                <tr>
+                                                    <td><code>name</code></td>
+                                                    <td><code>inference_taurus_local_monitoring</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>hostname</code></td>
+                                                    <td><code>BRL06570.local</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>timestamp</code></td>
+                                                    <td><code>1592499194</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>time</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>tests</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>failures</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>skipped</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>errors</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>status</code></td>
+                                                    <td><code>skipped</code></td>
+                                                </tr>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div><br>
+
+                            <div class="ui secondary menu">
+                                <a tab="status" name="all" testsuite="testsuite.4" class="active item">All &nbsp; 0</a>
+                                <a tab="status" name="failure" testsuite="testsuite.4" class="item">Failed &nbsp; 0</a>
+                                <a tab="status" name="error" testsuite="testsuite.4" class="item">Errored &nbsp; 0</a>
+                                <a tab="status" name="skipped" testsuite="testsuite.4" class="item">Skipped &nbsp; 0</a>
+                            </div>
+
+                            
+                            <div class="ui styled fluid accordion" style="box-shadow:none;">
+                                
+                            </div>
+                        </div>
+                    
+
+                        <div class="ui tab " data-tab="testsuite.5">
+                            <h2><i class="error icon"></i>  inference_taurus_local_monitoring_criteria</h2>
+
+                            <div class="ui accordion">
+                                <div class="title">
+                                    <i class="dropdown icon"></i><a>See more details</a>
+                                </div>
+                                <div class="content">
+                                    <table class="ui very basic collapsing celled compact table">
+                                        <tbody>
+                                            
+                                                <tr>
+                                                    <td><code>name</code></td>
+                                                    <td><code>inference_taurus_local_monitoring_criteria</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>tests</code></td>
+                                                    <td><code>4</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>errors</code></td>
+                                                    <td><code>1</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>failures</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>skipped</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>time</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>hostname</code></td>
+                                                    <td><code>BRL06570.local</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>timestamp</code></td>
+                                                    <td><code>1592499266</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>status</code></td>
+                                                    <td><code>error</code></td>
+                                                </tr>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div><br>
+
+                            <div class="ui secondary menu">
+                                <a tab="status" name="all" testsuite="testsuite.5" class="active item">All &nbsp; 4</a>
+                                <a tab="status" name="failure" testsuite="testsuite.5" class="item">Failed &nbsp; 0</a>
+                                <a tab="status" name="error" testsuite="testsuite.5" class="item">Errored &nbsp; 1</a>
+                                <a tab="status" name="skipped" testsuite="testsuite.5" class="item">Skipped &nbsp; 0</a>
+                            </div>
+
+                            
+                            <div class="ui styled fluid accordion" style="box-shadow:none;">
+                                
+                                    <div name="testcase" testsuite="testsuite.5" status="success">
+                                        <div id="5-1" class="title">
+                                            <i class="success icon"></i>  scenario_0: fail of s2_fail &gt;50%
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    <div name="testcase" testsuite="testsuite.5" status="success">
+                                        <div id="5-2" class="title">
+                                            <i class="success icon"></i>  scenario_0: p90 of s2_p90 &gt;250ms
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    <div name="testcase" testsuite="testsuite.5" status="success">
+                                        <div id="5-3" class="title">
+                                            <i class="success icon"></i>  scenario_0: avg-rt of s2_avg_rt &gt;1s
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    <div name="testcase" testsuite="testsuite.5" status="error">
+                                        <div id="5-4" class="title">
+                                            <i class="error icon"></i>  scenario_0: ServerLocalClient/sum_workers_memory_rss&gt;132000000 for 1s
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    <strong style="color:#D4E6F1">TYPE</strong>: <code>pass/fail criteria triggered</code><br><br>
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code>Failed: ServerLocalClient/sum_workers_memory_rss>132000000 for 1 sec</code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code>None</code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                            </div>
+                        </div>
+                    
+
+                        <div class="ui tab " data-tab="testsuite.6">
+                            <h2><i class="skipped icon"></i>  call_jmx</h2>
+
+                            <div class="ui accordion">
+                                <div class="title">
+                                    <i class="dropdown icon"></i><a>See more details</a>
+                                </div>
+                                <div class="content">
+                                    <table class="ui very basic collapsing celled compact table">
+                                        <tbody>
+                                            
+                                                <tr>
+                                                    <td><code>name</code></td>
+                                                    <td><code>call_jmx</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>hostname</code></td>
+                                                    <td><code>BRL06570.local</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>timestamp</code></td>
+                                                    <td><code>1592499298</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>time</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>tests</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>failures</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>skipped</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>errors</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>status</code></td>
+                                                    <td><code>skipped</code></td>
+                                                </tr>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div><br>
+
+                            <div class="ui secondary menu">
+                                <a tab="status" name="all" testsuite="testsuite.6" class="active item">All &nbsp; 0</a>
+                                <a tab="status" name="failure" testsuite="testsuite.6" class="item">Failed &nbsp; 0</a>
+                                <a tab="status" name="error" testsuite="testsuite.6" class="item">Errored &nbsp; 0</a>
+                                <a tab="status" name="skipped" testsuite="testsuite.6" class="item">Skipped &nbsp; 0</a>
+                            </div>
+
+                            
+                            <div class="ui styled fluid accordion" style="box-shadow:none;">
+                                
+                            </div>
+                        </div>
+                    
+
+                        <div class="ui tab " data-tab="testsuite.7">
+                            <h2><i class="success icon"></i>  inference_server_monitoring_criteria</h2>
+
+                            <div class="ui accordion">
+                                <div class="title">
+                                    <i class="dropdown icon"></i><a>See more details</a>
+                                </div>
+                                <div class="content">
+                                    <table class="ui very basic collapsing celled compact table">
+                                        <tbody>
+                                            
+                                                <tr>
+                                                    <td><code>name</code></td>
+                                                    <td><code>inference_server_monitoring_criteria</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>tests</code></td>
+                                                    <td><code>4</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>errors</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>failures</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>skipped</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>time</code></td>
+                                                    <td><code>0</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>hostname</code></td>
+                                                    <td><code>BRL06570.local</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>timestamp</code></td>
+                                                    <td><code>1592499374</code></td>
+                                                </tr>
+                                            
+                                                <tr>
+                                                    <td><code>status</code></td>
+                                                    <td><code>success</code></td>
+                                                </tr>
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div><br>
+
+                            <div class="ui secondary menu">
+                                <a tab="status" name="all" testsuite="testsuite.7" class="active item">All &nbsp; 4</a>
+                                <a tab="status" name="failure" testsuite="testsuite.7" class="item">Failed &nbsp; 0</a>
+                                <a tab="status" name="error" testsuite="testsuite.7" class="item">Errored &nbsp; 0</a>
+                                <a tab="status" name="skipped" testsuite="testsuite.7" class="item">Skipped &nbsp; 0</a>
+                            </div>
+
+                            
+                            <div class="ui styled fluid accordion" style="box-shadow:none;">
+                                
+                                    <div name="testcase" testsuite="testsuite.7" status="success">
+                                        <div id="7-1" class="title">
+                                            <i class="success icon"></i>  scenario_0: fail of s2_fail &gt;50%
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    <div name="testcase" testsuite="testsuite.7" status="success">
+                                        <div id="7-2" class="title">
+                                            <i class="success icon"></i>  scenario_0: p90 of s2_p90 &gt;250ms
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    <div name="testcase" testsuite="testsuite.7" status="success">
+                                        <div id="7-3" class="title">
+                                            <i class="success icon"></i>  scenario_0: avg-rt of s2_avg_rt &gt;1s
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    <div name="testcase" testsuite="testsuite.7" status="success">
+                                        <div id="7-4" class="title">
+                                            <i class="success icon"></i>  scenario_0: mms-inference-server/sum_workers_file_descriptors&gt;80 for 1s
+                                        </div>
+                                        <div class="ui inverted segment content" style="font-family:monospace">
+                                            <div class="ui inverted segment">
+
+                                                
+                                                    
+                                                <details open>
+                                                    <summary><strong style="color:#FAD7A0">MESSAGE</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+
+                                                <details open>
+                                                    <summary><strong style="color:#76D7C4">STDOUT</strong></summary>
+                                                    <code></code>
+                                                </details>
+                                                
+                                                <details open>
+                                                    <summary><strong style="color:#F1948A">STDERR</strong></summary>
+                                                    <pre><code></code></pre>
+                                                </details>
+                                                <div class="ui divider"></div>
+                                                Excetued in <strong>  </strong> seconds
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                            </div>
+                        </div>
+                    
+                </div>
+            </div>
+        
+            </div>
+        
+    </body>
+</html>

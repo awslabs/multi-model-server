@@ -1,0 +1,25 @@
+---
+execution:
+- executor: jmeter
+  scenario:
+    script: tests/common/setup.jmx
+modules:
+  jmeter:
+    properties:
+      hostname: 127.0.0.1
+      input_filepath: kitten.jpg
+      management_port: 8081
+      port: 8080
+      protocol: http
+reporting:
+- module: passfail
+- data-source: pass-fail
+  module: junit-xml
+- data-source: sample-labels
+  module: junit-xml
+- dump-csv: ${BASEDIR}/final_stats.csv
+  module: final-stats
+settings:
+  env:
+    BASEDIR: .
+

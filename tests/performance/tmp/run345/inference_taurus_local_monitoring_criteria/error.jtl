@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testResults version="1.2">
+<httpSample t="21" lt="0" ts="1592499297226" s="false" lb="Inference Request" rc="Non HTTP response code: java.net.SocketException" rm="Non HTTP response message: Socket closed" tn="squeezenet_v1.1 Inference-ThreadStarter 1-1" dt="text" de="" by="2562" ng="1" na="1">
+  <responseHeader class="java.lang.String"></responseHeader>
+  <requestHeader class="java.lang.String">Connection: keep-alive
+Content-Length: 111188
+Content-Type: multipart/form-data; boundary=LKGIyFsx9XbUAwKYl8pxndajiaQco4X7Qj6Wr7
+Host: 127.0.0.1:8080
+User-Agent: Apache-HttpClient/4.5.10 (Java/1.8.0_242)
+</requestHeader>
+  <responseData class="java.lang.String">java.net.SocketException: Socket closed
+	at java.net.SocketInputStream.socketRead0(Native Method)
+	at java.net.SocketInputStream.socketRead(SocketInputStream.java:116)
+	at java.net.SocketInputStream.read(SocketInputStream.java:171)
+	at java.net.SocketInputStream.read(SocketInputStream.java:141)
+	at org.apache.http.impl.io.SessionInputBufferImpl.streamRead(SessionInputBufferImpl.java:137)
+	at org.apache.http.impl.io.SessionInputBufferImpl.fillBuffer(SessionInputBufferImpl.java:153)
+	at org.apache.http.impl.io.SessionInputBufferImpl.readLine(SessionInputBufferImpl.java:280)
+	at org.apache.http.impl.conn.DefaultHttpResponseParser.parseHead(DefaultHttpResponseParser.java:138)
+	at org.apache.http.impl.conn.DefaultHttpResponseParser.parseHead(DefaultHttpResponseParser.java:56)
+	at org.apache.http.impl.io.AbstractMessageParser.parse(AbstractMessageParser.java:259)
+	at org.apache.http.impl.DefaultBHttpClientConnection.receiveResponseHeader(DefaultBHttpClientConnection.java:163)
+	at org.apache.http.impl.conn.CPoolProxy.receiveResponseHeader(CPoolProxy.java:157)
+	at org.apache.http.protocol.HttpRequestExecutor.doReceiveResponse(HttpRequestExecutor.java:273)
+	at org.apache.http.protocol.HttpRequestExecutor.execute(HttpRequestExecutor.java:125)
+	at org.apache.http.impl.execchain.MainClientExec.execute(MainClientExec.java:272)
+	at org.apache.http.impl.execchain.ProtocolExec.execute(ProtocolExec.java:186)
+	at org.apache.http.impl.execchain.RetryExec.execute(RetryExec.java:89)
+	at org.apache.http.impl.execchain.RedirectExec.execute(RedirectExec.java:110)
+	at org.apache.http.impl.client.InternalHttpClient.doExecute(InternalHttpClient.java:185)
+	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:83)
+	at org.apache.jmeter.protocol.http.sampler.HTTPHC4Impl.executeRequest(HTTPHC4Impl.java:850)
+	at org.apache.jmeter.protocol.http.sampler.HTTPHC4Impl.sample(HTTPHC4Impl.java:561)
+	at org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy.sample(HTTPSamplerProxy.java:67)
+	at org.apache.jmeter.protocol.http.sampler.HTTPSamplerBase.sample(HTTPSamplerBase.java:1282)
+	at org.apache.jmeter.protocol.http.sampler.HTTPSamplerBase.sample(HTTPSamplerBase.java:1271)
+	at org.apache.jmeter.threads.JMeterThread.doSampling(JMeterThread.java:627)
+	at org.apache.jmeter.threads.JMeterThread.executeSamplePackage(JMeterThread.java:551)
+	at org.apache.jmeter.threads.JMeterThread.processSampler(JMeterThread.java:490)
+	at org.apache.jmeter.threads.JMeterThread.run(JMeterThread.java:257)
+	at java.lang.Thread.run(Thread.java:748)
+</responseData>
+  <cookies class="java.lang.String"></cookies>
+  <method class="java.lang.String">POST</method>
+  <queryString class="java.lang.String">--LKGIyFsx9XbUAwKYl8pxndajiaQco4X7Qj6Wr7&#xd;
+Content-Disposition: form-data; name=&quot;data&quot;; filename=&quot;kitten.jpg&quot;&#xd;
+Content-Type: image/jpeg&#xd;
+Content-Transfer-Encoding: binary&#xd;
+&#xd;
+&lt;actual file content, not shown here&gt;&#xd;
+--LKGIyFsx9XbUAwKYl8pxndajiaQco4X7Qj6Wr7--&#xd;
+</queryString>
+  <java.net.URL>http://127.0.0.1:8080/predictions/squeezenet_v1.1</java.net.URL>
+</httpSample>
+
+</testResults>

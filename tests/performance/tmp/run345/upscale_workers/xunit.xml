@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="bzt_pass_fail" package_name="bzt">
+    <testcase classname="bzt-277070317" name="ServerLocalClient/total_workers&gt;4 for 1s"/>
+  </testsuite>
+</testsuites>

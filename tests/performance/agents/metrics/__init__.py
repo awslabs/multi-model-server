@@ -11,8 +11,9 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-from statistics import mean
 from enum import Enum
+from statistics import mean
+
 import psutil
 
 
@@ -119,7 +120,7 @@ def get_metrics(server_process, child_processes):
 
     # Total processes
     result['total_processes'] = len([server_process] + child_processes)
-    result['total_workers'] = len(child_processes) - 1
+    result['total_workers'] = len(child_processes) - 1 if len(child_processes) else 0
 
     ### SYSTEM METRICS ###
     result['system_disk_used'] = psutil.disk_usage('/').used

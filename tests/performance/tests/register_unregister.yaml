@@ -1,0 +1,48 @@
+---
+execution:
+- concurrency: 1
+  ramp-up: 1s
+  iterations: 5
+  scenario: scaledown
+
+scenarios:
+  scaledown:
+    script: register_unregister.jmx
+
+modules:
+  server_local_monitoring:
+    class : metrics_monitoring_taurus.Monitor
+
+services:
+  - module: server_local_monitoring
+    ServerLocalClient:
+      - interval: 1s
+        metrics:
+          - total_workers
+          - sum_workers_file_descriptors
+          - orphans
+
+reporting:
+- module: passfail
+  criteria:
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_workers
+      condition: '>'
+      threshold: 1
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '>'
+      threshold: 11
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/orphans
+      condition: '>'
+      threshold: 0
+      timeframe: 1s
+      stop : true
+      fail : true

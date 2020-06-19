@@ -24,7 +24,7 @@ pip install bzt
 
 # Execute performance test suite and store exit code
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
-./run_perfomance_suite.py --artifacts-dir=$ARTIFACTS_DIR --jmeter-path=$JMETER_PATH
+./run_performance_suite.py --artifacts-dir=$ARTIFACTS_DIR --jmeter-path=$JMETER_PATH
 EXIT_CODE=$?
 
 # Stop server

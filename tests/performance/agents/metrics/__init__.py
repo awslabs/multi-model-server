@@ -51,8 +51,6 @@ process_metrics = {
 }
 
 system_metrics = {
-    'total_processes': None,
-    'total_workers': None,
     'system_disk_used': None,
     'system_memory_percent': None,
     'system_read_count': None,
@@ -61,7 +59,13 @@ system_metrics = {
     'system_write_bytes': None,
 }
 
-AVAILABLE_METRICS = list(system_metrics)
+misc_metrics = {
+    'total_processes': None,
+    'total_workers': None,
+    'orphans': None
+}
+
+AVAILABLE_METRICS = list(system_metrics) + list(misc_metrics)
 
 for metric in list(process_metrics):
     for ptype in list(ProcessType):

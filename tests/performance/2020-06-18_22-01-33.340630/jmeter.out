@@ -1,5 +1,0 @@
-Created the tree successfully using /Users/mahesh/git/multi-model-server/tests/performance/tests/common/modified_setup.jmx
-Starting standalone test @ Thu Jun 18 22:01:37 IST 2020 (1592497897801)
-Waiting for possible Shutdown/StopTestNow/HeapDump/ThreadDump message on port 4445
-Tidying up ...    @ Thu Jun 18 22:02:56 IST 2020 (1592497976438)
-... end of run

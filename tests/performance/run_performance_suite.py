@@ -92,6 +92,7 @@ class Monitoring(object):
             stop_monitoring_server = "python {} --stop".format(self.path)
             run_process(stop_monitoring_server)
 
+
 class Suite(object):
     def __init__(self, name, artifacts_dir, junit_xml, timer):
         self.ts = TestSuite(name)
@@ -349,14 +350,14 @@ def get_options(artifacts_dir, jmeter_path=None):
 
 
 @click.command()
-@click.option('-a', '--artifacts-dir', help='Directory to store artifacts.', type=click.Path(writable=True), required=True)
+@click.option('-a', '--artifacts-dir', help='Directory to store artifacts.', type=click.Path(writable=True))
 @click.option('-t', '--test-dir', help='Directory containing tests.', type=click.Path(exists=True), default=None)
 @click.option('-p', '--pattern', help='Test case file name pattern. Example --> *.yaml', default="*.yaml")
 @click.option('-j', '--jmeter-path', help='JMeter executable path.')
 @click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
 @click.option('--env-name', help='Unique machine id on which MMS server is running', default=socket.gethostname())
 @click.option('--compare-local/--no-compare-local', help='Compare with previous run with files stored'
-                                                         ' in run_artifacts directory', default=False)
+                                                         ' in run_artifacts directory', default=True)
 def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_name, compare_local):
     commit_id = subprocess.check_output('git rev-parse --short HEAD'.split()).decode("utf-8")[:-1]
     artifacts_folder_name = "{}_{}_{}".format(env_name, commit_id, int(time.time()))

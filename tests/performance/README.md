@@ -70,26 +70,26 @@ To get you started quickly, we have provided a sample JMeter script and a Taurus
     
 Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [tests/common/global_config.yaml](tests/common/global_config.yaml) file.
     
-    ```yaml
-    execution:
-    - concurrency: 1
-      ramp-up: 1s
-      hold-for: 40s
-      scenario: Inference
+ ```yaml
+ execution:
+ - concurrency: 1
+   ramp-up: 1s
+   hold-for: 40s
+   scenario: Inference
 
-    scenarios:
-      Inference:
-        script: register_and_inference.jmx
-    
-    ```
+ scenarios:
+   Inference:
+     script: register_and_inference.jmx
+
+ ```
     
 To run this individual test using Taurus(bzt) run commands below:
     
-    ```bash
-    export MMS_HOME=<MMS_HOME_PATH>
-    cd $MMS_HOME/tests/performance
-    bzt tests/call_jmx.yaml tests/common/global_config.yaml
-    ```
+ ```bash
+ export MMS_HOME=<MMS_HOME_PATH>
+ cd $MMS_HOME/tests/performance
+ python -m run_performance_suite -p call_jmx.yaml
+ ```
 
 **Note**:
 Taurus provides support for different executors such as JMeter. You can use test script written in those frameworks as it is.
@@ -132,12 +132,12 @@ Metrics can be monitored in two ways:
               - server_workers # no of mms workers
     ```
     
-    Use Taurus command below to run the test yaml and observe the Metrics widget on CLI live report.
+    Use the command below to run the test yaml.
     
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    bzt tests/inference_server_monitoring.yaml tests/common/global_config.yaml
+    python -m run_performance_suite -p inference_server_monitoring.yaml
     ```
 
 
@@ -176,12 +176,12 @@ Metrics can be monitored in two ways:
     
     ```
 
-    Use Taurus command below to run the test yaml and observe the Metrics widget on CLI live report.
+    Use command below to run the test yaml
     
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    bzt tests/inference_taurus_local_monitoring.yaml tests/common/global_config.yaml
+    python -m run_performance_suite -p inference_taurus_local_monitoring.yaml
     ```
 
 #### 3.1 Add pass/fail criteria

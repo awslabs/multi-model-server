@@ -18,17 +18,20 @@ This file should be placed in Python Path along with monitoring package.
 # pylint: disable=redefined-builtin
 
 import csv
-from bzt.modules import monitoring
-from bzt import  TaurusConfigError
-from bzt.utils import dehumanize_time
 import sys
+
+import configuration
+from bzt import TaurusConfigError
+from bzt.modules import monitoring
+from bzt.utils import dehumanize_time
+from metrics import get_metrics, AVAILABLE_METRICS as AVAILABLE_SERVER_METRICS
+from utils.process import get_process_pid_from_file, get_server_processes, \
+    get_child_processes, get_server_pidfile
+from tabulate import tabulate
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
-
-from metrics import get_metrics, AVAILABLE_METRICS as AVAILABLE_SERVER_METRICS
-from process import get_process_pid_from_file, get_server_processes, \
-    get_child_processes, get_server_pidfile
+PID_FILE = configuration.get('server', 'pid_file', 'model_server.pid')
 
 
 class Monitor(monitoring.Monitoring):
@@ -81,7 +84,16 @@ class ServerLocalMonitor(monitoring.LocalMonitor):
 
      def _calc_resource_stats(self, interval):
          result = super()._calc_resource_stats(interval)
-         server_pid = get_process_pid_from_file(get_server_pidfile())
+         server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
          server_process = get_server_processes(server_pid)
          result.update(get_metrics(server_process, get_child_processes(server_process)))
+
+         '''
+         table = {}
+         for key in self.metrics:
+             if result.get(key) is not None:
+                table[key] = [result[key]]
+         self.log.info("\n{0}".format(tabulate(table, headers=table.keys(), tablefmt="pretty")))
+         '''
+
          return result

@@ -19,10 +19,10 @@ services:
         interval: 1s    # polling interval
         logging: True # those logs will be saved to "SAlogs_192.168.0.1_9009.csv" in the artifacts dir
         metrics: # metrics should be supported by monitoring service
-          - sum_cpu_percent # cpu percent used by all the mms server processes and workers
-          - sum_memory_percent
-          - sum_num_handles
-          - server_workers # no of mms workers
+          - sum_workers_cpu_percent # cpu percent used by all the mms server processes and workers
+          - sum_workers_memory_percent
+          - sum_workers_file_descriptors
+          - total_workers # no of mms workers
 
 
 reporting:
@@ -32,7 +32,7 @@ reporting:
   - p90 of s2_p90 >250ms  , stop as failed
   - avg-rt of s2_avg_rt >1s , stop as failed
   - class: bzt.modules.monitoring.MonitoringCriteria
-    subject: mms-inference-server/sum_num_handles
+    subject: mms-inference-server/sum_workers_file_descriptors
     condition: '>'
     threshold: 80
     timeframe: 1s

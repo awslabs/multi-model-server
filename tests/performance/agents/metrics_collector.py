@@ -15,24 +15,28 @@ Server metrics collector
 """
 # pylint: disable=redefined-builtin
 
+import argparse
+import logging
 import os
 import sys
-import time
-import logging
-import psutil
-import gevent
-import argparse
 import tempfile
+import time
+
+import gevent
+import psutil
+from tabulate import tabulate
 
 logger = logging.getLogger(__name__)
 
-from process import find_procs_by_name, get_process_pid_from_file, get_child_processes, \
+from utils.process import get_process_pid_from_file, get_child_processes, \
     get_server_processes, get_server_pidfile
 from metrics import AVAILABLE_METRICS, get_metrics
+import configuration
 
 TMP_DIR = tempfile.gettempdir()
 METRICS_LOG_FILE = "{}/server_metrics_{}.log".format(TMP_DIR, int(time.time()))
 METRICS_COLLECTOR_PID_FILE = "{}/.metrics_collector.pid".format(TMP_DIR)
+PID_FILE = configuration.get('server', 'pid_file', 'model_server.pid')
 
 MONITOR_INTERVAL = 1
 
@@ -97,9 +101,15 @@ def monitor_processes(server_process, metrics, interval, socket):
     while True:
         message = []
         collected_metrics = get_metrics(server_process, get_child_processes(server_process))
+        #table = {}
         for metric in metrics:
            message.append(str(collected_metrics.get(metric, 0)))
+           #if collected_metrics.get(metric) is not None:
+           #    table[metric] = [collected_metrics.get(metric, 0)]
+
+
         message = "\t".join(message)+"\n"
+        #logger.info("\n{}".format(tabulate(table, headers=table.keys(), tablefmt="pretty")))
 
         if socket:
             try:
@@ -127,7 +137,7 @@ def start_metric_collector_process():
 
     check_is_running(METRICS_COLLECTOR_PID_FILE)
     store_metrics_collector_pid()
-    server_pid = get_process_pid_from_file(get_server_pidfile())
+    server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
     server_process = get_server_processes(server_pid)
     start_metric_collection(server_process, AVAILABLE_METRICS, MONITOR_INTERVAL, None)
 

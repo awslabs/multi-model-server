@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
@@ -9,5 +11,18 @@
 # permissions and limitations under the License.
 
 """
-MMS Test Suites
+Read configuration file
 """
+# pylint: disable=redefined-builtin
+import configparser
+import pathlib
+
+config = configparser.ConfigParser()
+path = pathlib.Path(__file__).parent.absolute()
+config.read('{}/config.ini'.format(path))
+
+def get(section, key, default=''):
+    try:
+        return config[section][key]
+    except:
+        return default

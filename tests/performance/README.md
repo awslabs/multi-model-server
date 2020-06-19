@@ -4,7 +4,7 @@ This test suite helps in running the load tests and monitoring the process and s
 We use Taurus with JMeter as a test automation framework to run the test cases and metrics monitoring.
 
 ## How to run the test suite
-To run the test suite you need to execute the [run_perfomance_suite.py](run_perfomance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
+To run the test suite you need to execute the [run_performance_suite.py](run_performance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
 You can specify test cases to be run by providing 'test-dir' with default as '$MMS_HOME/tests/performance/tests' and 'pattern' with default as '*.yaml'. For other options use '--help' option.   
 
 Script does the following:  
@@ -28,11 +28,11 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
 
 ### B. Running the test suite
 1. Run MMS server
-2. Make sure parameters set in the [global_config.yaml](tests/common/global_config.yaml) are correct.
+2. Make sure parameters set in the [tests/common/global_config.yaml](tests/common/global_config.yaml) are correct.
 3. Run the test suite runner script
 4. Check the console logs, $artifacts-dir$/junit.html report and other artifacts.
 
-    **steps are provided below**
+    **Steps are provided below**
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
@@ -41,11 +41,11 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
     # multi-model-server --start 
     
     # check variables
-    #vi tests/common/global_config.yaml 
+    # vi tests/common/global_config.yaml 
     # jpeg download command for quick reference. Set input_filepath in global_config.yaml
-    #curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
+    # curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
     
-    python run_perfomance_suite.py --artifacts-dir='<path>' --pattern='*criteria*.yaml'
+    python -m run_performance_suite --artifacts-dir='<path>' --pattern='*criteria*.yaml'
     ```
 
 ### C. Understanding the test suite artifacts and reports
@@ -67,7 +67,7 @@ To add test case follow steps below.
 You can specify the test scenarios, in the scenario section of the yaml.
 To get you started quickly, we have provided a sample JMeter script and a Taurus yaml file [here](tests/register_and_inference.jmx) and [here](tests/call_jmx.yaml) .
     
-Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [global_config.yaml](tests/common/global_config.yaml) file.
+Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [tests/common/global_config.yaml](tests/common/global_config.yaml) file.
     
     ```yaml
     execution:
@@ -104,8 +104,7 @@ Metrics can be monitored in two ways:
     If your MMS server is hosted on different machine, you will be using this method. Before running the test case
     you have to start a [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will be communicating with Taurus test client over sockets.
     The address and port(default=9009) of the monitoring script should be specified in test case yaml. 
-    
-    **Note**: For available metrics check AVAILABLE_METRICS in the script [metric/__init__.py](metrics/__init__.py).  
+      
     **Note**: While running Test suite runner script, no need to manually start the monitoring server. The scripts optionally but by default starts and stops it in setup and teardown.
     
     To start monitoring server run commands below:
@@ -183,7 +182,7 @@ Metrics can be monitored in two ways:
     cd $MMS_HOME/tests/performance
     bzt tests/inference_taurus_local_monitoring.yaml tests/common/global_config.yaml
     ```
-    
+
 #### 3. Add pass/fail criteria
 You can specify the pass/fail criteria for the test cases.
 Read more about it [here](https://gettaurus.org/docs/PassFail/)
@@ -213,6 +212,47 @@ bzt inference_server_monitoring_criteria.yaml tests/common/global_config.yaml
 bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.yaml
 ```
 
+## Metrics that you can use for monitoring \ passfail criteria  
+  **System Metrics**
+  > disk_used, memory_percent, read_count, write_count, read_bytes, write_byte
+
+  | Syntax | Examples |
+  | ------ | -------- |
+  | system_{metricname} | system_disk_used, system_memory_percent, system_write_count |
+
+
+  **Process Metrics**
+  > cpu_percent, memory_percent, cpu_user_time, cpu_system_time, cpu_iowait_time, memory_rss, memory_vms, io_read_count, io_write_count, io_read_bytes, io_write_bytes, file_descriptors, threads
+
+  - Frontend  
+    It is a single java process
+
+    | Syntax | Examples |
+    | ------ | -------- |
+    | frontend_{metricname} | frontend_cpu_percent, frontend_memory_percent, frontend_cpu_iowait_time, frontend_memory_rss, frontend_io_write_bytes, frontend_threads |
+
+  - Workers  
+    These are python processes. MMS can have more than one worker  
+    Metrics for worker(s) are always available with an aggregate  
+    > Aggregates  
+    > sum, avg, min, max
+
+    | Syntax | Examples |
+    | ------ | -------- |
+    | {aggregate}\_workers\_{metricname} | total_workers, sum_workers_memory_percent, avg_workers_iowait_time, min_workers_io_write_bytes, max_workers_threads |
+
+  - All (Frontend + Workers)  
+    We can also aggregate metrics for both frontend and worker processes together
+  
+    | Syntax | Examples |
+    | ------ | -------- |
+    | {aggregate}\_all\_{metricname} | sum_all_memory_percent, avg_all_iowait_time, min_all_io_write_bytes, max_all_threads |
+
+  - Miscellaneous
+     * total_processes - Total number of processes spawned for frontend & workers
+     * total_workers - Total number of workers spawned
+     * orphans - Total number of orphan processes
+  
 
 ## Work in Progress
 1. Add more metrics for cpu and gpu both. Add documentation around those.

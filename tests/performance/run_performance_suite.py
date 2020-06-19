@@ -367,6 +367,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
         artifacts_dir = "{}/{}".format(run_artifacts_path, artifacts_folder_name)
         store_local = True
     else:
+        artifacts_dir = os.path.abspath(artifacts_dir)
         artifacts_dir = "{}/{}".format(artifacts_dir, artifacts_folder_name)
     logger.info("Artifacts will be stored in directory {}".format(artifacts_dir))
 

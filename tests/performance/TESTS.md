@@ -22,4 +22,4 @@
 |Health Check|A,B,E||
 |API Description|A,B,E||
 |Model Describe|A,B,E|[model_description.yaml](tests/model_description.yaml)|
-|List Models|A,B,E||
+|List Models|A,B,E|[list_models.yaml](tests/list_models.yaml)|

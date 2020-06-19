@@ -216,7 +216,7 @@ A sub directory with '{env_name}_{git_commit_id}_{timestamp}' gets created in th
 This is an optional parameter. The default is current hostname. This should be unique it is used while doing comparison between runs.
 Comparison should happen between the runs of same environment.
 3. **compare-local/no-compare-local**:
-This is an optional parameter. The default is compare-local. If `compare-local` is set,  previous run results from the local './run_artifacts' folder will be used used. 
+This is an optional parameter. The default is compare-local. If `compare-local` is set,  previous run results from the local `artifacts-dir` folder will be used used. 
 `experimental` If no-compare-local is set,  previous run results from the public S3 bucket will be used. `no-compare-local is currently experimental`
 
 ```yaml

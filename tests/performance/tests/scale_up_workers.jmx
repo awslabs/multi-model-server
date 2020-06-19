@@ -14,28 +14,17 @@
     <hashTree>
       <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="Variables" enabled="true">
         <collectionProp name="Arguments.arguments">
-          <elementProp name="cnn_url" elementType="Argument">
-            <stringProp name="Argument.name">cnn_url</stringProp>
-            <stringProp name="Argument.value">https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-            <stringProp name="Argument.desc">The url from where to fetch noop model from</stringProp>
-          </elementProp>
           <elementProp name="scale_up_workers" elementType="Argument">
             <stringProp name="Argument.name">scale_up_workers</stringProp>
-            <stringProp name="Argument.value">${__P(min_workers,4)}</stringProp>
+            <stringProp name="Argument.value">4</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
-            <stringProp name="Argument.desc">The workers to scale No op model to</stringProp>
-          </elementProp>
-          <elementProp name="scale_down_workers" elementType="Argument">
-            <stringProp name="Argument.name">scale_down_workers</stringProp>
-            <stringProp name="Argument.value">0</stringProp>
-            <stringProp name="Argument.desc">Offload the No-Op Model</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
+            <stringProp name="Argument.desc">Number of workers to scale up to</stringProp>
           </elementProp>
           <elementProp name="model" elementType="Argument">
             <stringProp name="Argument.name">model</stringProp>
             <stringProp name="Argument.value">squeezenet_v1.1</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
+            <stringProp name="Argument.desc">Model name</stringProp>
           </elementProp>
         </collectionProp>
       </Arguments>

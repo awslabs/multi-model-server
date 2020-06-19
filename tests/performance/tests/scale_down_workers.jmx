@@ -17,13 +17,14 @@
           <elementProp name="scale_down_workers" elementType="Argument">
             <stringProp name="Argument.name">scale_down_workers</stringProp>
             <stringProp name="Argument.value">2</stringProp>
-            <stringProp name="Argument.desc">Offload the No-Op Model</stringProp>
+            <stringProp name="Argument.desc">Number of workers to scale down to</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="model" elementType="Argument">
             <stringProp name="Argument.name">model</stringProp>
             <stringProp name="Argument.value">squeezenet_v1.1</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
+            <stringProp name="Argument.desc">Model name</stringProp>
           </elementProp>
         </collectionProp>
       </Arguments>

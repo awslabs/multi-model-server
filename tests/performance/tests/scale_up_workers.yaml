@@ -40,16 +40,16 @@ reporting:
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_file_descriptors
-      condition: '>'
-      threshold: 38
-      timeframe: 1s
+      condition: '<'
+      threshold: 4
+      timeframe: 5s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_file_descriptors
-      condition: '<'
-      threshold: 21
-      timeframe: 1s
+      condition: '>'
+      threshold: 38
+      timeframe: 5s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria

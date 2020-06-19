@@ -11,8 +11,9 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-from statistics import mean
 from enum import Enum
+from statistics import mean
+
 import psutil
 
 

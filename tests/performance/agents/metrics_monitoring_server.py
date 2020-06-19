@@ -85,7 +85,7 @@ def perf_server():
                             metrics = data[:-1].split("metrics:")[1].split("\t")
                             server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
                             server_process = get_server_processes(server_pid)
-                             start_metric_collection(server_process, metrics, interval, sock)
+                            start_metric_collection(server_process, metrics, interval, sock)
                         else:
                             # TODO - decide what to do here
                             pass

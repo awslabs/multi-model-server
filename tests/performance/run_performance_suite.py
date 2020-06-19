@@ -248,6 +248,7 @@ def get_compare_metric_list(dir, sub_dir):
 
 
 def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
+    logger.info("Comparing artifacts from {} with {}".format(dir1, dir2))
     sub_dirs_1 = get_sub_dirs(dir1)
     sub_dirs_2 = get_sub_dirs(dir2)
 
@@ -321,8 +322,10 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
         else:
             row.extend([sub_dir1, "log_file", "log file available", "log file not available", "NA", "pass"])
 
+        rows.append(row)
+
     out_path = "{}/comparison.csv".format(out_dir)
-    logger.info("Writing comparison report to log file ".format(out_path))
+    logger.info("Writing comparison report to log file {}".format(out_path))
     with open(out_path, 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -348,7 +351,6 @@ def get_options(artifacts_dir, jmeter_path=None):
     options_str = ' '.join(options)
 
     return options_str
-
 
 @click.command()
 @click.option('-a', '--artifacts-dir', help='Directory to store artifacts.', type=click.Path(writable=True))

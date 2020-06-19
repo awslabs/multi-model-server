@@ -1,8 +1,9 @@
 ---
 execution:
-- concurrency: 1
-  ramp-up: 0s
-  iterations: 1
+- concurrency: 10
+  ramp-up: 1s
+  hold-for: 30s
+#  iterations: 200
   scenario: Downscale
 
 scenarios:
@@ -20,6 +21,7 @@ services:
     - interval: 1s
       metrics:
         - total_workers
+        - sum_workers_file_descriptors
 
 modules:
   server_local_monitoring:
@@ -32,8 +34,29 @@ reporting:
   criteria:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_workers
+      condition: '>'
+      threshold: 4
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_workers
       condition: '<'
       threshold: 2
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '>'
+      threshold: 38
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '<'
+      threshold: 21
       timeframe: 1s
       stop : true
       fail : true

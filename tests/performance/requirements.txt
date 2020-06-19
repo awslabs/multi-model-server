@@ -2,8 +2,9 @@ gevent==20.5.2
 junitparser==1.4.1
 git+https://github.com/maheshambule/vjunit.git#egg=vjunit
 tqdm==4.40.0
-pathlib
-boto
-aws
-click
-tabulate
+pathlib==1.0.1
+boto==2.49.0
+awscli==1.18.80
+click==7.1.2
+tabulate==0.8.7
+pandas==1.0.3

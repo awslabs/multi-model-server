@@ -3,3 +3,4 @@ junitparser==1.4.1
 git+https://github.com/maheshambule/vjunit.git#egg=vjunit
 tqdm==4.40.0
 pathlib
+click

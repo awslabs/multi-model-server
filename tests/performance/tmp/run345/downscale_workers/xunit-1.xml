@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<testsuites>
-  <testsuite name="sample_labels" package_name="bzt">
-    <testcase classname="bzt-279546913" name="Scale Down Workers squeezenet_v1.1"/>
-  </testsuite>
-</testsuites>

@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<testsuites>
-  <testsuite name="sample_labels" package_name="bzt">
-    <testcase classname="bzt-286195653" name="Inference Request"/>
-    <testcase classname="bzt-286195653" name="Scale Down squeezenet_v1.1"/>
-    <testcase classname="bzt-286195653" name="Scale Up squeezenet_v1.1 Model"/>
-    <testcase classname="bzt-286195653" name="Setup squeezenet_v1.1 Model"/>
-  </testsuite>
-</testsuites>

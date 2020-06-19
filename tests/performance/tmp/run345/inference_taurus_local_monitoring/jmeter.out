@@ -1,5 +1,0 @@
-Created the tree successfully using /Users/mahesh/git/multi-model-server/tests/performance/tests/modified_register_and_inference.jmx
-Starting standalone test @ Thu Jun 18 22:23:18 IST 2020 (1592499198830)
-Waiting for possible Shutdown/StopTestNow/HeapDump/ThreadDump message on port 4445
-Tidying up ...    @ Thu Jun 18 22:24:23 IST 2020 (1592499263612)
-... end of run

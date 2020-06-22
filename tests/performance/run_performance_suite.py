@@ -21,8 +21,6 @@ import os
 import pathlib
 import socket
 import subprocess
-import yaml
-import requests
 from agents import configuration
 import csv
 import pandas as pd
@@ -40,8 +38,6 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
-
-code = 0
 metrics_monitoring_server = "agents/metrics_monitoring_server.py"
 base_file_path = pathlib.Path(__file__).parent.absolute()
 run_artifacts_path = "{}/run_artifacts/".format(base_file_path)
@@ -51,6 +47,9 @@ S3_BUCKET = configuration.get('suite', 's3_bucket')
 
 
 class Timer(object):
+    """
+    Helper context manager class to capture time diff
+    """
     def __init__(self, description):
         self.description = description
 
@@ -64,8 +63,9 @@ class Timer(object):
     def diff(self):
         return int(time.time()) - self.start
 
+
 class Monitoring(object):
-    def __init__(self, path, use = True):
+    def __init__(self, path, use=True):
         self.path = "{}/{}".format(path, "agents/metrics_monitoring_server.py")
         self.use = use
 
@@ -109,7 +109,7 @@ class Suite(object):
         err_txt = ""
         if os.path.exists(xunit_file):
             xml = JUnitXml.fromfile(xunit_file)
-            for i, suite in enumerate(xml):  # tqqdm
+            for i, suite in enumerate(xml):
                 for case in suite:
                     name = "scenario_{}: {}".format(i, case.name)
                     result = case.result
@@ -129,12 +129,8 @@ class Suite(object):
                     self.ts.add_testcase(tc)
         else:
             tc = TestCase(self.name)
-            if code:
-                tc.result = Error("Suite run failed", "Error")
-            else:
-                tc.result = Skipped()
+            tc.result = Skipped()
             self.ts.add_testcase(tc)
-
 
         self.ts.hostname = socket.gethostname()
         self.ts.timestamp = self.timer.start
@@ -145,6 +141,77 @@ class Suite(object):
         self.ts.errors = errors
         self.ts.update_statistics()
         self.junit_xml.add_testsuite(self.ts)
+
+
+class Compare():
+    def __init__(self, artifacts_dir, current_run_name, env_name):
+        self.artifacts_dir = artifacts_dir
+        self.current_run_name = current_run_name
+        self.env_name = env_name
+        self.result = True
+
+    @staticmethod
+    def get_latest(names, env_id):
+        max_ts = 0
+        latest_run = ''
+        for run_name in names:
+            run_name_list = run_name.split('_')
+            if env_id == run_name_list[0]:
+                if int(run_name_list[2]) > max_ts:
+                    max_ts = int(run_name_list[2])
+                    latest_run = run_name
+
+        return latest_run
+
+    def get_dir_to_compare(self):
+        parent_dir = pathlib.Path(self.artifacts_dir).parent
+        names = [di for di in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, di))]
+        latest_run = self.get_latest(names, self.env_name)
+        return os.path.join(parent_dir, latest_run), latest_run
+
+    def store_results(self):
+        pass
+
+    def compare(self):
+        compare_dir, compare_run_name = self.get_dir_to_compare()
+        if compare_dir:
+            self.result = compare_artifacts(self.artifacts_dir, compare_dir, self.artifacts_dir,
+                                            self.current_run_name, compare_run_name)
+        self.store_results()
+        return self.resultc1
+
+
+class LocalCompare(Compare):
+    pass
+
+
+class S3Compare(Compare):
+    def get_dir_to_compare(self):
+        tgt_path = "{}/comp_data".format(self.artifacts_dir)
+        s3 = boto3.resource('s3')
+        bucket = s3.Bucket(S3_BUCKET)
+        result = bucket.meta.client.list_objects(Bucket=bucket.name,
+                                                 Delimiter='/')
+        run_names = []
+        for o in result.get('CommonPrefixes'):
+            run_names.append(o.get('Prefix')[:-1])
+
+        latest_run = self.get_latest(run_names, self.env_name)
+        if not latest_run:
+            logger.info("No run found for env_id {}".format(self.env_name))
+            return '', ''
+
+        if not os.path.exists(tgt_path):
+            os.makedirs(tgt_path)
+
+        tgt_path = "{}/{}".format(tgt_path, latest_run)
+        run_process("aws s3 cp  s3://{}/{} {} --recursive".format(bucket.name, latest_run, tgt_path))
+
+        return tgt_path, latest_run
+
+    def store_results(self):
+        run_process("aws s3 cp {} s3://{}/{}  --recursive".format(self.artifacts_dir, S3_BUCKET,
+                                                                  self.current_run_name))
 
 
 def run_process(cmd, wait=True):
@@ -165,54 +232,6 @@ def run_process(cmd, wait=True):
     else:
         p = subprocess.Popen(cmd, shell=True)
         return p.returncode, ''
-
-
-def get_folder_names(dir1):
-    return [di for di in os.listdir(dir1) if os.path.isdir(os.path.join(dir1, di))]
-
-
-def get_latest(names, env_id):
-    max_ts = 0
-    latest_run = ''
-    for run_name in names:
-        run_name_list = run_name.split('_')
-        if env_id == run_name_list[0]:
-            if int(run_name_list[2]) > max_ts:
-                max_ts = int(run_name_list[2])
-                latest_run = run_name
-
-    return latest_run
-
-
-def get_latest_dir(dir1, env_id):
-    names= get_folder_names(dir1)
-    latest_run= get_latest(names, env_id)
-    return os.path.join(dir1, latest_run), latest_run
-
-
-def download_s3_files(env_id, tgt_path, bucket_name=S3_BUCKET):
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket(bucket_name)
-    result = bucket.meta.client.list_objects(Bucket=bucket.name,
-                                             Delimiter='/')
-
-    run_names = []
-    for o in result.get('CommonPrefixes'):
-        run_names.append(o.get('Prefix')[:-1])
-
-    latest_run = get_latest(run_names, env_id)
-    if not latest_run:
-        logger.info("No run found for env_id {}".format(env_id))
-        return '', ''
-
-    if not os.path.exists(tgt_path):
-        os.makedirs(tgt_path)
-
-    tgt_path = "{}/{}".format(tgt_path, latest_run)
-    run_process("aws s3 cp  s3://{}/{} {} --recursive".format(bucket.name, latest_run, tgt_path))
-
-    return tgt_path, latest_run
-
 
 def get_sub_dirs(dir, exclude_list=['comp_data']):
     dir = dir.strip()
@@ -383,17 +402,9 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
         junit_xml.write(junit_xml_path)
         run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
-    if compare_local:
-        compare_dir, run_name = get_latest_dir(pathlib.Path(artifacts_dir).parent, env_name)
-    else:
-        compare_dir, run_name = download_s3_files(env_name, "{}/comp_data".format(artifacts_dir))
-
-    compare_result = True
-    if compare_dir:
-        compare_result = compare_artifacts(artifacts_dir, compare_dir, artifacts_dir, artifacts_folder_name, run_name)
-
-    if not compare_local:
-        run_process("aws s3 cp {} s3://{}/{}  --recursive".format(artifacts_dir, S3_BUCKET, artifacts_folder_name))
+    compare_class = LocalCompare if compare_local else S3Compare
+    compare_obj = compare_class(artifacts_dir, artifacts_folder_name, env_name)
+    compare_result = compare_obj.compare()
 
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
         sys.exit(3)

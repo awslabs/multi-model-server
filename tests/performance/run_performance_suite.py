@@ -21,6 +21,7 @@ import os
 import pathlib
 import socket
 import subprocess
+import shutil
 from agents import configuration
 import csv
 import pandas as pd
@@ -151,12 +152,12 @@ class Compare():
         self.result = True
 
     @staticmethod
-    def get_latest(names, env_id):
+    def get_latest(names, env_id, exclude_run_name):
         max_ts = 0
         latest_run = ''
         for run_name in names:
             run_name_list = run_name.split('_')
-            if env_id == run_name_list[0]:
+            if env_id == run_name_list[0] and run_name != exclude_run_name:
                 if int(run_name_list[2]) > max_ts:
                     max_ts = int(run_name_list[2])
                     latest_run = run_name
@@ -166,7 +167,7 @@ class Compare():
     def get_dir_to_compare(self):
         parent_dir = pathlib.Path(self.artifacts_dir).parent
         names = [di for di in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, di))]
-        latest_run = self.get_latest(names, self.env_name)
+        latest_run = self.get_latest(names, self.env_name, self.current_run_name)
         return os.path.join(parent_dir, latest_run), latest_run
 
     def store_results(self):
@@ -178,7 +179,7 @@ class Compare():
             self.result = compare_artifacts(self.artifacts_dir, compare_dir, self.artifacts_dir,
                                             self.current_run_name, compare_run_name)
         self.store_results()
-        return self.resultc1
+        return self.result
 
 
 class LocalCompare(Compare):
@@ -196,7 +197,7 @@ class S3Compare(Compare):
         for o in result.get('CommonPrefixes'):
             run_names.append(o.get('Prefix')[:-1])
 
-        latest_run = self.get_latest(run_names, self.env_name)
+        latest_run = self.get_latest(run_names, self.env_name, self.current_run_name)
         if not latest_run:
             logger.info("No run found for env_id {}".format(self.env_name))
             return '', ''
@@ -242,6 +243,18 @@ def get_sub_dirs(dir, exclude_list=['comp_data']):
     return list([x for x in os.listdir(dir) if os.path.isdir(dir + "/" + x) and x not in exclude_list])
 
 
+def get_mon_metrics_list(test_yaml):
+    metrics = []
+    with open(test_yaml) as test_yaml:
+        test_yaml = yaml.safe_load(test_yaml)
+        for rep_section in test_yaml.get('services', []):
+            if rep_section.get('module', None) == 'monitoring' and "server-agent" in rep_section:
+                for mon_section in rep_section.get('server-agent', []):
+                    if isinstance(mon_section, dict):
+                       metrics.extend(mon_section.get('metrics', []))
+
+    return metrics
+
 def get_compare_metric_list(dir, sub_dir):
     diff_percents = []
     metrics = []
@@ -285,8 +298,10 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
                     logger.info("Metrics monitoring logs are not captured for {} in either of the runs.".format(sub_dir1))
                     rows.append([run_name1, run_name2, sub_dir1, "log_file", sub_dir1, sub_dir1, "metrics are not captured for either of the runs", "pass"])
                     continue
+
             metrics_from_file1 = pd.read_csv(metrics_file1[0])
             metrics_from_file2 = pd.read_csv(metrics_file2[0])
+
 
             metrics, diff_percents = get_compare_metric_list(dir1, sub_dir1)
             for col, diff_percent in zip(metrics, diff_percents):
@@ -396,6 +411,16 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
                     s.code, s.err = run_process("{} bzt {} {} {}".format(pre_command, options_str,
                                                                      test_file, GLOBAL_CONFIG_PATH))
 
+                    metrics_log_file = glob.glob("{}/SAlogs_*".format(suite_artifacts_dir))
+                    if metrics_log_file:
+                        metrics = get_mon_metrics_list(test_file)
+                        if metrics:
+                            with open(metrics_log_file[0]) as from_file:
+                                line = from_file.readline()
+                                with open(metrics_log_file[0], mode="w") as to_file:
+                                    to_file.write(','.join(line.split(',')[0:1] + metrics)+"\n")
+                                    shutil.copyfileobj(from_file, to_file)
+
         junit_xml.update_statistics()
         junit_xml_path = '{}/junit.xml'.format(artifacts_dir)
         junit_html_path = '{}/junit.html'.format(artifacts_dir)
@@ -405,12 +430,25 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
     compare_class = LocalCompare if compare_local else S3Compare
     compare_obj = compare_class(artifacts_dir, artifacts_folder_name, env_name)
     compare_result = compare_obj.compare()
-
-    if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
-        sys.exit(3)
-
+    
+    logger.info("\n\nResult Summary:")
+    exit_code = 0
     if not compare_result:
-        sys.exit(4)
+        compare_status = 'failed'
+        exit_code = 4
+    else:
+        compare_status = 'passed'
+    logger.info("Comparison with monitoring metrics of previous run has {}.".format(compare_status))
+    
+    if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
+        suite_status = 'failed'
+        exit_code = 3
+    else:
+        suite_status = 'passed'
+    logger.info("Test suite run has {}.".format(suite_status))
+    logger.info("Test suite report - {}/junit.html".format(artifacts_dir))
+    
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

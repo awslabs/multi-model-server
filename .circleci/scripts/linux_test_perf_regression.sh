@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ARTIFACTS_DIR='/tmp/mms-performance-regression/'
-RESULT_DIR=$ARTIFACTS_DIR'/report/performance/'
+ARTIFACTS_DIR='/tmp/mms-performance-regression'
+RESULT_DIR=$ARTIFACTS_DIR'/report/performance'
 JMETER_PATH='/opt/apache-jmeter-5.3/bin/jmeter'
 
 # Start MMS server
@@ -24,7 +24,7 @@ pip install bzt
 
 # Execute performance test suite and store exit code
 curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
-./run_performance_suite.py --artifacts-dir=$ARTIFACTS_DIR --jmeter-path=$JMETER_PATH --no-compare-local
+./run_performance_suite.py --artifacts-dir=$ARTIFACTS_DIR --jmeter-path=$JMETER_PATH
 EXIT_CODE=$?
 
 # Stop server

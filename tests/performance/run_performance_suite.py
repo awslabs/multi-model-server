@@ -362,7 +362,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
     else:
         artifacts_dir = os.path.abspath(artifacts_dir)
         artifacts_dir = "{}/{}".format(artifacts_dir, artifacts_folder_name)
-    os.environ.update({"MMS_PERF_ARTIFACTS_DIR_NAME": artifacts_folder_name})
+    # os.environ["MMS_PERF_ARTIFACTS_DIR_NAME"] = artifacts_folder_name
     logger.info("Artifacts will be stored in directory {}".format(artifacts_dir))
 
     with Monitoring(base_file_path, monit):

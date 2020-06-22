@@ -32,7 +32,7 @@ multi-model-server --stop >> mms.log 2>&1
 
 # Collect and store test results in result directory to be picked up by CircleCI
 mkdir -p $RESULT_DIR
-cp $ARTIFACTS_DIR/$MMS_PERF_ARTIFACTS_DIR_NAME/junit.xml $RESULT_DIR
+cp $ARTIFACTS_DIR/**/junit.xml $RESULT_DIR
 
 # Exit with the same error code as that of test execution
 exit EXIT_CODE

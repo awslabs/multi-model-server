@@ -108,7 +108,7 @@ def monitor_processes(server_process, metrics, interval, socket):
            #    table[metric] = [collected_metrics.get(metric, 0)]
 
 
-        message = "\t".join(message)+"\n"
+        message = "\t".join(message)+"\t\n"
         #logger.info("\n{}".format(tabulate(table, headers=table.keys(), tablefmt="pretty")))
 
         if socket:

@@ -135,9 +135,9 @@ jobs:
         - store_artifacts:
             name: Store artifacts from performance regression run
             path: /tmp/mms-performance-regression/
-      - store_test_results:
-          name: Store Taurus test results
-          path: /tmp/mms-performance-regression/report/
+        - store_test_results:
+            name: Store Taurus test results
+            path: /tmp/mms-performance-regression/report/
 
     modelarchiver:
       parameters:

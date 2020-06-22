@@ -112,16 +112,7 @@ def get_metrics(server_process, child_processes, logger):
     processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
     for child in children:
         if psutil.pid_exists(child.pid):
-            if len(list(filter(lambda parent : parent.pid == server_process.pid, child.parents()))) == 0:
-                ppids = [str(parent.pid) for parent in child.parents()]
-                logger.info('server process id is {0}; child process id is {1}; {1} has the following parents {2} : '.
-                    format(
-                        server_process.pid, child.pid, ",".join(ppids)
-                    )
-                )
-                reclaimed_pids.append(child)
-            else:
-                processes_stats.append({'type': ProcessType.WORKER, 'stats' : child.as_dict()})
+            processes_stats.append({'type': ProcessType.WORKER, 'stats' : child.as_dict()})
         else:
             reclaimed_pids.append(child)
             logger.debug('child {0} no longer available'.format(child.pid))

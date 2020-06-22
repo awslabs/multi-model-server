@@ -19,6 +19,7 @@ services:
       - interval: 1s
         metrics:
           - total_processes
+          - frontend_memory_rss
 
 reporting:
 - module: passfail
@@ -27,6 +28,13 @@ reporting:
       subject: ServerLocalClient/total_processes
       condition: '>'
       threshold: 1
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/frontend_memory_rss
+      condition: '>'
+      threshold: 75000000 #75MB
       timeframe: 5s
       stop : true
       fail : true

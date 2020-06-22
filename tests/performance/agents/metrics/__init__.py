@@ -81,14 +81,13 @@ for metric in list(process_metrics):
             for op in list(operators):
                 AVAILABLE_METRICS.append('{}_{}_{}'.format(op, PNAME, metric))
 
-children = set()
+__CHILDREN = set()
 
-def get_metrics(server_process, child_processes, logger):
+def get_metrics(server_process, child_processes):
     """ Get Server processes specific metrics
     """
     result = {}
-    children.update(child_processes)
-    logger.debug("children : {0}".format(",".join([str(c.pid) for c in children])))
+    __CHILDREN.update(child_processes)
 
     def update_metric(metric_name, proc_type, stats):
         stats = stats if stats else [0]
@@ -107,18 +106,9 @@ def get_metrics(server_process, child_processes, logger):
 
     # as_dict() gets all stats in one shot
     processes_stats = []
-    reclaimed_pids = []
-
     processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
-    for child in children:
-        if psutil.pid_exists(child.pid):
-            processes_stats.append({'type': ProcessType.WORKER, 'stats' : child.as_dict()})
-        else:
-            reclaimed_pids.append(child)
-            logger.debug('child {0} no longer available'.format(child.pid))
-
-    for p in reclaimed_pids:
-        children.remove(p)
+    for process in child_processes:
+        processes_stats.append({'type': ProcessType.WORKER, 'stats' : process.as_dict()})
 
     ### PROCESS METRICS ###
     worker_stats = list(map(lambda x: x['stats'], \
@@ -132,9 +122,10 @@ def get_metrics(server_process, child_processes, logger):
         update_metric(k, ProcessType.ALL, list(map(process_metrics[k], all_stats)))
         update_metric(k, ProcessType.FRONTEND, list(map(process_metrics[k], server_stats)))
 
+
     # Total processes
-    result['total_processes'] = len(worker_stats) + 1
-    result['total_workers'] = max(len(worker_stats) - 1, 0)
+    result['total_processes'] = len(child_processes) + 1
+    result['total_workers'] = max(len(child_processes) - 1, 0)
     result['orphans'] = len(list(filter(lambda p : p['ppid'] == 1, worker_stats)))
 
     ### SYSTEM METRICS ###

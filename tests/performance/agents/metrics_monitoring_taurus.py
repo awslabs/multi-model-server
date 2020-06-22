@@ -86,7 +86,7 @@ class ServerLocalMonitor(monitoring.LocalMonitor):
          result = super()._calc_resource_stats(interval)
          server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
          server_process = get_server_processes(server_pid)
-         result.update(get_metrics(server_process, get_child_processes(server_process), self.log))
+         result.update(get_metrics(server_process, get_child_processes(server_process)))
 
          '''
          table = {}

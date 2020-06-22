@@ -25,8 +25,7 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
     export MMS_HOME=<MMS_HOME_PATH>
     pip install -r $MMS_HOME/tests/performance/requirements.txt
     ``` 
-3. Git is installed.
-Make sure that you have git installed and you are in MMS git repository while running the test suite.
+3. Make sure that `git` is installed and the test suites are run from the MMS working directory. This is used to compare performance regresssions across runs and the run artifacts are stored in a folder which have the commit SHA.
 
 ### B. Running the test suite
 1. Run MMS server
@@ -50,25 +49,8 @@ Make sure that you have git installed and you are in MMS git repository while ru
     python -m run_performance_suite --artifacts-dir='<path>' --pattern='*criteria*.yaml'
     ```
 
-### C. Understanding comparison between different runs:
-At the end, the test suite runner script compares the monitoring metric with values from previous run which was executed on same environment. 
-Note you should have a one test suite run on same environment in order to do the comparison.
-The previous run results from S3 bucket or a local directory can be used. See compare-local option below. The comparison happens for the 
-monitoring metrics criteria for which 'diff_percent' properties is specified. See pass/fail criteria [section](#3-add-passfail-criteria)
-Below are different options used by run_performance_suite script for coparison.
-1. **artifacts-dir**:
-This is an optional parameter. The default is './run_artifacts' directory.
-A sub directory with '{env_name}_{git_commit_id}_{timestamp}' gets created in the artifacts dir.
-2. **env-name**:
-This is an optional parameter. The default is current hostname. This should be unique it is used while doing comparison between runs.
-Comparison should happen between the runs of same environment.
-3. **compare-local/no-compare-local**:
-This is an optional parameter. The default is compare-local. If compare-local is on previous run results from './run_artifacts' will be used used otherwise results from 
-S3 bucket will be used. Note that other users will also be uploading the results to same S3 bucket.
-
-
-### D. Understanding the test suite artifacts and reports
-1. The $artifacts-dir$/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
+### C. Understanding the test suite artifacts and reports
+1. The $artifacts-dir$/<run-dir>/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
 test suite. Different criteria in the yaml are treated as test cases. If criteria is not specified in the yaml, test suite is marked as skipped with 0 test cases.
 2. For each test yaml a sub-directory is created with artifacts for it.  
 3. The comparison.csv contains diff for monitoring metrics between an ongoing run and a previous run which was ran for same MMS server. 
@@ -88,26 +70,26 @@ To get you started quickly, we have provided a sample JMeter script and a Taurus
     
 Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [tests/common/global_config.yaml](tests/common/global_config.yaml) file.
     
-    ```yaml
-    execution:
-    - concurrency: 1
-      ramp-up: 1s
-      hold-for: 40s
-      scenario: Inference
+ ```yaml
+ execution:
+ - concurrency: 1
+   ramp-up: 1s
+   hold-for: 40s
+   scenario: Inference
 
-    scenarios:
-      Inference:
-        script: register_and_inference.jmx
-    
-    ```
+ scenarios:
+   Inference:
+     script: register_and_inference.jmx
+
+ ```
     
 To run this individual test using Taurus(bzt) run commands below:
     
-    ```bash
-    export MMS_HOME=<MMS_HOME_PATH>
-    cd $MMS_HOME/tests/performance
-    bzt tests/call_jmx.yaml tests/common/global_config.yaml
-    ```
+ ```bash
+ export MMS_HOME=<MMS_HOME_PATH>
+ cd $MMS_HOME/tests/performance
+ python -m run_performance_suite -p call_jmx.yaml
+ ```
 
 **Note**:
 Taurus provides support for different executors such as JMeter. You can use test script written in those frameworks as it is.
@@ -150,12 +132,12 @@ Metrics can be monitored in two ways:
               - server_workers # no of mms workers
     ```
     
-    Use Taurus command below to run the test yaml and observe the Metrics widget on CLI live report.
+    Use the command below to run the test yaml.
     
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    bzt tests/inference_server_monitoring.yaml tests/common/global_config.yaml
+    python -m run_performance_suite -p inference_server_monitoring.yaml
     ```
 
 
@@ -194,19 +176,17 @@ Metrics can be monitored in two ways:
     
     ```
 
-    Use Taurus command below to run the test yaml and observe the Metrics widget on CLI live report.
+    Use command below to run the test yaml
     
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    bzt tests/inference_taurus_local_monitoring.yaml tests/common/global_config.yaml
+    python -m run_performance_suite -p inference_taurus_local_monitoring.yaml
     ```
 
-#### 3. Add pass/fail criteria
+#### 3.1 Add pass/fail criteria
 You can specify the pass/fail criteria for the test cases.
 Read more about it [here](https://gettaurus.org/docs/PassFail/)
-
-**Note** The diff_percent is used by run_performance_suite script to compare the metric across different runs. 
 
 Relevant test yaml section:
 ```yaml
@@ -224,18 +204,37 @@ reporting:
 
 ```
 
-Test yamls can be found [here](tests/inference_server_monitoring_criteria.yaml) and [here](tests/inference_taurus_local_monitoring_criteria.yaml).
-Use command below to run the test case
+#### 3.2 Add pass/fail criteria with previous run
+On completion, the test suite runner script compares the monitoring metrics with values from a previous run which was executed on same environment. 
+Note that at least one test suite run on the same environment should have happened in order to do the comparison. The run results are stored in either a local folder or a S3 bucket based on the `compare-local` option
+Metrics which have 'diff_percent' value specified in the pass/fail criterion are used for comparision with the previous run. See pass/fail criteria [section](#3-add-passfail-criteria)
+Below are different options used by run_performance_suite script for coparison.
+1. **artifacts-dir**:
+This is an optional parameter. The default is './run_artifacts' directory.
+A sub directory with '{env_name}_{git_commit_id}_{timestamp}' gets created in the artifacts dir.
+2. **env-name**:
+This is an optional parameter. The default is current hostname. This should be unique it is used while doing comparison between runs.
+Comparison should happen between the runs of same environment.
+3. **compare-local/no-compare-local**:
+This is an optional parameter. The default is compare-local. If `compare-local` is set,  previous run results from the local `artifacts-dir` folder will be used used. 
+`experimental` If no-compare-local is set,  previous run results from the public S3 bucket will be used. `no-compare-local is currently experimental`
 
-```bash
-export MMS_HOME=<MMS_HOME_PATH>
-cd $MMS_HOME/tests/performance
-bzt inference_server_monitoring_criteria.yaml tests/common/global_config.yaml
-bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.yaml
+```yaml
+reporting:
+- module: passfail
+  criteria:
+  - class: bzt.modules.monitoring.MonitoringCriteria
+    subject: mms-inference-server/sum_num_handles
+    condition: '>'
+    threshold: 180
+    timeframe: 1s
+    fail: true
+    stop: true
+    diff_percent : 30
+
 ```
 
-
-## Metrics that you can use for monitoring \ passfail criteria  
+#### 3.3 Metrics that you can use for passfail criteria  
   **System Metrics**
   > disk_used, memory_percent, read_count, write_count, read_bytes, write_byte
 
@@ -275,11 +274,9 @@ bzt inference_taurus_local_monitoring_criteria.yaml tests/common/global_config.y
      * total_processes - Total number of processes spawned for frontend & workers
      * total_workers - Total number of workers spawned
      * orphans - Total number of orphan processes
-  
 
-## Work in Progress
-1. Add more metrics for cpu and gpu both. Add documentation around those.
-2. Add hooks to add custom metrics. Add a metrics registry.
-3. Better reporting and artifact management
-4. Enhance framework to add better abstraction to hide Taurus and other scripts.
-5. Auto threshold calculation, environment profiles
+## Test Strategy
+More details about our testing strategy and test cases can be found [here](TESTS.md) 
+
+## TODOs
+1. Auto threshold calculation, environment profiles

@@ -81,14 +81,14 @@ class Monitoring(object):
             raise Exception("Server is not running. Pinged url {}. Exiting...".format(server_ping_url))
 
         if self.use:
-            start_monitoring_server = "python {} --start".format(self.path)
+            start_monitoring_server = "{} {} --start".format(sys.executable, self.path)
             run_process(start_monitoring_server, wait=False)
             time.sleep(2)
         return self
 
     def __exit__(self, type, value, traceback):
         if self.use:
-            stop_monitoring_server = "python {} --stop".format(self.path)
+            stop_monitoring_server = "{} {} --stop".format(sys.executable, self.path)
             run_process(stop_monitoring_server)
 
 

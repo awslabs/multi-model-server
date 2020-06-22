@@ -19,6 +19,7 @@ services:
       - interval: 1s
         metrics:
           - total_processes
+          - sum_all_file_descriptors
           - frontend_memory_rss
 
 reporting:
@@ -32,9 +33,16 @@ reporting:
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/frontend_memory_rss
+      subject: ServerLocalClient/sum_all_file_descriptors
       condition: '>'
-      threshold: 75000000 #75MB
+      threshold: 66
       timeframe: 5s
       stop : true
       fail : true
+#    - class: bzt.modules.monitoring.MonitoringCriteria
+#      subject: ServerLocalClient/frontend_memory_rss
+#      condition: '>'
+#      threshold: 75000000 #75MB
+#      timeframe: 5s
+#      stop : true
+#      fail : true

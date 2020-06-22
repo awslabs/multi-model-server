@@ -100,7 +100,7 @@ def monitor_processes(server_process, metrics, interval, socket):
     """
     while True:
         message = []
-        collected_metrics = get_metrics(server_process, get_child_processes(server_process), logger)
+        collected_metrics = get_metrics(server_process, get_child_processes(server_process))
         #table = {}
         for metric in metrics:
            message.append(str(collected_metrics.get(metric, 0)))

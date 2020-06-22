@@ -26,12 +26,6 @@
             <stringProp name="Argument.desc">URL to model store on s3</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
-          <elementProp name="initial_workers" elementType="Argument">
-            <stringProp name="Argument.name">initial_workers</stringProp>
-            <stringProp name="Argument.value">1</stringProp>
-            <stringProp name="Argument.desc">Number of initial workers to create</stringProp>
-            <stringProp name="Argument.metadata">=</stringProp>
-          </elementProp>
         </collectionProp>
       </Arguments>
       <hashTree/>
@@ -71,7 +65,7 @@
           <stringProp name="HTTPSampler.port">${__P(management_port,8444)}</stringProp>
           <stringProp name="HTTPSampler.protocol"></stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-          <stringProp name="HTTPSampler.path">/models?url=${model_url}&amp;initial_workers=${initial_workers}&amp;synchronous=true</stringProp>
+          <stringProp name="HTTPSampler.path">/models?url=${model_url}</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>

@@ -1,12 +1,12 @@
 ---
 execution:
 - concurrency: 1
-  ramp-up: 1s
+  ramp-up: 0s
   iterations: 5
-  scenario: scaledown
+  scenario: register_unregister
 
 scenarios:
-  scaledown:
+  register_unregister:
     script: register_unregister.jmx
 
 modules:
@@ -18,31 +18,15 @@ services:
     ServerLocalClient:
       - interval: 1s
         metrics:
-          - total_workers
-          - sum_workers_file_descriptors
-          - orphans
+          - total_processes
 
 reporting:
 - module: passfail
   criteria:
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/total_workers
+      subject: ServerLocalClient/total_processes
       condition: '>'
       threshold: 1
-      timeframe: 1s
-      stop : true
-      fail : true
-    - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/sum_workers_file_descriptors
-      condition: '>'
-      threshold: 11
-      timeframe: 1s
-      stop : true
-      fail : true
-    - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/orphans
-      condition: '>'
-      threshold: 0
-      timeframe: 1s
+      timeframe: 5s
       stop : true
       fail : true

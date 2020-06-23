@@ -402,6 +402,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
         junit_xml = JUnitXml()
         pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(base_file_path))
         test_yamls = get_test_yamls(test_dir, pattern)
+        logger.info("Collected test yamls {}".format(test_yamls))
         for test_file in tqdm(test_yamls, desc="Test Suites"):
             suite_name = os.path.basename(test_file).rsplit('.', 1)[0]
             with Timer("Test suite {} execution time".format(suite_name)) as t:

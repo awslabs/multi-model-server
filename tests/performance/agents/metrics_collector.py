@@ -100,16 +100,15 @@ def monitor_processes(server_process, metrics, interval, socket):
     """
     while True:
         message = []
-        collected_metrics = get_metrics(server_process, get_child_processes(server_process))
-        #table = {}
+        collected_metrics = get_metrics(server_process, get_child_processes(server_process), logger)
+        metrics_msg = []
         for metric in metrics:
            message.append(str(collected_metrics.get(metric, 0)))
-           #if collected_metrics.get(metric) is not None:
-           #    table[metric] = [collected_metrics.get(metric, 0)]
-
+           if collected_metrics.get(metric) is not None:
+               metrics_msg.append("{0} : {1}".format(metric, collected_metrics.get(metric, 0)))
 
         message = "\t".join(message)+"\t\n"
-        #logger.info("\n{}".format(tabulate(table, headers=table.keys(), tablefmt="pretty")))
+        logger.info("{}".format("{0}".format(" -- ".join(metrics_msg))))
 
         if socket:
             try:

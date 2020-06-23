@@ -86,14 +86,12 @@ class ServerLocalMonitor(monitoring.LocalMonitor):
          result = super()._calc_resource_stats(interval)
          server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
          server_process = get_server_processes(server_pid)
-         result.update(get_metrics(server_process, get_child_processes(server_process)))
+         result.update(get_metrics(server_process, get_child_processes(server_process), self.log))
 
-         '''
-         table = {}
+         metrics_msg = []
          for key in self.metrics:
              if result.get(key) is not None:
-                table[key] = [result[key]]
-         self.log.info("\n{0}".format(tabulate(table, headers=table.keys(), tablefmt="pretty")))
-         '''
+                metrics_msg.append("{0} : {1}".format(key, result[key]))
+         self.log.info("{0}".format(" -- ".join(metrics_msg)))
 
          return result

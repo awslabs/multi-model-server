@@ -4,10 +4,10 @@ execution:
   ramp-up: 1s
   hold-for: 1m
   iterations: 100
-  scenario: inference
+  scenario: inference_single_worker
 
 scenarios:
-  inference:
+  inference_single_worker:
     script: inference_single_worker.jmx
 
 modules:

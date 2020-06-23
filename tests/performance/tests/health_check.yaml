@@ -58,7 +58,7 @@ reporting:
       stop : true
       fail : true
 #    - class: bzt.modules.monitoring.MonitoringCriteria
-#      subject: ServerLocalClient/frontend_memory_rss
+#      subject: ServerLocalClient/sum_all_memory_rss
 #      condition: '>'
 #      threshold: 750000000 #750MB
 #      timeframe: 5s

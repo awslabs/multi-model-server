@@ -16,53 +16,52 @@ modules:
 services:
   - module: shellexec
     prepare:
-      - curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
-      - curl -s -X PUT  http://localhost:8081/models/squeezenet_v1.1?min_worker=1&synchronous=true
+      - "multi-model-server --start > /dev/null 2>&1"
+      - "sleep 20s"
+      - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar"
+      - "curl -s -X PUT  http://localhost:8081/models/squeezenet_v1.1?min_worker=1&synchronous=true"
     post-process:
-      - curl -s -X DELETE http://localhost:8081/models/squeezenet_v1.1
+      - "multi-model-server --stop > /dev/null 2>&1"
   - module: server_local_monitoring
     ServerLocalClient:
       - interval: 1s
         metrics:
-          - total_workers
-          - sum_workers_file_descriptors
-          - orphans
+          - total_processes
+          - sum_all_file_descriptors
+          - sum_all_memory_rss
 
 reporting:
 - module: passfail
   criteria:
+    # Inbuilt Criteria
+    - success of ModelDescription<100%, stop as failed
+    - avg-rt of ModelDescription>14ms, stop as failed
+    # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/total_workers
+      subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: 1
+      threshold: 3
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/total_workers
+      subject: ServerLocalClient/total_processes
       condition: '<'
-      threshold: 1
+      threshold: 3
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/sum_workers_file_descriptors
+      subject: ServerLocalClient/sum_all_file_descriptors
       condition: '>'
-      threshold: 11
+      threshold: 90
       timeframe: 1s
       stop : true
       fail : true
-    - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/sum_workers_file_descriptors
-      condition: '<'
-      threshold: 11
-      timeframe: 1s
-      stop : true
-      fail : true
-    - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/orphans
-      condition: '>'
-      threshold: 0
-      timeframe: 1s
-      stop : true
-      fail : true
+#    - class: bzt.modules.monitoring.MonitoringCriteria
+#      subject: ServerLocalClient/frontend_memory_rss
+#      condition: '>'
+#      threshold: 300000000 #300MB
+#      timeframe: 5s
+#      stop : true
+#      fail : true

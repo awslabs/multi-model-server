@@ -23,6 +23,7 @@ services:
   - module: server_local_monitoring
     ServerLocalClient:
       - interval: 1s
+        logging : True
         metrics:
           - total_workers
           - sum_workers_file_descriptors

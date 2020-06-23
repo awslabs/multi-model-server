@@ -28,6 +28,7 @@ services:
   - module: server_local_monitoring
     ServerLocalClient:
       - interval: 1s
+        logging : True
         metrics:
           - total_processes
           - sum_all_file_descriptors

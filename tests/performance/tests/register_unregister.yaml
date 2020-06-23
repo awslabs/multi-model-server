@@ -14,6 +14,12 @@ modules:
     class : metrics_monitoring_taurus.Monitor
 
 services:
+  - module: shellexec
+    prepare:
+      - "multi-model-server --start > /dev/null 2>&1"
+      - "sleep 10s"
+    post-process:
+      - "multi-model-server --stop > /dev/null 2>&1"
   - module: server_local_monitoring
     ServerLocalClient:
       - interval: 1s
@@ -25,6 +31,12 @@ services:
 reporting:
 - module: passfail
   criteria:
+    # Inbuilt Criteria
+    - success of RegisterModel<100%, stop as failed
+    - success of UnregisterModel<100%, stop as failed
+    - avg-rt of RegisterModel>15s, stop as failed
+    - avg-rt of UnregisterModel>10ms, stop as failed
+    # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '>'

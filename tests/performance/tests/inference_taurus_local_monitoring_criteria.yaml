@@ -28,9 +28,9 @@ services:
 reporting:
 - module: passfail
   criteria:
-    - fail of s2_fail >50%, stop as failed
-    - p90 of s2_p90 >250ms  , stop as failed
-    - avg-rt of s2_avg_rt >1s , stop as failed
+    - fail >50%, stop as failed
+    - p90 >250ms  , stop as failed
+    - avg-rt >1s , stop as failed
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_memory_rss
       condition: '>'

@@ -89,9 +89,11 @@ class ServerLocalMonitor(monitoring.LocalMonitor):
          result.update(get_metrics(server_process, get_child_processes(server_process), self.log))
 
          metrics_msg = []
+
+         updated_result = {}
          for key in self.metrics:
              if result.get(key) is not None:
                 metrics_msg.append("{0} : {1}".format(key, result[key]))
+             updated_result[key] = result.get(key)
          self.log.info("{0}".format(" -- ".join(metrics_msg)))
-
-         return result
+         return updated_result

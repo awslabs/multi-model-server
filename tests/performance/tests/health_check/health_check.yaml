@@ -33,8 +33,8 @@ reporting:
 - module: passfail
   criteria:
     # Inbuilt Criteria
-    - success of HealthCheck<${success_HealthCheck}, stop as failed
-    - avg-rt of HealthCheck>${avg_rt_HealthCheck}, stop as failed
+    - success of HealthCheck<${HLTH_CHK_SUCC}, stop as failed
+    - avg-rt of HealthCheck>${HLTH_CHK_RT}, stop as failed
     # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
@@ -46,21 +46,21 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '<'
-      threshold: ${total_processes}
+      threshold: ${TOTAL_PROCS}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_all_file_descriptors
       condition: '>'
-      threshold: ${sum_all_file_descriptors}
+      threshold: ${TOTAL_FDS}
       timeframe: 5s
       stop : true
       fail : true
 #    - class: bzt.modules.monitoring.MonitoringCriteria
 #      subject: ServerLocalClient/sum_all_memory_rss
 #      condition: '>'
-#      threshold: ${sum_all_memory_rss}
+#      threshold: ${TOTAL_MEM}
 #      timeframe: 5s
 #      stop : true
 #      fail : true

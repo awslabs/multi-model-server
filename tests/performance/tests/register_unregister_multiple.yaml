@@ -3,11 +3,11 @@ execution:
 - concurrency: 1
   ramp-up: 0s
   iterations: 5
-  scenario: register_unregister
+  scenario: register_unregister_multiple
 
 scenarios:
-  register_unregister:
-    script: register_unregister.jmx
+  register_unregister_multiple:
+    script: register_unregister_multiple.jmx
 
 modules:
   server_local_monitoring:
@@ -37,9 +37,11 @@ reporting:
   criteria:
     # Inbuilt Criteria
     - success of RegisterModel<100%, stop as failed
+    - success of ScaleUp<100%, stop as failed
     - success of UnregisterModel<100%, stop as failed
     - avg-rt of RegisterModel>15s, stop as failed
-    - avg-rt of UnregisterModel>10ms, stop as failed
+    - avg-rt of ScaleUp>1.5s, stop as failed
+    - avg-rt of UnregisterModel>18ms, stop as failed
     # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes

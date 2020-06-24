@@ -1,8 +1,8 @@
 ---
 settings:
   env:
-    success_ListModels : 100%
-    avg_rt_ListModels : 14ms
-    sum_all_file_descriptors : 86
-    sum_all_memory_rss : 185000000
-    total_processes : 3
+    LST_MODLS_SUCC : 100%
+    LST_MODLS_RT : 14ms
+    TOTAL_PROCS : 3
+    TOTAL_FDS : 86
+    TOTAL_MEM : 185000000 #185MB

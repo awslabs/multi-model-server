@@ -97,12 +97,13 @@ class Monitoring(object):
 
 
 class Suite(object):
-    def __init__(self, name, artifacts_dir, junit_xml, timer):
+    def __init__(self, name, artifacts_dir, junit_xml, timer, env_name):
         self.ts = TestSuite(name)
         self.name = name
         self.junit_xml = junit_xml
         self.timer = timer
         self.artifacts_dir = artifacts_dir
+        self.env_name = env_name
 
     def __enter__(self):
         return self
@@ -136,7 +137,7 @@ class Suite(object):
             tc.result = Skipped()
             self.ts.add_testcase(tc)
 
-        self.ts.hostname = socket.gethostname()
+        self.ts.hostname = self.env_name
         self.ts.timestamp = self.timer.start
         self.ts.time = self.timer.diff()
         self.ts.tests = tests
@@ -159,7 +160,7 @@ class Compare():
         max_ts = 0
         latest_run = ''
         for run_name in names:
-            run_name_list = run_name.split('_')
+            run_name_list = run_name.split('__')
             if env_id == run_name_list[0] and run_name != exclude_run_name:
                 if int(run_name_list[2]) > max_ts:
                     max_ts = int(run_name_list[2])
@@ -170,6 +171,11 @@ class Compare():
     def get_dir_to_compare(self):
         parent_dir = pathlib.Path(self.artifacts_dir).parent
         names = [di for di in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, di))]
+        print("-----------")
+        print(names)
+        print(parent_dir)
+        print(self.env_name)
+        print("-----------")
         latest_run = self.get_latest(names, self.env_name, self.current_run_name)
         return os.path.join(parent_dir, latest_run), latest_run
 
@@ -178,9 +184,11 @@ class Compare():
 
     def compare(self):
         compare_dir, compare_run_name = self.get_dir_to_compare()
-        if compare_dir:
+        if compare_run_name:
             self.result = compare_artifacts(self.artifacts_dir, compare_dir, self.artifacts_dir,
                                             self.current_run_name, compare_run_name)
+        else:
+            logger.warning("The latest run not found for env {}".format(self.env_name))
         self.store_results()
         return self.result
 
@@ -265,7 +273,7 @@ def get_mon_metrics_list(test_yaml):
 def get_compare_metric_list(dir, sub_dir):
     diff_percents = []
     metrics = []
-    test_yaml = "{}/{}/{}.yaml".format(dir, sub_dir, sub_dir)
+    test_yaml = "{}/{}/{}".format(dir, sub_dir, "effective.yml")
     with open(test_yaml) as test_yaml:
         test_yaml = yaml.safe_load(test_yaml)
         for rep_section in test_yaml.get('reporting', []):
@@ -294,72 +302,116 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
     aggregates = ["mean", "max", "min"]
     header = ["run_name1", "run_name2", "test_suite", "metric", "run1", "run2", "percentage_diff", "result"]
     rows = [header]
+
+    junit_xml = JUnitXml()
     for sub_dir1 in sub_dirs_1:
-        if sub_dir1 in sub_dirs_2:
-            metrics_file1 = glob.glob("{}/{}/SAlogs_*".format(dir1, sub_dir1))
-            metrics_file2 = glob.glob("{}/{}/SAlogs_*".format(dir2, sub_dir1))
-            if not (metrics_file1 and metrics_file2):
-                metrics_file1 = glob.glob("{}/{}/local_*".format(dir1, sub_dir1))
-                metrics_file2 = glob.glob("{}/{}/local_*".format(dir2, sub_dir1))
+        with Timer("Comparison test suite {} execution time".format(sub_dir1)) as t:
+            ts = TestSuite(sub_dir1)
+            errors,failures, skipped, tests = 0, 0, 0, 0
+            if sub_dir1 in sub_dirs_2:
+                metrics_file1 = glob.glob("{}/{}/SAlogs_*".format(dir1, sub_dir1))
+                metrics_file2 = glob.glob("{}/{}/SAlogs_*".format(dir2, sub_dir1))
                 if not (metrics_file1 and metrics_file2):
-                    logger.info("Metrics monitoring logs are not captured for {} in either of the runs.".format(sub_dir1))
-                    rows.append([run_name1, run_name2, sub_dir1, "log_file", sub_dir1, sub_dir1, "metrics are not captured for either of the runs", "pass"])
-                    continue
+                    metrics_file1 = glob.glob("{}/{}/local_*".format(dir1, sub_dir1))
+                    metrics_file2 = glob.glob("{}/{}/local_*".format(dir2, sub_dir1))
+                    if not (metrics_file1 and metrics_file2):
+                        logger.info("Metrics monitoring logs are not captured for {} in either of the runs.".format(sub_dir1))
+                        rows.append([run_name1, run_name2, sub_dir1, "log_file", sub_dir1, sub_dir1, "metrics are not captured for either of the runs", "pass"])
+                        tc = TestCase("metrics_file_present")
+                        tc.result = Skipped("Metrics are not captured for either of the runs")
+                        ts.add_testcase(tc)
+                        skipped += 1
+                        continue
 
-            metrics_from_file1 = pd.read_csv(metrics_file1[0])
-            metrics_from_file2 = pd.read_csv(metrics_file2[0])
+
+                metrics_from_file1 = pd.read_csv(metrics_file1[0])
+                metrics_from_file2 = pd.read_csv(metrics_file2[0])
 
 
-            metrics, diff_percents = get_compare_metric_list(dir1, sub_dir1)
-            for col, diff_percent in zip(metrics, diff_percents):
-                for agg_func in aggregates:
-                    name = "{}_{}".format(agg_func, str(col))
-                    try:
-                        val1 = getattr(metrics_from_file1[str(col)], agg_func)()
-                    except TypeError:
-                        val1 = "NULL"
-
-                    if str(col) in metrics_from_file2:
+                metrics, diff_percents = get_compare_metric_list(dir1, sub_dir1)
+                for col, diff_percent in zip(metrics, diff_percents):
+                    for agg_func in aggregates:
+                        name = "{}_{}".format(agg_func, str(col))
                         try:
-                            val2 = getattr(metrics_from_file2[str(col)], agg_func)()
+                            val1 = getattr(metrics_from_file1[str(col)], agg_func)()
                         except TypeError:
-                            val2 = "NULL"
-                    else:
-                        val2 = "NA"
+                            val1 = "NULL"
 
-                    if val1 == val2 and val1 == "NULL":
-                         diff = "NULL"
-                         pass_fail = "pass"
-                    elif val1 == "NULL":
-                        diff = val2
-                        pass_fail = "fail"
-                    elif val2 == "NULL":
-                        diff = val1
-                        pass_fail = "fail"
-                    elif val2 == "NA":
-                        diff = val2
-                        pass_fail = "pass"
-                    else:
-                        try:
-                            if val2 != val1:
-                                diff = (abs(val2 - val1) / ((val2 + val1)/2)) * 100
-                                pass_fail = "pass" if diff < diff_percent else "fail"
-                            else: # special case of 0
-                                pass_fail = "pass"
-                                diff = 0
+                        if str(col) in metrics_from_file2:
+                            try:
+                                val2 = getattr(metrics_from_file2[str(col)], agg_func)()
+                            except TypeError:
+                                val2 = "NULL"
+                        else:
+                            val2 = "NA"
 
-                        except Exception as e:
-                            logger.info("error while calculating the diff {}".format(str(e)))
-                            diff = str(e)
+                        if val1 == val2 and val1 == "NULL":
+                             diff = "NULL"
+                             pass_fail = "pass"
+                        elif val1 == "NULL":
+                            diff = val2
                             pass_fail = "fail"
+                        elif val2 == "NULL":
+                            diff = val1
+                            pass_fail = "fail"
+                        elif val2 == "NA":
+                            diff = val2
+                            pass_fail = "pass"
+                        else:
+                            try:
+                                if float(val2) != float(val1):
+                                    val1 = float(val1)
+                                    val2 = float(val2)
+                                    diff = (abs(val2 - val1) / ((val2 + val1)/2)) * 100
+                                    pass_fail = "pass" if diff < float(diff_percent) else "fail"
+                                else: # special case of 0
+                                    pass_fail = "pass"
+                                    diff = 0
 
-                    if over_all_pass:
-                        over_all_pass = pass_fail == "pass"
-                    rows.append([run_name1, run_name2, sub_dir1, name, val1, val2, diff, pass_fail])
-        else:
-            rows.append([run_name1, run_name2, sub_dir1, "log_file", "log file available", "log file not available", "NA", "pass"])
+                            except Exception as e:
+                                logger.info("error while calculating the diff for val1={} and val2={}."
+                                            "Error is: {}".format(val1, val2, str(e)))
+                                diff = str(e)
+                                pass_fail = "fail"
 
-    out_path = "{}/comparison.csv".format(out_dir)
+                        if over_all_pass:
+                            over_all_pass = pass_fail == "pass"
+
+                        result_row = [run_name1, run_name2, sub_dir1, name, val1, val2, diff, pass_fail]
+                        rows.append(result_row)
+                        tc = TestCase(name)
+                        tc.result = None if pass_fail == 'pass' else Failure(dict(zip(header, result_row)) )
+                        ts.add_testcase(tc)
+                        if pass_fail == 'fail':
+                            failures += 1
+                        else:
+                            tests += 1
+
+            else:
+                rows.append([run_name1, run_name2, sub_dir1, "log_file", "log file available", "log file not available", "NA", "pass"])
+
+                tc = TestCase("metrics_file_present")
+                tc.result = Skipped("Metrics log file not available for {}".format(run_name2))
+                ts.add_testcase(tc)
+                skipped += 1
+
+            ts.hostname =  run_name1 + " and " + run_name1
+            ts.timestamp = t.start
+            ts.time = t.diff()
+            ts.tests = tests
+            ts.failures = failures
+            ts.skipped = skipped
+            ts.errors = errors
+            ts.update_statistics()
+            junit_xml.add_testsuite(ts)
+
+    junit_xml.update_statistics()
+    junit_xml_path = '{}/comparison_results.xml'.format(out_dir)
+    junit_html_path = '{}/comparison_results.html'.format(out_dir)
+    junit_xml.write(junit_xml_path)
+    run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
+
+    out_path = "{}/comparison_results.csv".format(out_dir)
     logger.info("Writing comparison report to log file {}".format(out_path))
     with open(out_path, 'w') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -391,8 +443,11 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
     if test_dir is None:
         test_dir = "{}/tests".format(base_file_path)
 
+    if '__' in env_name:
+        raise Exception("Environment name should not have double underscores in it.")
+
     commit_id = subprocess.check_output('git rev-parse --short HEAD'.split()).decode("utf-8")[:-1]
-    artifacts_folder_name = "{}_{}_{}".format(env_name, commit_id, int(time.time()))
+    artifacts_folder_name = "{}__{}__{}".format(env_name, commit_id, int(time.time()))
     if artifacts_dir is None:
         artifacts_dir = "{}/{}".format(run_artifacts_path, artifacts_folder_name)
     else:
@@ -410,11 +465,11 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
                 suite_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
                 options_str = get_options(suite_artifacts_dir, jmeter_path)
                 env_yaml_path = "{}/{}/environments/{}.yaml".format(test_dir, suite_name, env_name)
-                env_yaml_path = "" if not os.path.exists(env_yaml_path) else env_yaml_path
+
                 test_file = "{}/{}/{}.yaml".format(test_dir, suite_name, suite_name)
-                with Suite(suite_name, suite_artifacts_dir, junit_xml, t) as s:
+                with Suite(suite_name, suite_artifacts_dir, junit_xml, t, env_name) as s:
                     s.code, s.err = run_process("{} bzt {} {} {} {}".format(pre_command, options_str,
-                                                                     test_file, env_yaml_path, GLOBAL_CONFIG_PATH))
+                                                                         test_file, env_yaml_path, GLOBAL_CONFIG_PATH))
 
                     metrics_log_file = glob.glob("{}/SAlogs_*".format(suite_artifacts_dir))
                     if metrics_log_file:
@@ -427,8 +482,8 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
                                     shutil.copyfileobj(from_file, to_file)
 
         junit_xml.update_statistics()
-        junit_xml_path = '{}/junit.xml'.format(artifacts_dir)
-        junit_html_path = '{}/junit.html'.format(artifacts_dir)
+        junit_xml_path = '{}/performance_results.xml'.format(artifacts_dir)
+        junit_html_path = '{}/performance_results.html'.format(artifacts_dir)
         junit_xml.write(junit_xml_path)
         run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
@@ -444,14 +499,15 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
     else:
         compare_status = 'passed'
     logger.info("Comparison with monitoring metrics of previous run has {}.".format(compare_status))
-    
+    logger.info("Comparison test suite report - {}/comparison_results.html".format(artifacts_dir))
+
     if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
         suite_status = 'failed'
         exit_code = 3
     else:
         suite_status = 'passed'
     logger.info("Test suite run has {}.".format(suite_status))
-    logger.info("Test suite report - {}/junit.html".format(artifacts_dir))
+    logger.info("Test suite report - {}/performance_results.html".format(artifacts_dir))
     
     sys.exit(exit_code)
 

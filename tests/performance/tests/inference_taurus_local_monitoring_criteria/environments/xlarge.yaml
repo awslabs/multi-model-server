@@ -1,0 +1,9 @@
+
+---
+settings:
+  env:
+    fail : 100%
+    p90 : 290ms
+    avg_rt : 1s
+    sum_workers_memory_rss : 132000000
+    sum_workers_memory_rss_diff_percent : 30

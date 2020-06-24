@@ -1,8 +1,8 @@
 ---
 settings:
   env:
-    SUCCESS_MGMT_API: 100%
-    SUCCESS_INFR_API: 100%
+    MGMT_API_SUCC: 100%
+    INFR_API_SUCC: 100%
     MGMT_API_RT : 10ms
     INFR_API_RT : 10ms
     TOTAL_PROCS : 1

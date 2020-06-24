@@ -1,7 +1,7 @@
 ---
 settings:
   env:
-    Inference : 1s
+    Inference : 1.5s
     sum_workers_file_descriptors : 38
     total_workers : 4
     orphans : 0

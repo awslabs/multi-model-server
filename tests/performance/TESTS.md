@@ -13,13 +13,13 @@
 
 |API|CODE|YAML|
 |---|----|---|
-|Register Model|A,B,F,J|[WIP] [register_unregister.yaml](tests/register_unregister.yaml)|
-|Inference|A,B,C|[WIP] [inference_single_worker.yaml](tests/inference_single_worker.yaml), [inference_multiple_worker.yaml](tests/inference_multiple_worker.yaml)|
+|Register Model|A,B,F,J|[register_unregister.yaml](tests/register_unregister.yaml)|
+|Inference|A,B,C|[inference_single_worker.yaml](tests/inference_single_worker.yaml), [inference_multiple_worker.yaml](tests/inference_multiple_worker.yaml)|
 |Batch Inference|A,B,C|[batch_inference.yaml](tests/batch_inference.yaml)|
 |Custom Model Handlers|C|[batch_and_single_inference.yaml](tests/batch_and_single_inference.yaml)|
-|Scale Workers - UP/DOWN|D,G,I,F,J|[WIP] [scale_up_workers.yaml](tests/scale_up_workers.yaml), [scale_down_workers.yaml](tests/scale_down_workers.yaml)|
-|Unregister Models|D,G,I,J|[WIP] [register_unregister.yaml](tests/register_unregister.yaml)|
-|Health Check|A,B,E|[WIP] [health_check.yaml](tests/health_check.yaml)|
-|API Description|A,B,E|[WIP] [api_description.yaml](tests/api_description.yaml)|
-|Model Describe|A,B,E|[WIP] [model_description.yaml](tests/model_description.yaml)|
-|List Models|A,B,E|[WIP] [list_models.yaml](tests/list_models.yaml)|
+|Scale Workers - UP/DOWN|D,G,I,F,J|[scale_up_workers.yaml](tests/scale_up_workers.yaml), [scale_down_workers.yaml](tests/scale_down_workers.yaml)|
+|Unregister Models|D,G,I,J|[register_unregister.yaml](tests/register_unregister.yaml)|
+|Health Check|A,B,E|[health_check.yaml](tests/health_check.yaml)|
+|API Description|A,B,E|[api_description.yaml](tests/api_description.yaml)|
+|Model Describe|A,B,E|[model_description.yaml](tests/model_description.yaml)|
+|List Models|A,B,E|[list_models.yaml](tests/list_models.yaml)|

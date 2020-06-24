@@ -436,7 +436,9 @@ def get_options(artifacts_dir, jmeter_path=None):
 @click.option('-p', '--pattern', help='Test case folder name pattern', default="[!example]*")
 @click.option('-j', '--jmeter-path', help='JMeter executable path.')
 @click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
-@click.option('--env-name', help='Unique machine id on which MMS server is running', required=True)
+@click.option('-e', '--env-name', help='environment name which defines threshold values used by the test cases. '
+                                 'This is the name of a file found in the tests environment folder without '
+                                 'the extension', required=True)
 @click.option('--compare-local/--no-compare-local', help='Compare with previous run with files stored'
                                                          ' in artifacts directory', default=True)
 def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_name, compare_local):

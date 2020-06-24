@@ -433,7 +433,7 @@ def get_options(artifacts_dir, jmeter_path=None):
 @click.command()
 @click.option('-a', '--artifacts-dir', help='Directory to store artifacts.', type=click.Path(writable=True))
 @click.option('-t', '--test-dir', help='Directory containing tests.', type=click.Path(exists=True), default=None)
-@click.option('-p', '--pattern', help='Test case folder name pattern', default="[!example]*")
+@click.option('-p', '--pattern', help='Test case folder name pattern', default="[!e][!x]*")
 @click.option('-j', '--jmeter-path', help='JMeter executable path.')
 @click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
 @click.option('-e', '--env-name', help='environment name which defines threshold values used by the test cases. '

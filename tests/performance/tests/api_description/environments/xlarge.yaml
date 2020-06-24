@@ -7,4 +7,4 @@ settings:
     INFR_API_RT : 10ms
     TOTAL_PROCS : 1
     TOTAL_FDS : 73
-    2xlarge: 100000000 #100MB
+    TOTAL_MEM: 100000000 #100MB

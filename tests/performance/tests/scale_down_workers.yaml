@@ -86,7 +86,7 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_file_descriptors
       condition: '<'
-      threshold: 22
+      threshold: 23
       timeframe: 5s
       stop : true
       fail : true

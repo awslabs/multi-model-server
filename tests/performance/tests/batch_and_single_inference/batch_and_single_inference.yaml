@@ -65,7 +65,7 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_memory_rss
       condition: '>'
-      threshold: ${TOTAL_WRKR_MEM}
+      threshold: ${TOTAL_WORKERS_MEM}
       timeframe: 1s
       stop : true
       fail : true

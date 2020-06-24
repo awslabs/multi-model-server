@@ -16,40 +16,53 @@ modules:
 services:
   - module: shellexec
     prepare:
-      - curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar
-      - curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/shufflenet.mar
+      - "multi-model-server --start > /dev/null 2>&1"
+      - "sleep 20s"
+      - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar"
+      - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/shufflenet.mar"
     post-process:
-      - curl -s -X DELETE http://localhost:8081/models/squeezenet_v1.1
-      - curl -s -X DELETE http://localhost:8081/models/shufflenet
+      - "multi-model-server --stop > /dev/null 2>&1"
   - module: server_local_monitoring
     ServerLocalClient:
       - interval: 1s
+        logging : True
         metrics:
-          - total_workers
-          - sum_workers_file_descriptors
-          - orphans
+          - total_processes
+          - sum_all_file_descriptors
+          - sum_all_memory_rss
 
 reporting:
 - module: passfail
   criteria:
+    # Inbuilt Criteria
+    - success of ListModels<100%, stop as failed
+    - avg-rt of ListModels>14ms, stop as failed
+    # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/total_workers
+      subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: 1
+      threshold: 3
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/sum_workers_file_descriptors
-      condition: '>'
-      threshold: 8
+      subject: ServerLocalClient/total_processes
+      condition: '<'
+      threshold: 3
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/orphans
+      subject: ServerLocalClient/sum_all_file_descriptors
       condition: '>'
-      threshold: 0
+      threshold: 86
       timeframe: 1s
       stop : true
       fail : true
+#    - class: bzt.modules.monitoring.MonitoringCriteria
+#      subject: ServerLocalClient/sum_all_memory_rss
+#      condition: '>'
+#      threshold: 185000000 #185MB
+#      timeframe: 5s
+#      stop : true
+#      fail : true

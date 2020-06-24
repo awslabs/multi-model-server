@@ -15,6 +15,8 @@ from enum import Enum
 from statistics import mean
 
 import psutil
+from psutil import ZombieProcess
+
 
 class ProcessType(Enum):
     """ Type of MMS processes to compute metrics on """
@@ -81,16 +83,18 @@ for metric in list(process_metrics):
             for op in list(operators):
                 AVAILABLE_METRICS.append('{}_{}_{}'.format(op, PNAME, metric))
 
-__CHILDREN = set()
+children = set()
 
-def get_metrics(server_process, child_processes):
+def get_metrics(server_process, child_processes, logger):
     """ Get Server processes specific metrics
     """
     result = {}
-    __CHILDREN.update(child_processes)
+    children.update(child_processes)
+    logger.debug("children : {0}".format(",".join([str(c.pid) for c in children])))
 
     def update_metric(metric_name, proc_type, stats):
         stats = stats if stats else [0]
+        stats = list(filter(lambda x: isinstance(x, int) or isinstance(x, float), stats))
 
         if proc_type == ProcessType.WORKER:
             proc_name = 'workers'
@@ -106,9 +110,22 @@ def get_metrics(server_process, child_processes):
 
     # as_dict() gets all stats in one shot
     processes_stats = []
+    reclaimed_pids = []
+
     processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
-    for process in child_processes:
-        processes_stats.append({'type': ProcessType.WORKER, 'stats' : process.as_dict()})
+    for child in children:
+        try:
+            if psutil.pid_exists(child.pid) and 'model_service_worker.py' in child.cmdline()[1]:
+                processes_stats.append({'type': ProcessType.WORKER, 'stats' : child.as_dict()})
+            else:
+                reclaimed_pids.append(child)
+                logger.debug('child {0} no longer available'.format(child.pid))
+        except ZombieProcess:
+            reclaimed_pids.append(child)
+            logger.debug('child {0} no longer available'.format(child.pid))
+
+    for p in reclaimed_pids:
+        children.remove(p)
 
     ### PROCESS METRICS ###
     worker_stats = list(map(lambda x: x['stats'], \
@@ -122,10 +139,9 @@ def get_metrics(server_process, child_processes):
         update_metric(k, ProcessType.ALL, list(map(process_metrics[k], all_stats)))
         update_metric(k, ProcessType.FRONTEND, list(map(process_metrics[k], server_stats)))
 
-
     # Total processes
-    result['total_processes'] = len(child_processes) + 1
-    result['total_workers'] = max(len(child_processes) - 1, 0)
+    result['total_processes'] = len(worker_stats) + 1
+    result['total_workers'] = max(len(worker_stats) - 1, 0)
     result['orphans'] = len(list(filter(lambda p : p['ppid'] == 1, worker_stats)))
 
     ### SYSTEM METRICS ###
@@ -136,5 +152,6 @@ def get_metrics(server_process, child_processes):
     result['system_write_count'] = system_disk_io_counters.write_count
     result['system_read_bytes'] = system_disk_io_counters.read_bytes
     result['system_write_bytes'] = system_disk_io_counters.write_bytes
+
 
     return result

@@ -21,8 +21,7 @@ import os
 import pathlib
 import socket
 import subprocess
-import yaml
-import requests
+import shutil
 from agents import configuration
 import csv
 import pandas as pd
@@ -40,8 +39,6 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
-
-code = 0
 metrics_monitoring_server = "agents/metrics_monitoring_server.py"
 base_file_path = pathlib.Path(__file__).parent.absolute()
 run_artifacts_path = "{}/run_artifacts/".format(base_file_path)
@@ -51,6 +48,9 @@ S3_BUCKET = configuration.get('suite', 's3_bucket')
 
 
 class Timer(object):
+    """
+    Helper context manager class to capture time diff
+    """
     def __init__(self, description):
         self.description = description
 
@@ -64,31 +64,35 @@ class Timer(object):
     def diff(self):
         return int(time.time()) - self.start
 
+
 class Monitoring(object):
-    def __init__(self, path, use = True):
+    def __init__(self, path, use=True):
         self.path = "{}/{}".format(path, "agents/metrics_monitoring_server.py")
         self.use = use
 
     def __enter__(self):
-        with open(GLOBAL_CONFIG_PATH) as conf_file:
-            global_config = yaml.safe_load(conf_file)
-        server_props = global_config["modules"]["jmeter"]["properties"]
-        server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"],
-                                                   server_props["port"])
-        try:
-            requests.get(server_ping_url)
-        except requests.exceptions.ConnectionError:
-            raise Exception("Server is not running. Pinged url {}. Exiting...".format(server_ping_url))
+        # Commented as -
+        # START \ STOP of MMS server is handled in individual scenario's prepare \ post-process stages
+        #
+        # with open(GLOBAL_CONFIG_PATH) as conf_file:
+        #     global_config = yaml.safe_load(conf_file)
+        # server_props = global_config["modules"]["jmeter"]["properties"]
+        # server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"],
+        #                                            server_props["port"])
+        # try:
+        #     requests.get(server_ping_url)
+        # except requests.exceptions.ConnectionError:
+        #     raise Exception("Server is not running. Pinged url {}. Exiting...".format(server_ping_url))
 
         if self.use:
-            start_monitoring_server = "python {} --start".format(self.path)
+            start_monitoring_server = "{} {} --start".format(sys.executable, self.path)
             run_process(start_monitoring_server, wait=False)
             time.sleep(2)
         return self
 
     def __exit__(self, type, value, traceback):
         if self.use:
-            stop_monitoring_server = "python {} --stop".format(self.path)
+            stop_monitoring_server = "{} {} --stop".format(sys.executable, self.path)
             run_process(stop_monitoring_server)
 
 
@@ -109,7 +113,7 @@ class Suite(object):
         err_txt = ""
         if os.path.exists(xunit_file):
             xml = JUnitXml.fromfile(xunit_file)
-            for i, suite in enumerate(xml):  # tqqdm
+            for i, suite in enumerate(xml):
                 for case in suite:
                     name = "scenario_{}: {}".format(i, case.name)
                     result = case.result
@@ -129,12 +133,8 @@ class Suite(object):
                     self.ts.add_testcase(tc)
         else:
             tc = TestCase(self.name)
-            if code:
-                tc.result = Error("Suite run failed", "Error")
-            else:
-                tc.result = Skipped()
+            tc.result = Skipped()
             self.ts.add_testcase(tc)
-
 
         self.ts.hostname = socket.gethostname()
         self.ts.timestamp = self.timer.start
@@ -145,6 +145,77 @@ class Suite(object):
         self.ts.errors = errors
         self.ts.update_statistics()
         self.junit_xml.add_testsuite(self.ts)
+
+
+class Compare():
+    def __init__(self, artifacts_dir, current_run_name, env_name):
+        self.artifacts_dir = artifacts_dir
+        self.current_run_name = current_run_name
+        self.env_name = env_name
+        self.result = True
+
+    @staticmethod
+    def get_latest(names, env_id, exclude_run_name):
+        max_ts = 0
+        latest_run = ''
+        for run_name in names:
+            run_name_list = run_name.split('_')
+            if env_id == run_name_list[0] and run_name != exclude_run_name:
+                if int(run_name_list[2]) > max_ts:
+                    max_ts = int(run_name_list[2])
+                    latest_run = run_name
+
+        return latest_run
+
+    def get_dir_to_compare(self):
+        parent_dir = pathlib.Path(self.artifacts_dir).parent
+        names = [di for di in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, di))]
+        latest_run = self.get_latest(names, self.env_name, self.current_run_name)
+        return os.path.join(parent_dir, latest_run), latest_run
+
+    def store_results(self):
+        pass
+
+    def compare(self):
+        compare_dir, compare_run_name = self.get_dir_to_compare()
+        if compare_dir:
+            self.result = compare_artifacts(self.artifacts_dir, compare_dir, self.artifacts_dir,
+                                            self.current_run_name, compare_run_name)
+        self.store_results()
+        return self.result
+
+
+class LocalCompare(Compare):
+    pass
+
+
+class S3Compare(Compare):
+    def get_dir_to_compare(self):
+        tgt_path = "{}/comp_data".format(self.artifacts_dir)
+        s3 = boto3.resource('s3')
+        bucket = s3.Bucket(S3_BUCKET)
+        result = bucket.meta.client.list_objects(Bucket=bucket.name,
+                                                 Delimiter='/')
+        run_names = []
+        for o in result.get('CommonPrefixes'):
+            run_names.append(o.get('Prefix')[:-1])
+
+        latest_run = self.get_latest(run_names, self.env_name, self.current_run_name)
+        if not latest_run:
+            logger.info("No run found for env_id {}".format(self.env_name))
+            return '', ''
+
+        if not os.path.exists(tgt_path):
+            os.makedirs(tgt_path)
+
+        tgt_path = "{}/{}".format(tgt_path, latest_run)
+        run_process("aws s3 cp  s3://{}/{} {} --recursive".format(bucket.name, latest_run, tgt_path))
+
+        return tgt_path, latest_run
+
+    def store_results(self):
+        run_process("aws s3 cp {} s3://{}/{}  --recursive".format(self.artifacts_dir, S3_BUCKET,
+                                                                  self.current_run_name))
 
 
 def run_process(cmd, wait=True):
@@ -166,54 +237,6 @@ def run_process(cmd, wait=True):
         p = subprocess.Popen(cmd, shell=True)
         return p.returncode, ''
 
-
-def get_folder_names(dir1):
-    return [di for di in os.listdir(dir1) if os.path.isdir(os.path.join(dir1, di))]
-
-
-def get_latest(names, env_id):
-    max_ts = 0
-    latest_run = ''
-    for run_name in names:
-        run_name_list = run_name.split('_')
-        if env_id == run_name_list[0]:
-            if int(run_name_list[2]) > max_ts:
-                max_ts = int(run_name_list[2])
-                latest_run = run_name
-
-    return latest_run
-
-
-def get_latest_dir(dir1, env_id):
-    names= get_folder_names(dir1)
-    latest_run= get_latest(names, env_id)
-    return os.path.join(dir1, latest_run), latest_run
-
-
-def download_s3_files(env_id, tgt_path, bucket_name=S3_BUCKET):
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket(bucket_name)
-    result = bucket.meta.client.list_objects(Bucket=bucket.name,
-                                             Delimiter='/')
-
-    run_names = []
-    for o in result.get('CommonPrefixes'):
-        run_names.append(o.get('Prefix')[:-1])
-
-    latest_run = get_latest(run_names, env_id)
-    if not latest_run:
-        logger.info("No run found for env_id {}".format(env_id))
-        return '', ''
-
-    if not os.path.exists(tgt_path):
-        os.makedirs(tgt_path)
-
-    tgt_path = "{}/{}".format(tgt_path, latest_run)
-    run_process("aws s3 cp  s3://{}/{} {} --recursive".format(bucket.name, latest_run, tgt_path))
-
-    return tgt_path, latest_run
-
-
 def get_sub_dirs(dir, exclude_list=['comp_data']):
     dir = dir.strip()
     if not os.path.exists(dir):
@@ -222,6 +245,18 @@ def get_sub_dirs(dir, exclude_list=['comp_data']):
         raise Exception(msg)
     return list([x for x in os.listdir(dir) if os.path.isdir(dir + "/" + x) and x not in exclude_list])
 
+
+def get_mon_metrics_list(test_yaml):
+    metrics = []
+    with open(test_yaml) as test_yaml:
+        test_yaml = yaml.safe_load(test_yaml)
+        for rep_section in test_yaml.get('services', []):
+            if rep_section.get('module', None) == 'monitoring' and "server-agent" in rep_section:
+                for mon_section in rep_section.get('server-agent', []):
+                    if isinstance(mon_section, dict):
+                       metrics.extend(mon_section.get('metrics', []))
+
+    return metrics
 
 def get_compare_metric_list(dir, sub_dir):
     diff_percents = []
@@ -266,8 +301,10 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
                     logger.info("Metrics monitoring logs are not captured for {} in either of the runs.".format(sub_dir1))
                     rows.append([run_name1, run_name2, sub_dir1, "log_file", sub_dir1, sub_dir1, "metrics are not captured for either of the runs", "pass"])
                     continue
+
             metrics_from_file1 = pd.read_csv(metrics_file1[0])
             metrics_from_file2 = pd.read_csv(metrics_file2[0])
+
 
             metrics, diff_percents = get_compare_metric_list(dir1, sub_dir1)
             for col, diff_percent in zip(metrics, diff_percents):
@@ -369,6 +406,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
         junit_xml = JUnitXml()
         pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(base_file_path))
         test_yamls = get_test_yamls(test_dir, pattern)
+        logger.info("Collected test yamls {}".format(test_yamls))
         for test_file in tqdm(test_yamls, desc="Test Suites"):
             suite_name = os.path.basename(test_file).rsplit('.', 1)[0]
             with Timer("Test suite {} execution time".format(suite_name)) as t:
@@ -378,29 +416,44 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
                     s.code, s.err = run_process("{} bzt {} {} {}".format(pre_command, options_str,
                                                                      test_file, GLOBAL_CONFIG_PATH))
 
+                    metrics_log_file = glob.glob("{}/SAlogs_*".format(suite_artifacts_dir))
+                    if metrics_log_file:
+                        metrics = get_mon_metrics_list(test_file)
+                        if metrics:
+                            with open(metrics_log_file[0]) as from_file:
+                                line = from_file.readline()
+                                with open(metrics_log_file[0], mode="w") as to_file:
+                                    to_file.write(','.join(line.split(',')[0:1] + metrics)+"\n")
+                                    shutil.copyfileobj(from_file, to_file)
+
         junit_xml.update_statistics()
         junit_xml_path = '{}/junit.xml'.format(artifacts_dir)
         junit_html_path = '{}/junit.html'.format(artifacts_dir)
         junit_xml.write(junit_xml_path)
         run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
-    if compare_local:
-        compare_dir, run_name = get_latest_dir(pathlib.Path(artifacts_dir).parent, env_name)
-    else:
-        compare_dir, run_name = download_s3_files(env_name, "{}/comp_data".format(artifacts_dir))
-
-    compare_result = True
-    if compare_dir:
-        compare_result = compare_artifacts(artifacts_dir, compare_dir, artifacts_dir, artifacts_folder_name, run_name)
-
-    if not compare_local:
-        run_process("aws s3 cp {} s3://{}/{}  --recursive".format(artifacts_dir, S3_BUCKET, artifacts_folder_name))
-
-    if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
-        sys.exit(3)
-
+    compare_class = LocalCompare if compare_local else S3Compare
+    compare_obj = compare_class(artifacts_dir, artifacts_folder_name, env_name)
+    compare_result = compare_obj.compare()
+    
+    logger.info("\n\nResult Summary:")
+    exit_code = 0
     if not compare_result:
-        sys.exit(4)
+        compare_status = 'failed'
+        exit_code = 4
+    else:
+        compare_status = 'passed'
+    logger.info("Comparison with monitoring metrics of previous run has {}.".format(compare_status))
+    
+    if junit_xml.errors or junit_xml.failures or junit_xml.skipped:
+        suite_status = 'failed'
+        exit_code = 3
+    else:
+        suite_status = 'passed'
+    logger.info("Test suite run has {}.".format(suite_status))
+    logger.info("Test suite report - {}/junit.html".format(artifacts_dir))
+    
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

@@ -15,8 +15,8 @@
 |---|----|---|
 |Register Model|A,B,F,J|[WIP] [register_unregister.yaml](tests/register_unregister.yaml)|
 |Inference|A,B,C|[WIP] [inference_single_worker.yaml](tests/inference_single_worker.yaml), [inference_multiple_worker.yaml](tests/inference_multiple_worker.yaml)|
-|Batch Inference|A,B,C||
-|Custom Model Handlers|C||
+|Batch Inference|A,B,C|[batch_inference.yaml](tests/batch_inference.yaml)|
+|Custom Model Handlers|C|[batch_and_single_inference.yaml](tests/batch_and_single_inference.yaml)|
 |Scale Workers - UP/DOWN|D,G,I,F,J|[WIP] [scale_up_workers.yaml](tests/scale_up_workers.yaml), [scale_down_workers.yaml](tests/scale_down_workers.yaml)|
 |Unregister Models|D,G,I,J|[WIP] [register_unregister.yaml](tests/register_unregister.yaml)|
 |Health Check|A,B,E|[WIP] [health_check.yaml](tests/health_check.yaml)|

@@ -25,7 +25,7 @@ Script does the following:
 1. Starts the metrics monitoring server.
 2. Collects all the tests from test-dir satisfying the pattern
 3. Executes the tests
-4. Generates Junit XML and HTML report in artifacts-dir.  
+4. Generates performance XML and HTML report in artifacts-dir.  
 
 ### A. Installation Prerequisites
 1. Install Taurus. Taurus needs Python3 but since your tests and MMS instance can run in different virtual environment 
@@ -47,7 +47,8 @@ compare performance regressions across runs and the run artifacts are stored in 
 1. Make sure parameters set in the [tests/common/global_config.yaml](tests/performance/tests/global_config.yaml) are correct.
 2. Run the test suite runner script with the --env-name parameter. This parameter contains the threshold values 
 for a particular environment and is found in the environments folder of every test case
-3. Check the console logs, $artifacts-dir$/<run-dir>/junit.html report, comparison.csv and other artifacts.
+3. Check the console logs, $artifacts-dir$/<run-dir>/performance_results.html report, comparison.csv, comparison.html 
+and other artifacts.
 
     **Steps are provided below**
     ```bash
@@ -62,12 +63,12 @@ for a particular environment and is found in the environments folder of every te
     ```
 
 ### C. Understanding the test suite artifacts and reports
-1. The $artifacts-dir$/<run-dir>/junit.html contains the summary report of the test run. Note that each test yaml is 
-treated as a test suite. Different criteria in the yaml are treated as test cases. If criteria is not specified in 
-the yaml, test suite is marked as skipped with 0 test cases.
+1. The $artifacts-dir$/<run-dir>/performance_results.html contains the summary report of the test run. Note that each
+test yaml is treated as a test suite. Different criteria in the yaml are treated as test cases. If criteria is not
+ specified in the yaml, test suite is marked as skipped with 0 test cases.
 2. For each test suite a sub-directory is created with artifacts for it.  
-3. The comparison.csv contains diff for monitoring metrics between an ongoing run and a previous run 
-which was ran for same MMS server. 
+3. The comparison_results.csv contains diff for monitoring metrics between an ongoing run and a previous run 
+which was ran for same MMS server. Comparison.html shows the comparision results. 
 
 
 ## How to add test case to test suite.
@@ -108,7 +109,7 @@ To run this individual test, run the following command
  ```bash
  export MMS_HOME=<MMS_HOME_PATH>
  cd $MMS_HOME/tests/performance
- python -m run_performance_suite -p examples_starter -e local
+ python -m run_performance_suite -p examples_starter -e 2xlarge
  ```
 
 **Note**:

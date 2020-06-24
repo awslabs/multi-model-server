@@ -42,7 +42,7 @@ logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 metrics_monitoring_server = "agents/metrics_monitoring_server.py"
 base_file_path = pathlib.Path(__file__).parent.absolute()
 run_artifacts_path = "{}/run_artifacts/".format(base_file_path)
-GLOBAL_CONFIG_PATH = "{}/tests/common/global_config.yaml".format(base_file_path)
+GLOBAL_CONFIG_PATH = "{}/tests/global_config.yaml".format(base_file_path)
 
 S3_BUCKET = configuration.get('suite', 's3_bucket')
 
@@ -237,13 +237,17 @@ def run_process(cmd, wait=True):
         p = subprocess.Popen(cmd, shell=True)
         return p.returncode, ''
 
-def get_sub_dirs(dir, exclude_list=['comp_data']):
+
+def get_sub_dirs(dir, exclude_list=['comp_data'], include_pattern='*'):
     dir = dir.strip()
     if not os.path.exists(dir):
         msg = "The path {} does not exit".format(dir)
         logger.error("The path {} does not exit".format(dir))
         raise Exception(msg)
-    return list([x for x in os.listdir(dir) if os.path.isdir(dir + "/" + x) and x not in exclude_list])
+
+    pattern_list = glob.glob(dir + "/" + include_pattern)
+    return list([x for x in os.listdir(dir) if os.path.isdir(dir + "/" + x) and x not in exclude_list
+                 and dir + "/" + x in pattern_list])
 
 
 def get_mon_metrics_list(test_yaml):
@@ -363,14 +367,6 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
     return over_all_pass
 
 
-def get_test_yamls(dir_path=None, pattern="*.yaml"):
-    if not dir_path:
-        dir_path = str(base_file_path) + "/tests"
-
-    path_pattern = "{}/{}".format(dir_path, pattern)
-    return glob.glob(path_pattern)
-
-
 def get_options(artifacts_dir, jmeter_path=None):
     options=[]
     if jmeter_path:
@@ -385,20 +381,15 @@ def get_options(artifacts_dir, jmeter_path=None):
 @click.command()
 @click.option('-a', '--artifacts-dir', help='Directory to store artifacts.', type=click.Path(writable=True))
 @click.option('-t', '--test-dir', help='Directory containing tests.', type=click.Path(exists=True), default=None)
-@click.option('-p', '--pattern', help='Test case file name pattern. Example --> *.yaml', default="*.yaml")
+@click.option('-p', '--pattern', help='Test case folder name pattern', default="*")
 @click.option('-j', '--jmeter-path', help='JMeter executable path.')
 @click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
 @click.option('--env-name', help='Unique machine id on which MMS server is running', required=True)
 @click.option('--compare-local/--no-compare-local', help='Compare with previous run with files stored'
                                                          ' in artifacts directory', default=True)
 def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_name, compare_local):
-    env_path = "{}/tests/environments".format(base_file_path)
-    environments = get_sub_dirs(env_path, exclude_list=[])
-
-    if env_name not in environments:
-        msg = "Provided environment (--env-name) {} is not registered in the tests/environments directory." \
-              "Available environemnts are {}".format(env_name, environments)
-        raise Exception(msg)
+    if test_dir is None:
+        test_dir = "{}/tests".format(base_file_path)
 
     commit_id = subprocess.check_output('git rev-parse --short HEAD'.split()).decode("utf-8")[:-1]
     artifacts_folder_name = "{}_{}_{}".format(env_name, commit_id, int(time.time()))
@@ -412,16 +403,15 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
     with Monitoring(base_file_path, monit):
         junit_xml = JUnitXml()
         pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(base_file_path))
-        test_yamls = get_test_yamls(test_dir, pattern)
-        logger.info("Collected test yamls {}".format(test_yamls))
-        for test_file in tqdm(test_yamls, desc="Test Suites"):
-            suite_name = os.path.basename(test_file).rsplit('.', 1)[0]
+        test_dirs = get_sub_dirs(test_dir, exclude_list=[], include_pattern=pattern)
+        logger.info("Collected tests {}".format(test_dirs))
+        for suite_name in tqdm(test_dirs, desc="Test Suites"):
             with Timer("Test suite {} execution time".format(suite_name)) as t:
                 suite_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
                 options_str = get_options(suite_artifacts_dir, jmeter_path)
-                env_yaml_path = "{}/{}/{}.yaml".format(env_path, env_name, suite_name)
+                env_yaml_path = "{}/{}/environments/{}.yaml".format(test_dir, suite_name, env_name)
                 env_yaml_path = "" if not os.path.exists(env_yaml_path) else env_yaml_path
-
+                test_file = "{}/{}/{}.yaml".format(test_dir, suite_name, suite_name)
                 with Suite(suite_name, suite_artifacts_dir, junit_xml, t) as s:
                     s.code, s.err = run_process("{} bzt {} {} {} {}".format(pre_command, options_str,
                                                                      test_file, env_yaml_path, GLOBAL_CONFIG_PATH))

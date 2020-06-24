@@ -28,31 +28,28 @@ Refer the [link](https://gettaurus.org/docs/Installation/) for more details on i
 3. Make sure that `git` is installed and the test suites are run from the MMS working directory. This is used to compare performance regresssions across runs and the run artifacts are stored in a folder which have the commit SHA.
 
 ### B. Running the test suite
-1. Run MMS server
-2. Make sure parameters set in the [tests/common/global_config.yaml](tests/common/global_config.yaml) are correct.
-3. Run the test suite runner script
-4. Check the console logs, $artifacts-dir$/<run-dir>/junit.html report, comparison.csv and other artifacts.
+1. Make sure parameters set in the [tests/common/global_config.yaml](tests/performance/tests/global_config.yaml) are correct.
+2. Run the test suite runner script
+3. Check the console logs, $artifacts-dir$/<run-dir>/junit.html report, comparison.csv and other artifacts.
 
     **Steps are provided below**
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
     
-    # Run the command below in different terminal to start MMS
-    # multi-model-server --start 
-    
+     
+    # Note that MMS server started and stopped by the individual test suite.
     # check variables
     # vi tests/common/global_config.yaml 
-    # jpeg download command for quick reference. Set input_filepath in global_config.yaml
-    # curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
+
     
-    python -m run_performance_suite --artifacts-dir='<path>' --pattern='*criteria*.yaml'
+    python -m run_performance_suite  --pattern='*'
     ```
 
 ### C. Understanding the test suite artifacts and reports
 1. The $artifacts-dir$/<run-dir>/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
 test suite. Different criteria in the yaml are treated as test cases. If criteria is not specified in the yaml, test suite is marked as skipped with 0 test cases.
-2. For each test yaml a sub-directory is created with artifacts for it.  
+2. For each test suite a sub-directory is created with artifacts for it.  
 3. The comparison.csv contains diff for monitoring metrics between an ongoing run and a previous run which was ran for same MMS server. 
 
 
@@ -66,9 +63,9 @@ To add test case follow steps below.
 
 #### 1. Add scenario
 You can specify the test scenarios, in the scenario section of the yaml.
-To get you started quickly, we have provided a sample JMeter script and a Taurus yaml file [here](tests/register_and_inference.jmx) and [here](tests/call_jmx.yaml) .
+To get you started quickly, we have provided a sample JMeter script and a Taurus yaml file [here](tests/call_jmx/register_and_inference.jmx) and [here](tests/call_jmx/call_jmx.yaml) .
     
-Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [tests/common/global_config.yaml](tests/common/global_config.yaml) file.
+Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [tests/global_config.yaml](tests/performance/tests/global_config.yaml) file.
     
  ```yaml
  execution:
@@ -88,7 +85,7 @@ To run this individual test using Taurus(bzt) run commands below:
  ```bash
  export MMS_HOME=<MMS_HOME_PATH>
  cd $MMS_HOME/tests/performance
- python -m run_performance_suite -p call_jmx.yaml
+ python -m run_performance_suite -p call_jmx
  ```
 
 **Note**:
@@ -115,7 +112,7 @@ Metrics can be monitored in two ways:
     python $MMS_HOME/tests/performance/metrics_monitoring_server.py --start
     ```     
    
-    Sample yaml with monitoring section config. Complete yaml can be found [here](tests/inference_server_monitoring.yaml)
+    Sample yaml with monitoring section config. Complete yaml can be found [here](tests/inference_server_monitoring/inference_server_monitoring.yaml)
     
     ```yaml
     services:
@@ -137,7 +134,7 @@ Metrics can be monitored in two ways:
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    python -m run_performance_suite -p inference_server_monitoring.yaml
+    python -m run_performance_suite -p inference_server_monitoring
     ```
 
 
@@ -156,7 +153,7 @@ Metrics can be monitored in two ways:
      export PYTHONPATH=$MMS_HOME/tests/performance:$PYTHONPATH
     ```
     
-    Relevant test yaml sections. Test yaml can be found [here](tests/inference_taurus_local_monitoring.yaml)
+    Relevant test yaml sections. Test yaml can be found [here](tests/inference_taurus_local_monitoring/inference_taurus_local_monitoring.yaml)
     
     ```yaml
     modules:
@@ -181,7 +178,7 @@ Metrics can be monitored in two ways:
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    python -m run_performance_suite -p inference_taurus_local_monitoring.yaml
+    python -m run_performance_suite -p inference_taurus_local_monitoring
     ```
 
 #### 3.1 Add pass/fail criteria
@@ -279,4 +276,4 @@ reporting:
 More details about our testing strategy and test cases can be found [here](TESTS.md) 
 
 ## TODOs
-1. Auto threshold calculation, environment profiles
+1. Auto threshold calculation

@@ -36,13 +36,13 @@ services:
 reporting:
 - module: passfail
   criteria:
-  - fail >${fail}, stop as failed
-  - p90  >${p90}  , stop as failed
-  - avg-rt >${avg_rt} , stop as failed
+  - fail >${FAIL}, stop as failed
+  - p90  >${P90}  , stop as failed
+  - avg-rt >${AVG_RT} , stop as failed
   - class: bzt.modules.monitoring.MonitoringCriteria
     subject: mms-inference-server/sum_workers_file_descriptors
     condition: '>'
-    threshold: ${sum_workers_file_descriptors}
+    threshold: ${TOTAL_WORKERS_FDS}
     timeframe: 1s
     fail: true
     stop: true

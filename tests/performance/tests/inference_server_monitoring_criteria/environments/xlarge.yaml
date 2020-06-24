@@ -2,7 +2,7 @@
 ---
 settings:
   env:
-    fail : 50%
-    p90 : 250ms
-    avg_rt : 1s
-    sum_workers_file_descriptors : 80
+    FAIL : 50%
+    P90 : 250ms
+    AVG_RT : 1s
+    TOTAL_WORKERS_FDS : 80

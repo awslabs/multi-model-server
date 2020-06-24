@@ -43,7 +43,7 @@ reporting:
     - subject: avg-rt  # required
       label: 'Inference'  # optional, default is ''
       condition: '>'  # required
-      threshold: ${Inference}  # required
+      threshold: ${INFR_RT}  # required
       logic: for  # optional, logic to aggregate values within timeframe.
       # Default 'for' means take latest,
       # 'within' and 'over' means take sum/avg of all values within interval
@@ -53,7 +53,7 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_memory_rss
       condition: '>'
-      threshold: ${sum_workers_memory_rss}
+      threshold: ${TOTAL_WORKERS_MEM}
       timeframe: 1s
       stop : true
       fail : true
@@ -61,7 +61,7 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/orphans
       condition: '>'
-      threshold: ${orphans}
+      threshold: ${TOTAL_ORPHANS}
       timeframe: 1s
       stop : true
       fail : true
@@ -69,7 +69,7 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_workers
       condition: '>'
-      threshold: ${total_workers}
+      threshold: ${TOTAL_WORKERS}
       timeframe: 1s
       stop: true
       fail: true
@@ -77,7 +77,7 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_file_descriptors
       condition: '>'
-      threshold: ${sum_workers_file_descriptors}
+      threshold: ${TOTAL_WORKERS_FDS}
       timeframe: 1s
       stop: true
       fail: true

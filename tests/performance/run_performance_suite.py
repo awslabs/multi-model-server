@@ -467,7 +467,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
                 suite_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
                 options_str = get_options(suite_artifacts_dir, jmeter_path)
                 env_yaml_path = "{}/{}/environments/{}.yaml".format(test_dir, suite_name, env_name)
-
+                env_yaml_path =  "" if not os.path.exists(env_yaml_path) else env_yaml_path
                 test_file = "{}/{}/{}.yaml".format(test_dir, suite_name, suite_name)
                 with Suite(suite_name, suite_artifacts_dir, junit_xml, t, env_name) as s:
                     s.code, s.err = run_process("{} bzt {} {} {} {}".format(pre_command, options_str,

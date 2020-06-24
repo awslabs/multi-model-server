@@ -71,15 +71,18 @@ class Monitoring(object):
         self.use = use
 
     def __enter__(self):
-        with open(GLOBAL_CONFIG_PATH) as conf_file:
-            global_config = yaml.safe_load(conf_file)
-        server_props = global_config["modules"]["jmeter"]["properties"]
-        server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"],
-                                                   server_props["port"])
-        try:
-            requests.get(server_ping_url)
-        except requests.exceptions.ConnectionError:
-            raise Exception("Server is not running. Pinged url {}. Exiting...".format(server_ping_url))
+        # Commented as -
+        # START \ STOP of MMS server is handled in individual scenario's prepare \ post-process stages
+        #
+        # with open(GLOBAL_CONFIG_PATH) as conf_file:
+        #     global_config = yaml.safe_load(conf_file)
+        # server_props = global_config["modules"]["jmeter"]["properties"]
+        # server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"],
+        #                                            server_props["port"])
+        # try:
+        #     requests.get(server_ping_url)
+        # except requests.exceptions.ConnectionError:
+        #     raise Exception("Server is not running. Pinged url {}. Exiting...".format(server_ping_url))
 
         if self.use:
             start_monitoring_server = "{} {} --start".format(sys.executable, self.path)

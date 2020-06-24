@@ -14,9 +14,18 @@ modules:
     class : metrics_monitoring_taurus.Monitor
 
 services:
+  - module: shellexec
+    prepare:
+      - "curl -s -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg"
+      - "multi-model-server --start > /dev/null 2>&1"
+      - "sleep 10s"
+    post-process:
+      - "multi-model-server --stop > /dev/null 2>&1"
+      - "rm kitten.jpg"
   - module: server_local_monitoring
     ServerLocalClient:
       - interval: 1s
+        logging : True
         metrics:
           - total_processes
           - sum_all_file_descriptors
@@ -25,6 +34,12 @@ services:
 reporting:
 - module: passfail
   criteria:
+    # Inbuilt Criteria
+    - success of RegisterModel<100%, stop as failed
+    - success of UnregisterModel<100%, stop as failed
+    - avg-rt of RegisterModel>15s, stop as failed
+    - avg-rt of UnregisterModel>10ms, stop as failed
+    # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '>'

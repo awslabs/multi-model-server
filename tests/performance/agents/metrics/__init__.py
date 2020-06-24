@@ -15,6 +15,8 @@ from enum import Enum
 from statistics import mean
 
 import psutil
+from psutil import ZombieProcess
+
 
 class ProcessType(Enum):
     """ Type of MMS processes to compute metrics on """
@@ -112,9 +114,13 @@ def get_metrics(server_process, child_processes, logger):
 
     processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
     for child in children:
-        if psutil.pid_exists(child.pid):
-            processes_stats.append({'type': ProcessType.WORKER, 'stats' : child.as_dict()})
-        else:
+        try:
+            if psutil.pid_exists(child.pid) and 'model_service_worker.py' in child.cmdline()[1]:
+                processes_stats.append({'type': ProcessType.WORKER, 'stats' : child.as_dict()})
+            else:
+                reclaimed_pids.append(child)
+                logger.debug('child {0} no longer available'.format(child.pid))
+        except ZombieProcess:
             reclaimed_pids.append(child)
             logger.debug('child {0} no longer available'.format(child.pid))
 

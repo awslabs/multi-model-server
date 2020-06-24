@@ -39,7 +39,7 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: ${total_processes}
+      threshold: ${TOTAL_PROCS}
       timeframe: 1s
       stop : true
       fail : true

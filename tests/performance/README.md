@@ -109,7 +109,7 @@ To run this individual test, run the following command
  ```bash
  export MMS_HOME=<MMS_HOME_PATH>
  cd $MMS_HOME/tests/performance
- python -m run_performance_suite -p examples_starter -e 2xlarge
+ python -m run_performance_suite -p examples_starter -e xlarge
  ```
 
 **Note**:
@@ -162,7 +162,7 @@ Metrics can be monitored in two ways:
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    python -m run_performance_suite -p examples_remote_monitoring -e 2xlarge
+    python -m run_performance_suite -p examples_remote_monitoring -e xlarge
     ```
 
 
@@ -207,7 +207,7 @@ Metrics can be monitored in two ways:
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    python -m run_performance_suite -p examples_local_monitoring -e 2xlarge
+    python -m run_performance_suite -p examples_local_monitoring -e xlarge
     ```
 
 #### 3.1 Add pass/fail criteria

@@ -14,28 +14,55 @@ modules:
     class : metrics_monitoring_taurus.Monitor
 
 services:
+  - module: shellexec
+    prepare:
+      - "multi-model-server --start > /dev/null 2>&1"
+      - "sleep 10s"
+    post-process:
+      - "multi-model-server --stop > /dev/null 2>&1"
   - module: server_local_monitoring
     ServerLocalClient:
       - interval: 1s
+        logging : True
         metrics:
-          - total_workers
-          - sum_workers_file_descriptors
-          - orphans
+          - total_processes
+          - sum_all_file_descriptors
+          - sum_all_memory_rss
 
 reporting:
 - module: passfail
   criteria:
+    # Inbuilt Criteria
+    - success of ManagementAPIDescription<100%, stop as failed
+    - success of InferenceAPIDescription<100%, stop as failed
+    - avg-rt of ManagementAPIDescription>10ms, stop as failed
+    - avg-rt of InferenceAPIDescription>10ms, stop as failed
+    # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/total_workers
+      subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: 0
+      threshold: 1
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
-      subject: ServerLocalClient/orphans
-      condition: '>'
-      threshold: 0
+      subject: ServerLocalClient/total_processes
+      condition: '<'
+      threshold: 1
       timeframe: 1s
       stop : true
       fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_all_file_descriptors
+      condition: '>'
+      threshold: 73
+      timeframe: 5s
+      stop : true
+      fail : true
+#    - class: bzt.modules.monitoring.MonitoringCriteria
+#      subject: ServerLocalClient/sum_all_memory_rss
+#      condition: '>'
+#      threshold: 100000000 #100MB
+#      timeframe: 5s
+#      stop : true
+#      fail : true

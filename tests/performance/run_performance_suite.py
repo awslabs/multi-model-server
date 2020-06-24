@@ -71,15 +71,18 @@ class Monitoring(object):
         self.use = use
 
     def __enter__(self):
-        with open(GLOBAL_CONFIG_PATH) as conf_file:
-            global_config = yaml.safe_load(conf_file)
-        server_props = global_config["modules"]["jmeter"]["properties"]
-        server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"],
-                                                   server_props["port"])
-        try:
-            requests.get(server_ping_url)
-        except requests.exceptions.ConnectionError:
-            raise Exception("Server is not running. Pinged url {}. Exiting...".format(server_ping_url))
+        # Commented as -
+        # START \ STOP of MMS server is handled in individual scenario's prepare \ post-process stages
+        #
+        # with open(GLOBAL_CONFIG_PATH) as conf_file:
+        #     global_config = yaml.safe_load(conf_file)
+        # server_props = global_config["modules"]["jmeter"]["properties"]
+        # server_ping_url = "{}://{}:{}/ping".format(server_props["protocol"], server_props["hostname"],
+        #                                            server_props["port"])
+        # try:
+        #     requests.get(server_ping_url)
+        # except requests.exceptions.ConnectionError:
+        #     raise Exception("Server is not running. Pinged url {}. Exiting...".format(server_ping_url))
 
         if self.use:
             start_monitoring_server = "{} {} --start".format(sys.executable, self.path)
@@ -402,6 +405,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
         junit_xml = JUnitXml()
         pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(base_file_path))
         test_yamls = get_test_yamls(test_dir, pattern)
+        logger.info("Collected test yamls {}".format(test_yamls))
         for test_file in tqdm(test_yamls, desc="Test Suites"):
             suite_name = os.path.basename(test_file).rsplit('.', 1)[0]
             with Timer("Test suite {} execution time".format(suite_name)) as t:

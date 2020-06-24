@@ -17,10 +17,10 @@ modules:
 services:
   - module: shellexec
     prepare:
-      - curl -s -X POST curl -X POST "http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-152.mar&batch_size=8&max_batch_delay=50"
+      - curl -s -X POST "http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/examples/resnet-152-batching/resnet-152.mar&batch_size=8&max_batch_delay=50"
       # uncomment below and comment prev and use downloaded model with model-store
-      #- curl -s -X POST "http://localhost:8081/models?url=resnet-152.mar&batch_size=8&max_batch_delay=6000&initial_workers=1"
-      - curl -s -X PUT  http://localhost:8081/models/resnet-152?min_worker=4&synchronous=true
+      #- curl -s -X POST "http://localhost:8081/models?url=resnet-152.mar&batch_size=8&max_batch_delay=60&initial_workers=1"
+      - curl -s -X PUT  http://localhost:8081/models/resnet-152?min_worker=2&synchronous=true
     post-process:
       - curl -s -X DELETE http://localhost:8081/models/resnet-152
   - module: server_local_monitoring # should be added in modules section
@@ -43,7 +43,7 @@ reporting:
       logic: for  # optional, logic to aggregate values within timeframe.
       # Default 'for' means take latest,
       # 'within' and 'over' means take sum/avg of all values within interval
-      timeframe: 10s  # optional, default is none
+      timeframe: 1s  # optional, default is none
       stop: true  # optional, default is true. false for nonstop testing until the end
       fail: true  # optional, default is true
     - class: bzt.modules.monitoring.MonitoringCriteria

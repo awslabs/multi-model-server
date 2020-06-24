@@ -1,9 +1,9 @@
 ---
 settings:
   env:
-    Inference1 : 6s
-    Inference2 : 0.08s
-    sum_workers_file_descriptors : 78
-    total_workers : 9
-    orphans : 0
-    sum_workers_memory_rss : 4000000000
+    INFR1_RT : 6s
+    INFR2_RT : 0.08s
+    TOTAL_WORKERS_MEM : 4000000000 #4GB
+    TOTAL_WORKERS : 9
+    TOTAL_ORPHANS : 0
+    TOTAL_WORKERS_FDS : 78

@@ -1,13 +1,12 @@
-
 ---
 settings:
   env:
-    success_RegisterModel : 100%
-    avg_rt_RegisterModel : 15s
-    success_UnRegisterModel: 100%
-    avg_rt_UnRegisterModel: 18ms
-    success_ScaleUp: 100%
-    avg_rt_ScaleUp: 1.5s
-    sum_all_file_descriptors : 73
-    frontend_memory_rss : 120000000
-    total_processes : 2
+    REG_SUCC : 100%
+    SCL_UP_SUCC: 100%
+    UNREG_SUCC: 100%
+    REG_RT : 15s
+    SCL_UP_RT: 1.5s
+    UNREG_RT: 18ms
+    TOTAL_PROCS : 2
+    TOTAL_FDS : 73
+    FRNTEND_MEM : 120000000 #120MB

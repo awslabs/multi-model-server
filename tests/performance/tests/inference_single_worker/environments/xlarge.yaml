@@ -1,8 +1,8 @@
 ---
 settings:
   env:
-    success_Inference : 100%
-    avg_rt_Inference : 290ms
-    sum_all_file_descriptors : 90
-    sum_all_memory_rss : 290000000
-    total_processes : 3
+    INFR_SUCC : 100%
+    INFR_RT : 290ms
+    TOTAL_PROCS : 3
+    TOTAL_FDS : 90
+    TOTAL_MEM : 290000000 #290MB

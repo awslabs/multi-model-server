@@ -33,10 +33,10 @@ reporting:
 - module: passfail
   criteria:
     # Inbuilt Criteria
-    - success of ManagementAPIDescription<${SUCCESS_MGMT_API}, stop as failed
-    - success of InferenceAPIDescription<${SUCCESS_INFR_API}, stop as failed
-    - avg-rt of ManagementAPIDescription>${MGMT_API_RT}, stop as failed
-    - avg-rt of InferenceAPIDescription>${INFR_API_RT}, stop as failed
+    - success of ManagementAPIDescription<${MGMT_DESC_SUCC}, stop as failed
+    - success of InferenceAPIDescription<${INFR_DESC_SUCC}, stop as failed
+    - avg-rt of ManagementAPIDescription>${MGMT_DESC_RT}, stop as failed
+    - avg-rt of InferenceAPIDescription>${INFR_DESC_RT}, stop as failed
     # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes

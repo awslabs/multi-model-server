@@ -1,9 +1,8 @@
-
 ---
 settings:
   env:
-    success_HealthCheck : 100%
-    avg_rt_HealthCheck : 14ms
-    total_processes : 1
-    sum_all_file_descriptors : 67
-    sum_all_memory_rss : 750000000 #750MB
+    HLTH_CHK_SUCC : 100%
+    HLTH_CHK_RT : 14ms
+    TOTAL_PROCS : 1
+    TOTAL_FDS : 67
+    TOTAL_MEM : 750000000 #750MB

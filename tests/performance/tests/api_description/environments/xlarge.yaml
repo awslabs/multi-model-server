@@ -1,10 +1,10 @@
 ---
 settings:
   env:
-    SUCCESS_MGMT_API: 100%
-    SUCCESS_INFR_API: 100%
-    MGMT_API_RT : 10ms
-    INFR_API_RT : 10ms
+    MGMT_DESC_SUCC: 100%
+    INFR_DESC_SUCC: 100%
+    MGMT_DESC_RT : 10ms
+    INFR_DESC_RT : 10ms
     TOTAL_PROCS : 1
     TOTAL_FDS : 73
-    2xlarge: 100000000 #100MB
+    TOTAL_MEM: 100000000 #100MB

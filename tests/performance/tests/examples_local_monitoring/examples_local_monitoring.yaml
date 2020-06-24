@@ -6,7 +6,7 @@ execution:
   scenario: Inference
 scenarios:
   Inference:
-    script: register_and_inference.jmx
+    script: examples_local_monitoring.jmx
 
 modules:
   server_local_monitoring:

@@ -7,9 +7,7 @@ execution:
 
 scenarios:
   Inference:
-    script: register_and_inference.jmx
-
-
+    script: examples_remote_criteria.jmx
 
 services:
   - module: shellexec

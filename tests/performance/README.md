@@ -4,29 +4,6 @@ This test suite helps in running load tests and monitoring the process and syste
 It allows to specify the pass/fail criteria for metrics in the test case.
 We use Taurus with JMeter as a test automation framework to run the test cases and metrics monitoring.
 
-## How to run the test suite
-To run the test suite you need to execute [run_performance_suite.py](run_performance_suite.py) with the following 
-parameters
-
-* `--artifacts-dir` or `-a` is a directory where the test case results will be stored. The default value is 
-`$MMS_HOME/tests/performance/run_artifacts`.  
-
-* `--test-dir` or `-t` is a directory containing the test cases. The default value is 
-`$MMS_HOME/tests/performance/tests`.
- 
-* `--pattern` or `-p` picks up certain test cases for execution within the `test-dir`. The default value is to pick up 
-all test cases.
- 
-* `--env-name` or `-e` specifies the environment name to use while running the test cases. The environment name is the name of 
-the file (minus the extension) found inside the environments folder in each test case. They encapsulate parameter 
-values which are specific to the execution environment. This is a mandatory parameter.   
-
-Script does the following:  
-1. Starts the metrics monitoring server.
-2. Collects all the tests from test-dir satisfying the pattern
-3. Executes the tests
-4. Generates performance XML and HTML report in artifacts-dir.  
-
 ### A. Installation Prerequisites
 1. Install Taurus. Taurus needs Python3 but since your tests and MMS instance can run in different virtual environment 
 or machine, you can configure the system such that tests are running on Python3 and MMS instance can run on Python 2 
@@ -45,8 +22,28 @@ compare performance regressions across runs and the run artifacts are stored in 
 
 ### B. Running the test suite
 1. Make sure parameters set in the [tests/common/global_config.yaml](tests/performance/tests/global_config.yaml) are correct.
-2. Run the test suite runner script with the --env-name parameter. This parameter contains the threshold values 
-for a particular environment and is found in the environments folder of every test case
+2. To run the test suite you need to execute [run_performance_suite.py](run_performance_suite.py) with the following 
+parameters
+
+   * `--artifacts-dir` or `-a` is a directory where the test case results will be stored. The default value is 
+`$MMS_HOME/tests/performance/run_artifacts`.  
+
+   * `--test-dir` or `-t` is a directory containing the test cases. The default value is 
+`$MMS_HOME/tests/performance/tests`.
+ 
+   * `--pattern` or `-p` picks up certain test cases for execution within the `test-dir`. The default value is to pick up 
+all test cases.
+ 
+   * `--env-name` or `-e` specifies the environment name to use while running the test cases. The environment name is the name of 
+the file (minus the extension) found inside the environments folder in each test case. They encapsulate parameter 
+values which are specific to the execution environment. This is a mandatory parameter.   
+
+     Script does the following:  
+     1. Starts the metrics monitoring server.
+     2. Collects all the tests from test-dir satisfying the pattern
+     3. Executes the tests
+     4. Generates performance XML and HTML report in artifacts-dir.  
+
 3. Check the console logs, $artifacts-dir$/<run-dir>/performance_results.html report, comparison.csv, comparison.html 
 and other artifacts.
 
@@ -59,8 +56,9 @@ and other artifacts.
     # check variables such as MMS server PORT etc 
     # vi tests/common/global_config.yaml 
     
-    python -m run_performance_suite --env-name dev-env1
+    python -m run_performance_suite --env-name xlarge
     ```
+
 
 ### C. Understanding the test suite artifacts and reports
 1. The $artifacts-dir$/<run-dir>/performance_results.html contains the summary report of the test run. Note that each

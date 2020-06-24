@@ -1,8 +1,0 @@
-
----
-settings:
-  env:
-    fail : 50%
-    p90 : 250ms
-    avg_rt : 1s
-    sum_workers_file_descriptors : 80

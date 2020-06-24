@@ -68,6 +68,7 @@ misc_metrics = {
 }
 
 AVAILABLE_METRICS = list(system_metrics) + list(misc_metrics)
+WORKER_NAME = 'model_service_worker.py'
 
 for metric in list(process_metrics):
     for ptype in list(ProcessType):
@@ -115,7 +116,7 @@ def get_metrics(server_process, child_processes, logger):
     processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
     for child in children:
         try:
-            if psutil.pid_exists(child.pid) and 'model_service_worker.py' in child.cmdline()[1]:
+            if psutil.pid_exists(child.pid) and WORKER_NAME in child.cmdline()[1]:
                 processes_stats.append({'type': ProcessType.WORKER, 'stats' : child.as_dict()})
             else:
                 reclaimed_pids.append(child)
@@ -152,6 +153,5 @@ def get_metrics(server_process, child_processes, logger):
     result['system_write_count'] = system_disk_io_counters.write_count
     result['system_read_bytes'] = system_disk_io_counters.read_bytes
     result['system_write_bytes'] = system_disk_io_counters.write_bytes
-
 
     return result

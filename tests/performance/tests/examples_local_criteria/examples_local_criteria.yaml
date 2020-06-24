@@ -7,7 +7,7 @@ execution:
 
 scenarios:
   Inference:
-    script: register_and_inference.jmx
+    script: examples_local_criterion.jmx
 
 modules:
   server_local_monitoring:

@@ -6,7 +6,7 @@ execution:
   scenario: Inference
 scenarios:
   Inference:
-    script: register_and_inference.jmx
+    script: examples_starter.jmx
 
 services:
   - module: shellexec

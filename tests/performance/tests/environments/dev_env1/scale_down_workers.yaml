@@ -1,0 +1,16 @@
+---
+settings:
+  env:
+    success_ScaleDown : 100%
+    avg_rt_ScaleDown : 10ms
+    min_sum_workers_file_descriptors : 23
+    max_sum_workers_file_descriptors : 38
+    frontend_file_descriptors : 78
+    min_sum_workers_memory_rss : 210000000
+    max_sum_workers_memory_rss : 450000000
+    frontend_memory_rss : 290000000
+    min_total_workers  : 2
+    max_total_workers : 4
+    max_total_processes : 6
+    min_total_processes : 4
+

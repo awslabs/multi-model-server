@@ -1,0 +1,9 @@
+
+---
+settings:
+  env:
+    success_HealthCheck : 14s
+    avg_rt_HealthCheck : 100%
+    sum_all_file_descriptors : 67
+    sum_all_memory_rss : 750000000
+    total_processes : 1

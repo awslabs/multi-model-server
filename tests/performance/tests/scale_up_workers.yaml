@@ -38,76 +38,76 @@ reporting:
 - module: passfail
   criteria:
     # Inbuilt Criteria
-    - success of ScaleUp<100%, stop as failed
-    - avg-rt of ScaleUp>10ms, stop as failed
+    - success of ScaleUp<${success_ScaleUp}, stop as failed
+    - avg-rt of ScaleUp>${avg_rt_ScaleUp}, stop as failed
     # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: 6
+      threshold: ${max_total_processes}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '<'
-      threshold: 3
+      threshold: ${min_total_processes}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_workers
       condition: '>'
-      threshold: 4
+      threshold: ${max_total_workers}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_workers
       condition: '<'
-      threshold: 1
+      threshold: ${min_total_workers}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/frontend_file_descriptors
       condition: '>'
-      threshold: 88
+      threshold: ${frontend_file_descriptors}
       timeframe: 5s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_file_descriptors
       condition: '>'
-      threshold: 38
+      threshold: ${max_sum_workers_file_descriptors}
       timeframe: 5s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_file_descriptors
       condition: '<'
-      threshold: 11
+      threshold: ${min_sum_workers_file_descriptors}
       timeframe: 5s
       stop : true
       fail : true
 #    - class: bzt.modules.monitoring.MonitoringCriteria
 #      subject: ServerLocalClient/frontend_memory_rss
 #      condition: '>'
-#      threshold: 290000000 #290MB
+#      threshold: ${frontend_memory_rss} #290MB
 #      timeframe: 5s
 #      stop : true
 #      fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_memory_rss
       condition: '>'
-      threshold: 450000000 #450MB
+      threshold: ${max_sum_workers_memory_rss} #450MB
       timeframe: 5s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_memory_rss
       condition: '<'
-      threshold: 122000000 #122MB
+      threshold: ${min_sum_workers_memory_rss} #122MB
       timeframe: 5s
       stop : true
       fail : true

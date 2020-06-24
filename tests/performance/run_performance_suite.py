@@ -388,10 +388,18 @@ def get_options(artifacts_dir, jmeter_path=None):
 @click.option('-p', '--pattern', help='Test case file name pattern. Example --> *.yaml', default="*.yaml")
 @click.option('-j', '--jmeter-path', help='JMeter executable path.')
 @click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
-@click.option('--env-name', help='Unique machine id on which MMS server is running', default=socket.gethostname())
+@click.option('--env-name', help='Unique machine id on which MMS server is running', required=True)
 @click.option('--compare-local/--no-compare-local', help='Compare with previous run with files stored'
                                                          ' in artifacts directory', default=True)
 def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_name, compare_local):
+    env_path = "{}/tests/environments".format(base_file_path)
+    environments = get_sub_dirs(env_path, exclude_list=[])
+
+    if env_name not in environments:
+        msg = "Provided environment (--env-name) {} is not registered in the tests/environments directory." \
+              "Available environemnts are {}".format(env_name, environments)
+        raise Exception(msg)
+
     commit_id = subprocess.check_output('git rev-parse --short HEAD'.split()).decode("utf-8")[:-1]
     artifacts_folder_name = "{}_{}_{}".format(env_name, commit_id, int(time.time()))
     if artifacts_dir is None:
@@ -411,9 +419,12 @@ def run_test_suite(artifacts_dir, test_dir, pattern, jmeter_path, monit, env_nam
             with Timer("Test suite {} execution time".format(suite_name)) as t:
                 suite_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
                 options_str = get_options(suite_artifacts_dir, jmeter_path)
+                env_yaml_path = "{}/{}/{}.yaml".format(env_path, env_name, suite_name)
+                env_yaml_path = "" if not os.path.exists(env_yaml_path) else env_yaml_path
+
                 with Suite(suite_name, suite_artifacts_dir, junit_xml, t) as s:
-                    s.code, s.err = run_process("{} bzt {} {} {}".format(pre_command, options_str,
-                                                                     test_file, GLOBAL_CONFIG_PATH))
+                    s.code, s.err = run_process("{} bzt {} {} {} {}".format(pre_command, options_str,
+                                                                     test_file, env_yaml_path, GLOBAL_CONFIG_PATH))
 
                     metrics_log_file = glob.glob("{}/SAlogs_*".format(suite_artifacts_dir))
                     if metrics_log_file:

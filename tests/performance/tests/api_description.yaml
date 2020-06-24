@@ -35,34 +35,34 @@ reporting:
     # Inbuilt Criteria
     - success of ManagementAPIDescription<100%, stop as failed
     - success of InferenceAPIDescription<100%, stop as failed
-    - avg-rt of ManagementAPIDescription>10ms, stop as failed
-    - avg-rt of InferenceAPIDescription>10ms, stop as failed
+    - avg-rt of ManagementAPIDescription>${AVG_RT_ManagementAPIDescription}, stop as failed
+    - avg-rt of InferenceAPIDescription>${AVG_RT_InferenceAPIDescription}, stop as failed
     # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: 1
+      threshold: ${total_processes}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '<'
-      threshold: 1
+      threshold: ${total_processes}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_all_file_descriptors
       condition: '>'
-      threshold: 73
+      threshold: ${sum_all_file_descriptors}
       timeframe: 5s
       stop : true
       fail : true
 #    - class: bzt.modules.monitoring.MonitoringCriteria
 #      subject: ServerLocalClient/sum_all_memory_rss
 #      condition: '>'
-#      threshold: 100000000 #100MB
+#      threshold: ${sum_all_memory_rss}
 #      timeframe: 5s
 #      stop : true
 #      fail : true

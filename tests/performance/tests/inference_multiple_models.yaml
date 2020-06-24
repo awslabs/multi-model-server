@@ -39,36 +39,36 @@ reporting:
 - module: passfail
   criteria:
     # Inbuilt Criteria
-    - success of Inference1<100%, stop as failed
-    - success of Inference2<100%, stop as failed
-    - avg-rt of Inference1>290ms, stop as failed
-    - avg-rt of Inference2>450ms, stop as failed
+    - success of Inference1<${success_Inference1}, stop as failed
+    - success of Inference2<${success_Inference2}, stop as failed
+    - avg-rt of Inference1>${avg_rt_Inference1}, stop as failed
+    - avg-rt of Inference2>${avg_rt_Inference2}, stop as failed
     # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: 5
+      threshold: ${total_processes}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '<'
-      threshold: 5
+      threshold: ${total_processes}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_all_file_descriptors
       condition: '>'
-      threshold: 107
+      threshold: ${sum_all_file_descriptors}
       timeframe: 5s
       stop : true
       fail : true
 #    - class: bzt.modules.monitoring.MonitoringCriteria
 #      subject: ServerLocalClient/sum_all_memory_rss
 #      condition: '>'
-#      threshold: 600000000 #600MB
+#      threshold: ${sum_all_memory_rss} #600MB
 #      timeframe: 5s
 #      stop : true
 #      fail : true

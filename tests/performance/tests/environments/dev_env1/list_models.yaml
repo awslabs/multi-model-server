@@ -1,0 +1,8 @@
+---
+settings:
+  env:
+    success_ListModels : 100%
+    avg_rt_ListModels : 14ms
+    sum_all_file_descriptors : 86
+    sum_all_memory_rss : 185000000
+    total_processes : 3

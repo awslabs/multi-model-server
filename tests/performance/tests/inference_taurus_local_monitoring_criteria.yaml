@@ -28,14 +28,14 @@ services:
 reporting:
 - module: passfail
   criteria:
-    - fail >50%, stop as failed
-    - p90 >250ms  , stop as failed
-    - avg-rt >1s , stop as failed
+    - fail >${fail}, stop as failed
+    - p90 >${p90}  , stop as failed
+    - avg-rt >${avg_rt} , stop as failed
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_workers_memory_rss
       condition: '>'
-      threshold: 132000000
+      threshold: ${sum_workers_memory_rss}
       timeframe: 1s
       stop : true
       fail : true
-      diff_percent : 30
+      diff_percent : ${sum_workers_memory_rss_diff_percent}

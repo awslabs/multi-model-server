@@ -36,31 +36,31 @@ reporting:
 - module: passfail
   criteria:
     # Inbuilt Criteria
-    - success of RegisterModel<100%, stop as failed
-    - success of ScaleUp<100%, stop as failed
-    - success of UnregisterModel<100%, stop as failed
-    - avg-rt of RegisterModel>15s, stop as failed
-    - avg-rt of ScaleUp>1.5s, stop as failed
-    - avg-rt of UnregisterModel>18ms, stop as failed
+    - success of RegisterModel<${success_RegisterModel}, stop as failed
+    - success of ScaleUp<${success_ScaleUp}, stop as failed
+    - success of UnregisterModel<${success_UnRegisterModel}, stop as failed
+    - avg-rt of RegisterModel>${avg_rt_RegisterModel}, stop as failed
+    - avg-rt of ScaleUp>${avg_rt_ScaleUp}, stop as failed
+    - avg-rt of UnregisterModel>${avg_rt_UnRegisterModel}, stop as failed
     # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: 2
+      threshold: ${total_processes}
       timeframe: 5s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_all_file_descriptors
       condition: '>'
-      threshold: 73
+      threshold: ${sum_all_file_descriptors}
       timeframe: 5s
       stop : true
       fail : true
 #    - class: bzt.modules.monitoring.MonitoringCriteria
 #      subject: ServerLocalClient/frontend_memory_rss
 #      condition: '>'
-#      threshold: 120000000 #120MB
+#      threshold: ${frontend_memory_rss} #120MB
 #      timeframe: 5s
 #      stop : true
 #      fail : true

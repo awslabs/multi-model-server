@@ -28,13 +28,13 @@ services:
 reporting:
 - module: passfail
   criteria:
-  - fail >50%, stop as failed
-  - p90  >250ms  , stop as failed
-  - avg-rt >1s , stop as failed
+  - fail >${fail}, stop as failed
+  - p90  >${p90}  , stop as failed
+  - avg-rt >${avg_rt} , stop as failed
   - class: bzt.modules.monitoring.MonitoringCriteria
     subject: mms-inference-server/sum_workers_file_descriptors
     condition: '>'
-    threshold: 80
+    threshold: ${sum_workers_file_descriptors}
     timeframe: 1s
     fail: true
     stop: true

@@ -1,0 +1,8 @@
+---
+settings:
+  env:
+    AVG_RT_ManagementAPIDescription : 10ms
+    AVG_RT_InferenceAPIDescription : 10ms
+    total_processes : 1
+    sum_all_file_descriptors : 73
+    sum_all_memory_rss : 100000000 #100MB

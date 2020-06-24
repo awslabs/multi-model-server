@@ -35,34 +35,34 @@ reporting:
 - module: passfail
   criteria:
     # Inbuilt Criteria
-    - success of ListModels<100%, stop as failed
-    - avg-rt of ListModels>14ms, stop as failed
+    - success of ListModels<${success_ListModels}, stop as failed
+    - avg-rt of ListModels>${avg_rt_ListModels}, stop as failed
     # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: 3
+      threshold: ${total_processes}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '<'
-      threshold: 3
+      threshold: ${total_processes}
       timeframe: 1s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/sum_all_file_descriptors
       condition: '>'
-      threshold: 86
+      threshold: ${sum_all_file_descriptors}
       timeframe: 1s
       stop : true
       fail : true
 #    - class: bzt.modules.monitoring.MonitoringCriteria
 #      subject: ServerLocalClient/sum_all_memory_rss
 #      condition: '>'
-#      threshold: 185000000 #185MB
+#      threshold: ${sum_all_memory_rss} #185MB
 #      timeframe: 5s
 #      stop : true
 #      fail : true

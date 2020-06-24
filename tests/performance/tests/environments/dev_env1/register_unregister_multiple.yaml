@@ -1,0 +1,13 @@
+
+---
+settings:
+  env:
+    success_RegisterModel : 100%
+    avg_rt_RegisterModel : 15s
+    success_UnRegisterModel: 100%
+    avg_rt_UnRegisterModel: 18ms
+    success_ScaleUp: 100%
+    avg_rt_ScaleUp: 1.5s
+    sum_all_file_descriptors : 73
+    frontend_memory_rss : 120000000
+    total_processes : 2

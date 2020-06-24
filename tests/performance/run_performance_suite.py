@@ -433,7 +433,7 @@ def get_options(artifacts_dir, jmeter_path=None):
 @click.command()
 @click.option('-a', '--artifacts-dir', help='Directory to store artifacts.', type=click.Path(writable=True))
 @click.option('-t', '--test-dir', help='Directory containing tests.', type=click.Path(exists=True), default=None)
-@click.option('-p', '--pattern', help='Test case folder name pattern', default="*")
+@click.option('-p', '--pattern', help='Test case folder name pattern', default="[!example]*")
 @click.option('-j', '--jmeter-path', help='JMeter executable path.')
 @click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
 @click.option('--env-name', help='Unique machine id on which MMS server is running', required=True)

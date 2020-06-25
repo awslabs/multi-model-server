@@ -1,8 +1,38 @@
 # Performance Regression Suite
 
-This test suite helps in running load tests and monitoring the process and system wide metrics. 
-It allows to specify the pass/fail criteria for metrics in the test case.
-We use Taurus with JMeter as a test automation framework to run the test cases and metrics monitoring.
+## Motivation
+The goal of this test suite is to ensure that performance regressions are detected early on. Ideally, with every commit 
+made into the source control system. 
+
+The salient features of the performance regression suite are
+
+* Non-intrusive - Does not need any code-changes or instrumentation on the server being monitored. 
+* It can be used to monitor a wide variety of server metrics - memory, cpu, io - in addition to 
+traditional API level metrics such as latency, throughput etc. 
+* It is easy to add custom metrics. For example, in MMS server, `the number of workers spawned` would be an interesting 
+metric to track. The platform allows for easy addition of these metrics.
+* The list of available server metrics can be found [here](#Metrics-that-you-can-use-for-passfail-criteria)
+* Test cases are specified in human readable yaml files. Every test case has a pass or fail status. This is determined 
+by evaluating expressions specified in the test case. Every expression checks metrics against threshold values. For 
+example, `memory consumed by all workers < 500M`, `number of worker processes < 3`
+* Test cases execute against compute environments. The threshold values are specific to the compute environment. It is
+possible to specify multiple compute environments against which the test cases will run. It follows that each compute 
+environment, will have its own threshold values.
+* This suite leverages the open source [Taurus framework](https://gettaurus.org/). 
+* This suite extends the Taurus framework in the following ways
+   * Adds resource monitoring service. This allows us to add MMS specific metrics. 
+   * Environments as described earlier
+   * Specification of pass/fail criterion between two commits. For example, memory consumed by workers should not 
+   increase by more than 10% between two commits for the given test case.
+   * Custom reporting of results
+   
+The lay of the land is captured in the following drawing
+![](assets/blocks.png) 
+
+
+
+
+
 
 ### A. Installation Prerequisites
 1. Install Taurus. Taurus needs Python3 but since your tests and MMS instance can run in different virtual environment 
@@ -42,7 +72,7 @@ values which are specific to the execution environment. This is a mandatory para
      1. Starts the metrics monitoring server.
      2. Collects all the tests from test-dir satisfying the pattern
      3. Executes the tests
-     4. Generates performance XML and HTML report in artifacts-dir.  
+     4. Generates artifacts in the artifacts-dir against each test case.  
 
 3. Check the console logs, $artifacts-dir$/<run-dir>/performance_results.html report, comparison.csv, comparison.html 
 and other artifacts.
@@ -56,7 +86,7 @@ and other artifacts.
     # check variables such as MMS server PORT etc 
     # vi tests/common/global_config.yaml 
     
-    python -m run_performance_suite --env-name xlarge
+    python -m run_performance_suite -e xlarge
     ```
 
 
@@ -66,7 +96,7 @@ test yaml is treated as a test suite. Different criteria in the yaml are treated
  specified in the yaml, test suite is marked as skipped with 0 test cases.
 2. For each test suite a sub-directory is created with artifacts for it.  
 3. The comparison_results.csv contains diff for monitoring metrics between an ongoing run and a previous run 
-which was ran for same MMS server. Comparison.html shows the comparision results. 
+which was ran for same MMS server. Comparison.html shows the comparison results. 
 
 
 ## How to add test case to test suite.
@@ -231,8 +261,8 @@ reporting:
 #### 3.2 Add pass/fail criteria with previous run
 On completion, the test suite runner script compares the monitoring metrics with values from a previous run which was executed on same environment. 
 Note that at least one test suite run on the same environment should have happened in order to do the comparison. The run results are stored in either a local folder or a S3 bucket based on the `compare-local` option
-Metrics which have 'diff_percent' value specified in the pass/fail criterion are used for comparision with the previous run. See pass/fail criteria [section](#3-add-passfail-criteria)
-Below are different options used by run_performance_suite script for coparison.
+Metrics which have 'diff_percent' value specified in the pass/fail criterion are used for comparison with the previous run. See pass/fail criteria [section](#3-add-passfail-criteria)
+Below are different options used by run_performance_suite script for comparison.
 1. **artifacts-dir**:
 This is an optional parameter. The default is './run_artifacts' directory.
 A sub directory with '{env_name}_{git_commit_id}_{timestamp}' gets created in the artifacts dir.
@@ -300,5 +330,3 @@ reporting:
 ## Test Strategy
 More details about our testing strategy and test cases can be found [here](TESTS.md) 
 
-## TODOs
-1. Auto threshold calculation

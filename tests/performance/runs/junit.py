@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
@@ -11,19 +11,16 @@
 # permissions and limitations under the License.
 
 """
-Read configuration file
+Start and stop monitoring server
 """
-# pylint: disable=redefined-builtin, bare-except
-import configparser
-import pathlib
+# pylint: disable=redefined-builtin
 
-config = configparser.ConfigParser()
-path = pathlib.Path(__file__).parent.absolute()
-config.read('{}/config.ini'.format(path))
+from utils import run_process
 
 
-def get(section, key, default=''):
-    try:
-        return config[section][key]
-    except:
-        return default
+def genrate_junit_report(junit_xml, out_dir, report_name):
+    junit_xml.update_statistics()
+    junit_xml_path = '{}/{}.xml'.format(out_dir, report_name)
+    junit_html_path = '{}/{}.html'.format(out_dir, report_name)
+    junit_xml.write(junit_xml_path)
+    run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))

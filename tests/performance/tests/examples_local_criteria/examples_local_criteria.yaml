@@ -7,12 +7,12 @@ execution:
 
 scenarios:
   Inference:
-    script: examples_local_criterion.jmx
+    script: examples_local_criteria.jmx
 
 modules:
   server_local_monitoring:
-    # metrics_monitoring_taurus and dependencies should be in python path
-    class : metrics_monitoring_taurus.Monitor # monitoring class.
+    # metrics_monitoring_inproc and dependencies should be in python path
+    class : metrics_monitoring_inproc.Monitor # monitoring class.
 
 services:
   - module: shellexec
@@ -24,7 +24,7 @@ services:
       - "multi-model-server --stop > /dev/null 2>&1"
       - "rm kitten.jpg"
   - module: server_local_monitoring # should be added in modules section
-    ServerLocalClient: # keyword from metrics_monitoring_taurus.Monitor
+    ServerLocalClient: # keyword from metrics_monitoring_inproc.Monitor
     - interval: 1s
       logging : True
       metrics:

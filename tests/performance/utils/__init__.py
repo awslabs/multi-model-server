@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
@@ -11,19 +11,10 @@
 # permissions and limitations under the License.
 
 """
-Read configuration file
+Run Tarus test cases and generate the Junit XML report
 """
-# pylint: disable=redefined-builtin, bare-except
-import configparser
-import pathlib
+# pylint: disable=redefined-builtin
 
-config = configparser.ConfigParser()
-path = pathlib.Path(__file__).parent.absolute()
-config.read('{}/config.ini'.format(path))
-
-
-def get(section, key, default=''):
-    try:
-        return config[section][key]
-    except:
-        return default
+from .fs import get_sub_dirs
+from .timer import Timer
+from .pyshell import run_process

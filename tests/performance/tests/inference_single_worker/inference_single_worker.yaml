@@ -12,7 +12,7 @@ scenarios:
 
 modules:
   server_local_monitoring:
-    class : metrics_monitoring_taurus.Monitor
+    class : metrics_monitoring_inproc.Monitor
 
 services:
   - module: shellexec

@@ -15,19 +15,20 @@ Taurus Local plugin for server monitoring.
 Should be used when server and Taurus are running on same machine.
 This file should be placed in Python Path along with monitoring package.
 """
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin, unnecessary-comprehension
 
 import csv
 import sys
 
-import configuration
 from bzt import TaurusConfigError
 from bzt.modules import monitoring
 from bzt.utils import dehumanize_time
+
+import configuration
 from metrics import get_metrics, AVAILABLE_METRICS as AVAILABLE_SERVER_METRICS
 from utils.process import get_process_pid_from_file, get_server_processes, \
     get_child_processes, get_server_pidfile
-from tabulate import tabulate
+
 
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
@@ -35,12 +36,17 @@ PID_FILE = configuration.get('server', 'pid_file', 'model_server.pid')
 
 
 class Monitor(monitoring.Monitoring):
+    """Add ServerLocalClient to Monitoring by patching to monitoring.Monitoring
+    """
+
     def __init__(self):
         super(Monitor, self).__init__()
         self.client_classes.update({'ServerLocalClient': ServerLocalClient})
 
 
 class ServerLocalClient(monitoring.LocalClient):
+    """Custom server local client """
+
     AVAILABLE_METRICS = monitoring.LocalClient.AVAILABLE_METRICS + \
                         AVAILABLE_SERVER_METRICS
 
@@ -81,19 +87,20 @@ class ServerLocalClient(monitoring.LocalClient):
 
 
 class ServerLocalMonitor(monitoring.LocalMonitor):
+    """Custom server local monitor"""
 
-     def _calc_resource_stats(self, interval):
-         result = super()._calc_resource_stats(interval)
-         server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
-         server_process = get_server_processes(server_pid)
-         result.update(get_metrics(server_process, get_child_processes(server_process), self.log))
+    def _calc_resource_stats(self, interval):
+        result = super()._calc_resource_stats(interval)
+        server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
+        server_process = get_server_processes(server_pid)
+        result.update(get_metrics(server_process, get_child_processes(server_process), self.log))
 
-         metrics_msg = []
+        metrics_msg = []
 
-         updated_result = {}
-         for key in self.metrics:
-             if result.get(key) is not None:
+        updated_result = {}
+        for key in self.metrics:
+            if result.get(key) is not None:
                 metrics_msg.append("{0} : {1}".format(key, result[key]))
-             updated_result[key] = result.get(key)
-         self.log.info("{0}".format(" -- ".join(metrics_msg)))
-         return updated_result
+            updated_result[key] = result.get(key)
+        self.log.info("{0}".format(" -- ".join(metrics_msg)))
+        return updated_result

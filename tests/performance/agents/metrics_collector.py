@@ -13,7 +13,7 @@
 """
 Server metrics collector
 """
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin, broad-except, unused-variable
 
 import argparse
 import logging
@@ -21,18 +21,15 @@ import os
 import sys
 import tempfile
 import time
-
 import gevent
 import psutil
-from tabulate import tabulate
-
-logger = logging.getLogger(__name__)
 
 from utils.process import get_process_pid_from_file, get_child_processes, \
     get_server_processes, get_server_pidfile
 from metrics import AVAILABLE_METRICS, get_metrics
 import configuration
 
+logger = logging.getLogger(__name__)
 TMP_DIR = tempfile.gettempdir()
 METRICS_LOG_FILE = "{}/server_metrics_{}.log".format(TMP_DIR, int(time.time()))
 METRICS_COLLECTOR_PID_FILE = "{}/.metrics_collector.pid".format(TMP_DIR)
@@ -58,18 +55,19 @@ def stop_process(pid_file):
         try:
             process = psutil.Process(pid)
             if process.is_running():
-                logger.info("Process with pid {} is running. Killing it.".format(process.pid))
+                logger.info("Process with pid %s is running. Killing it.", process.pid)
                 process.kill()
         except Exception as e:
             pass
         else:
-            logger.info("Dead process with pid {} found in '{}'.".format(process.pid, pid_file))
+            logger.info("Dead process with pid %s found in '%s'.", process.pid, pid_file)
 
-        logger.info("Removing pid file '{}'.".format(pid_file))
+        logger.info("Removing pid file '%s'.", pid_file)
         os.remove(pid_file)
 
 
 def check_is_running(pid_file):
+    """check if pid is running"""
     pid = get_process_pid_from_file(pid_file)
     if pid:
         try:
@@ -79,7 +77,7 @@ def check_is_running(pid_file):
         else:
             if perf_mon_process.is_running():
                 logger.error("Performance monitoring script already running. "
-                                "Stop it using stop option.")
+                             "Stop it using stop option.")
                 sys.exit()
 
 
@@ -103,12 +101,12 @@ def monitor_processes(server_process, metrics, interval, socket):
         collected_metrics = get_metrics(server_process, get_child_processes(server_process), logger)
         metrics_msg = []
         for metric in metrics:
-           message.append(str(collected_metrics.get(metric, 0)))
-           if collected_metrics.get(metric) is not None:
-               metrics_msg.append("{0} : {1}".format(metric, collected_metrics.get(metric, 0)))
+            message.append(str(collected_metrics.get(metric, 0)))
+            if collected_metrics.get(metric) is not None:
+                metrics_msg.append("{0} : {1}".format(metric, collected_metrics.get(metric, 0)))
 
-        message = "\t".join(message)+"\t\n"
-        logger.info("{}".format("{0}".format(" -- ".join(metrics_msg))))
+        message = "\t".join(message) + "\t\n"
+        logger.info("%s", " -- ".join(metrics_msg))
 
         if socket:
             try:
@@ -143,10 +141,10 @@ def start_metric_collector_process():
 
 if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
-    parser = argparse.ArgumentParser(prog='perf-mon-script', description='System Performance Monitoring')
+    parser = argparse.ArgumentParser(prog='metric-collector', description='System Performance Metrics collector')
     sub_parse = parser.add_mutually_exclusive_group(required=True)
-    sub_parse.add_argument('--start', action='store_true', help='Start the perf-mon-script')
-    sub_parse.add_argument('--stop', action='store_true', help='Stop the perf-mon-script')
+    sub_parse.add_argument('--start', action='store_true', help='Start the metric-collector')
+    sub_parse.add_argument('--stop', action='store_true', help='Stop the metric-collector')
 
     args = parser.parse_args()
 

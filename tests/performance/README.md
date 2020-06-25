@@ -143,8 +143,8 @@ Specify the metrics of interest in the services/monitoring section of the yaml.
 1. Standalone monitoring server
 
    Use this technique if MMS and the tests execute on different machines. Before running the test cases, 
-   please start the [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will  
-   communicate server metric data with the test client over sockets. The monitoring server runs on port 9009 by default.
+   please start the [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will communicate server 
+   metric data with the test client over sockets. The monitoring server runs on port 9009 by default.
     
    To start the monitoring server, run the following commands on the MMS host:
     ```bash 

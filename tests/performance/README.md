@@ -54,8 +54,11 @@ parameters
    * `--test-dir` or `-t` is a directory containing the test cases. The default value is 
 `$MMS_HOME/tests/performance/tests`.
  
-   * `--pattern` or `-p` picks up certain test cases for execution within the `test-dir`. The default value picks up 
+   * `--pattern` or `-p` glob pattern picks up certain test cases for execution within the `test-dir`. The default value picks up 
 all test cases.
+ 
+    * `--exclude-pattern` or `-x` glob pattern excludes certain test cases for execution within the `test-dir`. 
+The default value excludes nothing.
  
    * `--env-name` or `-e` specifies the environment name to use while running the test cases. The environment name is the name of 
 the file (minus the extension) found inside the environments folder in each test case. They encapsulate parameter 

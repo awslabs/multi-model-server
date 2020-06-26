@@ -18,12 +18,12 @@ Result store classes
 
 import logging
 import os
-import pathlib
 import sys
 
 import boto3
-
+import pathlib
 from agents import configuration
+
 from utils import run_process
 
 logger = logging.getLogger(__name__)
@@ -34,13 +34,13 @@ S3_BUCKET = configuration.get('suite', 's3_bucket')
 class Storage():
     """Class to store and retrieve artifacts"""
 
-    def __init__(self, artifacts_dir, current_run_name, env_name):
-        self.artifacts_dir = artifacts_dir
-        self.current_run_name = current_run_name
+    def __init__(self, path, env_name):
+        self.artifacts_dir = os.path.dirname(path)
+        self.current_run_name = os.path.basename(path)
         self.env_name = env_name
 
     def get_dir_to_compare(self):
-        """get the artifiacts dir to compare to"""
+        """get the artifacts dir to compare to"""
 
     def store_results(self):
         """Store the results"""
@@ -86,7 +86,7 @@ class S3Storage(Storage):
         """Get latest run result artifacts directory  for same env_name from S3 bucket
         and store it locally for further comparison
         """
-        tgt_path = "{}/comp_data".format(self.artifacts_dir)
+        tgt_path = os.path.join(self.artifacts_dir, "comp_data")
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(S3_BUCKET)
         result = bucket.meta.client.list_objects(Bucket=bucket.name,
@@ -103,7 +103,7 @@ class S3Storage(Storage):
         if not os.path.exists(tgt_path):
             os.makedirs(tgt_path)
 
-        tgt_path = "{}/{}".format(tgt_path, latest_run)
+        tgt_path = os.path.join(tgt_path, latest_run)
         run_process("aws s3 cp  s3://{}/{} {} --recursive".format(bucket.name, latest_run, tgt_path))
 
         return tgt_path, latest_run

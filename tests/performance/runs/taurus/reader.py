@@ -15,6 +15,8 @@ Run shell command utilities
 """
 # pylint: disable=redefined-builtin
 
+import os
+
 import yaml
 
 
@@ -36,7 +38,7 @@ def get_compare_metric_list(dir, sub_dir):
     """Utility method to get list of compare monitoring metrics identified by diff_percent property"""
     diff_percents = []
     metrics = []
-    test_yaml = "{}/{}/{}".format(dir, sub_dir, "effective.yml")
+    test_yaml = os.path.join(dir, sub_dir, "effective.yml")
     with open(test_yaml) as test_yaml:
         test_yaml = yaml.safe_load(test_yaml)
         for rep_section in test_yaml.get('reporting', []):

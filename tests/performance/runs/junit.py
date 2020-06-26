@@ -15,12 +15,14 @@ Start and stop monitoring server
 """
 # pylint: disable=redefined-builtin
 
+import os
+
 from utils import run_process
 
 
-def genrate_junit_report(junit_xml, out_dir, report_name):
+def generate_junit_report(junit_xml, out_dir, report_name):
     junit_xml.update_statistics()
-    junit_xml_path = '{}/{}.xml'.format(out_dir, report_name)
-    junit_html_path = '{}/{}.html'.format(out_dir, report_name)
+    junit_xml_path = os.path.join(out_dir, '{}.xml'.format(report_name))
+    junit_html_path = os.path.join(out_dir, '{}.html'.format(report_name))
     junit_xml.write(junit_xml_path)
     run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))

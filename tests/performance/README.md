@@ -83,16 +83,25 @@ cd $MMS_HOME/tests/performance
 # check variables such as MMS server PORT etc 
 # vi tests/common/global_config.yaml 
 
+#all tests
 python -m run_performance_suite -e xlarge
+
+#run a specific test 
+python -m run_performance_suite -e xlarge -p inference_single_worker
+
 ```
 
 ### C. Understanding the test suite artifacts and reports
 1. The $artifacts-dir$/<run-dir>/performance_results.html is a summary report of the test run. 
 2. Each test yaml is treated as a test suite. Each criteria in the test suite is treated as a test case. 
 If the test suite does not specify any criteria, then the test suite is reported as skipped with 0 test cases.
-3. For each test suite, a sub-directory is created containing relevant run artifacts.  
+3. For each test suite, a sub-directory is created containing relevant run artifacts. Important files in this directory are
+   * metrics.csv -- contains the values of the various system-monitored metrics over time
+   * finals_stats.csv -- contains the values of the various api metrics over time  
 4. The $artifacts-dir$/<run-dir>/comparison_results.html is a summary report which shows performance difference between
 the last two commits.
+5. The run completes with a console summary of the performance and comparision suites which have failed
+![](assets/console.png) 
 
 ## Add a new test
 

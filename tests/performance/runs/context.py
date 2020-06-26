@@ -62,18 +62,20 @@ class ExecutionEnv(object):
 
     @staticmethod
     def report_summary(reporter, suite_name):
-        status = reporter.junit_xml.errors or reporter.junit_xml.failures or reporter.junit_xml.skipped
-        status, code, color = ("failed", 3, "red") if status else ("passed", 0, "green")
-
         if reporter and os.path.exists(reporter.junit_html_path):
+            status = reporter.junit_xml.errors or reporter.junit_xml.failures or reporter.junit_xml.skipped
+            status, code, color = ("failed", 3, "red") if status else ("passed", 0, "green")
+
             msg = "{} run has {}.".format(suite_name, status)
             logger.info(colored(msg, color, attrs=['reverse', 'blink']))
             logger.info("%s report - %s", suite_name, reporter.junit_html_path)
             logger.info("%s summary:", suite_name)
             print(junit2tabulate(reporter.junit_xml))
             ExecutionEnv.open_report(reporter.junit_html_path)
+            return code
 
-        return code
+        else:
+            return 0
 
     def __exit__(self, type, value, traceback):
         if self.use:

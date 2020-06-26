@@ -30,7 +30,7 @@ from tqdm import tqdm
 from utils import run_process, Timer, get_sub_dirs
 from runs.storage import LocalStorage, S3Storage
 from runs.monitoring_driver import Monitoring
-from runs.junit import genrate_junit_report
+from runs.junit import genrate_junit_report, junit2tabulate
 from runs.taurus import get_taurus_options, x2junit, update_metric_log_header
 from runs.compare import compare
 
@@ -46,6 +46,30 @@ def open_report(file_path):
     if os.path.exists(file_path):
         return webbrowser.open_new_tab('file://' + os.path.realpath(file_path))
     return False
+
+
+def report_summary(junit_xml, compare_result, artifacts_dir):
+    compare_status, exit_code = ('failed', 4) if not compare_result else ('passed', 0)
+    suite_status, exit_code = ('failed', 3) if junit_xml.errors or junit_xml.failures \
+                                               or junit_xml.skipped else ('passed', 0)
+
+    logger.info("\n\nResult Summary:")
+    comparison_result_html = "{}/comparison_results.html".format(artifacts_dir)
+    comparison_result_xml = "{}/comparison_results.xml".format(artifacts_dir)
+    suite_result_html = "{}/performance_results.html".format(artifacts_dir)
+    if os.path.exists(comparison_result_html):
+        logger.info("Comparison with monitoring metrics of previous run has %s.", compare_status)
+        logger.info("Comparison test suite report - %s", comparison_result_html)
+        logger.info("Comparison test suite summary:")
+        print(junit2tabulate(comparison_result_xml))
+
+    logger.info("Performance Regression Test suite run has %s.", suite_status)
+    logger.info("Performance Regression Test suite report - %s", suite_result_html)
+    logger.info("Comparison test suite summary:")
+    print(junit2tabulate(junit_xml))
+    open_report(suite_result_html)
+
+    return exit_code
 
 
 @click.command()
@@ -101,24 +125,11 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
 
         genrate_junit_report(junit_xml, artifacts_dir, 'performance_results')
 
+    # compare with previous run
     storage_class = LocalStorage if compare_local else S3Storage
     compare_result = compare(storage_class(artifacts_dir, artifacts_folder_name, env_name))
 
-    compare_status, exit_code = ('failed', 4) if not compare_result else ('passed', 0)
-    suite_status, exit_code = ('failed', 3) if junit_xml.errors or junit_xml.failures \
-                                               or junit_xml.skipped else ('passed', 0)
-
-    logger.info("\n\nResult Summary:")
-    comparison_result_html = "{}/comparison_results.html".format(artifacts_dir)
-    suite_result_html = "{}/performance_results.html".format(artifacts_dir)
-    if os.path.exists(comparison_result_html):
-        logger.info("Comparison with monitoring metrics of previous run has %s.", compare_status)
-        logger.info("Comparison test suite report - %s", comparison_result_html)
-
-    logger.info("Performance Regression Test suite run has %s.", suite_status)
-    logger.info("Performance Regression Test suite report - %s", suite_result_html)
-
-    open_report(suite_result_html)
+    exit_code = report_summary(junit_xml, compare_result, artifacts_dir)
     sys.exit(exit_code)
 
 

@@ -159,29 +159,29 @@ workflows:
     jobs:
       - &build
         build:
-          name: build-<< matrix.version >>
+          name: build-<< matrix.executor >>
           matrix:
             parameters:
               executor: ["py27", "py36"]
       - &modelarchiver
         modelarchiver:
-          name: modelarchiver-<< matrix.version >>
+          name: modelarchiver-<< matrix.executor >>
           matrix:
             parameters:
               executor: ["py27", "py36"]
       - &python_tests
         python_tests:
-          name: python_tests-<< matrix.version >>
+          name: python_tests-<< matrix.executor >>
           requires:
-            - build-<< matrix.version >>
+            - build-<< matrix.executor >>
           matrix:
             parameters:
               executor: ["py27", "py36"]
       - &api_tests
         api_tests:
-          name: api_tests-<< matrix.version >>
+          name: api_tests-<< matrix.executor >>
           requires:
-            - build-<< matrix.version >>
+            - build-<< matrix.executor >>
           matrix:
             parameters:
               executor: ["py27", "py36"]
@@ -194,13 +194,13 @@ workflows:
       - *api_tests
       - benchmark:
           requires:
-            - build-<< matrix.version >>
+            - build-<< matrix.executor >>
           matrix:
             parameters:
               executor: ["py27", "py36"]
       - performance_regression:
           requires:
-            - build-<< matrix.version >>
+            - build-<< matrix.executor >>
           matrix:
             parameters:
               executor: ["py27", "py36"]

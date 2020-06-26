@@ -51,8 +51,7 @@ def get_child_processes(process):
     """Get all running child processes recursively"""
     child_processes = set()
     for p in process.children(recursive=True):
-        if p.status() == 'running':
-            child_processes.add(p)
+        child_processes.add(p)
     return child_processes
 
 

@@ -21,7 +21,6 @@ workflow = args.workflow
 job = args.job
 
 cci_config_file = '.circleci/config.yml'
-sw_cci_config_file = '.circleci/sw_config.yml'
 processed_file = '.circleci/processed.yml'
 xformed_file = '.circleci/xformed.yml'
 processed_config = {}
@@ -29,26 +28,8 @@ xformed_config = {}
 xformed_job_name = 'mms_xformed_job'
 blacklisted_steps = ['persist_to_workspace', 'attach_workspace', 'store_artifacts']
 
-# Generate a new CircleCI config which only has ONLY one workflow (workflow name from cli args)
-# WHY ?
-# > In case of multiple workflows (py27, py36, etc), CircleCI updates the job names(myjob -> myjob-1) while creating
-# > processed.yml. This causes mismatch between 'job name from cli args' and 'job name in processed yaml'
-# > As a workaround, we pre-process config to only have 1 workflow. This ensures unchanged job names in process.yml
-with open(cci_config_file) as f1stream:
-    try:
-        config = yaml.safe_load(f1stream)
-        single_workflow_config = {
-            'version': config['workflows']['version'],
-            workflow: config['workflows'][workflow]
-        }
-        config['workflows'] = single_workflow_config
-        with open(sw_cci_config_file, 'w+') as f2stream:
-            yaml.dump(config, f2stream)
-    except yaml.YAMLError as err:
-        print(err)
-
 # Create processed YAML using circleci cli's 'config process' commands
-subprocess.check_call('circleci config process {} > {}'.format(sw_cci_config_file, processed_file), shell=True)
+subprocess.check_call('circleci config process {} > {}'.format(cci_config_file, processed_file), shell=True)
 
 # Read the processed config
 with open(processed_file) as fstream:
@@ -111,4 +92,4 @@ with open(xformed_file, 'w+') as fstream:
 subprocess.check_call('circleci local execute -c {} --job {}'.format(xformed_file, xformed_job_name), shell=True)
 
 # Clean up, remove the processed and transformed yml files
-subprocess.check_call('rm {} {} {}'.format(sw_cci_config_file, processed_file, xformed_file), shell=True)
+subprocess.check_call('rm {} {}'.format(processed_file, xformed_file), shell=True)

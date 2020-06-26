@@ -28,6 +28,7 @@ services:
       - interval: 1s
         logging : True
         metrics:
+          - orphans
           - total_processes
           - sum_all_file_descriptors
           - frontend_memory_rss

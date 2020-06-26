@@ -47,8 +47,8 @@ Developers can use the following command to build MMS locally:
 **_./run_circleci_tests.py <workflow_name> <job_name>_**
 ```bash
 $ cd multi-model-server
-$ ./run_circleci_tests.py smoke python-tests
-$ ./run_circleci_tests.py nightly api-tests
+$ ./run_circleci_tests.py smoke python-tests-py27
+$ ./run_circleci_tests.py nightly api-tests-py36
 ```
 
 ###### Checklist

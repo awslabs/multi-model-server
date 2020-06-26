@@ -30,6 +30,8 @@ from metrics import AVAILABLE_METRICS, get_metrics
 import configuration
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
+
 TMP_DIR = tempfile.gettempdir()
 METRICS_LOG_FILE = os.path.join(TMP_DIR, "server_metrics_{}.log".format(int(time.time())))
 METRICS_COLLECTOR_PID_FILE = os.path.join(TMP_DIR, "metrics_collector.pid")

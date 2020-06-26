@@ -39,9 +39,12 @@ class JunitConverter():
         run_process("vjunit -f {} -o {}".format(self.junit_xml_path, self.junit_html_path))
 
 
-def unescape(data):
-    """Unsescape the html characters from the data"""
-    return html.unescape(html.unescape(data))
+def pretty_text(data):
+    """Unsescape the html characters from the data & wrap it"""
+    if data is not None:
+        return textwrap.fill(html.unescape(html.unescape(data)), width=60)
+    else:
+        return ""
 
 
 def junit2array(junit_xml):
@@ -49,13 +52,13 @@ def junit2array(junit_xml):
     rows = [header]
     for i, suite in enumerate(junit_xml):
         if len(suite) == 0:
-            rows.append([suite.name, "", "skipped", "No metrics to compare"])
+            rows.append([suite.name, "", "skipped",
+                         "No criteria specified or there is an error."])
         else:
             for case in suite:
                 result = case.result
                 tag, msg = (result._tag, result.message) if result else ("passed", "")
-                msg = textwrap.fill(unescape(msg), width=50)
-                rows.append([suite.name, unescape(case.name), tag, msg])
+                rows.append([suite.name, pretty_text(case.name), tag, pretty_text(msg)])
 
     return rows
 

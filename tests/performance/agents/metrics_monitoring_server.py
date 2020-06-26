@@ -35,6 +35,7 @@ import configuration
 
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 TMP_DIR = tempfile.gettempdir()
 METRICS_MON_SERVER_PID_FILE = os.path.join(TMP_DIR, ".metrics_monitoring_server.pid")
 PID_FILE = configuration.get('server', 'pid_file', 'model_server.pid')
@@ -46,6 +47,34 @@ SOCKET_LIST = []
 RECV_BUFFER = 4096
 interval = 1
 
+
+def process_data(sock):
+    """ process data recieved on socket"""
+    # receiving data from the socket.
+    data = sock.recv(RECV_BUFFER).decode()
+    if data:
+        if data == 'test\n':
+            send_message(sock, "Yep\n")
+        elif data == 'exit\n':
+            close_socket(sock)
+        elif data.startswith('interval'):
+            try:
+                global interval
+                interval = int(data.split(":")[1][:-1])
+            except Exception:
+                send_message(sock, "In-correct interval data")
+        elif data.startswith('metrics'):
+            metrics = data[:-1].split("metrics:")[1].split("\t")
+            server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
+            server_process = get_server_processes(server_pid)
+            start_metric_collection(server_process, metrics, interval, sock)
+        else:
+            # TODO - decide what to do here
+            pass
+    else:
+        # remove the socket that's broken
+        if sock in SOCKET_LIST:
+            SOCKET_LIST.remove(sock)
 
 def perf_server():
     """ start performance moniting server on a socket """
@@ -69,32 +98,7 @@ def perf_server():
             # a message from a client, not a new connection
             else:
                 try:
-                    # receiving data from the socket.
-                    data = sock.recv(RECV_BUFFER).decode()
-                    if data:
-                        if data == 'test\n':
-                            send_message(sock, "Yep\n")
-                        elif data == 'exit\n':
-                            close_socket(sock)
-                        elif data.startswith('interval'):
-                            try:
-                                global interval
-                                interval = int(data.split(":")[1][:-1])
-                            except Exception:
-                                send_message(sock, "In-correct interval data")
-                        elif data.startswith('metrics'):
-                            metrics = data[:-1].split("metrics:")[1].split("\t")
-                            server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
-                            server_process = get_server_processes(server_pid)
-                            start_metric_collection(server_process, metrics, interval, sock)
-                        else:
-                            # TODO - decide what to do here
-                            pass
-
-                    else:
-                        # remove the socket that's broken
-                        if sock in SOCKET_LIST:
-                            SOCKET_LIST.remove(sock)
+                    process_data(sock)
                 except Exception as e:
                     logger.warning("Error %s", str(e))
                     continue

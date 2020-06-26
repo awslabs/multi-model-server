@@ -75,6 +75,8 @@ class ExecutionEnv(object):
             return code
 
         else:
+            msg = "{} run report is not generated.".format(suite_name)
+            logger.info(colored(msg, "yellow", attrs=['reverse', 'blink']))
             return 0
 
     def __exit__(self, type, value, traceback):

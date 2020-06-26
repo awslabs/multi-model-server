@@ -76,12 +76,16 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
     """Collect test suites, run them and generate reports"""
 
     logger.info("Artifacts will be stored in directory %s", artifacts_dir)
+    test_dirs = get_sub_dirs(test_dir, exclude_list=[], include_pattern=pattern,
+                             exclude_pattern=exclude_pattern)
+    if not test_dirs:
+        logger.info("No test cases are collected...Existing.")
+        sys.exit(3)
+    else:
+        logger.info("Collected tests %s", test_dirs)
 
     with ExecutionEnv(MONITORING_AGENT, artifacts_dir, env_name, compare_local, monit) as prt:
         pre_command = 'export PYTHONPATH={}:$PYTHONPATH;'.format(os.path.join(str(ROOT_PATH), "agents"))
-        test_dirs = get_sub_dirs(test_dir, exclude_list=[], include_pattern=pattern,
-                                 exclude_pattern=exclude_pattern)
-        logger.info("Collected tests %s", test_dirs)
         for suite_name in tqdm(test_dirs, desc="Test Suites"):
             with Timer("Test suite {} execution time".format(suite_name)) as t:
                 suite_artifacts_dir = os.path.join(artifacts_dir, suite_name)

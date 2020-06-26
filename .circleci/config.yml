@@ -70,7 +70,7 @@ jobs:
             paths:
               - .
 
-    python_tests:
+    python-tests:
       parameters:
         executor:
           type: executor
@@ -84,7 +84,7 @@ jobs:
             name: Store python Test results
             path: htmlcov
 
-    api_tests:
+    api-tests:
       parameters:
         executor:
           type: executor
@@ -149,9 +149,9 @@ workflows:
         modelarchiver:
           name: modelarchiver-<< matrix.executor >>
           matrix: *matrix
-      - &python_tests
-        python_tests:
-          name: python_tests-<< matrix.executor >>
+      - &python-tests
+        python-tests:
+          name: python-tests-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix
@@ -159,18 +159,18 @@ workflows:
   nightly:
     triggers:
       - schedule:
-          cron: "05 13 26 06 *"
+          cron: "0 0 * * *"
           filters:
             branches:
               only:
-                - circleci-project
+                - master
     jobs:
       - *build
       - *modelarchiver
-      - *python_tests
-      - &api_tests
-        api_tests:
-          name: api_tests-<< matrix.executor >>
+      - *python-tests
+      - &api-tests
+        api-tests:
+          name: api-tests-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix
@@ -182,7 +182,7 @@ workflows:
           filters:
             branches:
               only:
-                - circleci-project
+                - master
     jobs:
       - *build
       - benchmark:

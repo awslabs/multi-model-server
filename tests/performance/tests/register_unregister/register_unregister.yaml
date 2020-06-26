@@ -2,8 +2,8 @@
 execution:
 - concurrency: 1
   ramp-up: 0s
-  hold-for: 5h
-#  iterations: 5
+#  hold-for: 5h
+  iterations: 5
   scenario: register_unregister
 
 scenarios:
@@ -28,38 +28,45 @@ services:
       - interval: 1s
         logging : True
         metrics:
-          - orphans
           - total_processes
           - sum_all_file_descriptors
           - frontend_memory_rss
+          - orphans
 
-#reporting:
-#- module: passfail
-#  criteria:
-#    # Inbuilt Criteria
-#    - success of RegisterModel<${REG_SUCC}, stop as failed
-#    - success of UnregisterModel<${UNREG_SUCC}, stop as failed
-#    - avg-rt of RegisterModel>${REG_RT}, stop as failed
-#    - avg-rt of UnregisterModel>${UNREG_RT}, stop as failed
-#    # Custom Criteria
+reporting:
+- module: passfail
+  criteria:
+    # Inbuilt Criteria
+    - success of RegisterModel<${REG_SUCC}, stop as failed
+    - success of UnregisterModel<${UNREG_SUCC}, stop as failed
+    - avg-rt of RegisterModel>${REG_RT}, stop as failed
+    - avg-rt of UnregisterModel>${UNREG_RT}, stop as failed
+    # Custom Criteria
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '>'
+      threshold: ${TOTAL_PROCS}
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_all_file_descriptors
+      condition: '>'
+      threshold: ${TOTAL_FDS}
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/orphans
+      condition: '>'
+      threshold: ${TOTAL_ORPHANS}
+      timeframe: 1s
+      stop : true
+      fail : true
 #    - class: bzt.modules.monitoring.MonitoringCriteria
-#      subject: ServerLocalClient/total_processes
+#      subject: ServerLocalClient/frontend_memory_rss
 #      condition: '>'
-#      threshold: ${TOTAL_PROCS}
+#      threshold: ${FRNTEND_MEM}
 #      timeframe: 5s
 #      stop : true
 #      fail : true
-#    - class: bzt.modules.monitoring.MonitoringCriteria
-#      subject: ServerLocalClient/sum_all_file_descriptors
-#      condition: '>'
-#      threshold: ${TOTAL_FDS}
-#      timeframe: 5s
-#      stop : true
-#      fail : true
-##    - class: bzt.modules.monitoring.MonitoringCriteria
-##      subject: ServerLocalClient/frontend_memory_rss
-##      condition: '>'
-##      threshold: ${FRNTEND_MEM}
-##      timeframe: 5s
-##      stop : true
-##      fail : true

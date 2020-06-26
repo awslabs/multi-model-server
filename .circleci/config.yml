@@ -118,24 +118,6 @@ jobs:
             path: /tmp/MMSBenchmark/out/latency/resnet-18/report/
             destination: benchmark-latency-resnet-18
 
-    performance_regression:
-      parameters:
-        executor:
-          type: executor
-      executor: << parameters.executor >>
-      steps:
-        - attach-mms-workspace
-        - install-mms-server
-        - run:
-            name: Start MMS, Execute performance regression testcases, Stop MMS
-            command: .circleci/scripts/linux_test_perf_regression.sh
-        - store_artifacts:
-            name: Store server logs
-            path: mms.log
-        - store_artifacts:
-            name: Store artifacts from performance regression run
-            path: /tmp/mms-performance-regression/
-
     modelarchiver:
       parameters:
         executor:
@@ -173,12 +155,6 @@ workflows:
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix
-      - &api_tests
-        api_tests:
-          name: api_tests-<< matrix.executor >>
-          requires:
-            - build-<< matrix.executor >>
-          matrix: *matrix
 
   nightly:
     triggers:
@@ -192,14 +168,24 @@ workflows:
       - *build
       - *modelarchiver
       - *python_tests
-      - *api_tests
-      - benchmark:
-          name: benchmark--<< matrix.executor >>
+      - &api_tests
+        api_tests:
+          name: api_tests-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix
-      - performance_regression:
-          name: performance_regression--<< matrix.executor >>
+
+  weekly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * 0"
+          filters:
+            branches:
+              only:
+                - circleci-project
+    jobs:
+      - benchmark:
+          name: benchmark--<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix

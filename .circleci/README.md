@@ -6,8 +6,9 @@ _config.yml_ contains MMS build logic which will be used by CircleCI.
 
 ## Workflows and Jobs
 Currently, following _workflows_ are available -
-- **smoke_python36**, **full_python36**
-- **smoke_python27**, **full_python27**
+1. smoke
+2. nightly
+3. weekly
 
 Following _jobs_ are executed under each workflow
 1. **build** - Builds _frontend/model-server.jar_ and executes tests from gradle
@@ -15,7 +16,6 @@ Following _jobs_ are executed under each workflow
 3. **python_tests** - Executes pytests from _mms/tests/unit_tests/_
 4. **benchmark** - Executes latency benchmark using resnet-18 model
 5. (NEW!) **api_tests** - Executes newman test suite for API testing
-6. (NEW!) **performance_regression** - Executes performance tests using taurus/jmeter 
 
 > Checkout _workflows_ and _jobs_ section in _config.yml_ for an up to date list 
 

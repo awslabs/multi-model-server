@@ -160,47 +160,47 @@ workflows:
       - &build
         build:
           name: build-<< matrix.executor >>
+          &matrix
           matrix:
             parameters:
               executor: ["py27", "py36"]
       - &modelarchiver
         modelarchiver:
           name: modelarchiver-<< matrix.executor >>
-          matrix:
-            parameters:
-              executor: ["py27", "py36"]
+          *matrix
       - &python_tests
         python_tests:
           name: python_tests-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
-          matrix:
-            parameters:
-              executor: ["py27", "py36"]
+          *matrix
       - &api_tests
         api_tests:
           name: api_tests-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
-          matrix:
-            parameters:
-              executor: ["py27", "py36"]
+          *matrix
 
   nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - circleci-project
     jobs:
       - *build
       - *modelarchiver
       - *python_tests
       - *api_tests
       - benchmark:
+          name: benchmark--<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
-          matrix:
-            parameters:
-              executor: ["py27", "py36"]
+          *matrix
       - performance_regression:
+          name: performance_regression--<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
-          matrix:
-            parameters:
-              executor: ["py27", "py36"]
+          *matrix

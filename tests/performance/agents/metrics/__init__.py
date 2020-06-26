@@ -15,7 +15,7 @@ from enum import Enum
 from statistics import mean
 
 import psutil
-from psutil import ZombieProcess
+from psutil import NoSuchProcess, ZombieProcess
 
 
 class ProcessType(Enum):
@@ -95,8 +95,8 @@ def get_metrics(server_process, child_processes, logger):
     logger.debug("children : {0}".format(",".join([str(c.pid) for c in children])))
 
     def update_metric(metric_name, proc_type, stats):
-        stats = stats if stats else [0]
         stats = list(filter(lambda x: isinstance(x, (float, int)), stats))
+        stats = stats if len(stats) else [0]
 
         if proc_type == ProcessType.WORKER:
             proc_name = 'workers'
@@ -117,12 +117,13 @@ def get_metrics(server_process, child_processes, logger):
     processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
     for child in children:
         try:
-            if psutil.pid_exists(child.pid) and WORKER_NAME in child.cmdline()[1]:
+            child_cmdline = child.cmdline()
+            if psutil.pid_exists(child.pid) and len(child_cmdline) >= 2 and WORKER_NAME in child_cmdline[1]:
                 processes_stats.append({'type': ProcessType.WORKER, 'stats': child.as_dict()})
             else:
                 reclaimed_pids.append(child)
                 logger.debug('child {0} no longer available'.format(child.pid))
-        except ZombieProcess:
+        except (NoSuchProcess, ZombieProcess):
             reclaimed_pids.append(child)
             logger.debug('child {0} no longer available'.format(child.pid))
 

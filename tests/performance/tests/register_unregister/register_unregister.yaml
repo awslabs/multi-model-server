@@ -2,6 +2,7 @@
 execution:
 - concurrency: 1
   ramp-up: 0s
+#  hold-for: 5h
   iterations: 5
   scenario: register_unregister
 
@@ -30,6 +31,7 @@ services:
           - total_processes
           - sum_all_file_descriptors
           - frontend_memory_rss
+          - orphans
 
 reporting:
 - module: passfail
@@ -52,6 +54,13 @@ reporting:
       condition: '>'
       threshold: ${TOTAL_FDS}
       timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/orphans
+      condition: '>'
+      threshold: ${TOTAL_ORPHANS}
+      timeframe: 1s
       stop : true
       fail : true
 #    - class: bzt.modules.monitoring.MonitoringCriteria

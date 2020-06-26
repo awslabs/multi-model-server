@@ -2,13 +2,13 @@ version: 2.1
 
 
 executors:
-  docker-python-3:
+  py36:
     docker:
       - image: prashantsail/mms-build:python3.6
     environment:
       _JAVA_OPTIONS: "-Xmx2048m"
 
-  docker-python-2:
+  py27:
     docker:
       - image: prashantsail/mms-build:python2.7
     environment:
@@ -155,79 +155,52 @@ jobs:
 workflows:
   version: 2
 
-  smoke_python36:
+  smoke:
     jobs:
-      - build:
-          executor: docker-python-3
-      - modelarchiver:
-          executor: docker-python-3
-      - python_tests:
-          executor: docker-python-3
+      - &build
+        build:
+          name: build-<< matrix.version >>
+          matrix:
+            parameters:
+              executor: ["py27", "py36"]
+      - &modelarchiver
+        modelarchiver:
+          name: modelarchiver-<< matrix.version >>
+          matrix:
+            parameters:
+              executor: ["py27", "py36"]
+      - &python_tests
+        python_tests:
+          name: python_tests-<< matrix.version >>
           requires:
-            - build
-      - api_tests:
-          executor: docker-python-3
+            - build-<< matrix.version >>
+          matrix:
+            parameters:
+              executor: ["py27", "py36"]
+      - &api_tests
+        api_tests:
+          name: api_tests-<< matrix.version >>
           requires:
-            - build
+            - build-<< matrix.version >>
+          matrix:
+            parameters:
+              executor: ["py27", "py36"]
 
-  full_python36:
+  nightly:
     jobs:
-      - build:
-          executor: docker-python-3
-      - modelarchiver:
-          executor: docker-python-3
-      - python_tests:
-          executor: docker-python-3
-          requires:
-            - build
-      - api_tests:
-          executor: docker-python-3
-          requires:
-            - build
+      - *build
+      - *modelarchiver
+      - *python_tests
+      - *api_tests
       - benchmark:
-          executor: docker-python-3
           requires:
-            - build
+            - build-<< matrix.version >>
+          matrix:
+            parameters:
+              executor: ["py27", "py36"]
       - performance_regression:
-          executor: docker-python-3
           requires:
-            - build
-
-
-  smoke_python27:
-    jobs:
-      - build:
-          executor: docker-python-2
-      - modelarchiver:
-          executor: docker-python-2
-      - python_tests:
-          executor: docker-python-2
-          requires:
-            - build
-      - api_tests:
-          executor: docker-python-2
-          requires:
-            - build
-
-  full_python27:
-    jobs:
-      - build:
-          executor: docker-python-2
-      - modelarchiver:
-          executor: docker-python-2
-      - python_tests:
-          executor: docker-python-2
-          requires:
-            - build
-      - api_tests:
-          executor: docker-python-2
-          requires:
-            - build
-      - benchmark:
-          executor: docker-python-2
-          requires:
-            - build
-      - performance_regression:
-          executor: docker-python-2
-          requires:
-            - build
+            - build-<< matrix.version >>
+          matrix:
+            parameters:
+              executor: ["py27", "py36"]

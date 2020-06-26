@@ -17,6 +17,7 @@ Convert the Taurus Test suite XML to Junit XML
 
 
 import os
+
 from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
 
 
@@ -37,7 +38,7 @@ class X2Junit(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        xunit_file = "{}/xunit.xml".format(self.artifacts_dir)
+        xunit_file = os.path.join(self.artifacts_dir, "xunit.xml")
         tests, failures, skipped, errors = 0, 0, 0, 0
         if os.path.exists(xunit_file):
             xml = JUnitXml.fromfile(xunit_file)

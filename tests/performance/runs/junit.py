@@ -22,34 +22,34 @@ from junitparser import JUnitXml
 header = ["suite_name", "test_case", "result", "message"]
 
 
-def genrate_junit_report(junit_xml, out_dir, report_name):
-    """This generates xml and hml report"""
+def generate_junit_report(junit_xml, out_dir, report_name):
     junit_xml.update_statistics()
-    junit_xml_path = '{}/{}.xml'.format(out_dir, report_name)
-    junit_html_path = '{}/{}.html'.format(out_dir, report_name)
+    junit_xml_path = os.path.join(out_dir, '{}.xml'.format(report_name))
+    junit_html_path = os.path.join(out_dir, '{}.html'.format(report_name))
     junit_xml.write(junit_xml_path)
 
-    #vjunit pip package is used here
+    # vjunit pip package is used here
     run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
 
 
 def junit2array(junit_xml):
+    """convert junit xml junitparser.JUnitXml object to 2d array """
     rows = [header]
     for i, suite in enumerate(junit_xml):
         for case in suite:
-            name = "scenario_{}: {}".format(i, case.name)
             result = case.result
-            rows.append(suite, name, result._tag, result.message)
+            tag, msg = (result._tag, result.message) if result else ("pass", "")
+            rows.append([suite.name, case.name, tag, msg])
 
     return rows
 
 
 def junit2tabulate(junit_xml):
+    """convert junit xml junitparser.JUnitXml object or a Junit xml to tabulate string """
     if not isinstance(junit_xml, JUnitXml):
         if os.path.exists(junit_xml):
             junit_xml = JUnitXml.fromfile(junit_xml)
         else:
             return tabulate.tabulate([[header]], headers='firstrow')
     data = junit2array(junit_xml)
-    return tabulate.tabulate(data, headers='firstrow')
-
+    return tabulate.tabulate(data, headers='firstrow', tablefmt="grid")

@@ -16,35 +16,35 @@ Compare artifacts between runs
 # pylint: disable=redefined-builtin, self-assigning-variable, broad-except
 
 
+import csv
 import glob
 import logging
-import csv
 import sys
 
 import pandas as pd
-
 from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
-from utils import Timer, get_sub_dirs
-from runs.junit import genrate_junit_report
+from runs.junit import generate_junit_report
 from runs.taurus import reader as taurus_reader
+
+from utils import Timer, get_sub_dirs
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
 
-def compare(store_obj):
+def compare(store):
     """Driver method to get comparison directory, do the comparison of it with current run directory
     and then store results
     """
-    compare_dir, compare_run_name = store_obj.get_dir_to_compare()
+    compare_dir, compare_run_name = store.get_dir_to_compare()
     result = True
     if compare_run_name:
-        result = compare_artifacts(store_obj.artifacts_dir, compare_dir, store_obj.artifacts_dir,
-                                   store_obj.current_run_name, compare_run_name)
+        result = compare_artifacts(store.artifacts_dir, compare_dir, store.artifacts_dir,
+                                   store.current_run_name, compare_run_name)
     else:
         logger.warning("The latest run not found for env.")
 
-    store_obj.store_results()
+    store.store_results()
     return result
 
 
@@ -136,7 +136,7 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
               "result", "message"]
     rows = [header]
 
-    junit_xml = JUnitXml()
+    reporter = JUnitXml()
     for sub_dir1 in sub_dirs_1:
         with Timer("Comparison test suite {} execution time".format(sub_dir1)) as t:
             comp_ts = CompareTestSuite(sub_dir1, run_name1 + " and " + run_name1, t)
@@ -175,9 +175,9 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
 
             comp_ts.ts.time = t.diff()
             comp_ts.ts.update_statistics()
-            junit_xml.add_testsuite(comp_ts.ts)
+            reporter.add_testsuite(comp_ts.ts)
 
-    genrate_junit_report(junit_xml, out_dir, "comparison_results")
+    generate_junit_report(reporter, out_dir, "comparison_results")
 
     out_path = "{}/comparison_results.csv".format(out_dir)
     logger.info("Writing comparison report to log file %s", out_path)

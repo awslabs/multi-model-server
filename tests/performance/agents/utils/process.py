@@ -69,4 +69,4 @@ def get_server_processes(server_process_pid):
 
 
 def get_server_pidfile(file):
-    return "{0}/.{1}".format(tempfile.gettempdir(), file)
+    return os.path.join(tempfile.gettempdir(), ".{}".format(file))

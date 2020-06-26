@@ -35,7 +35,7 @@ class Storage():
     """Class to store and retrieve artifacts"""
 
     def __init__(self, path, env_name):
-        self.artifacts_dir = os.path.dirname(path)
+        self.artifacts_dir = path
         self.current_run_name = os.path.basename(path)
         self.env_name = env_name
 

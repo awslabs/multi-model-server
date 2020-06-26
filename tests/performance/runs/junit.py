@@ -16,20 +16,32 @@ Start and stop monitoring server
 # pylint: disable=redefined-builtin
 
 import os
+import html
+import textwrap
 import tabulate
 from utils import run_process
 from junitparser import JUnitXml
+
 header = ["suite_name", "test_case", "result", "message"]
 
 
-def generate_junit_report(junit_xml, out_dir, report_name):
-    junit_xml.update_statistics()
-    junit_xml_path = os.path.join(out_dir, '{}.xml'.format(report_name))
-    junit_html_path = os.path.join(out_dir, '{}.html'.format(report_name))
-    junit_xml.write(junit_xml_path)
+class JunitConverter():
 
-    # vjunit pip package is used here
-    run_process("vjunit -f {} -o {}".format(junit_xml_path, junit_html_path))
+    def __init__(self, junit_xml, out_dir, report_name):
+        self.junit_xml = junit_xml
+        self.junit_xml_path = os.path.join(out_dir, '{}.xml'.format(report_name))
+        self.junit_html_path = os.path.join(out_dir, '{}.html'.format(report_name))
+
+    def generate_junit_report(self):
+        self.junit_xml.update_statistics()
+        self.junit_xml.write(self.junit_xml_path)
+        # vjunit pip package is used here
+        run_process("vjunit -f {} -o {}".format(self.junit_xml_path, self.junit_html_path))
+
+
+def unescape(data):
+    """Unsescape the html characters from the data"""
+    return html.unescape(html.unescape(data))
 
 
 def junit2array(junit_xml):
@@ -39,7 +51,8 @@ def junit2array(junit_xml):
         for case in suite:
             result = case.result
             tag, msg = (result._tag, result.message) if result else ("pass", "")
-            rows.append([suite.name, case.name, tag, msg])
+            msg = textwrap.fill(unescape(msg), width=50)
+            rows.append([suite.name, unescape(case.name), tag, msg])
 
     return rows
 

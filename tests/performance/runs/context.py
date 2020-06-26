@@ -20,11 +20,11 @@ import os
 import sys
 import time
 import webbrowser
+from termcolor import colored
 
 from junitparser import JUnitXml
-from runs.compare import compare
-from runs.junit import generate_junit_report, junit2tabulate
-from runs.storage import LocalStorage, S3Storage
+from runs.compare import CompareReportGenerator
+from runs.junit import JunitConverter, junit2tabulate
 
 from utils import run_process
 
@@ -42,9 +42,10 @@ class ExecutionEnv(object):
         self.artifacts_dir = artifacts_dir
         self.use = use
         self.env = env
-        self.storage = LocalStorage if local_run else S3Storage
+        self.local_run = local_run
         self.check_mms_server_status = check_mms_server_status
         self.reporter = JUnitXml()
+        self.compare_reporter_generator = CompareReportGenerator(self.artifacts_dir, self.env, self.local_run)
 
     def __enter__(self):
         if self.use:
@@ -60,36 +61,34 @@ class ExecutionEnv(object):
         return False
 
     @staticmethod
-    def report_summary(junit_xml, compare_result, artifacts_dir):
-        compare_status, exit_code = ('failed', 4) if not compare_result else ('passed', 0)
-        suite_status, exit_code = ('failed', 3) if junit_xml.errors or junit_xml.failures \
-                                                   or junit_xml.skipped else ('passed', 0)
+    def report_summary(reporter, suite_name):
+        status = reporter.junit_xml.errors or reporter.junit_xml.failures or reporter.junit_xml.skipped
+        status, code, color = ("failed", 3, "red") if status else ("passed", 0, "green")
 
-        logger.info("\n\nResult Summary:")
-        comparison_result_html = "{}/comparison_results.html".format(artifacts_dir)
-        comparison_result_xml = "{}/comparison_results.xml".format(artifacts_dir)
-        suite_result_html = "{}/performance_results.html".format(artifacts_dir)
-        if os.path.exists(comparison_result_html):
-            logger.info("Comparison with monitoring metrics of previous run has %s.", compare_status)
-            logger.info("Comparison test suite report - %s", comparison_result_html)
-            logger.info("Comparison test suite summary:")
-            print(junit2tabulate(comparison_result_xml))
+        if reporter and os.path.exists(reporter.junit_html_path):
+            msg = "{} run has {}.".format(suite_name, status)
+            logger.info(colored(msg, color, attrs=['reverse', 'blink']))
+            logger.info("%s report - %s", suite_name, reporter.junit_html_path)
+            logger.info("%s summary:", suite_name)
+            print(junit2tabulate(reporter.junit_xml))
+            ExecutionEnv.open_report(reporter.junit_html_path)
 
-        logger.info("Performance Regression Test suite run has %s.", suite_status)
-        logger.info("Performance Regression Test suite report - %s", suite_result_html)
-        logger.info("Comparison test suite summary:")
-        print(junit2tabulate(junit_xml))
-        ExecutionEnv.open_report(suite_result_html)
-
-        return exit_code
+        return code
 
     def __exit__(self, type, value, traceback):
         if self.use:
             stop_monitoring_server = "{} {} --stop".format(sys.executable, self.monitoring_agent)
             run_process(stop_monitoring_server)
 
-        generate_junit_report(self.reporter, self.artifacts_dir, 'performance_results')
-        compare_result = compare(self.storage(self.artifacts_dir, self.env))
+        junit_reporter = JunitConverter(self.reporter, self.artifacts_dir, 'performance_results')
+        junit_reporter.generate_junit_report()
+        junit_compare = self.compare_reporter_generator.gen()
+        junit_compare_reporter = None
+        if junit_compare:
+            junit_compare_reporter = JunitConverter(junit_compare, self.artifacts_dir, 'comparison_results')
+            junit_compare_reporter.generate_junit_report()
 
-        exit_code = ExecutionEnv.report_summary(self.reporter, compare_result, self.artifacts_dir)
-        sys.exit(exit_code)
+        compare_exit_code = ExecutionEnv.report_summary(junit_compare_reporter, "Comparison Test suite")
+        exit_code = ExecutionEnv.report_summary(junit_reporter, "Performance Regression Test suite")
+
+        sys.exit(0 if 0 == exit_code == compare_exit_code else 3)

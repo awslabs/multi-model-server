@@ -19,6 +19,7 @@ import argparse
 import logging
 import sys
 import tempfile
+import os
 
 from gevent import monkey
 from gevent import select
@@ -35,7 +36,7 @@ import configuration
 
 logger = logging.getLogger(__name__)
 TMP_DIR = tempfile.gettempdir()
-METRICS_MON_SERVER_PID_FILE = "{}/.metrics_monitoring_server.pid".format(TMP_DIR)
+METRICS_MON_SERVER_PID_FILE = os.path.join(TMP_DIR, ".metrics_monitoring_server.pid")
 PID_FILE = configuration.get('server', 'pid_file', 'model_server.pid')
 
 HOST = str(configuration.get('monitoring', 'HOST'))

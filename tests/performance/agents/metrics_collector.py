@@ -31,8 +31,8 @@ import configuration
 
 logger = logging.getLogger(__name__)
 TMP_DIR = tempfile.gettempdir()
-METRICS_LOG_FILE = "{}/server_metrics_{}.log".format(TMP_DIR, int(time.time()))
-METRICS_COLLECTOR_PID_FILE = "{}/.metrics_collector.pid".format(TMP_DIR)
+METRICS_LOG_FILE = os.path.join(TMP_DIR, "server_metrics_{}.log".format(int(time.time())))
+METRICS_COLLECTOR_PID_FILE = os.path.join(TMP_DIR, "metrics_collector.pid")
 PID_FILE = configuration.get('server', 'pid_file', 'model_server.pid')
 
 MONITOR_INTERVAL = 1

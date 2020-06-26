@@ -14,12 +14,13 @@
 Read configuration file
 """
 # pylint: disable=redefined-builtin, bare-except
+import os
 import configparser
 import pathlib
 
 config = configparser.ConfigParser()
 path = pathlib.Path(__file__).parent.absolute()
-config.read('{}/config.ini'.format(path))
+config.read(os.path.join(path, 'config.ini'))
 
 
 def get(section, key, default=''):

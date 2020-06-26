@@ -20,11 +20,12 @@ import csv
 import glob
 import logging
 import sys
+import os
 
 import pandas as pd
 from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
-from runs.junit import generate_junit_report
 from runs.taurus import reader as taurus_reader
+from runs.storage import LocalStorage, S3Storage
 
 from utils import Timer, get_sub_dirs
 
@@ -32,20 +33,32 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
 
-def compare(store):
-    """Driver method to get comparison directory, do the comparison of it with current run directory
-    and then store results
-    """
-    compare_dir, compare_run_name = store.get_dir_to_compare()
-    result = True
-    if compare_run_name:
-        result = compare_artifacts(store.artifacts_dir, compare_dir, store.artifacts_dir,
-                                   store.current_run_name, compare_run_name)
-    else:
-        logger.warning("The latest run not found for env.")
+class CompareReportGenerator():
 
-    store.store_results()
-    return result
+    def __init__(self, path, env_name, local_run):
+        self.artifacts_dir = path
+        self.current_run_name = os.path.basename(path)
+        self.env_name = env_name
+        storage_class = LocalStorage if local_run else S3Storage
+        self.storage = storage_class(self.artifacts_dir, self.env_name)
+        self.junit_reporter = None
+        self.pandas_result = None
+        self.pass_fail =  True
+
+    def gen(self):
+        """Driver method to get comparison directory, do the comparison of it with current run directory
+        and then store results
+        """
+        compare_dir, compare_run_name = self.storage.get_dir_to_compare()
+        if compare_run_name:
+            self.junit_reporter, self.pandas_result = compare_artifacts(self.storage.artifacts_dir, compare_dir,
+                                       self.storage.current_run_name, compare_run_name)
+            self.pandas_result.to_csv(os.path.join(self.artifacts_dir, "comparison_result.csv"))
+        else:
+            logger.warning("The latest run not found for env.")
+
+        self.storage.store_results()
+        return self.junit_reporter
 
 
 class CompareTestSuite():
@@ -72,15 +85,10 @@ class CompareTestSuite():
         setattr(self.ts, result_type[1], getattr(self.ts, result_type[1]) + 1)
 
 
-def get_log_files(sub_dir1, dir1, dir2):
+def get_log_file(dir, sub_dir):
     """Get metric monitoring log files"""
-    metrics_file1 = glob.glob("{}/{}/SAlogs_*".format(dir1, sub_dir1))
-    metrics_file2 = glob.glob("{}/{}/SAlogs_*".format(dir2, sub_dir1))
-    if not (metrics_file1 and metrics_file2):
-        metrics_file1 = glob.glob("{}/{}/local_*".format(dir1, sub_dir1))
-        metrics_file2 = glob.glob("{}/{}/local_*".format(dir2, sub_dir1))
-
-    return metrics_file1, metrics_file2
+    metrics_file = os.path.join(dir, sub_dir, "metrics.csv")
+    return metrics_file if os.path.exists(metrics_file) else None
 
 
 def get_aggregate_val(df, agg_func, col):
@@ -124,7 +132,7 @@ def compare_values(val1, val2, diff_percent, run_name1, run_name2):
     return diff, pass_fail, msg
 
 
-def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
+def compare_artifacts(dir1, dir2, run_name1, run_name2):
     """Compare artifacts from dir1 with di2 and store results in out_dir"""
 
     logger.info("Comparing artifacts from %s with %s", dir1, dir2)
@@ -132,8 +140,8 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
 
     over_all_pass = True
     aggregates = ["mean", "max", "min"]
-    header = ["run_name1", "run_name2", "test_suite", "metric", "run1", "run2", "percentage_diff", "expected_diff",
-              "result", "message"]
+    header = ["run_name1", "run_name2", "test_suite", "metric", "run1", "run2",
+              "percentage_diff", "expected_diff", "result", "message"]
     rows = [header]
 
     reporter = JUnitXml()
@@ -141,7 +149,7 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
         with Timer("Comparison test suite {} execution time".format(sub_dir1)) as t:
             comp_ts = CompareTestSuite(sub_dir1, run_name1 + " and " + run_name1, t)
 
-            metrics_file1, metrics_file2 = get_log_files(sub_dir1, dir1, dir2)
+            metrics_file1, metrics_file2 = get_log_file(dir1, sub_dir1), get_log_file(dir2, sub_dir1)
             if not (metrics_file1 and metrics_file2):
                 msg = "Metrics monitoring logs are not captured for {} in either " \
                       "of the runs.".format(sub_dir1)
@@ -151,8 +159,8 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
                 comp_ts.add_test_case("metrics_log_file_availability", msg, "skip")
                 continue
 
-            metrics_from_file1 = pd.read_csv(metrics_file1[0])
-            metrics_from_file2 = pd.read_csv(metrics_file2[0])
+            metrics_from_file1 = pd.read_csv(metrics_file1)
+            metrics_from_file2 = pd.read_csv(metrics_file2)
             metrics, diff_percents = taurus_reader.get_compare_metric_list(dir1, sub_dir1)
 
             for col, diff_percent in zip(metrics, diff_percents):
@@ -177,12 +185,6 @@ def compare_artifacts(dir1, dir2, out_dir, run_name1, run_name2):
             comp_ts.ts.update_statistics()
             reporter.add_testsuite(comp_ts.ts)
 
-    generate_junit_report(reporter, out_dir, "comparison_results")
+    dataframe = pd.DataFrame(rows[1:], columns=rows[0])
+    return reporter, dataframe
 
-    out_path = "{}/comparison_results.csv".format(out_dir)
-    logger.info("Writing comparison report to log file %s", out_path)
-    with open(out_path, 'w') as csvfile:
-        csv_writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        csv_writer.writerows(rows)
-
-    return over_all_pass

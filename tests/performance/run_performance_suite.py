@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 # Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
@@ -24,7 +24,7 @@ import time
 import click
 import pathlib
 from runs.context import ExecutionEnv
-from runs.taurus import get_taurus_options, x2junit, update_taurus_metric_log_header
+from runs.taurus import get_taurus_options, x2junit, update_taurus_metric_files
 from tqdm import tqdm
 
 from utils import run_process, Timer, get_sub_dirs
@@ -62,7 +62,7 @@ def validate_env(ctx, param, value):
 @click.option('-a', '--artifacts-dir', help='Directory to store artifacts.', type=click.Path(writable=True),
               callback=get_artifacts_dir)
 @click.option('-t', '--test-dir', help='Directory containing tests.', type=click.Path(exists=True),
-              default="{}/tests".format(ROOT_PATH))
+              default=os.path.join(ROOT_PATH, "tests"))
 @click.option('-p', '--pattern', help='Test case folder name glob pattern', default="*")
 @click.option('-x', '--exclude-pattern', help='Test case folder name glob pattern to exclude', default=None)
 @click.option('-j', '--jmeter-path', help='JMeter executable path.')
@@ -78,23 +78,23 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
     logger.info("Artifacts will be stored in directory %s", artifacts_dir)
 
     with ExecutionEnv(MONITORING_AGENT, artifacts_dir, env_name, compare_local, monit) as prt:
-        pre_command = 'export PYTHONPATH={}/agents:$PYTHONPATH; '.format(str(ROOT_PATH))
+        pre_command = 'export PYTHONPATH={}:$PYTHONPATH;'.format(os.path.join(str(ROOT_PATH), "agents"))
         test_dirs = get_sub_dirs(test_dir, exclude_list=[], include_pattern=pattern,
                                  exclude_pattern=exclude_pattern)
         logger.info("Collected tests %s", test_dirs)
         for suite_name in tqdm(test_dirs, desc="Test Suites"):
             with Timer("Test suite {} execution time".format(suite_name)) as t:
-                suite_artifacts_dir = "{}/{}".format(artifacts_dir, suite_name)
+                suite_artifacts_dir = os.path.join(artifacts_dir, suite_name)
                 options_str = get_taurus_options(suite_artifacts_dir, jmeter_path)
-                env_yaml_path = "{}/{}/environments/{}.yaml".format(test_dir, suite_name, env_name)
+                env_yaml_path = os.path.join(test_dir, suite_name, "environments", "{}.yaml".format(env_name))
                 env_yaml_path = "" if not os.path.exists(env_yaml_path) else env_yaml_path
-                test_file = "{0}/{1}/{1}.yaml".format(test_dir, suite_name)
+                test_file = os.path.join(test_dir, suite_name, "{}.yaml".format(suite_name))
                 with x2junit.X2Junit(suite_name, suite_artifacts_dir, prt.reporter, t, env_name) as s:
                     s.code, s.err = run_process("{} bzt {} {} {} {}".format(pre_command, options_str,
                                                                             test_file, env_yaml_path,
                                                                             GLOBAL_CONFIG_PATH))
 
-                    update_taurus_metric_log_header(suite_artifacts_dir, test_file)
+                    update_taurus_metric_files(suite_artifacts_dir, test_file)
 
 if __name__ == "__main__":
     run_test_suite()

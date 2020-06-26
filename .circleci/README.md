@@ -6,8 +6,8 @@ _config.yml_ contains MMS build logic which will be used by CircleCI.
 
 ## Workflows and Jobs
 Currently, following _workflows_ are available -
-1. **build_and_test_python27**
-2. **build_and_test_python36**
+- **smoke_python36**, **full_python36**
+- **smoke_python27**, **full_python27**
 
 Following _jobs_ are executed under each workflow
 1. **build** - Builds _frontend/model-server.jar_ and executes tests from gradle
@@ -47,8 +47,8 @@ Developers can use the following command to build MMS locally:
 **_./run_circleci_tests.py <workflow_name> <job_name>_**
 ```bash
 $ cd multi-model-server
-$ ./run_circleci_tests.py build_and_test_python27 python_tests
-$ ./run_circleci_tests.py build_and_test_python36 api_tests
+$ ./run_circleci_tests.py smoke_python27 python_tests
+$ ./run_circleci_tests.py full_python36 api_tests
 ```
 
 ###### Checklist

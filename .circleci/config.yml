@@ -160,26 +160,25 @@ workflows:
       - &build
         build:
           name: build-<< matrix.executor >>
-          &matrix
-          matrix:
+          matrix: &matrix
             parameters:
               executor: ["py27", "py36"]
       - &modelarchiver
         modelarchiver:
           name: modelarchiver-<< matrix.executor >>
-          *matrix
+          matrix: *matrix
       - &python_tests
         python_tests:
           name: python_tests-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
-          *matrix
+          matrix: *matrix
       - &api_tests
         api_tests:
           name: api_tests-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
-          *matrix
+          matrix: *matrix
 
   nightly:
     triggers:
@@ -198,9 +197,9 @@ workflows:
           name: benchmark--<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
-          *matrix
+          matrix: *matrix
       - performance_regression:
           name: performance_regression--<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
-          *matrix
+          matrix: *matrix

@@ -48,11 +48,14 @@ def junit2array(junit_xml):
     """convert junit xml junitparser.JUnitXml object to 2d array """
     rows = [header]
     for i, suite in enumerate(junit_xml):
-        for case in suite:
-            result = case.result
-            tag, msg = (result._tag, result.message) if result else ("pass", "")
-            msg = textwrap.fill(unescape(msg), width=50)
-            rows.append([suite.name, unescape(case.name), tag, msg])
+        if len(suite) == 0:
+            rows.append([suite.name, "", "skipped", "No metrics to compare"])
+        else:
+            for case in suite:
+                result = case.result
+                tag, msg = (result._tag, result.message) if result else ("passed", "")
+                msg = textwrap.fill(unescape(msg), width=50)
+                rows.append([suite.name, unescape(case.name), tag, msg])
 
     return rows
 

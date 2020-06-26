@@ -7,4 +7,5 @@ settings:
     UNREG_RT: 10ms
     TOTAL_PROCS : 1
     TOTAL_FDS : 66
+    TOTAL_ORPHANS : 0
     FRNTEND_MEM : 75000000 #75MB

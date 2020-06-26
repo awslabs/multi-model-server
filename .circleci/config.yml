@@ -184,8 +184,9 @@ workflows:
               only:
                 - circleci-project
     jobs:
+      - *build
       - benchmark:
-          name: benchmark--<< matrix.executor >>
+          name: benchmark-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix

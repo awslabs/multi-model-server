@@ -110,11 +110,14 @@ def get_metrics(server_process, child_processes, logger):
         for op_name in operators:
             result['{}_{}_{}'.format(op_name, proc_name, metric_name)] = operators[op_name](stats)
 
-    # as_dict() gets all stats in one shot
     processes_stats = []
     reclaimed_pids = []
 
-    processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
+    try:
+        # as_dict() gets all stats in one shot
+        processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
+    except:
+        pass
     for child in children:
         try:
             child_cmdline = child.cmdline()

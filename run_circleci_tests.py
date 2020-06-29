@@ -71,16 +71,15 @@ jobs_in_workflow = PROCESSED_CONFIG['workflows'][workflow]['jobs']
 def get_processed_job_sequence(processed_job_name):
     """ Recursively iterate over jobs in the workflow to generate an ordered list of parent jobs """
     jobs_in_sequence = []
-    for job_dict in jobs_in_workflow:
-        if isinstance(job_dict, str) and processed_job_name == job_dict:
-            # We have reached a root job (outter most parent), no further traversal
-            break
-        elif isinstance(job_dict, dict) and processed_job_name == list(job_dict)[0]:
-            # Find all parent jpbs, recurse to find their respective ancestors
-            parent_jobs = job_dict[processed_job_name].get('requires', [])
-            for pjob in parent_jobs:
-                jobs_in_sequence += get_processed_job_sequence(pjob)
-            break
+
+    job_dict = next((jd for jd in jobs_in_workflow \
+                    if isinstance(jd, dict) and processed_job_name == list(jd)[0]), None)
+    if job_dict:
+        # Find all parent jobs, recurse to find their respective ancestors
+        parent_jobs = job_dict[processed_job_name].get('requires', [])
+        for pjob in parent_jobs:
+            jobs_in_sequence += get_processed_job_sequence(pjob)
+
     return jobs_in_sequence + [processed_job_name]
 
 
@@ -96,7 +95,8 @@ def get_jobs_to_exec(job_name):
                 else list(j)[0], jobs_in_workflow)
             # Filter processed job names as per the executor
             # "job_name-executor_name" is a convention set in config.yml
-            jobs_dict[exectr_name] = filter(lambda j: exectr_name in j, jobs_dict[exectr_name])
+            jobs_dict[exectr_name] = filter(lambda j, exectr_name: exectr_name in j, \
+                                            jobs_dict[exectr_name])
         else:
             # The list might contain duplicate parent jobs due to multiple fan-ins like config
             #     - Remove the duplicates

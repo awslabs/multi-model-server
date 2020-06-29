@@ -95,8 +95,8 @@ def get_jobs_to_exec(job_name):
                 else list(j)[0], jobs_in_workflow)
             # Filter processed job names as per the executor
             # "job_name-executor_name" is a convention set in config.yml
-            jobs_dict[exectr_name] = filter(lambda j, exectr_name: exectr_name in j, \
-                                            jobs_dict[exectr_name])
+            # pylint: disable=cell-var-from-loop
+            jobs_dict[exectr_name] = filter(lambda j: exectr_name in j, jobs_dict[exectr_name])
         else:
             # The list might contain duplicate parent jobs due to multiple fan-ins like config
             #     - Remove the duplicates

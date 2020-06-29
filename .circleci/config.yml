@@ -59,9 +59,6 @@ jobs:
         - run:
             name: Build frontend
             command: .circleci/scripts/linux_build.sh
-        - run:
-            name: Optimize before moving to workspace
-            command: rm -rf .git  # Save disk space & time required for copy to\from workspace
         - store_artifacts:
             name: Store gradle testng results
             path: frontend/server/build/reports/tests/test

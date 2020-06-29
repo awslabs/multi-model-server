@@ -10,14 +10,18 @@ Currently, following _workflows_ are available -
 2. nightly
 3. weekly
 
-Following _jobs_ are executed under each workflow
+Following _jobs_ are executed under each workflow -
 1. **build** : Builds _frontend/model-server.jar_ and executes tests from gradle
 2. **modelarchiver** : Builds and tests modelarchiver module
 3. **python-tests** : Executes pytests from _mms/tests/unit_tests/_
 4. **benchmark** : Executes latency benchmark using resnet-18 model
 5. (NEW!) **api-tests** : Executes newman test suite for API testing
 
-> Please check the _workflows_ and _jobs_ section in _config.yml_ for an up to date list 
+Following _executors_ are available for job execution -
+1. py27
+2. py36
+
+> Please check the _workflows_, _jobs_ and _executors_ section in _config.yml_ for an up to date list
 
 ## scripts
 Instead of using inline commands inside _config.yml_, job steps are configured as shell scripts.  
@@ -44,7 +48,7 @@ To make it easy for developers to debug build issues locally, MMS supports Circl
 
 #### Command
 Developers can use the following command to build MMS locally:  
-**_./run_circleci_tests.py <workflow_name> <job_name>_**
+**_./run_circleci_tests.py <workflow_name> <job_name>-<executor_name>
 ```bash
 $ cd multi-model-server
 $ ./run_circleci_tests.py smoke python-tests-py27

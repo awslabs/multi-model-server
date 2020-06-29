@@ -48,11 +48,25 @@ To make it easy for developers to debug build issues locally, MMS supports Circl
 
 #### Command
 Developers can use the following command to build MMS locally:  
-**_./run_circleci_tests.py <workflow_name> <job_name>-<executor_name>
+**_./run_circleci_tests.py <workflow_name> -j <job_name> -e <executor_name>**
+
+- _workflow_name_  
+This is a madatory parameter
+
+- _-j, --job job_name_  
+If specified, executes only the specified job name (along with the required parents).  
+If not specified, all jobs in the workflow are executed sequentially.  
+
+- _-e, --executor executor_name_  
+If specified, job is executed only on the specified executor(docker image).  
+If not specified, job is executed on all the available executors.  
+
 ```bash
 $ cd multi-model-server
-$ ./run_circleci_tests.py smoke python-tests-py27
-$ ./run_circleci_tests.py nightly api-tests-py36
+$ ./run_circleci_tests.py smoke
+$ ./run_circleci_tests.py smoke -j modelarchiver
+$ ./run_circleci_tests.py smoke -e py36
+$ ./run_circleci_tests.py smoke -j modelarchiver -e py36
 ```
 
 ###### Checklist

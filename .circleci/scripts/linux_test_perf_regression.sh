@@ -23,7 +23,7 @@ pip install -r requirements.txt
 pip install bzt
 
 # Execute performance test suite and store exit code
-./run_performance_suite.py -e xlarge -p health_check.yaml
+./run_performance_suite.py -e xlarge -p health_check
 EXIT_CODE=$?
 
 # Stop server

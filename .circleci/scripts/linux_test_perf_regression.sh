@@ -2,7 +2,7 @@
 
 ARTIFACTS_DIR='run_artifacts'
 RESULT_DIR=$ARTIFACTS_DIR'/report/performance/'
-#JMETER_PATH='/opt/apache-jmeter-5.3/bin/jmeter'
+JMETER_PATH='/opt/apache-jmeter-5.3/bin/jmeter'
 
 # Start MMS server
 #multi-model-server --start >> mms.log 2>&1
@@ -23,7 +23,7 @@ pip install -r requirements.txt
 pip install bzt
 
 # Execute performance test suite and store exit code
-./run_performance_suite.py -e xlarge -p health_check
+./run_performance_suite.py -j $JMETER_PATH -e xlarge
 EXIT_CODE=$?
 
 # Stop server

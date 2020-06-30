@@ -218,7 +218,7 @@ workflows:
 #          requires:
 #            - build-<< matrix.executor >>
 #          matrix: *matrix
-      - performance_regression:
+      - performance-regression:
           name: performance-regression-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>

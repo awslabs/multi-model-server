@@ -202,7 +202,17 @@ workflows:
 #              only:
 #                - master
     jobs:
-      - *build
+#      - *build
+
+########## Remove after dev #################
+      - build:
+          name: build-<< matrix.executor >>
+          matrix: &matrix
+            parameters:
+              executor: ["py36"]
+#              executor: ["py27", "py36"]
+##############################################
+
 #      - benchmark:
 #          name: benchmark-<< matrix.executor >>
 #          requires:

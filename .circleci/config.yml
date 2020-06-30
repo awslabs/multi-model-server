@@ -128,13 +128,13 @@ jobs:
             command: .circleci/scripts/linux_test_perf_regression.sh
         - store_artifacts:
             name: Store server logs
-            path: mms.log
+            path: tests/performance/logs/
         - store_artifacts:
             name: Store artifacts from performance regression run
-            path: /tmp/mms-performance-regression/
+            path: tests/performance/run_artifacts/
         - store_test_results:
             name: Store Taurus test results
-            path: /tmp/mms-performance-regression/report/
+            path: tests/performance/run_artifacts/report/
 
     modelarchiver:
       parameters:

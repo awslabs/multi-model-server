@@ -15,7 +15,7 @@ PY_MAJOR_VER=$(python -c 'import sys; major = sys.version_info.major; print(majo
 if [ $PY_MAJOR_VER -eq 2 ]; then
   # Hack to use python 3.6.5 for bzt installation and execution
   export PATH="/root/.pyenv/bin:/root/.pyenv/shims:$PATH"
-  pyenv local 3.6.5
+  pyenv local 3.6.5 system
 fi
 
 # Install dependencies

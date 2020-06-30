@@ -209,7 +209,7 @@ workflows:
           name: build-<< matrix.executor >>
           matrix: &matrix
             parameters:
-              executor: ["py36"]
+              executor: ["py27"]
 #              executor: ["py27", "py36"]
 ##############################################
 

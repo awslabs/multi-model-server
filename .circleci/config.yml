@@ -115,7 +115,7 @@ jobs:
             path: /tmp/MMSBenchmark/out/latency/resnet-18/report/
             destination: benchmark-latency-resnet-18
 
-    performance_regression:
+    performance-regression:
       parameters:
         executor:
           type: executor
@@ -219,7 +219,7 @@ workflows:
 #            - build-<< matrix.executor >>
 #          matrix: *matrix
       - performance_regression:
-          name: benchmark-<< matrix.executor >>
+          name: performance-regression-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix

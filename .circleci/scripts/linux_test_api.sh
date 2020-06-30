@@ -1,11 +1,11 @@
 #!/bin/bash
 
-MODEL_STORE_DIR='test/model_store'
+MODEL_STORE_DIR='tests/api/model_store'
 
 MMS_LOG_FILE_MANAGEMENT='mms_management.log'
 MMS_LOG_FILE_INFERENCE='mms_inference.log'
 MMS_LOG_FILE_HTTPS='mms_https.log'
-MMS_CONFIG_FILE_HTTPS='test/resources/config.properties'
+MMS_CONFIG_FILE_HTTPS='tests/api/resources/config.properties'
 
 POSTMAN_ENV_FILE='tests/api/postman/environment.json'
 POSTMAN_COLLECTION_MANAGEMENT='tests/api/postman/management_api_test_collection.json'
@@ -13,9 +13,9 @@ POSTMAN_COLLECTION_INFERENCE='tests/api/postman/inference_api_test_collection.js
 POSTMAN_COLLECTION_HTTPS='tests/api/postman/https_test_collection.json'
 POSTMAN_DATA_FILE_INFERENCE='tests/api/postman/inference_data.json'
 
-REPORT_FILE_MANAGEMENT='test/management-api-report.html'
-REPORT_FILE_INFERENCE='test/inference-api-report.html'
-REPORT_FILE_HTTPS='test/https-api-report.html'
+REPORT_FILE_MANAGEMENT='tests/api/management-api-report.html'
+REPORT_FILE_INFERENCE='tests/api/inference-api-report.html'
+REPORT_FILE_HTTPS='tests/api/https-api-report.html'
 
 start_mms_server() {
   multi-model-server --start --model-store $1 >> $2 2>&1

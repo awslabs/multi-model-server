@@ -23,7 +23,7 @@ pip install -r requirements.txt
 pip install bzt
 
 # Execute performance test suite and store exit code
-./run_performance_suite.py -j $JMETER_PATH -e xlarge
+./run_performance_suite.py -j $JMETER_PATH -e xlarge --no-compare-local
 EXIT_CODE=$?
 
 # Stop server

@@ -2,13 +2,13 @@ version: 2.1
 
 
 executors:
-  docker-python-3:
+  py36:
     docker:
       - image: prashantsail/mms-build:python3.6
     environment:
       _JAVA_OPTIONS: "-Xmx2048m"
 
-  docker-python-2:
+  py27:
     docker:
       - image: prashantsail/mms-build:python2.7
     environment:
@@ -59,9 +59,6 @@ jobs:
         - run:
             name: Build frontend
             command: .circleci/scripts/linux_build.sh
-#        - run:
-#            name: Optimize before moving to workspace
-#            command: rm -rf .git  # Save disk space & time required for copy to\from workspace
         - store_artifacts:
             name: Store gradle testng results
             path: frontend/server/build/reports/tests/test
@@ -70,7 +67,7 @@ jobs:
             paths:
               - .
 
-    python_tests:
+    python-tests:
       parameters:
         executor:
           type: executor
@@ -84,7 +81,7 @@ jobs:
             name: Store python Test results
             path: htmlcov
 
-    api_tests:
+    api-tests:
       parameters:
         executor:
           type: executor
@@ -157,48 +154,57 @@ jobs:
 
 workflows:
   version: 2
-  build_and_test_python36:
-    jobs:
-      - build:
-          executor: docker-python-3
-#      - modelarchiver:
-#          executor: docker-python-3
-#      - python_tests:
-#          executor: docker-python-3
-#          requires:
-#            - build
-#      - api_tests:
-#          executor: docker-python-3
-#          requires:
-#            - build
-#      - benchmark:
-#          executor: docker-python-3
-#          requires:
-#            - build
-      - performance_regression:
-          executor: docker-python-3
-          requires:
-            - build
 
-#  build_and_test_python27:
-#    jobs:
-#      - build:
-#          executor: docker-python-2
-#      - modelarchiver:
-#          executor: docker-python-2
-#      - python_tests:
-#          executor: docker-python-2
-#          requires:
-#            - build
-#      - api_tests:
-#          executor: docker-python-2
-#          requires:
-#            - build
-#      - benchmark:
-#          executor: docker-python-2
-#          requires:
-#            - build
-#      - performance_regression:
-#          executor: docker-python-2
-#          requires:
-#            - build
+  smoke:
+    jobs:
+      - &build
+        build:
+          name: build-<< matrix.executor >>
+          matrix: &matrix
+            parameters:
+              executor: ["py27", "py36"]
+      - &modelarchiver
+        modelarchiver:
+          name: modelarchiver-<< matrix.executor >>
+          matrix: *matrix
+      - &python-tests
+        python-tests:
+          name: python-tests-<< matrix.executor >>
+          requires:
+            - build-<< matrix.executor >>
+          matrix: *matrix
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - *build
+      - *modelarchiver
+      - *python-tests
+      - &api-tests
+        api-tests:
+          name: api-tests-<< matrix.executor >>
+          requires:
+            - build-<< matrix.executor >>
+          matrix: *matrix
+
+  weekly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * 0"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - *build
+      - benchmark:
+          name: benchmark-<< matrix.executor >>
+          requires:
+            - build-<< matrix.executor >>
+          matrix: *matrix

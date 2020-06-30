@@ -1,76 +1,129 @@
 # Performance Regression Suite
 
-This test suite helps in running the load tests and monitoring the process and system wide metrics. It allows to specify the pass/fail criteria for metrics in the test case.
-We use Taurus with JMeter as a test automation framework to run the test cases and metrics monitoring.
+## Motivation
+The goal of this test suite is to ensure that performance regressions are detected early on. Ideally, with every commit 
+made into the source control system. 
 
-## How to run the test suite
-To run the test suite you need to execute the [run_performance_suite.py](run_performance_suite.py). You will have to provide the artifacts-dir path to store the test case results.
-You can specify test cases to be run by providing 'test-dir' with default as '$MMS_HOME/tests/performance/tests' and 'pattern' with default as '*.yaml'. For other options use '--help' option.   
+The salient features of the performance regression suite are
 
-Script does the following:  
-1. Optionally but by default starts the metrics monitoring server
-2. Collects all the test yamls from test-dir satisfying the pattern
-3. Executes test yamls
-4. Generates Junit XML and HTML report in artifacts-dir.  
+* Non-intrusive - Does not need any code-changes or instrumentation on the server being monitored. 
+* It can be used to monitor a wide variety of server metrics - memory, cpu, io - in addition to 
+traditional API level metrics such as latency, throughput etc. 
+* It is easy to add custom metrics. For example, in MMS server, `the number of workers spawned` would be an interesting 
+metric to track. The platform allows for easy addition of these metrics.
+* Test cases are specified in human readable yaml files. Every test case has a pass or fail status. This is determined 
+by evaluating expressions specified in the test case. Every expression checks metrics against threshold values. For 
+example, `memory consumed by all workers < 500M`, `number of worker processes < 3`.
+* Test cases execute against compute environments. The threshold values are specific to the compute environment. It is
+possible to specify multiple compute environments against which the test cases will run. It follows that each compute 
+environment, will have its own threshold values.
+* This suite leverages the open source [Taurus framework](https://gettaurus.org/). 
+* This suite extends the Taurus framework in the following ways
+   * Adds resource monitoring service. This allows MMS specific metrics to be added. 
+   * Environments as described earlier.
+   * Specification of pass/fail criterion between two commits. For example, memory consumed by workers should not 
+   increase by more than 10% between two commits for the given test case.
+   * Custom reporting of results.
+   
+The building blocks of the performance regression suite and flow is captured in the following drawing
 
-### A. Installation Prerequisites
-1. Install Taurus. The Taurus needs Python3 but since your tests and MMS instance can run in different virtual environement or machine, 
-you can configure system such that tests are running on Python3 and MMS instance can run on Python 2 or 3.  
-Refer the [link](https://gettaurus.org/docs/Installation/) for more details on installation.
+![](assets/blocks.png) 
+
+## Quickstart
+
+### A. Installation
+1. Install Taurus. Refer the [link](https://gettaurus.org/docs/Installation/) for more details on installation.
    ```bash   
     pip install bzt # Needs python3.6+
     ``` 
-2. Install other dependencies.
+2. Install performance regression suite dependencies.
    ```bash 
     export MMS_HOME=<MMS_HOME_PATH>
     pip install -r $MMS_HOME/tests/performance/requirements.txt
     ``` 
-3. Make sure that `git` is installed and the test suites are run from the MMS working directory. This is used to compare performance regresssions across runs and the run artifacts are stored in a folder which have the commit SHA.
+3. Make sure that `git` is installed and the test suites are run from the MMS working directory.
 
 ### B. Running the test suite
-1. Run MMS server
-2. Make sure parameters set in the [tests/common/global_config.yaml](tests/common/global_config.yaml) are correct.
-3. Run the test suite runner script
-4. Check the console logs, $artifacts-dir$/<run-dir>/junit.html report, comparison.csv and other artifacts.
+1. Make sure parameters set in [tests/common/global_config.yaml](tests/performance/tests/global_config.yaml) are correct.
+2. To run the test suite execute [run_performance_suite.py](run_performance_suite.py) with the following 
+parameters
 
-    **Steps are provided below**
-    ```bash
-    export MMS_HOME=<MMS_HOME_PATH>
-    cd $MMS_HOME/tests/performance
-    
-    # Run the command below in different terminal to start MMS
-    # multi-model-server --start 
-    
-    # check variables
-    # vi tests/common/global_config.yaml 
-    # jpeg download command for quick reference. Set input_filepath in global_config.yaml
-    # curl -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg
-    
-    python -m run_performance_suite --artifacts-dir='<path>' --pattern='*criteria*.yaml'
-    ```
+   * `--artifacts-dir` or `-a` is a directory where the test case results will be stored. The default value is 
+`$MMS_HOME/tests/performance/run_artifacts`.  
+
+   * `--test-dir` or `-t` is a directory containing the test cases. The default value is 
+`$MMS_HOME/tests/performance/tests`.
+ 
+   * `--pattern` or `-p` glob pattern picks up certain test cases for execution within the `test-dir`. The default value picks up 
+all test cases.
+ 
+    * `--exclude-pattern` or `-x` glob pattern excludes certain test cases for execution within the `test-dir`. 
+The default value excludes nothing.
+ 
+   * `--env-name` or `-e` specifies the environment name to use while running the test cases. The environment name is the name of 
+the file (minus the extension) found inside the environments folder in each test case. They encapsulate parameter 
+values which are specific to the execution environment. This is a mandatory parameter.   
+
+   The script does the following:  
+   1. Starts the metrics monitoring server.
+   2. Collects all the tests from test-dir satisfying the pattern
+   3. Executes the tests
+   4. Generates artifacts in the artifacts-dir against each test case.  
+
+3. Check the console logs, $artifacts-dir$/<run-dir>/performance_results.html report, comparison.csv, comparison.html 
+and other artifacts.
+
+**Steps are provided below**
+
+```bash
+export MMS_HOME=<MMS_HOME_PATH>
+cd $MMS_HOME/tests/performance
+ 
+# Note that MMS server started and stopped by the individual test suite.
+# check variables such as MMS server PORT etc 
+# vi tests/common/global_config.yaml 
+
+#all tests
+python -m run_performance_suite -e xlarge
+
+#run a specific test 
+python -m run_performance_suite -e xlarge -p inference_single_worker
+
+```
 
 ### C. Understanding the test suite artifacts and reports
-1. The $artifacts-dir$/<run-dir>/junit.html contains the summary report of the test run. Note that each test yaml is treated as a 
-test suite. Different criteria in the yaml are treated as test cases. If criteria is not specified in the yaml, test suite is marked as skipped with 0 test cases.
-2. For each test yaml a sub-directory is created with artifacts for it.  
-3. The comparison.csv contains diff for monitoring metrics between an ongoing run and a previous run which was ran for same MMS server. 
+1. The $artifacts-dir$/<run-dir>/performance_results.html is a summary report of the test run. 
+2. Each test yaml is treated as a test suite. Each criteria in the test suite is treated as a test case. 
+If the test suite does not specify any criteria, then the test suite is reported as skipped with 0 test cases.
+3. For each test suite, a sub-directory is created containing relevant run artifacts. Important files in this directory are
+   * metrics.csv -- contains the values of the various system-monitored metrics over time
+   * finals_stats.csv -- contains the values of the various api metrics over time  
+4. The $artifacts-dir$/<run-dir>/comparison_results.html is a summary report which shows performance difference between
+the last two commits.
+5. The run completes with a console summary of the performance and comparision suites which have failed
+![](assets/console.png) 
 
+## Add a new test
 
-## How to add test case to test suite.
+Follow these three steps to add a new test case to the test suite.
 
-To add test case follow steps below.
-1. Add scenario
+1. Add scenario (a.k.a test suite)
 2. Add metrics to monitor
-3. Add pass/fail criteria
+3. Add pass/fail criteria (a.k.a test case)
 
 
-#### 1. Add scenario
-You can specify the test scenarios, in the scenario section of the yaml.
-To get you started quickly, we have provided a sample JMeter script and a Taurus yaml file [here](tests/register_and_inference.jmx) and [here](tests/call_jmx.yaml) .
+#### 1. Add scenario (a.k.a test suite)
+Create a folder for the test under `test_dir` location. A test generally comprises of a jmeter file - containing the 
+load scenario and a yaml file which contains test scenarios specifying the conditions for failure or success. The
+file-names should be identical to the folder name with their respective extensions. 
+
+An example [jmeter script](tests/examples_starter/examples_starter.jmx) 
+and a [scenario](tests/examples_starter/examples_starter.yaml) is provided as a template to get started.
     
-Here is how the sample call_jmx.yaml looks like. Note variables used by jmx script are specified in [tests/common/global_config.yaml](tests/common/global_config.yaml) file.
+Please note that various global configuration settings used by examples_starter.jmx script are specified in 
+[tests/global_config.yaml](tests/performance/tests/global_config.yaml) file.
     
- ```yaml
+ ```tests/examples_starter/examples_starter.yaml
  execution:
  - concurrency: 1
    ramp-up: 1s
@@ -79,50 +132,47 @@ Here is how the sample call_jmx.yaml looks like. Note variables used by jmx scri
 
  scenarios:
    Inference:
-     script: register_and_inference.jmx
+     script: examples_starter.jmx
 
  ```
     
-To run this individual test using Taurus(bzt) run commands below:
+To execute this test suite, run the following command
     
  ```bash
  export MMS_HOME=<MMS_HOME_PATH>
  cd $MMS_HOME/tests/performance
- python -m run_performance_suite -p call_jmx.yaml
+ python -m run_performance_suite -p examples_starter -e xlarge
  ```
 
 **Note**:
-Taurus provides support for different executors such as JMeter. You can use test script written in those frameworks as it is.
-Details about executor types are provided [here](https://gettaurus.org/docs/ExecutionSettings/).
-Details about how to run an existing JMeter script are provided [here](https://gettaurus.org/docs/JMeter/). 
+Taurus provides support for different executors such as JMeter. Supported executor types can be found [here](https://gettaurus.org/docs/ExecutionSettings/).
+Details about how to use an existing JMeter script are provided [here](https://gettaurus.org/docs/JMeter/). 
 
 
 #### 2. Add metrics to monitor
-You can specify different metrics in services/monitoring section of the yaml.
-Metrics can be monitored in two ways:
+Specify the metrics of interest in the services/monitoring section of the yaml.
+
 1. Standalone monitoring server
 
-    If your MMS server is hosted on different machine, you will be using this method. Before running the test case
-    you have to start a [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will be communicating with Taurus test client over sockets.
-    The address and port(default=9009) of the monitoring script should be specified in test case yaml. 
-      
-    **Note**: While running Test suite runner script, no need to manually start the monitoring server. The scripts optionally but by default starts and stops it in setup and teardown.
+   Use this technique if MMS and the tests execute on different machines. Before running the test cases, 
+   please start the [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will communicate server 
+   metric data with the test client over sockets. The monitoring server runs on port 9009 by default.
     
-    To start monitoring server run commands below:
+   To start the monitoring server, run the following commands on the MMS host:
     ```bash 
     export MMS_HOME=<MMS_HOME_PATH>
     pip install -r $MMS_HOME/tests/performance/requirements.txt
     python $MMS_HOME/tests/performance/metrics_monitoring_server.py --start
     ```     
-   
-    Sample yaml with monitoring section config. Complete yaml can be found [here](tests/inference_server_monitoring.yaml)
+      
+   The monitoring section configuration is shown below. 
     
     ```yaml
     services:
       - module: monitoring
         server-agent:
-          - address: localhost:9009 # metric monitoring service address
-            label: mms-inference-server  # if you specify label, it will be used in reports instead of ip:port
+          - address: <mms-host>:9009 # metric monitoring service address
+            label: mms-inference-server  # Specified label will be used in reports instead of ip:port
             interval: 1s    # polling interval
             logging: True # those logs will be saved to "SAlogs_192.168.0.1_9009.csv" in the artifacts dir
             metrics: # metrics should be supported by monitoring service
@@ -131,32 +181,20 @@ Metrics can be monitored in two ways:
               - sum_num_handles
               - server_workers # no of mms workers
     ```
+   The complete yaml can be found [here](tests/examples_remote_monitoring/examples_remote_monitoring.yaml)
     
-    Use the command below to run the test yaml.
+   Use the command below to run the test suite.
     
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    python -m run_performance_suite -p inference_server_monitoring.yaml
+    python -m run_performance_suite -p examples_remote_monitoring -e xlarge
     ```
 
+2. Local monitoring plugin
 
-2. Taurus local monitoring plugin
-
-    If your test client is running on the server itself, you may want to use this method.
-    We have provided a custom Taurus plugin as [metrics_monitoring_taurus.py](metrics_monitoring_taurus.py). 
-    
-    **Note**: To know the list of supported/available metrics check [here](metrics_monitoring_taurus.py)  
-    **Note**: While running Test suite runner script, no need to manually update the PYTHONPATH. The scripts updates it.
-    
-    Use commands below to update PYTHONPATH so that plugin gets picked up by Taurus.
-    
-    ```bash
-     export MMS_HOME=<MMS_HOME_PATH>
-     export PYTHONPATH=$MMS_HOME/tests/performance:$PYTHONPATH
-    ```
-    
-    Relevant test yaml sections. Test yaml can be found [here](tests/inference_taurus_local_monitoring.yaml)
+   Use this technique if both MMS and the tests run on the same host.   
+   The monitoring section configuration is shown below.
     
     ```yaml
     modules:
@@ -175,108 +213,113 @@ Metrics can be monitored in two ways:
           - sum_memory_percent
     
     ```
-
-    Use command below to run the test yaml
+   The complete yaml can be found [here](tests/examples_local_monitoring/examples_local_monitoring.yaml).
+    
+   Use the command below to run the test suite.
     
     ```bash
     export MMS_HOME=<MMS_HOME_PATH>
     cd $MMS_HOME/tests/performance
-    python -m run_performance_suite -p inference_taurus_local_monitoring.yaml
+    python -m run_performance_suite -p examples_local_monitoring -e xlarge
     ```
 
-#### 3.1 Add pass/fail criteria
-You can specify the pass/fail criteria for the test cases.
-Read more about it [here](https://gettaurus.org/docs/PassFail/)
+#### 3. Add pass/fail criteria (a.k.a test case)
 
-Relevant test yaml section:
-```yaml
-reporting:
-- module: passfail
-  criteria:
-  - class: bzt.modules.monitoring.MonitoringCriteria
-    subject: mms-inference-server/sum_num_handles
-    condition: '>'
-    threshold: 180
-    timeframe: 1s
-    fail: true
-    stop: true
-    diff_percent : 30
+1. **Specify the pass/fail criteria**. Each pass-fail criterion maps to a test case in the generated report. We leverage the
+pass-fail module from Taurus to achieve this functionality. More details can be found [here](https://gettaurus.org/docs/PassFail/).
 
-```
+   A sample criterion is shown below
 
-#### 3.2 Add pass/fail criteria with previous run
-On completion, the test suite runner script compares the monitoring metrics with values from a previous run which was executed on same environment. 
-Note that at least one test suite run on the same environment should have happened in order to do the comparison. The run results are stored in either a local folder or a S3 bucket based on the `compare-local` option
-Metrics which have 'diff_percent' value specified in the pass/fail criterion are used for comparision with the previous run. See pass/fail criteria [section](#3-add-passfail-criteria)
-Below are different options used by run_performance_suite script for coparison.
-1. **artifacts-dir**:
-This is an optional parameter. The default is './run_artifacts' directory.
-A sub directory with '{env_name}_{git_commit_id}_{timestamp}' gets created in the artifacts dir.
-2. **env-name**:
-This is an optional parameter. The default is current hostname. This should be unique it is used while doing comparison between runs.
-Comparison should happen between the runs of same environment.
-3. **compare-local/no-compare-local**:
-This is an optional parameter. The default is compare-local. If `compare-local` is set,  previous run results from the local `artifacts-dir` folder will be used used. 
-`experimental` If no-compare-local is set,  previous run results from the public S3 bucket will be used. `no-compare-local is currently experimental`
+    ```yaml
+    reporting:
+    - module: passfail
+      criteria:
+      - class: bzt.modules.monitoring.MonitoringCriteria
+        subject: mms-inference-server/sum_num_handles
+        condition: '>'
+        threshold: 180
+        timeframe: 1s
+        fail: true
+        stop: true
+    
+    ```
 
-```yaml
-reporting:
-- module: passfail
-  criteria:
-  - class: bzt.modules.monitoring.MonitoringCriteria
-    subject: mms-inference-server/sum_num_handles
-    condition: '>'
-    threshold: 180
-    timeframe: 1s
-    fail: true
-    stop: true
-    diff_percent : 30
+2. Specify the pass/fail criterion vis-a-vis a prior run. On completion, the test suite runner script compares the 
+monitoring metrics with values from a previous run which was executed on same environment. The run results are stored 
+in either a local folder or a S3 bucket based on the `compare-local` option. Metrics which have 'diff_percent' value 
+specified in the pass/fail criterion are used for comparison with the previous run. 
 
-```
+   A sample criterion is shown below
+    ```yaml
+    reporting:
+    - module: passfail
+      criteria:
+      - class: bzt.modules.monitoring.MonitoringCriteria
+        subject: mms-inference-server/sum_num_handles
+        condition: '>'
+        threshold: 180
+        timeframe: 1s
+        fail: true
+        stop: true
+        diff_percent : 30
+    
+    ```
+    Note that 
+    1. At least one test suite run on the same environment should have happened in order to do the comparison.
+    2. The $artifacts-dir$/<run-dir>/comparison_results.html is a summary report which shows performance difference 
+    between the last two commits.
+    3. The test case fails if the diff_percent is greater than the specified value across runs.
 
-#### 3.3 Metrics that you can use for passfail criteria  
-  **System Metrics**
-  > disk_used, memory_percent, read_count, write_count, read_bytes, write_byte
-
-  | Syntax | Examples |
-  | ------ | -------- |
-  | system_{metricname} | system_disk_used, system_memory_percent, system_write_count |
-
-
-  **Process Metrics**
-  > cpu_percent, memory_percent, cpu_user_time, cpu_system_time, cpu_iowait_time, memory_rss, memory_vms, io_read_count, io_write_count, io_read_bytes, io_write_bytes, file_descriptors, threads
-
-  - Frontend  
-    It is a single java process
-
-    | Syntax | Examples |
-    | ------ | -------- |
-    | frontend_{metricname} | frontend_cpu_percent, frontend_memory_percent, frontend_cpu_iowait_time, frontend_memory_rss, frontend_io_write_bytes, frontend_threads |
-
-  - Workers  
-    These are python processes. MMS can have more than one worker  
-    Metrics for worker(s) are always available with an aggregate  
-    > Aggregates  
-    > sum, avg, min, max
-
-    | Syntax | Examples |
-    | ------ | -------- |
-    | {aggregate}\_workers\_{metricname} | total_workers, sum_workers_memory_percent, avg_workers_iowait_time, min_workers_io_write_bytes, max_workers_threads |
-
-  - All (Frontend + Workers)  
-    We can also aggregate metrics for both frontend and worker processes together
+3. Metrics available for pass-fail criteria  
   
-    | Syntax | Examples |
-    | ------ | -------- |
-    | {aggregate}\_all\_{metricname} | sum_all_memory_percent, avg_all_iowait_time, min_all_io_write_bytes, max_all_threads |
+   **System Metrics**
+   > disk_used, memory_percent, read_count, write_count, read_bytes, write_byte
 
-  - Miscellaneous
-     * total_processes - Total number of processes spawned for frontend & workers
-     * total_workers - Total number of workers spawned
-     * orphans - Total number of orphan processes
+   | Syntax | Examples |
+   | ------ | -------- |
+   | system_{metricname} | system_disk_used, system_memory_percent, system_write_count |
 
-## Test Strategy
+   **Process Metrics**
+   > cpu_percent, memory_percent, cpu_user_time, cpu_system_time, cpu_iowait_time, memory_rss, memory_vms, io_read_count, io_write_count, io_read_bytes, io_write_bytes, file_descriptors, threads
+
+   - Frontend. Represents the Java process hosting the REST APIs 
+
+     | Syntax | Examples |
+     | ------ | -------- |
+     | frontend_{metricname} | frontend_cpu_percent, frontend_memory_percent, frontend_cpu_iowait_time, frontend_memory_rss, frontend_io_write_bytes, frontend_threads |
+
+   - Workers. Represents the python worker processes. Metrics for worker(s) are always available with an aggregate  
+     > Aggregates  
+     > sum, avg, min, max
+
+     | Syntax | Examples |
+     | ------ | -------- |
+     | {aggregate}\_workers\_{metricname} | total_workers, sum_workers_memory_percent, avg_workers_iowait_time, min_workers_io_write_bytes, max_workers_threads |
+
+   - All (Frontend + Workers). Represents aggregate metrics for both frontend and worker processes.
+  
+     | Syntax | Examples |
+     | ------ | -------- |
+     | {aggregate}\_all\_{metricname} | sum_all_memory_percent, avg_all_iowait_time, min_all_io_write_bytes, max_all_threads |
+
+   - Miscellaneous
+      * total_processes - Total number of processes spawned for frontend & workers
+      * total_workers - Total number of workers spawned
+      * orphans - Total number of orphan processes
+
+## Test Strategy & Cases
 More details about our testing strategy and test cases can be found [here](TESTS.md) 
 
-## TODOs
-1. Auto threshold calculation, environment profiles
+## FAQ
+
+Q1. Is it possible to use the performance regression framework to test MMS on Python2.7?
+
+Yes. Even though, the performance regression framework needs Python 3.7+ (as Taurus requires Python 3.7+), there are two
+possible ways to achieve this
+* Please create a Python 2.7 virtual env which runs MMS and a Python 3.7 virtual env which runs 
+  the test framework and test cases.
+* Alternatively, deploy the standalone monitoring agent on the MMS instance and run the test cases against the remote
+server. Note that the standalone monitoring agent works on both Python 2/3. 
+
+
+

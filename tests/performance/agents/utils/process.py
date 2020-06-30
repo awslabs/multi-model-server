@@ -51,8 +51,7 @@ def get_child_processes(process):
     """Get all running child processes recursively"""
     child_processes = set()
     for p in process.children(recursive=True):
-        if p.status() == 'running':
-            child_processes.add(p)
+        child_processes.add(p)
     return child_processes
 
 
@@ -69,4 +68,4 @@ def get_server_processes(server_process_pid):
 
 
 def get_server_pidfile(file):
-    return "{0}/.{1}".format(tempfile.gettempdir(), file)
+    return os.path.join(tempfile.gettempdir(), ".{}".format(file))

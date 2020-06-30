@@ -1,0 +1,12 @@
+---
+settings:
+  env:
+    REG_SUCC : 100%
+    SCL_UP_SUCC: 100%
+    UNREG_SUCC: 100%
+    REG_RT : 15s
+    SCL_UP_RT: 1.5s
+    UNREG_RT: 18ms
+    TOTAL_PROCS : 2
+    TOTAL_FDS : 73
+    FRNTEND_MEM : 120000000 #120MB

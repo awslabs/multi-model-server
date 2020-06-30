@@ -155,55 +155,60 @@ jobs:
 workflows:
   version: 2
 
-  smoke:
-    jobs:
-      - &build
-        build:
-          name: build-<< matrix.executor >>
-          matrix: &matrix
-            parameters:
-              executor: ["py27", "py36"]
-      - &modelarchiver
-        modelarchiver:
-          name: modelarchiver-<< matrix.executor >>
-          matrix: *matrix
-      - &python-tests
-        python-tests:
-          name: python-tests-<< matrix.executor >>
-          requires:
-            - build-<< matrix.executor >>
-          matrix: *matrix
-
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - *build
-      - *modelarchiver
-      - *python-tests
-      - &api-tests
-        api-tests:
-          name: api-tests-<< matrix.executor >>
-          requires:
-            - build-<< matrix.executor >>
-          matrix: *matrix
+#  smoke:
+#    jobs:
+#      - &build
+#        build:
+#          name: build-<< matrix.executor >>
+#          matrix: &matrix
+#            parameters:
+#              executor: ["py27", "py36"]
+#      - &modelarchiver
+#        modelarchiver:
+#          name: modelarchiver-<< matrix.executor >>
+#          matrix: *matrix
+#      - &python-tests
+#        python-tests:
+#          name: python-tests-<< matrix.executor >>
+#          requires:
+#            - build-<< matrix.executor >>
+#          matrix: *matrix
+#
+#  nightly:
+#    triggers:
+#      - schedule:
+#          cron: "0 0 * * *"
+#          filters:
+#            branches:
+#              only:
+#                - master
+#    jobs:
+#      - *build
+#      - *modelarchiver
+#      - *python-tests
+#      - &api-tests
+#        api-tests:
+#          name: api-tests-<< matrix.executor >>
+#          requires:
+#            - build-<< matrix.executor >>
+#          matrix: *matrix
 
   weekly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * 0"
-          filters:
-            branches:
-              only:
-                - master
+#    triggers:
+#      - schedule:
+#          cron: "0 0 * * 0"
+#          filters:
+#            branches:
+#              only:
+#                - master
     jobs:
       - *build
-      - benchmark:
+#      - benchmark:
+#          name: benchmark-<< matrix.executor >>
+#          requires:
+#            - build-<< matrix.executor >>
+#          matrix: *matrix
+      - performance_regression:
           name: benchmark-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>

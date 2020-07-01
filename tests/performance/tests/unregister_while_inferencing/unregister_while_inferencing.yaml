@@ -1,0 +1,74 @@
+---
+execution:
+- concurrency: 1
+  ramp-up: 0
+  iterations: 1
+  scenario: unregister_while_inferencing
+
+scenarios:
+  unregister_while_inferencing:
+    script: unregister_while_inferencing.jmx
+
+modules:
+  server_local_monitoring:
+    class : metrics_monitoring_inproc.Monitor
+
+services:
+  - module: shellexec
+    prepare:
+      - "curl -s -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg"
+      - "./tests/unregister_while_inferencing/custom_model_for_slow_inference.sh build"
+      - "multi-model-server --start --model-store=tmp_store > /dev/null 2>&1"
+      - "sleep 20s"
+      - "curl -s -X POST http://localhost:8081/models?url=squeezenet_v1.1.mar"
+      - "curl -s -X PUT  http://localhost:8081/models/squeezenet_v1.1?min_worker=1&synchronous=true"
+    post-process:
+      - "multi-model-server --stop > /dev/null 2>&1"
+      - "./tests/unregister_while_inferencing/custom_model_for_slow_inference.sh clean"
+      - "rm kitten.jpg"
+  - module: server_local_monitoring
+    ServerLocalClient:
+      - interval: 1s
+        logging : True
+        metrics:
+          - total_processes
+          - sum_all_file_descriptors
+          - sum_all_memory_rss
+
+reporting:
+- module: passfail
+  criteria:
+    # Inbuilt Criteria
+    - success of Inference<${INFR_SUCC}, stop as failed
+    - success of Unregister<${UNREG_SUCC}, stop as failed
+    - avg-rt of Inference>${INFR_RT}, stop as failed
+    - avg-rt of Unregister>${UNREG_RT}, stop as failed
+    # Custom Criteria
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '>'
+      threshold: ${MAX_TOTAL_PROCS}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '<'
+      threshold: ${MIN_TOTAL_PROCS}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_all_file_descriptors
+      condition: '>'
+      threshold: ${TOTAL_FDS}
+      timeframe: 1s
+      stop : true
+      fail : true
+#    - class: bzt.modules.monitoring.MonitoringCriteria
+#      subject: ServerLocalClient/sum_all_memory_rss
+#      condition: '>'
+#      threshold: ${FRNTEND_MEM}
+#      timeframe: 5s
+#      stop : true
+#      fail : true

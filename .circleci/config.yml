@@ -160,16 +160,16 @@ workflows:
           matrix: &matrix
             parameters:
               executor: ["py27", "py36"]
-#      - &modelarchiver
-#        modelarchiver:
-#          name: modelarchiver-<< matrix.executor >>
-#          matrix: *matrix
-#      - &python-tests
-#        python-tests:
-#          name: python-tests-<< matrix.executor >>
-#          requires:
-#            - build-<< matrix.executor >>
-#          matrix: *matrix
+      - &modelarchiver
+        modelarchiver:
+          name: modelarchiver-<< matrix.executor >>
+          matrix: *matrix
+      - &python-tests
+        python-tests:
+          name: python-tests-<< matrix.executor >>
+          requires:
+            - build-<< matrix.executor >>
+          matrix: *matrix
       ############ Remove after Dev ############
       - benchmark:
           name: benchmark-<< matrix.executor >>

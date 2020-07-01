@@ -171,18 +171,6 @@ workflows:
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix
-      ############ Remove after Dev ############
-      - benchmark:
-          name: benchmark-<< matrix.executor >>
-          requires:
-            - build-<< matrix.executor >>
-          matrix: *matrix
-      - api-tests:
-          name: api-tests-<< matrix.executor >>
-          requires:
-            - build-<< matrix.executor >>
-          matrix: *matrix
-      ##########################################
 
   nightly:
     triggers:

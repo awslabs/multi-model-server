@@ -7,7 +7,7 @@ settings:
     REG_RT : 15s
     SCL_UP_RT: 1.5s
     UNREG_RT: 18ms
-    TOTAL_PROCS : 2
+    TOTAL_PROCS : 5
     TOTAL_FDS : 73
     FRNTEND_MEM : 120000000 #120MB
     TOTAL_MEM : 120000000 #120MB

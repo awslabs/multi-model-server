@@ -34,6 +34,8 @@ services:
           - total_processes
           - sum_all_file_descriptors
           - sum_all_memory_rss
+          - frontend_memory_rss
+          - orphans
 
 reporting:
 - module: passfail
@@ -65,10 +67,25 @@ reporting:
       timeframe: 5s
       stop : true
       fail : true
-#    - class: bzt.modules.monitoring.MonitoringCriteria
-#      subject: ServerLocalClient/sum_all_memory_rss
-#      condition: '>'
-#      threshold: ${TOTAL_MEM}
-#      timeframe: 5s
-#      stop : true
-#      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_all_memory_rss
+      condition: '>'
+      threshold: ${TOTAL_MEM}
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/orphans
+      condition: '>'
+      threshold: ${TOTAL_ORPHANS}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/frontend_memory_rss
+      condition: '>'
+      threshold: ${FRNTEND_MEM}
+      timeframe: 5s
+      stop : true
+      fail : true
+

@@ -7,7 +7,7 @@ pylint -rn --rcfile=./model_archiver/tests/pylintrc model_archiver/.
 PY_LINT_EXIT_CODE=$?
 
 # Execute python unit tests
-python -m pytest --cov-report html:results_units --cov=./ model_archiver/tests/unit_tests
+python -m pytest --cov-report html:result_units --cov=./ model_archiver/tests/unit_tests
 PY_UNITS_EXIT_CODE=$?
 
 

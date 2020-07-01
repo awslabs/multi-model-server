@@ -69,11 +69,12 @@ jobs:
       steps:
         - attach-mms-workspace
         - run:
-            name: Execute python unit tests
+            name: Execute python lint and unit tests
             command: .circleci/scripts/linux_test_python.sh
         - store_artifacts:
             name: Store python Test results
-            path: htmlcov
+            path: result_units
+            destination: units
 
     api-tests:
       parameters:
@@ -141,11 +142,11 @@ jobs:
       steps:
         - checkout
         - run:
-            name: Execute lint, unit and integration tests
+            name: Execute python lint, unit and integration tests
             command: .circleci/scripts/linux_test_modelarchiver.sh
         - store_artifacts:
             name: Store unit tests results from model archiver tests
-            path: model-archiver/results_units
+            path: model-archiver/result_units
             destination: units
 
 

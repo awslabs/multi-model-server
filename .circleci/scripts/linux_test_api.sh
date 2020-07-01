@@ -1,21 +1,25 @@
 #!/bin/bash
 
-MODEL_STORE_DIR='tests/api/model_store'
+BASE_DIR="tests/api"
+MODEL_STORE_DIR="$BASE_DIR/model_store"
 
-MMS_LOG_FILE_MANAGEMENT='mms_management.log'
-MMS_LOG_FILE_INFERENCE='mms_inference.log'
-MMS_LOG_FILE_HTTPS='mms_https.log'
-MMS_CONFIG_FILE_HTTPS='tests/api/resources/config.properties'
+ARTIFACTS_BASE_DIR="$BASE_DIR/artifacts"
+MANAGEMENT_API_ARTIFACTS_DIR="$ARTIFACTS_BASE_DIR/management"
+INFERENCE_API_ARTIFACTS_DIR="$ARTIFACTS_BASE_DIR/inference"
+HTTPS_API_ARTIFACTS_DIR="$ARTIFACTS_BASE_DIR/https"
 
-POSTMAN_ENV_FILE='tests/api/postman/environment.json'
-POSTMAN_COLLECTION_MANAGEMENT='tests/api/postman/management_api_test_collection.json'
-POSTMAN_COLLECTION_INFERENCE='tests/api/postman/inference_api_test_collection.json'
-POSTMAN_COLLECTION_HTTPS='tests/api/postman/https_test_collection.json'
-POSTMAN_DATA_FILE_INFERENCE='tests/api/postman/inference_data.json'
+MMS_CONSOLE_LOG_FILE="mms_console.log"
+MMS_CONFIG_FILE_HTTPS="$BASE_DIR/resources/config.properties"
 
-REPORT_FILE_MANAGEMENT='tests/api/management-api-report.html'
-REPORT_FILE_INFERENCE='tests/api/inference-api-report.html'
-REPORT_FILE_HTTPS='tests/api/https-api-report.html'
+POSTMAN_ENV_FILE="$BASE_DIR/postman/environment.json"
+POSTMAN_COLLECTION_MANAGEMENT="$BASE_DIR/postman/management_api_test_collection.json"
+POSTMAN_COLLECTION_INFERENCE="$BASE_DIR/postman/inference_api_test_collection.json"
+POSTMAN_COLLECTION_HTTPS="$BASE_DIR/postman/https_test_collection.json"
+POSTMAN_DATA_FILE_INFERENCE="$BASE_DIR/postman/inference_data.json"
+
+REPORT_FILE_MANAGEMENT="$MANAGEMENT_API_ARTIFACTS_DIR/management-api-report.html"
+REPORT_FILE_INFERENCE="$INFERENCE_API_ARTIFACTS_DIR/inference-api-report.html"
+REPORT_FILE_HTTPS="$HTTPS_API_ARTIFACTS_DIR/https-api-report.html"
 
 start_mms_server() {
   multi-model-server --start --model-store $1 >> $2 2>&1
@@ -31,43 +35,67 @@ stop_mms_server() {
   multi-model-server --stop
 }
 
+move_logs(){
+  mv $1 logs/
+  mv logs/ $2
+}
+
 trigger_management_tests(){
-  start_mms_server $MODEL_STORE_DIR $MMS_LOG_FILE_MANAGEMENT
+  start_mms_server $MODEL_STORE_DIR $MMS_CONSOLE_LOG_FILE
   newman run -e $POSTMAN_ENV_FILE $POSTMAN_COLLECTION_MANAGEMENT \
              -r cli,html --reporter-html-export $REPORT_FILE_MANAGEMENT --verbose
+  local EXIT_CODE=$?
   stop_mms_server
+  move_logs $MMS_CONSOLE_LOG_FILE $MANAGEMENT_API_ARTIFACTS_DIR
+  return $EXIT_CODE
 }
 
 trigger_inference_tests(){
-  start_mms_server $MODEL_STORE_DIR $MMS_LOG_FILE_INFERENCE
+  start_mms_server $MODEL_STORE_DIR $MMS_CONSOLE_LOG_FILE
   newman run -e $POSTMAN_ENV_FILE $POSTMAN_COLLECTION_INFERENCE -d $POSTMAN_DATA_FILE_INFERENCE \
              -r cli,html --reporter-html-export $REPORT_FILE_INFERENCE --verbose
+  local EXIT_CODE=$?
   stop_mms_server
+  move_logs $MMS_CONSOLE_LOG_FILE $INFERENCE_API_ARTIFACTS_DIR
+  return $EXIT_CODE
 }
 
 trigger_https_tests(){
-  start_mms_secure_server $MODEL_STORE_DIR $MMS_LOG_FILE_HTTPS
+  start_mms_secure_server $MODEL_STORE_DIR $MMS_CONSOLE_LOG_FILE
   newman run --insecure -e $POSTMAN_ENV_FILE $POSTMAN_COLLECTION_HTTPS \
              -r cli,html --reporter-html-export $REPORT_FILE_HTTPS --verbose
+  local EXIT_CODE=$?
   stop_mms_server
+  move_logs $MMS_CONSOLE_LOG_FILE $HTTPS_API_ARTIFACTS_DIR
+  return $EXIT_CODE
 }
 
-mkdir -p $MODEL_STORE_DIR
+mkdir -p $MODEL_STORE_DIR $MANAGEMENT_API_ARTIFACTS_DIR $INFERENCE_API_ARTIFACTS_DIR $HTTPS_API_ARTIFACTS_DIR
 
 case $1 in
    'management')
       trigger_management_tests
+      exit $?
       ;;
    'inference')
       trigger_inference_tests
+      exit $?
       ;;
    'https')
       trigger_https_tests
+      exit $?
       ;;
    'ALL')
       trigger_management_tests
+      MGMT_EXIT_CODE=$?
       trigger_inference_tests
+      INFR_EXIT_CODE=$?
       trigger_https_tests
+      HTTPS_EXIT_CODE=$?
+      # If any one of the tests fail, exit with error
+      if [ "$MGMT_EXIT_CODE" -ne 0 ] || [ "$INFR_EXIT_CODE" -ne 0 ] || [ "$HTTPS_EXIT_CODE" -ne 0 ]
+      then exit 1
+      fi
       ;;
    *)
      echo $1 'Invalid'

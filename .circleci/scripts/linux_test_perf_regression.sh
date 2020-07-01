@@ -28,4 +28,4 @@ mkdir -p $RESULT_DIR
 cp $ARTIFACTS_DIR/**/performance_results.xml $RESULT_DIR
 
 # Exit with the same error code as that of test execution
-exit EXIT_CODE
+exit $EXIT_CODE

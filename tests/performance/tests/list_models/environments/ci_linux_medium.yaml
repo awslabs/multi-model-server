@@ -1,0 +1,8 @@
+---
+settings:
+  env:
+    LST_MODLS_SUCC : 100%
+    LST_MODLS_RT : 14ms
+    TOTAL_PROCS : 3
+    TOTAL_FDS : 86
+    TOTAL_MEM : 185000000 #185MB

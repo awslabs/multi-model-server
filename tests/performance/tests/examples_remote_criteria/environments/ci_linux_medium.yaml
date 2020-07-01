@@ -1,0 +1,7 @@
+---
+settings:
+  env:
+    FAIL : 50%
+    P90 : 250ms
+    AVG_RT : 1s
+    TOTAL_WORKERS_FDS : 80

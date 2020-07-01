@@ -1,17 +1,17 @@
 
-execution:
+~execution:
 - concurrency: 4
   ramp-up: 1s
   hold-for: 20s
   scenario: Inference
 
-scenarios:
+~scenarios:
   Inference:
     script: examples_remote_monitoring.jmx
 
 
 
-services:
+~services:
   - module: shellexec
     prepare:
       - "curl -s -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg"
@@ -32,3 +32,5 @@ services:
           - frontend_file_descriptors
           - total_workers # no of mms workers
 
+~reporting:
+  - module: passfail

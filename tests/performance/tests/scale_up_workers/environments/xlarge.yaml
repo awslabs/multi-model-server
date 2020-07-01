@@ -11,5 +11,15 @@ settings:
     TOTAL_WRKRS_FDS_AFTR_SCL_UP : 38
     TOTAL_WRKRS_FDS_B4_SCL_UP : 11
     FRNTEND_MEM : 290000000 #290MB
-    TOTAL_WRKRS_MEM_AFTR_SCL_UP : 450000000 #450MB
+    TOTAL_WRKRS_MEM_AFTR_SCL_UP : 650000000
     TOTAL_WRKRS_MEM_B4_SCL_UP : 115000000 #115MB
+
+
+
+    CONCURRENCY: 10
+    RAMP-UP: 1s
+    HOLD-FOR: 60s
+    SCRIPT: scale_up_workers.jmx
+
+    STOP : ''    #possible values true, false. Bug in bzt so for false use ''
+    STOP_ALIAS: continue  #possible values continue, stop

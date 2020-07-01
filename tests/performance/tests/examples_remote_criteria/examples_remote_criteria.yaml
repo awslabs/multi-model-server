@@ -1,15 +1,15 @@
 
-execution:
+~execution:
 - concurrency: 4
   ramp-up: 1s
   hold-for: 20s
   scenario: Inference
 
-scenarios:
+~scenarios:
   Inference:
     script: examples_remote_criteria.jmx
 
-services:
+~services:
   - module: shellexec
     prepare:
       - "curl -s -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg"
@@ -31,7 +31,14 @@ services:
           - total_workers # no of mms workers
 
 
-reporting:
+~reporting:
+- module: passfail # this is to enable passfail module
+- module: junit-xml
+  data-source: pass-fail
+- module: junit-xml
+  data-source: sample-labels
+- module: final-stats
+  dump-csv : ${BASEDIR}/final_stats.csv
 - module: passfail
   criteria:
   - fail >${FAIL}, stop as failed
@@ -44,4 +51,4 @@ reporting:
     timeframe: 1s
     fail: true
     stop: true
-    diff_percent : 35
+    diff_percent : ${TOTAL_WORKERS_FDS_DIFF}

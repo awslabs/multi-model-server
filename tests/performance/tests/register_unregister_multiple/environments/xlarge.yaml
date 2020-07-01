@@ -1,14 +1,41 @@
 ---
 settings:
   env:
-    REG_SUCC : 100%
+    API_LABLE : RegisterModel
+    API_SUCCESS : 100%
+    API_AVG_RT : 15s
+
     SCL_UP_SUCC: 100%
     UNREG_SUCC: 100%
-    REG_RT : 15s
     SCL_UP_RT: 1.5s
     UNREG_RT: 18ms
+
+    TOTAL_WORKERS: 4
+    TOTAL_WORKERS_MEM: 100000000
+    TOTAL_WORKERS_FDS: 200
+
+
+    TOTAL_MEM : 2000000000
     TOTAL_PROCS : 5
-    TOTAL_FDS : 73
-    FRNTEND_MEM : 120000000 #120MB
-    TOTAL_MEM : 120000000 #120MB
+    TOTAL_FDS : 200
+
+    FRNTEND_MEM: 100000000
+
     TOTAL_ORPHANS : 0
+
+    TOTAL_WORKERS_DIFF: 30
+    TOTAL_WORKERS_MEM_DIFF: 30
+    TOTAL_WORKERS_FDS_DIFF: 30
+    TOTAL_MEM_DIFF: 30
+    TOTAL_PROCS_DIFF: 30
+    TOTAL_FDS_DIFF: 30
+    FRNTEND_MEM_DIFF: 30
+    TOTAL_ORPHANS_DIFF: 0
+
+    CONCURRENCY : 10
+    RAMP-UP : 1s
+    HOLD-FOR : 60s
+    SCRIPT : register_unregister_multiple.jmx
+
+    STOP :  ''    #possible values true, false. Bug in bzt so for false use ''
+    STOP_ALIAS: continue  #possible values continue, stop

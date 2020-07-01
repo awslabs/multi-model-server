@@ -79,7 +79,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
     test_dirs = get_sub_dirs(test_dir, exclude_list=[], include_pattern=pattern,
                              exclude_pattern=exclude_pattern)
     if not test_dirs:
-        logger.info("No test cases are collected...Existing.")
+        logger.info("No test cases are collected...Exiting.")
         sys.exit(3)
     else:
         logger.info("Collected tests %s", test_dirs)
@@ -95,10 +95,11 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
                 test_file = os.path.join(test_dir, suite_name, "{}.yaml".format(suite_name))
                 with x2junit.X2Junit(suite_name, suite_artifacts_dir, prt.reporter, t, env_name) as s:
                     s.code, s.err = run_process("{} bzt {} {} {} {}".format(pre_command, options_str,
-                                                                            test_file, env_yaml_path,
-                                                                            GLOBAL_CONFIG_PATH))
+                                                                            GLOBAL_CONFIG_PATH, test_file,
+                                                                            env_yaml_path))
 
                     update_taurus_metric_files(suite_artifacts_dir, test_file)
+
 
 if __name__ == "__main__":
     run_test_suite()

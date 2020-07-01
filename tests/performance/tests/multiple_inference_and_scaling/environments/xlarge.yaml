@@ -1,16 +1,43 @@
+
 ---
 settings:
   env:
-    INFR1_SUCC : 100%
+    API_LABLE : Inference1
+    API_SUCCESS : 100%
+    API_AVG_RT : 290ms
+
     INFR2_SUCC: 100%
-    INFR1_RT : 290ms
     INFR2_RT: 450ms
     SCALEUP1_RT : 500ms
     SCALEUP2_RT : 500ms
     SCALEDOWN1_RT : 100ms
     SCALEDOWN2_RT : 100ms
-    TOTAL_PROCS : 14
+
+    TOTAL_WORKERS: 9
+    TOTAL_WORKERS_MEM: 2668554752
+    TOTAL_WORKERS_FDS: 100
+
+    TOTAL_MEM : 2000000000
+    TOTAL_PROCS : 11
     TOTAL_FDS : 300
-    TOTAL_MEM : 2000000000 #~2GB
+
+    FRNTEND_MEM: 1000000000
+
     TOTAL_ORPHANS : 0
-    FRNTEND_MEM : 1000000000 #~1GB
+
+    TOTAL_WORKERS_DIFF: 30
+    TOTAL_WORKERS_MEM_DIFF: 30
+    TOTAL_WORKERS_FDS_DIFF: 30
+    TOTAL_MEM_DIFF: 30
+    TOTAL_PROCS_DIFF: 30
+    TOTAL_FDS_DIFF: 30
+    FRNTEND_MEM_DIFF: 30
+    TOTAL_ORPHANS_DIFF: 0
+
+    CONCURRENCY : 10
+    RAMP-UP : 1s
+    HOLD-FOR : 120s
+    SCRIPT : multiple_inference_and_scaling.jmx
+
+    STOP :  ''    #possible values true, false. Bug in bzt so for false use ''
+    STOP_ALIAS: continue  #possible values continue, stop

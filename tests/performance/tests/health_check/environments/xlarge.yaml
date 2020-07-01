@@ -1,8 +1,36 @@
+
 ---
 settings:
   env:
-    HLTH_CHK_SUCC : 100%
-    HLTH_CHK_RT : 14ms
+    API_LABLE : HealthCheck
+    API_SUCCESS : 100%
+    API_AVG_RT : 30ms
+
+    TOTAL_WORKERS: 0
+    TOTAL_WORKERS_MEM: 0
+    TOTAL_WORKERS_FDS: 0
+
+    TOTAL_MEM : 1500098304
     TOTAL_PROCS : 1
-    TOTAL_FDS : 67
-    TOTAL_MEM : 750000000 #750MB
+    TOTAL_FDS : 73
+
+    FRNTEND_MEM: 1500098304
+
+    TOTAL_ORPHANS : 0
+
+    TOTAL_WORKERS_DIFF: 0
+    TOTAL_WORKERS_MEM_DIFF: 30
+    TOTAL_WORKERS_FDS_DIFF: 30
+    TOTAL_MEM_DIFF: 30
+    TOTAL_PROCS_DIFF: 30
+    TOTAL_FDS_DIFF: 30
+    FRNTEND_MEM_DIFF: 30
+    TOTAL_ORPHANS_DIFF: 0
+
+    CONCURRENCY : 10
+    RAMP-UP : 1s
+    HOLD-FOR : 30s
+    SCRIPT : health_check.jmx
+
+    STOP :  ''    #possible values true, false. Bug in bzt so for false use ''
+    STOP_ALIAS: continue  #possible values continue, stop

@@ -1,10 +1,11 @@
 ---
-execution:
+~execution:
 - concurrency: 1
   ramp-up: 5s
   hold-for: 20s
   scenario: Inference
-scenarios:
+
+~scenarios:
   Inference:
     script: examples_local_monitoring.jmx
 
@@ -13,7 +14,7 @@ modules:
     # metrics_monitoring_inproc and dependencies should be in python path
     class : metrics_monitoring_inproc.Monitor # monitoring class.
 
-services:
+~services:
   - module: shellexec
     prepare:
       - "curl -s -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg"
@@ -30,3 +31,6 @@ services:
           - disk-space
           - mem
           - sum_workers_memory_percent
+
+~reporting:
+  - module: passfail

@@ -63,7 +63,7 @@ class ExecutionEnv(object):
     @staticmethod
     def report_summary(reporter, suite_name):
         if reporter and os.path.exists(reporter.junit_html_path):
-            status = reporter.junit_xml.errors or reporter.junit_xml.failures or reporter.junit_xml.skipped
+            status = reporter.junit_xml.errors or reporter.junit_xml.failures
             status, code, color = ("failed", 3, "red") if status else ("passed", 0, "green")
 
             msg = "{} run has {}.".format(suite_name, status)

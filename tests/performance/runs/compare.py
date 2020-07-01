@@ -188,3 +188,10 @@ def compare_artifacts(dir1, dir2, run_name1, run_name2):
     dataframe = pd.DataFrame(rows[1:], columns=rows[0])
     return reporter, dataframe
 
+
+if __name__ == "__main__":
+    compare_artifacts(
+    "/Users/mahesh/git/multi-model-server/tests/performance/run_artifacts/xlarge__e436434__1593615831",
+    "/Users/mahesh/git/multi-model-server/tests/performance/run_artifacts/xlarge__e436434__1593615748",
+    "xlarge__e436434__1593615831", "xlarge__e436434__1593615748"
+    )

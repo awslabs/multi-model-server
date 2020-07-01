@@ -20,7 +20,7 @@ pip install -r requirements.txt
 pip install bzt
 
 # Execute performance test suite and store exit code
-./run_performance_suite.py -j $JMETER_PATH -e macos-xlarge --no-compare-local
+./run_performance_suite.py -j $JMETER_PATH -e macos_xlarge --no-compare-local
 EXIT_CODE=$?
 
 # Collect and store test results in result directory to be picked up by CircleCI

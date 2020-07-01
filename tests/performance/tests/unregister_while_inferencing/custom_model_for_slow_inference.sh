@@ -26,11 +26,12 @@ build(){
   rm $MODEL_NAME.mar
 
   #### Adds a 20 sec wait in the handle function ####
+  # DO NOT - change any spacing and\or try to format the below code
   sed -i'' -e '/import logging/a\
-  import time' $HANDLER_FILE_NAME.py
+import time' $HANDLER_FILE_NAME.py
 
   sed -i'' -e '/def handle(data, context):/a\
-  \ \ \ \ \time.sleep(20)
+\ \ \ \ time.sleep(20)
   ' $HANDLER_FILE_NAME.py
   ##################################################
 

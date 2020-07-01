@@ -45,6 +45,18 @@ reporting:
     - success of Inference2<${INFR2_SUCC}, stop as failed
     - avg-rt of Inference1>${INFR1_RT}, stop as failed
     - avg-rt of Inference2>${INFR2_RT}, stop as failed
+    - success of Inference11<${INFR1_SUCC}, stop as failed
+    - success of Inference21<${INFR2_SUCC}, stop as failed
+    - avg-rt of Inference11>${INFR1_RT}, stop as failed
+    - avg-rt of Inference21>${INFR2_RT}, stop as failed
+    - success of ScaleUp1<${INFR2_SUCC}, stop as failed
+    - avg-rt of ScaleUp1>${SCALEUP1_RT}, stop as failed
+    - success of ScaleUp2<${INFR2_SUCC}, stop as failed
+    - avg-rt of ScaleUp2>${SCALEUP2_RT}, stop as failed
+    - success of ScaleDown1<${INFR2_SUCC}, stop as failed
+    - avg-rt of ScaleDown1>${SCALEDOWN1_RT}, stop as failed
+    - success of ScaleDown2<${INFR2_SUCC}, stop as failed
+    - avg-rt of ScaleDown2>${SCALEDOWN2_RT}, stop as failed
     # Custom Criteria
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes

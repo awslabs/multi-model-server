@@ -79,7 +79,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
     test_dirs = get_sub_dirs(test_dir, exclude_list=[], include_pattern=pattern,
                              exclude_pattern=exclude_pattern)
     if not test_dirs:
-        logger.info("No test cases are collected...Existing.")
+        logger.info("No test cases are collected...Exiting.")
         sys.exit(3)
     else:
         logger.info("Collected tests %s", test_dirs)

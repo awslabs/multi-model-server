@@ -60,8 +60,8 @@ reporting:
 - module: passfail
   criteria:
     # API requests KPI crieteria
-    - success of ${API_LABLE}<${API_SUCCESS}, ${STOP_ALIAS} as failed
-    - avg-rt of ${API_LABLE}>${API_AVG_RT}, ${STOP_ALIAS} as failed
+    - success of ${API_LABEL}<${API_SUCCESS}, ${STOP_ALIAS} as failed
+    - avg-rt of ${API_LABEL}>${API_AVG_RT}, ${STOP_ALIAS} as failed
 
     # Monitoring metrics criteria
     - class: bzt.modules.monitoring.MonitoringCriteria

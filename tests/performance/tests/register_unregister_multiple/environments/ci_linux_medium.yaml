@@ -4,9 +4,9 @@ settings:
     REG_SUCC : 100%
     SCL_UP_SUCC: 100%
     UNREG_SUCC: 100%
-    REG_RT : 15s
+    REG_RT : 2.5s
     SCL_UP_RT: 1.5s
     UNREG_RT: 18ms
     TOTAL_PROCS : 2
-    TOTAL_FDS : 73
-    FRNTEND_MEM : 120000000 #120MB
+    TOTAL_FDS : 509
+    FRNTEND_MEM : 425000000 #425MB

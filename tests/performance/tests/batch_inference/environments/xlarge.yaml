@@ -1,7 +1,6 @@
 -----
 settings:
   env:
-
     API_LABEL : Inference
     API_SUCCESS : 100%
     API_AVG_RT : 30ms
@@ -9,7 +8,7 @@ settings:
 
     TOTAL_WORKERS: 4
     TOTAL_WORKERS_MEM: 3000000000
-    TOTAL_WORKERS_FDS: 200
+    TOTAL_WORKERS_FDS: 400
 
     TOTAL_MEM : 4000000000
     TOTAL_PROCS : 7

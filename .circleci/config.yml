@@ -187,7 +187,8 @@ workflows:
           name: performance-regression-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
-          matrix: *matrix
+          matrix:
+            <<: *matrix
             exclude:
               - executor: "py27"
       ###############################################

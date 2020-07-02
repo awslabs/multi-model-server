@@ -46,8 +46,15 @@ reporting:
     - class: bzt.modules.monitoring.MonitoringCriteria
       subject: ServerLocalClient/total_processes
       condition: '>'
-      threshold: ${TOTAL_PROCS}
-      timeframe: 7s
+      threshold: ${TOTAL_PROCS_WITH_EXTRA_MODEL_AND_WORKERS}
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '<'
+      threshold: ${TOTAL_PROCS_WITHOUT_EXTRA_MODEL}
+      timeframe: 5s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria

@@ -4,7 +4,7 @@ settings:
     INFR1_SUCC : 100%
     INFR2_SUCC: 100%
     INFR1_RT : 290ms
-    INFR2_RT: 630ms
+    INFR2_RT: 800ms
     TOTAL_PROCS : 5
     TOTAL_FDS : 521
     TOTAL_MEM : 810000000 #810MB

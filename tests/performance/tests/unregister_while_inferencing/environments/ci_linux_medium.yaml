@@ -7,5 +7,5 @@ settings:
     UNREG_RT: 25ms
     MIN_TOTAL_PROCS : 1
     MAX_TOTAL_PROCS : 3
-    TOTAL_FDS : 74
+    TOTAL_FDS : 498
     FRNTEND_MEM : 250000000 #250MB

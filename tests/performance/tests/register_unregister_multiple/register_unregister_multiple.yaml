@@ -47,7 +47,7 @@ reporting:
       subject: ServerLocalClient/total_processes
       condition: '>'
       threshold: ${TOTAL_PROCS}
-      timeframe: 5s
+      timeframe: 7s
       stop : true
       fail : true
     - class: bzt.modules.monitoring.MonitoringCriteria

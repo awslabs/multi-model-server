@@ -3,11 +3,11 @@ execution:
 - concurrency: 1
   ramp-up: 0
   iterations: 1
-  scenario: unregister_while_inferencing
+  scenario: examples_unregister_while_inferencing
 
 scenarios:
-  unregister_while_inferencing:
-    script: unregister_while_inferencing.jmx
+  examples_unregister_while_inferencing:
+    script: examples_unregister_while_inferencing.jmx
 
 modules:
   server_local_monitoring:

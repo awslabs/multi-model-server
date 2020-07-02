@@ -1,9 +1,45 @@
+
 ---
 settings:
   env:
-    INFR1_RT : 6s
-    INFR2_RT : 0.08s
-    TOTAL_WORKERS_MEM : 4000000000 #4GB
-    TOTAL_WORKERS : 9
+
+    API_LABEL : Inference1
+    API_SUCCESS : 100%
+    API_AVG_RT : 30ms
+
+    INF2_SUCC: 100%
+    INF2_AVG_RT: 30ms
+
+    TOTAL_WORKERS: 4
+    TOTAL_WORKERS_MEM: 3000000000
+    TOTAL_WORKERS_FDS: 200
+
+    TOTAL_MEM : 4000000000
+    TOTAL_PROCS : 7
+    TOTAL_FDS : 200
+
+    FRNTEND_MEM: 1000000000
+
     TOTAL_ORPHANS : 0
-    TOTAL_WORKERS_FDS : 78
+
+
+    ## Percent diff values to do a compare across runs
+    TOTAL_WORKERS_DIFF: 30
+    TOTAL_WORKERS_MEM_DIFF: 30
+    TOTAL_WORKERS_FDS_DIFF: 30
+    TOTAL_MEM_DIFF: 30
+    TOTAL_PROCS_DIFF: 30
+    TOTAL_FDS_DIFF: 30
+    FRNTEND_MEM_DIFF: 30
+    TOTAL_ORPHANS_DIFF: 0
+
+
+    CONCURRENCY : 10
+    RAMP-UP : 1s
+    HOLD-FOR : 120s
+    SCRIPT : batch_and_single_inference.jmx
+
+    STOP : ''
+    STOP_ALIAS: continue
+
+

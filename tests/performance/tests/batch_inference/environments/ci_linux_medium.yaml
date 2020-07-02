@@ -1,7 +1,7 @@
 ---
 settings:
   env:
-    INFR_RT : 4s
+    INFR_RT : 5s
     TOTAL_WORKERS_MEM : 1300000000 #1.3GB
     TOTAL_WORKERS : 2
     TOTAL_ORPHANS : 0

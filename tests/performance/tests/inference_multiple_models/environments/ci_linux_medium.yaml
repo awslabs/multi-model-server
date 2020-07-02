@@ -3,8 +3,8 @@ settings:
   env:
     INFR1_SUCC : 100%
     INFR2_SUCC: 100%
-    INFR1_RT : 290ms
-    INFR2_RT: 800ms
+    INFR1_RT : 350ms
+    INFR2_RT: 1.5s
     TOTAL_PROCS : 5
     TOTAL_FDS : 521
     TOTAL_MEM : 810000000 #810MB

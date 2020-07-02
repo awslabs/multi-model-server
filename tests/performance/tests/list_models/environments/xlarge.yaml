@@ -1,7 +1,7 @@
 ---
 settings:
   env:
-    API_LABLE : ListModels
+    API_LABEL : ListModels
     API_SUCCESS : 100%
     API_AVG_RT : 14ms
 

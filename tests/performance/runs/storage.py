@@ -19,6 +19,7 @@ Result store classes
 import logging
 import os
 import sys
+import shutil
 
 import boto3
 import pathlib
@@ -86,7 +87,7 @@ class S3Storage(Storage):
         """Get latest run result artifacts directory  for same env_name from S3 bucket
         and store it locally for further comparison
         """
-        tgt_path = os.path.join(self.artifacts_dir, "comp_data")
+        comp_data_path = os.path.join(self.artifacts_dir, "comp_data")
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(S3_BUCKET)
         result = bucket.meta.client.list_objects(Bucket=bucket.name,
@@ -100,15 +101,19 @@ class S3Storage(Storage):
             logger.info("No run found for env_id %s", self.env_name)
             return '', ''
 
-        if not os.path.exists(tgt_path):
-            os.makedirs(tgt_path)
+        if not os.path.exists(comp_data_path):
+            os.makedirs(comp_data_path)
 
-        tgt_path = os.path.join(tgt_path, latest_run)
+        tgt_path = os.path.join(comp_data_path, latest_run)
         run_process("aws s3 cp  s3://{}/{} {} --recursive".format(bucket.name, latest_run, tgt_path))
 
         return tgt_path, latest_run
 
     def store_results(self):
         """Store the run results back to S3"""
+        comp_data_path = os.path.join(self.artifacts_dir, "comp_data")
+        if os.path.exists(comp_data_path):
+            shutil.rmtree(comp_data_path)
+
         run_process("aws s3 cp {} s3://{}/{}  --recursive".format(self.artifacts_dir, S3_BUCKET,
                                                                   self.current_run_name))

@@ -1,7 +1,7 @@
 ---
 settings:
   env:
-    API_LABLE : RegisterModel
+    API_LABEL : RegisterModel
     API_SUCCESS : 100%
     API_AVG_RT : 290ms
 

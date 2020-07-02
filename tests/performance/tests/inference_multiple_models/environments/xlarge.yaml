@@ -2,7 +2,7 @@
 ---
 settings:
   env:
-    API_LABLE : Inference1
+    API_LABEL : Inference1
     API_SUCCESS : 100%
     API_AVG_RT : 30ms
 

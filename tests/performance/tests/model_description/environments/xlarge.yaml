@@ -2,7 +2,7 @@
 ---
 settings:
   env:
-    API_LABLE : ModelDescription
+    API_LABEL : ModelDescription
     API_SUCCESS : 100%
     API_AVG_RT : 14ms
 

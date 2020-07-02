@@ -2,7 +2,7 @@
 ---
 settings:
   env:
-    API_LABLE : HealthCheck
+    API_LABEL : HealthCheck
     API_SUCCESS : 100%
     API_AVG_RT : 30ms
 

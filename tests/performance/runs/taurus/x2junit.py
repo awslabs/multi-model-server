@@ -17,6 +17,8 @@ Convert the Taurus Test suite XML to Junit XML
 
 
 import os
+import pandas as pd
+from .reader import get_compare_metric_list
 
 from junitparser import TestCase, TestSuite, JUnitXml, Skipped, Error, Failure
 
@@ -34,12 +36,56 @@ class X2Junit(object):
         self.artifacts_dir = artifacts_dir
         self.env_name = env_name
 
+        self.ts.tests, self.ts.failures, self.ts.skipped, self.ts.errors = 0, 0, 0, 0
+
     def __enter__(self):
         return self
 
+    def add_compare_tests(self):
+        metrics_file = os.path.join(self.artifacts_dir, "metrics.csv")
+        metrics = pd.read_csv(metrics_file)
+        compare_list = get_compare_metric_list(self.artifacts_dir, "")
+
+        for metric_values in compare_list:
+            col = metric_values[0]
+            diff_percent = metric_values[2]
+            tc = TestCase("{}_diff_run > {}".format(col, diff_percent))
+            if diff_percent is None:
+                tc.result = Skipped("diff_percent_run value is not mentioned")
+                self.ts.skipped += 1
+            else:
+                col_metric_values = getattr(metrics, col, None)
+                if col_metric_values is None:
+                    tc.result = Error("Metric is not captured")
+                    self.ts.errors += 1
+                elif len(col_metric_values) < 2:
+                    tc.result = Skipped("Enough values are not captured")
+                    self.ts.errors += 1
+                else:
+                    first_value = col_metric_values[0]
+                    last_value = col_metric_values[-2:-1]
+
+                    try:
+                        if last_value == first_value == 0:
+                            diff_actual = 0
+                        else:
+                            diff_actual = (abs(last_value - first_value) / ((last_value + first_value) / 2)) * 100
+
+                        if diff_actual > diff_percent:
+                            self.ts.tests += 1
+                        else:
+                            tc.result = Failure("The first value and last value of run are {}, {} "
+                                                "with precent diff {}".format(first_value, last_value, diff_actual))
+
+                    except Exception as e:
+                        tc.result = Error("Error while comparing values {}".format(str(e)))
+                        self.ts.errors += 1
+
+            self.ts.add_testcase(tc)
+
+
     def __exit__(self, type, value, traceback):
         xunit_file = os.path.join(self.artifacts_dir, "xunit.xml")
-        tests, failures, skipped, errors = 0, 0, 0, 0
         if os.path.exists(xunit_file):
             xml = JUnitXml.fromfile(xunit_file)
             for i, suite in enumerate(xml):
@@ -47,15 +93,15 @@ class X2Junit(object):
                     name = "scenario_{}: {}".format(i, case.name)
                     result = case.result
                     if isinstance(result, Error):
-                        failures += 1
+                        self.ts.failures += 1
                         result = Failure(result.message, result.type)
                     elif isinstance(result, Failure):
-                        errors += 1
+                        self.ts.errors += 1
                         result = Error(result.message, result.type)
                     elif isinstance(result, Skipped):
-                        skipped += 1
+                        self.ts.skipped += 1
                     else:
-                        tests += 1
+                        self.ts.tests += 1
 
                     tc = TestCase(name)
                     tc.result = result
@@ -65,12 +111,15 @@ class X2Junit(object):
             tc.result = Skipped()
             self.ts.add_testcase(tc)
 
+        self.add_compare_tests()
+
         self.ts.hostname = self.env_name
         self.ts.timestamp = self.timer.start
         self.ts.time = self.timer.diff()
-        self.ts.tests = tests
-        self.ts.failures = failures
-        self.ts.skipped = skipped
-        self.ts.errors = errors
         self.ts.update_statistics()
         self.junit_xml.add_testsuite(self.ts)
+
+
+
+
+

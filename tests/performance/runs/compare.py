@@ -106,7 +106,7 @@ def compare_values(val1, val2, diff_percent, run_name1, run_name2):
     """ Compare percentage diff values of val1 and val2 """
     if pd.isna(val1) or pd.isna(val2):
         msg = "Either of the value can not be determined. The run1 value is '{}' and " \
-              "run2 value is {}.".format(val1, val2)
+              "run2 value is '{}'.".format(val1, val2)
         pass_fail, diff, msg = "error", "NA", msg
     else:
         try:
@@ -161,9 +161,13 @@ def compare_artifacts(dir1, dir2, run_name1, run_name2):
 
             metrics_from_file1 = pd.read_csv(metrics_file1)
             metrics_from_file2 = pd.read_csv(metrics_file2)
-            metrics, diff_percents = taurus_reader.get_compare_metric_list(dir1, sub_dir1)
+            metrics = taurus_reader.get_compare_metric_list(dir1, sub_dir1)
 
-            for col, diff_percent in zip(metrics, diff_percents):
+            for metric_values in metrics:
+                col = metric_values[0]
+                diff_percent = metric_values[1]
+                if diff_percent is None:
+                    continue
                 for agg_func in aggregates:
                     name = "{}_{}".format(agg_func, str(col))
 

@@ -48,10 +48,9 @@ def get_compare_metric_list(dir, sub_dir):
                         subject = criterion["subject"]
                         metric = subject.rsplit('/', 1)
                         metric = metric[1] if len(metric) == 2 else metric[0]
-                        diff_percent = criterion.get("diff_percent", None)
+                        diff_percent_prev = criterion.get("diff_percent_previuos", None)
+                        diff_percent_run = criterion.get("diff_percent_run", None)
 
-                        if diff_percent:
-                            metrics.append(metric)
-                            diff_percents.append(diff_percent)
+                        metrics.append([metric, diff_percent_prev, diff_percent_run])
 
-    return metrics, diff_percents
+    return metrics

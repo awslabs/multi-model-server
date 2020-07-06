@@ -62,8 +62,8 @@ class X2Junit(object):
                     tc.result = Skipped("Enough values are not captured")
                     self.ts.errors += 1
                 else:
-                    first_value = col_metric_values[0]
-                    last_value = col_metric_values[-2:-1]
+                    first_value = col_metric_values.iloc[0]
+                    last_value = col_metric_values.iloc[-1]
 
                     try:
                         if last_value == first_value == 0:
@@ -71,18 +71,17 @@ class X2Junit(object):
                         else:
                             diff_actual = (abs(last_value - first_value) / ((last_value + first_value) / 2)) * 100
 
-                        if diff_actual > diff_percent:
+                        if float(diff_actual) <= float(diff_percent):
                             self.ts.tests += 1
                         else:
                             tc.result = Failure("The first value and last value of run are {}, {} "
-                                                "with precent diff {}".format(first_value, last_value, diff_actual))
+                                                "with percent diff {}".format(first_value, last_value, diff_actual))
 
                     except Exception as e:
                         tc.result = Error("Error while comparing values {}".format(str(e)))
                         self.ts.errors += 1
 
             self.ts.add_testcase(tc)
-
 
     def __exit__(self, type, value, traceback):
         xunit_file = os.path.join(self.artifacts_dir, "xunit.xml")
@@ -120,6 +119,14 @@ class X2Junit(object):
         self.junit_xml.add_testsuite(self.ts)
 
 
+if __name__ == "__main__":
+    from utils import timer
+    j = JUnitXml()
+    with timer.Timer("asd") as t:
+        with X2Junit("a",
+                "/home/mahesh/multi-model-server/tests/performance/run_artifacts/xlarge__197a706__1594039175/api_description",
+                j, t, "xlarge") as a:
 
+            print("a")
 
 

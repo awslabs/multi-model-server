@@ -51,9 +51,11 @@ def get_compare_metric_list(dir, sub_dir):
     test_yaml = os.path.join(dir, sub_dir, "effective.yml")
     with open(test_yaml) as test_yaml:
         test_yaml = yaml.safe_load(test_yaml)
-        for criterion in test_yaml.get('compare_criteria', []):
-            if isinstance(criterion, dict):
-               metrics.append(get_metrics_list(criterion))
+        section = test_yaml.get('compare_criteria', [])
+        if section:
+            for criterion in section:
+                if isinstance(criterion, dict):
+                   metrics.append(get_metrics_list(criterion))
     return metrics
 
 

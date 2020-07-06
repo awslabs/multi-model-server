@@ -8,3 +8,5 @@ settings:
     TOTAL_WORKERS_MEM_DIFF : 5
 
     STOP : false
+
+~compare_criteria:

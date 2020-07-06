@@ -54,3 +54,6 @@ modules:
       stop : ${STOP}
       fail : true
       diff_percent_previous : ${TOTAL_WORKERS_MEM_DIFF}
+
+~compare_criteria:
+  -

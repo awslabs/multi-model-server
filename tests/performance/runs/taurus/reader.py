@@ -69,5 +69,3 @@ def get_compare_metric_list(dir, sub_dir):
             metrics.append(parse_criterion_sec(criterion))
 
     return metrics
-
-

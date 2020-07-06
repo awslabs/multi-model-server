@@ -36,4 +36,4 @@ modules:
   - module: passfail
 
 ~compare_criteria:
-
+  -

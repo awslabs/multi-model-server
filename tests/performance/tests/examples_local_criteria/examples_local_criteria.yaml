@@ -56,3 +56,4 @@ modules:
       diff_percent : ${TOTAL_WORKERS_MEM_DIFF}
 
 ~compare_criteria:
+  -

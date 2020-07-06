@@ -100,3 +100,4 @@ services:
       fail : true
 
 ~compare_criteria:
+  -

@@ -34,3 +34,6 @@ modules:
 
 ~reporting:
   - module: passfail
+
+~compare_criteria:
+

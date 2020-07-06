@@ -37,5 +37,7 @@ class Timer(object):
     def __exit__(self, type, value, traceback):
         logger.info("%s: %ss", self.description, self.diff())
 
+        return False
+
     def diff(self):
         return int(time.time()) - self.start

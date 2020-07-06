@@ -52,3 +52,6 @@
     fail: true
     stop: true
     diff_percent : ${TOTAL_WORKERS_FDS_DIFF}
+
+
+~compare_criteria:

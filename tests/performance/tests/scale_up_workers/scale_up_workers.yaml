@@ -95,3 +95,5 @@ services:
       timeframe: 5s
       stop : ${STOP}
       fail : true
+
+~compare_criteria:

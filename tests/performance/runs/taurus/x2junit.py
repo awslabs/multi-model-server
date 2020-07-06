@@ -118,6 +118,8 @@ class X2Junit(object):
         self.ts.update_statistics()
         self.junit_xml.add_testsuite(self.ts)
 
+        return False
+
 
 if __name__ == "__main__":
     from utils import timer

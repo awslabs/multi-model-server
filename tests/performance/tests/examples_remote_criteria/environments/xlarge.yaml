@@ -7,3 +7,4 @@ settings:
     TOTAL_WORKERS_FDS : 80
     TOTAL_WORKERS_FDS_DIFF : 35
 
+~compare_criteria:

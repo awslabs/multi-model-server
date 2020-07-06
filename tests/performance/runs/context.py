@@ -46,6 +46,7 @@ class ExecutionEnv(object):
         self.check_mms_server_status = check_mms_server_status
         self.reporter = JUnitXml()
         self.compare_reporter_generator = CompareReportGenerator(self.artifacts_dir, self.env, self.local_run)
+        self.exit_code = 1
 
     def __enter__(self):
         if self.use:
@@ -95,4 +96,6 @@ class ExecutionEnv(object):
         compare_exit_code = ExecutionEnv.report_summary(junit_compare_reporter, "Comparison Test suite")
         exit_code = ExecutionEnv.report_summary(junit_reporter, "Performance Regression Test suite")
 
-        sys.exit(0 if 0 == exit_code == compare_exit_code else 3)
+        self.exit_code = 0 if 0 == exit_code == compare_exit_code else 3
+
+        return False

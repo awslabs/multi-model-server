@@ -160,7 +160,7 @@ class X2Junit(object):
             self.ts.add_testcase(tc)
         else:
             tc = TestCase(self.name)
-            tc.result = Skipped()
+            tc.result = Skipped("Skipped criteria test cases as Taurus XUnit file is not generated.")
             self.ts.add_testcase(tc)
 
         self.add_compare_tests()

@@ -103,6 +103,43 @@ the last two commits.
 5. The run completes with a console summary of the performance and comparision suites which have failed
 ![](assets/console.png) 
 
+### D. Understanding the test case components
+A Test Case consists of the test.yaml, test.jmx, environments/*.yaml files and a global_config.yaml.
+Below is the sample folder structure for 'api_description' test case:
+```bash
+tests
+   -- api_description
+      --- environments
+          ---- xlarge.yaml
+          ---- mac_xlarge.yaml
+      --- api_description.jmx
+      --- api_description.yaml
+   -- global_config.yaml
+```
+
+1. global_config.yaml  
+   - It is a master template for all the test cases and is shared across all the tests.  
+   - It contains all the common yaml sections, criteria, monitoring metrics etc.  
+   - It also contain variables in the format ${variable} for metric thresholds and other test specific attributes.
+
+2. environments/*.yaml  
+   - A test case can have multiple environment files. If you have a environment dependent metrics you can create an environment
+   yaml file. For ex. macos_xlarge, ubuntu_xlarge etc.  
+   - The environment file contains values for all the variables mentioned in global_config.yaml and test.yaml.  
+
+3. test.yaml  
+   - The test.yaml is main yaml for a test case. Note the name of the yaml should be same as the test folder.  
+   - It inherits the master template global_config.yaml.  
+   And it usually contains the scenario, specific pre-processing commands (if any), and special criteria (if any) applicable for that test case only. 
+   - If you want a behavior other than defined in the master template, It is possible to override sections of global_config.yaml in the individual test case. 
+   The global_config.yaml's top-level sections can be overridden, merged, or appended based on below rules:  
+        1. By default the dictionaries get merged.  
+        2. If the dictionary key is prepended with '~' it will get overridden.  
+        3. The list gets appended.  
+4. test.jmx 
+   -  The JMeter test scenario file. The test.yaml runs the scenarion mentioned in the .jmx file.
+
+
 ## Add a new test
 
 Follow these three steps to add a new test case to the test suite.
@@ -110,6 +147,7 @@ Follow these three steps to add a new test case to the test suite.
 1. Add scenario (a.k.a test suite)
 2. Add metrics to monitor
 3. Add pass/fail criteria (a.k.a test case)
+4. Add compare criteria (a.k.a compare test cases)
 
 
 #### 1. Add scenario (a.k.a test suite)
@@ -261,7 +299,6 @@ specified in the pass/fail criterion are used for comparison with the previous r
         timeframe: 1s
         fail: true
         stop: true
-        diff_percent : 30
     
     ```
     Note that 
@@ -306,6 +343,22 @@ specified in the pass/fail criterion are used for comparison with the previous r
       * total_processes - Total number of processes spawned for frontend & workers
       * total_workers - Total number of workers spawned
       * orphans - Total number of orphan processes
+
+4. Add compare criteria:  
+There are two types of compare criteria you can add for metrics:
+    1. diff_percent_run  
+    This criteria is used to check the percent difference between first and last value of the metric for a run. 
+    In other words it is used to verify if metrics values are same before and after the scenario run. 
+    2. diff_percent_previous  
+    Compare the metric aggregate values with previous run. Here we take aggregate min, max and avg of metric values for current run
+    and previous run and check if percentage difference is not greater than diff_percent_previous. 
+
+Note formula for percentage difference is abs(value1 - value2)/((value1 + value2)/2) * 100
+
+## Guidelines for writing good test cases:
+1. The 'timeframe' duration to check values for threshold criteria should be sufficiently large at least 5 sec. 
+2. The duration specified using 'hold-for' property should also be sufficiently large at least 5 min.
+3. When you use diff_percent_run, make sure that scenario (JMX script) results in deterministic state across different runs.
 
 ## Test Strategy & Cases
 More details about our testing strategy and test cases can be found [here](TESTS.md) 

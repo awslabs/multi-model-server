@@ -40,6 +40,7 @@ commands:
       - run:
           name: Start MMS, Execute << parameters.collection >> API Tests, Stop MMS
           command: .circleci/scripts/linux_test_api.sh << parameters.collection >>
+          when: always
 
 
 jobs:
@@ -51,7 +52,7 @@ jobs:
       steps:
         - checkout
         - run:
-            name: Build frontend
+            name: Build MMS
             command: .circleci/scripts/linux_build.sh
         - store_artifacts:
             name: Store gradle testng results
@@ -110,8 +111,7 @@ jobs:
             path: logs/
         - store_artifacts:
             name: Store Benchmark Latency resnet-18 results
-            path: /tmp/MMSBenchmark/out/latency/resnet-18/report/
-            destination: benchmark-latency-resnet-18
+            path: /tmp/MMSBenchmark
 
     performance-regression:
       parameters:

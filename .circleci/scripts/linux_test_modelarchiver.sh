@@ -12,7 +12,8 @@ PY_UNITS_EXIT_CODE=$?
 
 
 # Install model archiver module
-pip install .
+python setup.py bdist_wheel --universal && \
+pip install dist/*.whl
 MODL_ARCHVR_EXIT_CODE=$?
 
 # Execute integration tests

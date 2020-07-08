@@ -1,21 +1,21 @@
 #!/bin/bash
 
 BASE_DIR="tests/api"
-MODEL_STORE_DIR="$BASE_DIR/model_store"
+MODEL_STORE_DIR="model_store"
 
-ARTIFACTS_BASE_DIR="$BASE_DIR/artifacts"
+ARTIFACTS_BASE_DIR="artifacts"
 ARTIFACTS_MANAGEMENT_DIR="$ARTIFACTS_BASE_DIR/management"
 ARTIFACTS_INFERENCE_DIR="$ARTIFACTS_BASE_DIR/inference"
 ARTIFACTS_HTTPS_DIR="$ARTIFACTS_BASE_DIR/https"
 
 MMS_CONSOLE_LOG_FILE="mms_console.log"
-MMS_CONFIG_FILE_HTTPS="$BASE_DIR/resources/config.properties"
+MMS_CONFIG_FILE_HTTPS="resources/config.properties"
 
-POSTMAN_ENV_FILE="$BASE_DIR/postman/environment.json"
-POSTMAN_COLLECTION_MANAGEMENT="$BASE_DIR/postman/management_api_test_collection.json"
-POSTMAN_COLLECTION_INFERENCE="$BASE_DIR/postman/inference_api_test_collection.json"
-POSTMAN_COLLECTION_HTTPS="$BASE_DIR/postman/https_test_collection.json"
-POSTMAN_DATA_FILE_INFERENCE="$BASE_DIR/postman/inference_data.json"
+POSTMAN_ENV_FILE="postman/environment.json"
+POSTMAN_COLLECTION_MANAGEMENT="postman/management_api_test_collection.json"
+POSTMAN_COLLECTION_INFERENCE="postman/inference_api_test_collection.json"
+POSTMAN_COLLECTION_HTTPS="postman/https_test_collection.json"
+POSTMAN_DATA_FILE_INFERENCE="postman/inference_data.json"
 
 REPORT_FILE="report.html"
 
@@ -31,6 +31,11 @@ start_mms_secure_server() {
 
 stop_mms_server() {
   multi-model-server --stop
+  sleep 10
+}
+
+cleanup_model_store(){
+  rm -rf $MODEL_STORE_DIR/*
 }
 
 move_logs(){
@@ -45,6 +50,7 @@ trigger_management_tests(){
   local EXIT_CODE=$?
   stop_mms_server
   move_logs $MMS_CONSOLE_LOG_FILE $ARTIFACTS_MANAGEMENT_DIR
+  cleanup_model_store
   return $EXIT_CODE
 }
 
@@ -55,6 +61,7 @@ trigger_inference_tests(){
   local EXIT_CODE=$?
   stop_mms_server
   move_logs $MMS_CONSOLE_LOG_FILE $ARTIFACTS_INFERENCE_DIR
+  cleanup_model_store
   return $EXIT_CODE
 }
 
@@ -65,9 +72,11 @@ trigger_https_tests(){
   local EXIT_CODE=$?
   stop_mms_server
   move_logs $MMS_CONSOLE_LOG_FILE $ARTIFACTS_HTTPS_DIR
+  cleanup_model_store
   return $EXIT_CODE
 }
 
+cd $BASE_DIR
 mkdir -p $MODEL_STORE_DIR $ARTIFACTS_MANAGEMENT_DIR $ARTIFACTS_INFERENCE_DIR $ARTIFACTS_HTTPS_DIR
 
 case $1 in

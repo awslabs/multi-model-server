@@ -2,8 +2,9 @@
 
 # Hack needed to make it work with existing benchmark.py
 # benchmark.py expects jmeter to be present at a very specific location
-mkdir -p /home/ubuntu/.linuxbrew/Cellar/jmeter/5.3/libexec/bin/
-ln -s /opt/apache-jmeter-5.3/bin/jmeter /home/ubuntu/.linuxbrew/Cellar/jmeter/5.3/libexec/bin/jmeter
+mkdir -p /home/linuxbrew/.linuxbrew/Homebrew/Cellar/jmeter/5.3/libexec/
+ln -s /opt/apache-jmeter-5.3/lib/ /home/linuxbrew/.linuxbrew/Homebrew/Cellar/jmeter/5.3/libexec/lib
+ln -s /opt/apache-jmeter-5.3/bin/ /home/linuxbrew/.linuxbrew/Homebrew/Cellar/jmeter/5.3/libexec/bin
 
 # Start MMS and redirect console ouptut and errors to a log file
 multi-model-server --start >> mms_console.log 2>&1

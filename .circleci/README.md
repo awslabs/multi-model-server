@@ -48,7 +48,7 @@ To make it easy for developers to debug build issues locally, MMS supports Circl
 
 #### Command
 Developers can use the following command to build MMS locally:  
-**_./run_circleci_tests.py <workflow_name> -j <job_name> -e <executor_name>**
+**./run_circleci_tests.py <workflow_name> -j <job_name> -e <executor_name>**
 
 - _workflow_name_  
 This is a madatory parameter

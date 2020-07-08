@@ -1,0 +1,51 @@
+---
+execution:
+- concurrency: 1
+  ramp-up: 5s
+  hold-for: 1m
+  scenario: Inference
+scenarios:
+  Inference:
+    default-address: ${__P(protocol,https)}://${__P(hostname,127.0.0.1)}:${__P(port,8443)}/
+    requests:
+    - follow-redirects: true
+      label: Inference Request
+      method: POST
+      upload-files:
+      - mime-type: image/jpeg
+        param: data
+        path: ${__P(input_filepath)}
+      url: ${__P(protocol,http)}://${__P(hostname,127.0.0.1)}:${__P(port,8080)}/predictions/${model}
+    store-cache: false
+    store-cookie: false
+    use-dns-cache-mgr: false
+    variables:
+      cnn_url: ${__P(url, https://s3.amazonaws.com/model-server/models/squeezenet_v1.1/squeezenet_v1.1.model)}
+      model: ${__P(model_name,squeezenet_v1.1)}
+      scale_down_workers: '0'
+      scale_up_workers: ${__P(min_workers,1)}
+modules:
+  jmeter:
+    properties:
+      input_filepath : kitten.jpg
+      model_name : squeezenet
+services:
+  - module: monitoring
+    local:
+    - interval: 2s
+      logging: True
+      metrics:
+      - cpu
+      - disk-space
+      - mem
+reporting:
+- module: passfail
+  criteria:
+  - class: bzt.modules.monitoring.MonitoringCriteria
+    subject: local/cpu
+    condition: '>'
+    threshold: 100
+    timeframe: 6s
+- module: junit-xml
+  filename: ${TAURUS_ARTIFACTS_DIR}/output/results.xml
+  data-source: pass-fail

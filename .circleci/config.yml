@@ -1,0 +1,189 @@
+version: 2.1
+
+
+executors:
+  py36:
+    docker:
+      - image: prashantsail/mms-build:python3.6
+    environment:
+      _JAVA_OPTIONS: "-Xmx2048m"
+
+  py27:
+    docker:
+      - image: prashantsail/mms-build:python2.7
+    environment:
+      _JAVA_OPTIONS: "-Xmx2048m"
+
+
+commands:
+  attach-mms-workspace:
+    description: "Attach the MMS directory which was saved into workspace"
+    steps:
+      - attach_workspace:
+          at: .
+
+  install-mms-server:
+    description: "Install MMS server from a wheel"
+    steps:
+      - run:
+          name: Install MMS
+          command: pip install dist/*.whl
+
+  exeucute-api-tests:
+    description: "Execute API tests from a collection"
+    parameters:
+      collection:
+        type: enum
+        enum: [management, inference, https]
+        default: management
+    steps:
+      - run:
+          name: Start MMS, Execute << parameters.collection >> API Tests, Stop MMS
+          command: .circleci/scripts/linux_test_api.sh << parameters.collection >>
+      - store_artifacts:
+          name: Store server logs from << parameters.collection >> API tests
+          path: mms_<< parameters.collection >>.log
+      - store_artifacts:
+          name: Store << parameters.collection >> API test results
+          path: test/<< parameters.collection >>-api-report.html
+
+
+jobs:
+    build:
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
+      steps:
+        - checkout
+        - run:
+            name: Build frontend
+            command: .circleci/scripts/linux_build.sh
+        - store_artifacts:
+            name: Store gradle testng results
+            path: frontend/server/build/reports/tests/test
+        - persist_to_workspace:
+            root: .
+            paths:
+              - .
+
+    python-tests:
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
+      steps:
+        - attach-mms-workspace
+        - run:
+            name: Execute python unit tests
+            command: .circleci/scripts/linux_test_python.sh
+        - store_artifacts:
+            name: Store python Test results
+            path: htmlcov
+
+    api-tests:
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
+      steps:
+        - attach-mms-workspace
+        - install-mms-server
+        - exeucute-api-tests:
+            collection: management
+        - exeucute-api-tests:
+            collection: inference
+        - exeucute-api-tests:
+            collection: https
+
+    benchmark:
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
+      steps:
+        - attach-mms-workspace
+        - install-mms-server
+        - run:
+            name: Start MMS, Execute benchmark tests, Stop MMS
+            command: .circleci/scripts/linux_test_benchmark.sh
+        - store_artifacts:
+            name: Store server logs from benchmark tests
+            path: mms.log
+        - store_artifacts:
+            name: Store Benchmark Latency resnet-18 results
+            path: /tmp/MMSBenchmark/out/latency/resnet-18/report/
+            destination: benchmark-latency-resnet-18
+
+    modelarchiver:
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
+      steps:
+        - checkout
+        - run:
+            name: Execute lint, unit and integration tests
+            command: .circleci/scripts/linux_test_modelarchiver.sh
+        - store_artifacts:
+            name: Store unit tests results from model archiver tests
+            path: model-archiver/results_units
+            destination: units
+
+
+workflows:
+  version: 2
+
+  smoke:
+    jobs:
+      - &build
+        build:
+          name: build-<< matrix.executor >>
+          matrix: &matrix
+            parameters:
+              executor: ["py27", "py36"]
+      - &modelarchiver
+        modelarchiver:
+          name: modelarchiver-<< matrix.executor >>
+          matrix: *matrix
+      - &python-tests
+        python-tests:
+          name: python-tests-<< matrix.executor >>
+          requires:
+            - build-<< matrix.executor >>
+          matrix: *matrix
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - *build
+      - *modelarchiver
+      - *python-tests
+      - &api-tests
+        api-tests:
+          name: api-tests-<< matrix.executor >>
+          requires:
+            - build-<< matrix.executor >>
+          matrix: *matrix
+
+  weekly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * 0"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - *build
+      - benchmark:
+          name: benchmark-<< matrix.executor >>
+          requires:
+            - build-<< matrix.executor >>
+          matrix: *matrix

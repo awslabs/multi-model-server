@@ -1,0 +1,51 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License").
+# You may not use this file except in compliance with the License.
+# A copy of the License is located at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
+# permissions and limitations under the License.
+#
+
+FROM awsdeeplearningteam/mms-build:python3.6@sha256:2c1afa8834907ceec641d254dffbf4bcc659ca2d00fd6f2872d7521f32c9fa2e
+
+# 2020 - Updated Build and Test dependencies
+
+# Python packages for MMS Server
+RUN pip install psutil \
+    && pip install future \
+    && pip install Pillow \
+    && pip install wheel \
+    && pip install twine \
+    && pip install requests \
+    && pip install mock \
+    && pip install numpy \
+    && pip install Image \
+    && pip install mxnet==1.5.0
+
+# Python packages for pytests
+RUN pip install pytest==4.0.0 \
+    && pip install pytest-cov \
+    && pip install pytest-mock
+
+# Python packages for benchmark
+RUN pip install pandas
+
+# Install NodeJS and packages for API tests
+RUN curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - \
+    && sudo apt-get install -y nodejs \
+    && sudo npm install -g newman newman-reporter-html
+
+# Install jmeter for benchmark
+# ToDo: Remove --no-check-certificate; temporarily added to bypass jmeter-plugins.org's expired certificate
+RUN cd /opt \
+    && wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.3.tgz \
+    && tar -xzf apache-jmeter-5.3.tgz \
+    && cd apache-jmeter-5.3 \
+    && ln -s /opt/apache-jmeter-5.3/bin/jmeter /usr/local/bin/jmeter \
+    && wget --no-check-certificate https://jmeter-plugins.org/get/ -O lib/ext/jmeter-plugins-manager-1.4.jar \
+    && wget http://search.maven.org/remotecontent?filepath=kg/apc/cmdrunner/2.2/cmdrunner-2.2.jar -O lib/cmdrunner-2.2.jar \
+    && java -cp lib/ext/jmeter-plugins-manager-1.4.jar org.jmeterplugins.repository.PluginManagerCMDInstaller \
+    && bin/PluginsManagerCMD.sh install jpgc-synthesis=2.1,jpgc-filterresults=2.1,jpgc-mergeresults=2.1,jpgc-cmd=2.1,jpgc-perfmon=2.1

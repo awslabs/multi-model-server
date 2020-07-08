@@ -1,0 +1,68 @@
+---
+execution:
+- concurrency: 10
+  ramp-up: 1s
+  hold-for: 30s
+  scenario: list_models
+
+scenarios:
+  list_models:
+    script: list_models.jmx
+
+modules:
+  server_local_monitoring:
+    class : metrics_monitoring_inproc.Monitor
+
+services:
+  - module: shellexec
+    prepare:
+      - "multi-model-server --start > /dev/null 2>&1"
+      - "sleep 20s"
+      - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar"
+      - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/shufflenet.mar"
+    post-process:
+      - "multi-model-server --stop > /dev/null 2>&1"
+  - module: server_local_monitoring
+    ServerLocalClient:
+      - interval: 1s
+        logging : True
+        metrics:
+          - total_processes
+          - sum_all_file_descriptors
+          - sum_all_memory_rss
+
+reporting:
+- module: passfail
+  criteria:
+    # Inbuilt Criteria
+    - success of ListModels<${LST_MODLS_SUCC}, stop as failed
+    - avg-rt of ListModels>${LST_MODLS_RT}, stop as failed
+    # Custom Criteria
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '>'
+      threshold: ${TOTAL_PROCS}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '<'
+      threshold: ${TOTAL_PROCS}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_all_file_descriptors
+      condition: '>'
+      threshold: ${TOTAL_FDS}
+      timeframe: 1s
+      stop : true
+      fail : true
+#    - class: bzt.modules.monitoring.MonitoringCriteria
+#      subject: ServerLocalClient/sum_all_memory_rss
+#      condition: '>'
+#      threshold: ${TOTAL_MEM}
+#      timeframe: 5s
+#      stop : true
+#      fail : true

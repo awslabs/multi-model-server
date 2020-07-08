@@ -1,0 +1,10 @@
+---
+settings:
+  env:
+    MGMT_DESC_SUCC: 100%
+    INFR_DESC_SUCC: 100%
+    MGMT_DESC_RT : 10ms
+    INFR_DESC_RT : 10ms
+    TOTAL_PROCS : 1
+    TOTAL_FDS : 73
+    TOTAL_MEM: 100000000 #100MB

@@ -1,0 +1,66 @@
+---
+execution:
+- concurrency: 10
+  ramp-up: 1s
+  hold-for: 30s
+  scenario: health_check
+
+scenarios:
+  health_check:
+    script: health_check.jmx
+
+modules:
+  server_local_monitoring:
+    class : metrics_monitoring_inproc.Monitor
+
+services:
+  - module: shellexec
+    prepare:
+      - "multi-model-server --start > /dev/null 2>&1"
+      - "sleep 10s"
+    post-process:
+      - "multi-model-server --stop > /dev/null 2>&1"
+  - module: server_local_monitoring
+    ServerLocalClient:
+      - interval: 1s
+        logging : True
+        metrics:
+          - total_processes
+          - sum_all_file_descriptors
+          - sum_all_memory_rss
+
+reporting:
+- module: passfail
+  criteria:
+    # Inbuilt Criteria
+    - success of HealthCheck<${HLTH_CHK_SUCC}, stop as failed
+    - avg-rt of HealthCheck>${HLTH_CHK_RT}, stop as failed
+    # Custom Criteria
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '>'
+      threshold: ${TOTAL_PROCS}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '<'
+      threshold: ${TOTAL_PROCS}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_all_file_descriptors
+      condition: '>'
+      threshold: ${TOTAL_FDS}
+      timeframe: 5s
+      stop : true
+      fail : true
+#    - class: bzt.modules.monitoring.MonitoringCriteria
+#      subject: ServerLocalClient/sum_all_memory_rss
+#      condition: '>'
+#      threshold: ${TOTAL_MEM}
+#      timeframe: 5s
+#      stop : true
+#      fail : true

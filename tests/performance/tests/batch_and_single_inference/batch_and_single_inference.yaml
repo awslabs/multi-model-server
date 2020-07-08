@@ -1,0 +1,96 @@
+---
+execution:
+- concurrency: 10
+  ramp-up: 5s
+  hold-for: 20s
+  scenario: Inference
+
+scenarios:
+  Inference:
+    script: batch_and_single_inference.jmx
+
+modules:
+  server_local_monitoring:
+    # metrics_monitoring_inproc and dependencies should be in python path
+    class : metrics_monitoring_inproc.Monitor # monitoring class.
+
+services:
+  - module: shellexec
+    prepare:
+      - "curl -s -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg"
+      - "multi-model-server --start > /dev/null 2>&1"
+      - "sleep 20s"
+      - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/examples/resnet-152-batching/resnet-152.mar&batch_size=8&max_batch_delay=50"
+      # uncomment below and comment prev and use downloaded model with model-store
+      #- curl -s -X POST "http://localhost:8081/models?url=resnet-152.mar&batch_size=8&max_batch_delay=60&initial_workers=1"
+      - "curl -s -X PUT  http://localhost:8081/models/resnet-152?min_worker=2&synchronous=true"
+      - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar"
+      - "curl -s -X PUT  http://localhost:8081/models/squeezenet_v1.1?min_worker=2&synchronous=true"
+    post-process:
+      - "multi-model-server --stop > /dev/null 2>&1"
+      - "rm kitten.jpg"
+  - module: server_local_monitoring # should be added in modules section
+    ServerLocalClient: # keyword from metrics_monitoring_inproc.Monitor
+    - interval: 1s
+      logging : True
+      metrics:
+        - sum_workers_memory_rss
+        - sum_workers_file_descriptors
+        - total_workers
+        - orphans
+
+reporting:
+- module: passfail
+  criteria:
+    - subject: avg-rt  # required
+      label: 'Inference1'  # optional, default is ''
+      condition: '>'  # required
+      threshold: ${INFR1_RT}  # required
+      logic: for  # optional, logic to aggregate values within timeframe.
+      # Default 'for' means take latest,
+      # 'within' and 'over' means take sum/avg of all values within interval
+      timeframe: 1s  # optional, default is none
+      stop: true  # optional, default is true. false for nonstop testing until the end
+      fail: true  # optional, default is true
+    - subject: avg-rt  # required
+      label: 'Inference2'  # optional, default is ''
+      condition: '>'  # required
+      threshold: ${INFR2_RT} # required
+      logic: for  # optional, logic to aggregate values within timeframe.
+      # Default 'for' means take latest,
+      # 'within' and 'over' means take sum/avg of all values within interval
+      timeframe: 1s  # optional, default is none
+      stop: true  # optional, default is true. false for nonstop testing until the end
+      fail: true  # optional, default is true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_memory_rss
+      condition: '>'
+      threshold: ${TOTAL_WORKERS_MEM}
+      timeframe: 1s
+      stop : true
+      fail : true
+      diff_percent : 30
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/orphans
+      condition: '>'
+      threshold: ${TOTAL_ORPHANS}
+      timeframe: 1s
+      stop : true
+      fail : true
+      diff_percent : 0
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_workers
+      condition: '>'
+      threshold: ${TOTAL_WORKERS}
+      timeframe: 1s
+      stop: true
+      fail: true
+      diff_percent: 0
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '>'
+      threshold: ${TOTAL_WORKERS_FDS}
+      timeframe: 1s
+      stop: true
+      fail: true
+      diff_percent: 30

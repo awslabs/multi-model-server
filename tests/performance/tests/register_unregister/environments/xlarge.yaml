@@ -1,0 +1,11 @@
+---
+settings:
+  env:
+    REG_SUCC : 100%
+    UNREG_SUCC: 100%
+    REG_RT : 15s
+    UNREG_RT: 10ms
+    TOTAL_PROCS : 1
+    TOTAL_FDS : 66
+    TOTAL_ORPHANS : 0
+    FRNTEND_MEM : 75000000 #75MB

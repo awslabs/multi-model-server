@@ -1,0 +1,113 @@
+---
+execution:
+- concurrency: 10
+  ramp-up: 1s
+  hold-for: 30s
+  scenario: scaledown
+
+scenarios:
+  scaledown:
+    script: scale_down_workers.jmx
+
+modules:
+  server_local_monitoring:
+    class : metrics_monitoring_inproc.Monitor
+
+services:
+  - module: shellexec
+    prepare:
+      - "multi-model-server --start > /dev/null 2>&1"
+      - "sleep 20s"
+      - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar"
+      - "curl -s -X PUT  http://localhost:8081/models/squeezenet_v1.1?min_worker=4&synchronous=true"
+    post-process:
+      - "multi-model-server --stop > /dev/null 2>&1"
+  - module: server_local_monitoring
+    ServerLocalClient:
+      - interval: 1s
+        logging : True
+        metrics:
+          - total_processes
+          - total_workers
+          - frontend_file_descriptors
+          - sum_workers_file_descriptors
+          - frontend_memory_rss
+          - sum_workers_memory_rss
+
+reporting:
+- module: passfail
+  criteria:
+    # Inbuilt Criteria
+    - success of ScaleDown<${SCL_DWN_SUCC}, stop as failed
+    - avg-rt of ScaleDown>${SCL_DWN_RT}, stop as failed
+    # Custom Criteria
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '>'
+      threshold: ${TOTAL_PROCS_B4_SCL_DWN}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_processes
+      condition: '<'
+      threshold: ${TOTAL_PROCS_AFTR_SCL_DWN}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_workers
+      condition: '>'
+      threshold: ${TOTAL_WRKRS_B4_SCL_DWN}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/total_workers
+      condition: '<'
+      threshold: ${TOTAL_WRKRS_AFTR_SCL_DWN}
+      timeframe: 1s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/frontend_file_descriptors
+      condition: '>'
+      threshold: ${FRNTEND_FDS}
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '>'
+      threshold: ${TOTAL_WRKRS_FDS_B4_SCL_DWN}
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_file_descriptors
+      condition: '<'
+      threshold: ${TOTAL_WRKRS_FDS_AFTR_SCL_DWN}
+      timeframe: 5s
+      stop : true
+      fail : true
+#    - class: bzt.modules.monitoring.MonitoringCriteria
+#      subject: ServerLocalClient/frontend_memory_rss
+#      condition: '>'
+#      threshold: ${FRNTEND_MEM}
+#      timeframe: 5s
+#      stop : true
+#      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_memory_rss
+      condition: '>'
+      threshold: ${TOTAL_WRKRS_MEM_B4_SCL_DWN}
+      timeframe: 5s
+      stop : true
+      fail : true
+    - class: bzt.modules.monitoring.MonitoringCriteria
+      subject: ServerLocalClient/sum_workers_memory_rss
+      condition: '<'
+      threshold: ${TOTAL_WRKRS_MEM_AFTR_SCL_DWN}
+      timeframe: 5s
+      stop : true
+      fail : true

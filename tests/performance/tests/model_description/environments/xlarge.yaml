@@ -1,0 +1,8 @@
+---
+settings:
+  env:
+    MODL_DESC_SUCC : 100%
+    MODL_DESC_RT : 14ms
+    TOTAL_PROCS : 3
+    TOTAL_FDS : 90
+    TOTAL_MEM : 300000000 #300MB

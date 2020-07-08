@@ -4,7 +4,7 @@
         "model_name":"alexnet",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -36,7 +36,7 @@
         "model_name":"caffenet",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -68,7 +68,7 @@
         "model_name":"inception_v1",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -100,7 +100,7 @@
         "model_name":"inception-bn",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -132,7 +132,7 @@
         "model_name":"mobilenet",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -164,7 +164,7 @@
         "model_name":"nin",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -196,7 +196,7 @@
         "model_name":"resnet-152",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -228,7 +228,7 @@
         "model_name":"resnet-18",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -260,7 +260,7 @@
         "model_name":"resnext101",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -292,7 +292,7 @@
         "model_name":"resnet18-v1",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -324,7 +324,7 @@
         "model_name":"resnet34-v1",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -356,7 +356,7 @@
         "model_name":"resnet50-v1",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -388,7 +388,7 @@
         "model_name":"resnet101-v1",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -420,7 +420,7 @@
         "model_name":"resnet152-v1",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -452,7 +452,7 @@
         "model_name":"resnet18-v2",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -484,7 +484,7 @@
         "model_name":"resnet34-v2",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -516,7 +516,7 @@
         "model_name":"resnet50-v2",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -548,7 +548,7 @@
         "model_name":"resnet101-v2",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -580,7 +580,7 @@
         "model_name":"resnet152-v2",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -612,7 +612,7 @@
         "model_name":"shufflenet",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -644,7 +644,7 @@
         "model_name":"onnx-squeezenet",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -676,7 +676,7 @@
         "model_name":"squeezenet_v1.1",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -708,7 +708,7 @@
         "model_name":"vgg16",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -740,7 +740,7 @@
         "model_name":"onnx-vgg16",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -772,7 +772,7 @@
         "model_name":"onnx-vgg16_bn",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -804,7 +804,7 @@
         "model_name":"vgg19",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -836,7 +836,7 @@
         "model_name":"onnx-vgg19",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[
@@ -868,7 +868,7 @@
         "model_name":"onnx-vgg19_bn",
         "worker":1,
         "synchronous":"true",
-        "file":"tests/api/resources/kitten.jpg",
+        "file":"resources/kitten.jpg",
         "content-type":"application/json",
         "validator":"image_classification",
         "expected":[

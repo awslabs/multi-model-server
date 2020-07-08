@@ -57,7 +57,7 @@ start_secure_mms() {
 run_postman_test() {
   # Run Postman Scripts
   mkdir $ROOT_DIR/report/
-  cd $CODEBUILD_WD/
+  cd $CODEBUILD_WD/tests/api/
   set +e
   # Run Management API Tests
   stop_mms_serve

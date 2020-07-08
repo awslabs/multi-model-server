@@ -7,7 +7,6 @@ Multi Model Server
 
 Multi Model Server (MMS) is a flexible and easy to use tool for serving deep learning models trained using any ML/DL framework.
 
-
 Use the MMS Server CLI, or the pre-configured Docker images, to start a service that sets up HTTP endpoints to handle model inference requests.
 
 A quick overview and examples for both serving and packaging are provided below. Detailed documentation and examples are provided in the [docs folder](docs/README.md).

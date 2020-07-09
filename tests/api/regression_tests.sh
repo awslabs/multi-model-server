@@ -48,7 +48,7 @@ stop_mms_serve() {
 start_secure_mms() {
 
   # Start MMS with Model Store
-  multi-model-server --start --mms-config tests/api/resources/config.properties --model-store $1  &>> $2
+  multi-model-server --start --mms-config resources/config.properties --model-store $1  &>> $2
   sleep 10
   curl --insecure -X GET https://127.0.0.1:8444/models
 }
@@ -62,20 +62,20 @@ run_postman_test() {
   # Run Management API Tests
   stop_mms_serve
   start_mms $MODEL_STORE $MMS_LOG_FILE
-  newman run -e tests/api/postman/environment.json --bail --verbose tests/api/postman/management_api_test_collection.json \
+  newman run -e postman/environment.json --bail --verbose postman/management_api_test_collection.json \
 	  -r cli,html --reporter-html-export $ROOT_DIR/report/management_report.html >>$1 2>&1
 
   # Run Inference API Tests after Restart
   stop_mms_serve
   start_mms $MODEL_STORE $MMS_LOG_FILE
-  newman run -e tests/api/postman/environment.json --bail --verbose tests/api/postman/inference_api_test_collection.json \
-	  -d tests/api/postman/inference_data.json -r cli,html --reporter-html-export $ROOT_DIR/report/inference_report.html >>$1 2>&1
+  newman run -e postman/environment.json --bail --verbose postman/inference_api_test_collection.json \
+	  -d postman/inference_data.json -r cli,html --reporter-html-export $ROOT_DIR/report/inference_report.html >>$1 2>&1
 
 
   # Run Https test cases
   stop_mms_serve
   start_secure_mms $MODEL_STORE $MMS_LOG_FILE
-  newman run --insecure -e tests/api/postman/environment.json --bail --verbose tests/api/postman/https_test_collection.json \
+  newman run --insecure -e postman/environment.json --bail --verbose postman/https_test_collection.json \
 	  -r cli,html --reporter-html-export $ROOT_DIR/report/MMS_https_test_report.html >>$1 2>&1
 
   stop_mms_serve

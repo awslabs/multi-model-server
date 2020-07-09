@@ -3,7 +3,7 @@ settings:
   env:
     INFR1_SUCC : 100%
     INFR2_SUCC: 100%
-    INFR1_RT : 350ms
+    INFR1_RT : 1s
     INFR2_RT: 1.5s
     TOTAL_PROCS : 5
     TOTAL_FDS : 521

@@ -171,18 +171,6 @@ workflows:
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix
-      ##### Remove after Dev test ###############################
-      - api-tests:
-          name: api-tests-<< matrix.executor >>
-          requires:
-            - build-<< matrix.executor >>
-          matrix: *matrix
-      - performance-regression:
-          name: performance-regression-<< matrix.executor >>
-          requires:
-            - build-<< matrix.executor >>
-          matrix: *matrix
-      #############################################################
 
   nightly:
     triggers:

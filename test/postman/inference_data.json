@@ -1,0 +1,898 @@
+[
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/alexnet.mar",
+        "model_name":"alexnet",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.4766186773777008,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.20687074959278107,
+                "class":"n02128757 snow leopard, ounce, Panthera uncia"
+            },
+            {
+                "probability":0.135288268327713,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.09019536525011063,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.04814659804105759,
+                "class":"n02123159 tiger cat"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/caffenet.mar",
+        "model_name":"caffenet",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.7166884541511536,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.09750154614448547,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.0745730996131897,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.06743090599775314,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.03200334310531616,
+                "class":"n02128757 snow leopard, ounce, Panthera uncia"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-inception_v1.mar",
+        "model_name":"inception_v1",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.3833286464214325,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.33825597167015076,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.17002010345458984,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.09881989657878876,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.001223195344209671,
+                "class":"n02123394 Persian cat"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/inception-bn.mar",
+        "model_name":"inception-bn",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.5972931981086731,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.30086880922317505,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.08586657792329788,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.009726772084832191,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.0008877559448592365,
+                "class":"n03598930 jigsaw puzzle"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-mobilenet.mar",
+        "model_name":"mobilenet",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":216.0907745361328,
+                "class":"n02948072 candle, taper, wax light"
+            },
+            {
+                "probability":186.8531494140625,
+                "class":"n04456115 torch"
+            },
+            {
+                "probability":178.81483459472656,
+                "class":"n03347037 fire screen, fireguard"
+            },
+            {
+                "probability":169.5437469482422,
+                "class":"n03666591 lighter, light, igniter, ignitor"
+            },
+            {
+                "probability":145.08824157714844,
+                "class":"n09472597 volcano"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/nin.mar",
+        "model_name":"nin",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.978486180305481,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.021282507106661797,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":9.809057519305497e-05,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":8.281067130155861e-05,
+                "class":"n02128385 leopard, Panthera pardus"
+            },
+            {
+                "probability":2.5670484319562092e-05,
+                "class":"n02128757 snow leopard, ounce, Panthera uncia"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-152.mar",
+        "model_name":"resnet-152",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.7149006128311157,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.22877003252506256,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.040323738008737564,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.008370742201805115,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.00067278987262398,
+                "class":"n02129604 tiger, Panthera tigris"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/resnet-18.mar",
+        "model_name":"resnet-18",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.3633013665676117,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.2988913953304291,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.18073132634162903,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.07343611121177673,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.02035967819392681,
+                "class":"n02128757 snow leopard, ounce, Panthera uncia"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/resnext-101-64x4d.mar",
+        "model_name":"resnext101",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.5961099863052368,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.4005117118358612,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.0012956340797245502,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.0011538631515577435,
+                "class":"n04074963 remote control, remote"
+            },
+            {
+                "probability":0.000405249185860157,
+                "class":"n04286575 spotlight, spot"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet18v1.mar",
+        "model_name":"resnet18-v1",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":16.35452651977539,
+                "class":"n02999410 chain"
+            },
+            {
+                "probability":16.15776824951172,
+                "class":"n10148035 groom, bridegroom"
+            },
+            {
+                "probability":15.857562065124512,
+                "class":"n04141076 sax, saxophone"
+            },
+            {
+                "probability":15.083999633789062,
+                "class":"n04507155 umbrella"
+            },
+            {
+                "probability":14.938633918762207,
+                "class":"n09229709 bubble"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet34v1.mar",
+        "model_name":"resnet34-v1",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":12.617600440979004,
+                "class":"n04286575 spotlight, spot"
+            },
+            {
+                "probability":10.216148376464844,
+                "class":"n03637318 lampshade, lamp shade"
+            },
+            {
+                "probability":9.676478385925293,
+                "class":"n03942813 ping-pong ball"
+            },
+            {
+                "probability":9.529446601867676,
+                "class":"n02708093 analog clock"
+            },
+            {
+                "probability":9.494606018066406,
+                "class":"n03691459 loudspeaker, speaker, speaker unit, loudspeaker system, speaker system"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet50v1.mar",
+        "model_name":"resnet50-v1",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":177.36087036132812,
+                "class":"n03982430 pool table, billiard table, snooker table"
+            },
+            {
+                "probability":174.36256408691406,
+                "class":"n03942813 ping-pong ball"
+            },
+            {
+                "probability":172.44488525390625,
+                "class":"n03661043 library"
+            },
+            {
+                "probability":163.6439971923828,
+                "class":"n02788148 bannister, banister, balustrade, balusters, handrail"
+            },
+            {
+                "probability":159.4976043701172,
+                "class":"n03065424 coil, spiral, volute, whorl, helix"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet101v1.mar",
+        "model_name":"resnet101-v1",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":107.36915588378906,
+                "class":"n02823428 beer bottle"
+            },
+            {
+                "probability":99.51375579833984,
+                "class":"n04485082 tripod"
+            },
+            {
+                "probability":95.99050903320312,
+                "class":"n04069434 reflex camera"
+            },
+            {
+                "probability":84.3740463256836,
+                "class":"n04557648 water bottle"
+            },
+            {
+                "probability":83.7496566772461,
+                "class":"n02841315 binoculars, field glasses, opera glasses"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet152v1.mar",
+        "model_name":"resnet152-v1",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":61.71363067626953,
+                "class":"n07930864 cup"
+            },
+            {
+                "probability":60.88921356201172,
+                "class":"n03832673 notebook, notebook computer"
+            },
+            {
+                "probability":60.11431121826172,
+                "class":"n03691459 loudspeaker, speaker, speaker unit, loudspeaker system, speaker system"
+            },
+            {
+                "probability":53.656005859375,
+                "class":"n07920052 espresso"
+            },
+            {
+                "probability":53.115779876708984,
+                "class":"n03492542 hard disc, hard disk, fixed disk"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet18v2.mar",
+        "model_name":"resnet18-v2",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":24.102333068847656,
+                "class":"n04553703 washbasin, handbasin, washbowl, lavabo, wash-hand basin"
+            },
+            {
+                "probability":23.69866943359375,
+                "class":"n04254120 soap dispenser"
+            },
+            {
+                "probability":19.214643478393555,
+                "class":"n02747177 ashcan, trash can, garbage can, wastebin, ash bin, ash-bin, ashbin, dustbin, trash barrel, trash bin"
+            },
+            {
+                "probability":18.93875503540039,
+                "class":"n03691459 loudspeaker, speaker, speaker unit, loudspeaker system, speaker system"
+            },
+            {
+                "probability":18.90488052368164,
+                "class":"n04201297 shoji"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet34v2.mar",
+        "model_name":"resnet34-v2",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":9.2193603515625,
+                "class":"n02708093 analog clock"
+            },
+            {
+                "probability":7.803028583526611,
+                "class":"n03782006 monitor"
+            },
+            {
+                "probability":7.681037425994873,
+                "class":"n04286575 spotlight, spot"
+            },
+            {
+                "probability":7.129834175109863,
+                "class":"n03028079 church, church building"
+            },
+            {
+                "probability":7.0597100257873535,
+                "class":"n04152593 screen, CRT screen"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet50v2.mar",
+        "model_name":"resnet50-v2",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":15.76949691772461,
+                "class":"n06359193 web site, website, internet site, site"
+            },
+            {
+                "probability":14.25102710723877,
+                "class":"n07565083 menu"
+            },
+            {
+                "probability":13.321331024169922,
+                "class":"n03944341 pinwheel"
+            },
+            {
+                "probability":11.99173641204834,
+                "class":"n06596364 comic book"
+            },
+            {
+                "probability":11.768353462219238,
+                "class":"n03291819 envelope"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet101v2.mar",
+        "model_name":"resnet101-v2",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":7.887596130371094,
+                "class":"n04380533 table lamp"
+            },
+            {
+                "probability":7.870771884918213,
+                "class":"n03627232 knot"
+            },
+            {
+                "probability":7.605418682098389,
+                "class":"n02093859 Kerry blue terrier"
+            },
+            {
+                "probability":7.55618143081665,
+                "class":"n04033995 quilt, comforter, comfort, puff"
+            },
+            {
+                "probability":7.256267547607422,
+                "class":"n03884397 panpipe, pandean pipe, syrinx"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-resnet152v2.mar",
+        "model_name":"resnet152-v2",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":36.13174819946289,
+                "class":"n03970156 plunger, plumber's helper"
+            },
+            {
+                "probability":29.110092163085938,
+                "class":"n02708093 analog clock"
+            },
+            {
+                "probability":28.711875915527344,
+                "class":"n04152593 screen, CRT screen"
+            },
+            {
+                "probability":28.073928833007812,
+                "class":"n01930112 nematode, nematode worm, roundworm"
+            },
+            {
+                "probability":28.058176040649414,
+                "class":"n04404412 television, television system"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/shufflenet.mar",
+        "model_name":"shufflenet",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.0010000000474974513,
+                "class":"n03792972 mountain tent"
+            },
+            {
+                "probability":0.0010000000474974513,
+                "class":"n03773504 missile"
+            },
+            {
+                "probability":0.0010000000474974513,
+                "class":"n03775071 mitten"
+            },
+            {
+                "probability":0.0010000000474974513,
+                "class":"n03775546 mixing bowl"
+            },
+            {
+                "probability":0.0010000000474974513,
+                "class":"n03776460 mobile home, manufactured home"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-squeezenet.mar",
+        "model_name":"onnx-squeezenet",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.6482629179954529,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.2318260818719864,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.10045160353183746,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.013487360440194607,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.003135664388537407,
+                "class":"n02128757 snow leopard, ounce, Panthera uncia"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar",
+        "model_name":"squeezenet_v1.1",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.8582231402397156,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.09159984439611435,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.03748767822980881,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.006165081635117531,
+                "class":"n02128385 leopard, Panthera pardus"
+            },
+            {
+                "probability":0.0031715999357402325,
+                "class":"n02127052 lynx, catamount"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/vgg16.mar",
+        "model_name":"vgg16",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.8178463578224182,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.12500879168510437,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.05412120372056961,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.0020657714921981096,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.0005614628316834569,
+                "class":"n02128757 snow leopard, ounce, Panthera uncia"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg16.mar",
+        "model_name":"onnx-vgg16",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":101.13871765136719,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":89.77296447753906,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":88.40411376953125,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":76.17413330078125,
+                "class":"n02125311 cougar, puma, catamount, mountain lion, painter, panther, Felis concolor"
+            },
+            {
+                "probability":74.09810638427734,
+                "class":"n07930864 cup"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg16_bn.mar",
+        "model_name":"onnx-vgg16_bn",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":16.06477165222168,
+                "class":"n03196217 digital clock"
+            },
+            {
+                "probability":13.64653491973877,
+                "class":"n04286575 spotlight, spot"
+            },
+            {
+                "probability":13.565534591674805,
+                "class":"n03692522 loupe, jeweler's loupe"
+            },
+            {
+                "probability":13.479013442993164,
+                "class":"n03388043 fountain"
+            },
+            {
+                "probability":12.639715194702148,
+                "class":"n03666591 lighter, light, igniter, ignitor"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/vgg19.mar",
+        "model_name":"vgg19",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.5058671832084656,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.28164851665496826,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.20637290179729462,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.0046674045734107494,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.00011857607023557648,
+                "class":"n03598930 jigsaw puzzle"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg19.mar",
+        "model_name":"onnx-vgg19",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":0.3949933350086212,
+                "class":"n02124075 Egyptian cat"
+            },
+            {
+                "probability":0.34417903423309326,
+                "class":"n02123159 tiger cat"
+            },
+            {
+                "probability":0.25566166639328003,
+                "class":"n02123045 tabby, tabby cat"
+            },
+            {
+                "probability":0.0027325130067765713,
+                "class":"n02127052 lynx, catamount"
+            },
+            {
+                "probability":0.0002417804644210264,
+                "class":"n07930864 cup"
+            }
+        ],
+        "tolerance":1
+    },
+    {
+        "url":"https://s3.amazonaws.com/model-server/model_archive_1.0/onnx-vgg19_bn.mar",
+        "model_name":"onnx-vgg19_bn",
+        "worker":1,
+        "synchronous":"true",
+        "file":"test/resources/kitten.jpg",
+        "content-type":"application/json",
+        "validator":"image_classification",
+        "expected":[
+            {
+                "probability":17.26873016357422,
+                "class":"n04589890 window screen"
+            },
+            {
+                "probability":16.25399398803711,
+                "class":"n03347037 fire screen, fireguard"
+            },
+            {
+                "probability":16.093460083007812,
+                "class":"n04286575 spotlight, spot"
+            },
+            {
+                "probability":16.02733039855957,
+                "class":"n04590129 window shade"
+            },
+            {
+                "probability":15.910074234008789,
+                "class":"n03637318 lampshade, lamp shade"
+            }
+        ],
+        "tolerance":1
+    }
+]

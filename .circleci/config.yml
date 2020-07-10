@@ -131,7 +131,7 @@ jobs:
             name: Store artifacts from performance regression run
             path: tests/performance/run_artifacts/
         - store_test_results:
-            name: Store Taurus test results
+            name: Store performance regression test results for CircleCI
             path: tests/performance/run_artifacts/report/
 
     modelarchiver:

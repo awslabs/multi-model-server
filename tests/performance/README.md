@@ -9,7 +9,7 @@ The salient features of the performance regression suite are
 * Non-intrusive - Does not need any code-changes or instrumentation on the server being monitored. 
 * It can be used to monitor a wide variety of server metrics - memory, cpu, io - in addition to 
 traditional API level metrics such as latency, throughput etc. 
-* It is easy to add custom metrics. For example, in MMS server, `the number of workers spawned` would be an interesting 
+* It is easy to add custom metrics. For example, in Model server, `the number of workers spawned` would be an interesting 
 metric to track. The platform allows for easy addition of these metrics.
 * Test cases are specified in human readable yaml files. Every test case has a pass or fail status. This is determined 
 by evaluating expressions specified in the test case. Every expression checks metrics against threshold values. For 
@@ -19,7 +19,7 @@ possible to specify multiple compute environments against which the test cases w
 environment, will have its own threshold values.
 * This suite leverages the open source [Taurus framework](https://gettaurus.org/). 
 * This suite extends the Taurus framework in the following ways
-   * Adds resource monitoring service. This allows MMS specific metrics to be added. 
+   * Adds resource monitoring service. This allows Model Server specific metrics to be added. 
    * Environments as described earlier.
    * Specification of pass/fail criterion between two commits. For example, memory consumed by workers should not 
    increase by more than 10% between two commits for the given test case.
@@ -38,21 +38,21 @@ The building blocks of the performance regression suite and flow is captured in 
     ``` 
 2. Install performance regression suite dependencies.
    ```bash 
-    export MMS_HOME=<MMS_HOME_PATH>
-    pip install -r $MMS_HOME/tests/performance/requirements.txt
+    export MODEL_SERVER_HOME=<MODEL_SERVER_HOME_PATH>
+    pip install -r $MODEL_SERVER_HOME/tests/performance/requirements.txt
     ``` 
-3. Make sure that `git` is installed and the test suites are run from the MMS working directory.
+3. Make sure that `git` is installed and the test suites are run from the Model Server working directory.
 
 ### B. Running the test suite
-1. Make sure parameters set in [tests/common/global_config.yaml](tests/performance/tests/global_config.yaml) are correct.
+1. Make sure parameters set in [tests/global_config.yaml](tests/performance/tests/global_config.yaml) are correct.
 2. To run the test suite execute [run_performance_suite.py](run_performance_suite.py) with the following 
 parameters
 
    * `--artifacts-dir` or `-a` is a directory where the test case results will be stored. The default value is 
-`$MMS_HOME/tests/performance/run_artifacts`.  
+`$MODEL_SERVER_HOME/tests/performance/run_artifacts`.  
 
    * `--test-dir` or `-t` is a directory containing the test cases. The default value is 
-`$MMS_HOME/tests/performance/tests`.
+`$MODEL_SERVER_HOME/tests/performance/tests`.
  
    * `--pattern` or `-p` glob pattern picks up certain test cases for execution within the `test-dir`. The default value picks up 
 all test cases.
@@ -64,23 +64,34 @@ The default value excludes nothing.
 the file (minus the extension) found inside the environments folder in each test case. They encapsulate parameter 
 values which are specific to the execution environment. This is a mandatory parameter.   
 
+   * `--compare-local` or `--no-compare-local` specifies whether to do comparison with run artifacts data  available on local machine
+   or the data available on S3 bucket.
+   
+   * `--compare-with` or `-c` specifies the commit id compare against.  The default value is 'HEAD~1'. The branch name, tag,
+   can also be specified. The comparison happens if the run artifacts folder for the commit_id and env is available.
+   
+
+
+
    The script does the following:  
    1. Starts the metrics monitoring server.
-   2. Collects all the tests from test-dir satisfying the pattern
-   3. Executes the tests
+   2. Collects all the tests from test-dir satisfying the pattern, excluding exclude pattern and test starting with 'skip'
+   3. Executes the collected tests
    4. Generates artifacts in the artifacts-dir against each test case.  
+   5. Generate Pass Fail report for test cases
+   6. Generate comparison report for specified commit id
 
-3. Check the console logs, $artifacts-dir$/<run-dir>/performance_results.html report, comparison.csv, comparison.html 
+3. Check the console logs, $artifacts-dir$/<run-dir>/performance_results.html report, comparison_result.csv, comparison_result.html 
 and other artifacts.
 
 **Steps are provided below**
 
 ```bash
-export MMS_HOME=<MMS_HOME_PATH>
-cd $MMS_HOME/tests/performance
+export MODEL_SERVER_HOME=<MODEL_SERVER_HOME_PATH>
+cd $MODEL_SERVER_HOME/tests/performance
  
-# Note that MMS server started and stopped by the individual test suite.
-# check variables such as MMS server PORT etc 
+# Note that Model server started and stopped by the individual test suite.
+# check variables such as Model server PORT etc 
 # vi tests/common/global_config.yaml 
 
 #all tests
@@ -92,16 +103,54 @@ python -m run_performance_suite -e xlarge -p inference_single_worker
 ```
 
 ### C. Understanding the test suite artifacts and reports
-1. The $artifacts-dir$/<run-dir>/performance_results.html is a summary report of the test run. 
+1. The $artifacts-dir/<run-dir>/performance_results.html is a summary report of the test run. 
 2. Each test yaml is treated as a test suite. Each criteria in the test suite is treated as a test case. 
 If the test suite does not specify any criteria, then the test suite is reported as skipped with 0 test cases.
 3. For each test suite, a sub-directory is created containing relevant run artifacts. Important files in this directory are
    * metrics.csv -- contains the values of the various system-monitored metrics over time
+   * metrics_agg.csv -- contains percentile values for columns in metrics.csv
    * finals_stats.csv -- contains the values of the various api metrics over time  
-4. The $artifacts-dir$/<run-dir>/comparison_results.html is a summary report which shows performance difference between
+4. The $artifacts-dir/<run-dir>/comparison_results.html is a summary report which shows performance difference between
 the last two commits.
 5. The run completes with a console summary of the performance and comparision suites which have failed
 ![](assets/console.png) 
+
+### D. Understanding the test case components
+A Test Case consists of the test.yaml, test.jmx, environments/*.yaml files and a global_config.yaml.
+Below is the sample folder structure for 'api_description' test case:
+```bash
+tests
+   -- api_description
+      --- environments
+          ---- xlarge.yaml
+          ---- mac_xlarge.yaml
+      --- api_description.jmx
+      --- api_description.yaml
+   -- global_config.yaml
+```
+
+1. global_config.yaml  
+   - It is a master template for all_comm the test cases and is shared across all the tests.  
+   - It contains all the common yaml sections, criteria, monitoring metrics etc.  
+   - It also contain variables in the format ${variable} for metric thresholds and other test specific attributes.
+
+2. environments/*.yaml  
+   - A test case can have multiple environment files. If you have a environment dependent metrics you can create an environment
+   yaml file. For ex. macos_xlarge, ubuntu_xlarge etc.  
+   - The environment file contains values for all the variables mentioned in global_config.yaml and test.yaml.  
+
+3. test.yaml  
+   - The test.yaml is main yaml for a test case. Note the name of the yaml should be same as the test folder.  
+   - It inherits the master template global_config.yaml.  
+   And it usually contains the scenario, specific pre-processing commands (if any), and special criteria (if any) applicable for that test case only. 
+   - If you want a behavior other than defined in the master template, It is possible to override sections of global_config.yaml in the individual test case. 
+   The global_config.yaml's top-level sections can be overridden, merged, or appended based on below rules:  
+        1. By default the dictionaries get merged.  
+        2. If the dictionary key is prepended with '~' it will get overridden.  
+        3. The list gets appended.  
+4. test.jmx 
+   -  The JMeter test scenario file. The test.yaml runs the scenarion mentioned in the .jmx file.
+
 
 ## Add a new test
 
@@ -110,6 +159,7 @@ Follow these three steps to add a new test case to the test suite.
 1. Add scenario (a.k.a test suite)
 2. Add metrics to monitor
 3. Add pass/fail criteria (a.k.a test case)
+4. Add compare criteria (a.k.a compare test cases)
 
 
 #### 1. Add scenario (a.k.a test suite)
@@ -139,8 +189,8 @@ Please note that various global configuration settings used by examples_starter.
 To execute this test suite, run the following command
     
  ```bash
- export MMS_HOME=<MMS_HOME_PATH>
- cd $MMS_HOME/tests/performance
+ export MODEL_SERVER_HOME=<MODEL_SERVER_HOME_PATH>
+ cd $MODEL_SERVER_HOME/tests/performance
  python -m run_performance_suite -p examples_starter -e xlarge
  ```
 
@@ -154,15 +204,15 @@ Specify the metrics of interest in the services/monitoring section of the yaml.
 
 1. Standalone monitoring server
 
-   Use this technique if MMS and the tests execute on different machines. Before running the test cases, 
+   Use this technique if Model Server and the tests execute on different machines. Before running the test cases, 
    please start the [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will communicate server 
    metric data with the test client over sockets. The monitoring server runs on port 9009 by default.
     
-   To start the monitoring server, run the following commands on the MMS host:
+   To start the monitoring server, run the following commands on the Model Server host:
     ```bash 
-    export MMS_HOME=<MMS_HOME_PATH>
-    pip install -r $MMS_HOME/tests/performance/requirements.txt
-    python $MMS_HOME/tests/performance/metrics_monitoring_server.py --start
+    export MODEL_SERVER_HOME=<MODEL_SERVER_HOME_PATH>
+    pip install -r $MODEL_SERVER_HOME/tests/performance/requirements.txt
+    python $MODEL_SERVER_HOME/tests/performance/metrics_monitoring_server.py --start
     ```     
       
    The monitoring section configuration is shown below. 
@@ -171,29 +221,29 @@ Specify the metrics of interest in the services/monitoring section of the yaml.
     services:
       - module: monitoring
         server-agent:
-          - address: <mms-host>:9009 # metric monitoring service address
-            label: mms-inference-server  # Specified label will be used in reports instead of ip:port
+          - address: <Model-Server-host>:9009 # metric monitoring service address
+            label: Model-Server-inference-server  # Specified label will be used in reports instead of ip:port
             interval: 1s    # polling interval
             logging: True # those logs will be saved to "SAlogs_192.168.0.1_9009.csv" in the artifacts dir
             metrics: # metrics should be supported by monitoring service
-              - sum_cpu_percent # cpu percent used by all the mms server processes and workers
+              - sum_cpu_percent # cpu percent used by all the Model server processes and workers
               - sum_memory_percent
               - sum_num_handles
-              - server_workers # no of mms workers
+              - server_workers # no of Model Server workers
     ```
    The complete yaml can be found [here](tests/examples_remote_monitoring/examples_remote_monitoring.yaml)
     
    Use the command below to run the test suite.
     
     ```bash
-    export MMS_HOME=<MMS_HOME_PATH>
-    cd $MMS_HOME/tests/performance
+    export MODEL_SERVER_HOME=<MODEL_SERVER_HOME_PATH>
+    cd $MODEL_SERVER_HOME/tests/performance
     python -m run_performance_suite -p examples_remote_monitoring -e xlarge
     ```
 
 2. Local monitoring plugin
 
-   Use this technique if both MMS and the tests run on the same host.   
+   Use this technique if both Model Server and the tests run on the same host.   
    The monitoring section configuration is shown below.
     
     ```yaml
@@ -218,8 +268,8 @@ Specify the metrics of interest in the services/monitoring section of the yaml.
    Use the command below to run the test suite.
     
     ```bash
-    export MMS_HOME=<MMS_HOME_PATH>
-    cd $MMS_HOME/tests/performance
+    export MODEL_SERVER_HOME=<MODEL_SERVER_HOME_PATH>
+    cd $MODEL_SERVER_HOME/tests/performance
     python -m run_performance_suite -p examples_local_monitoring -e xlarge
     ```
 
@@ -235,7 +285,7 @@ pass-fail module from Taurus to achieve this functionality. More details can be 
     - module: passfail
       criteria:
       - class: bzt.modules.monitoring.MonitoringCriteria
-        subject: mms-inference-server/sum_num_handles
+        subject: model-server/sum_num_handles
         condition: '>'
         threshold: 180
         timeframe: 1s
@@ -255,19 +305,18 @@ specified in the pass/fail criterion are used for comparison with the previous r
     - module: passfail
       criteria:
       - class: bzt.modules.monitoring.MonitoringCriteria
-        subject: mms-inference-server/sum_num_handles
+        subject: model-server/sum_num_handles
         condition: '>'
         threshold: 180
         timeframe: 1s
         fail: true
         stop: true
-        diff_percent : 30
     
     ```
     Note that 
     1. At least one test suite run on the same environment should have happened in order to do the comparison.
     2. The $artifacts-dir$/<run-dir>/comparison_results.html is a summary report which shows performance difference 
-    between the last two commits.
+    between the current run and user specified compare_with commit_id run.
     3. The test case fails if the diff_percent is greater than the specified value across runs.
 
 3. Metrics available for pass-fail criteria  
@@ -307,18 +356,34 @@ specified in the pass/fail criterion are used for comparison with the previous r
       * total_workers - Total number of workers spawned
       * orphans - Total number of orphan processes
 
+4. Add compare criteria:  
+There are two types of compare criteria you can add for metrics:
+    1. diff_percent_run  
+    This criteria is used to check the percent difference between first and last value of the metric for a run. 
+    In other words it is used to verify if metrics values are same before and after the scenario run. 
+    2. diff_percent_previous  
+    Compare the metric aggregate values with previous run. Here we take aggregate min, max and avg of metric values for current run
+    and previous run and check if percentage difference is not greater than diff_percent_previous. 
+
+Note formula for percentage difference is abs(value1 - value2)/((value1 + value2)/2) * 100
+
+## Guidelines for writing good test cases:
+1. The 'timeframe' duration to check values for threshold criteria should be sufficiently large at least 5 sec. 
+2. The duration specified using 'hold-for' property should also be sufficiently large at least 5 min.
+3. When you use diff_percent_run, make sure that scenario (JMX script) results in deterministic state across different runs.
+
 ## Test Strategy & Cases
 More details about our testing strategy and test cases can be found [here](TESTS.md) 
 
 ## FAQ
 
-Q1. Is it possible to use the performance regression framework to test MMS on Python2.7?
+Q1. Is it possible to use the performance regression framework to test Model Server on Python2.7?
 
 Yes. Even though, the performance regression framework needs Python 3.7+ (as Taurus requires Python 3.7+), there are two
 possible ways to achieve this
-* Please create a Python 2.7 virtual env which runs MMS and a Python 3.7 virtual env which runs 
+* Please create a Python 2.7 virtual env which runs Model Server and a Python 3.7 virtual env which runs 
   the test framework and test cases.
-* Alternatively, deploy the standalone monitoring agent on the MMS instance and run the test cases against the remote
+* Alternatively, deploy the standalone monitoring agent on the Model Server instance and run the test cases against the remote
 server. Note that the standalone monitoring agent works on both Python 2/3. 
 
 

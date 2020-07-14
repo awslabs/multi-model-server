@@ -56,9 +56,7 @@ def get_child_processes(process):
 
 
 def get_server_processes(server_process_pid):
-    """ It caches the main server and child processes at module level.
-    Ensure that you call this process so that MMS process
-    """
+    """get psutil Process object from process id """
     try:
         server_process = psutil.Process(server_process_pid)
     except Exception as e:
@@ -68,4 +66,5 @@ def get_server_processes(server_process_pid):
 
 
 def get_server_pidfile(file):
+    """get temp server pid file"""
     return os.path.join(tempfile.gettempdir(), ".{}".format(file))

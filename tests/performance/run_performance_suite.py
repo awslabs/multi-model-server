@@ -71,8 +71,9 @@ def validate_env(ctx, param, value):
 @click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
 @click.option('--compare-local/--no-compare-local', help='Compare with previous run with files stored'
                                                          ' in artifacts directory', default=True)
+@click.option('-c', '--compare-with', help='Compare with commit id, branch, tag, HEAD~N.', default="HEAD~1")
 def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
-                   jmeter_path, env_name, monit, compare_local):
+                   jmeter_path, env_name, monit, compare_local, compare_with):
     """Collect test suites, run them and generate reports"""
 
     logger.info("Artifacts will be stored in directory %s", artifacts_dir)
@@ -84,7 +85,7 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
     else:
         logger.info("Collected tests %s", test_dirs)
 
-    with ExecutionEnv(MONITORING_AGENT, artifacts_dir, env_name, compare_local, monit) as prt:
+    with ExecutionEnv(MONITORING_AGENT, artifacts_dir, env_name, compare_local, compare_with, monit) as prt:
         pre_command = 'export PYTHONPATH={}:$PYTHONPATH;'.format(os.path.join(str(ROOT_PATH), "agents"))
         for suite_name in tqdm(test_dirs, desc="Test Suites"):
             with Timer("Test suite {} execution time".format(suite_name)) as t:
@@ -95,10 +96,13 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
                 test_file = os.path.join(test_dir, suite_name, "{}.yaml".format(suite_name))
                 with x2junit.X2Junit(suite_name, suite_artifacts_dir, prt.reporter, t, env_name) as s:
                     s.code, s.err = run_process("{} bzt {} {} {} {}".format(pre_command, options_str,
-                                                                            test_file, env_yaml_path,
-                                                                            GLOBAL_CONFIG_PATH))
+                                                                            GLOBAL_CONFIG_PATH, test_file,
+                                                                            env_yaml_path))
 
                     update_taurus_metric_files(suite_artifacts_dir, test_file)
+
+    sys.exit(prt.exit_code)
+
 
 if __name__ == "__main__":
     run_test_suite()

@@ -19,6 +19,7 @@ import logging
 import os
 import sys
 import time
+import subprocess
 import webbrowser
 from termcolor import colored
 
@@ -32,20 +33,27 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
 
+def get_git_commit_id(compare_with):
+    return subprocess.check_output('git rev-parse --short {}'.format(compare_with).split()).decode(
+            "utf-8")[:-1]
+
+
 class ExecutionEnv(object):
     """
     Context Manager class to run the performance regression suites
     """
 
-    def __init__(self, agent, artifacts_dir, env, local_run, use=True, check_mms_server_status=False):
+    def __init__(self, agent, artifacts_dir, env, local_run, compare_with, use=True, check_model_server_status=False):
         self.monitoring_agent = agent
         self.artifacts_dir = artifacts_dir
         self.use = use
         self.env = env
         self.local_run = local_run
-        self.check_mms_server_status = check_mms_server_status
+        self.compare_with = get_git_commit_id(compare_with)
+        self.check_model_server_status = check_model_server_status
         self.reporter = JUnitXml()
-        self.compare_reporter_generator = CompareReportGenerator(self.artifacts_dir, self.env, self.local_run)
+        self.compare_reporter_generator = CompareReportGenerator(self.artifacts_dir, self.env, self.local_run, compare_with)
+        self.exit_code = 1
 
     def __enter__(self):
         if self.use:
@@ -63,7 +71,7 @@ class ExecutionEnv(object):
     @staticmethod
     def report_summary(reporter, suite_name):
         if reporter and os.path.exists(reporter.junit_html_path):
-            status = reporter.junit_xml.errors or reporter.junit_xml.failures or reporter.junit_xml.skipped
+            status = reporter.junit_xml.errors or reporter.junit_xml.failures
             status, code, color = ("failed", 3, "red") if status else ("passed", 0, "green")
 
             msg = "{} run has {}.".format(suite_name, status)
@@ -95,4 +103,9 @@ class ExecutionEnv(object):
         compare_exit_code = ExecutionEnv.report_summary(junit_compare_reporter, "Comparison Test suite")
         exit_code = ExecutionEnv.report_summary(junit_reporter, "Performance Regression Test suite")
 
-        sys.exit(0 if 0 == exit_code == compare_exit_code else 3)
+        self.exit_code = 0 if 0 == exit_code == compare_exit_code else 3
+
+        # Return True needed so that __exit__ method do no ignore the exception
+        # otherwise exception are not reported
+        return False
+

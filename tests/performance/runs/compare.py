@@ -15,9 +15,6 @@ Compare artifacts between runs
 """
 # pylint: disable=redefined-builtin, self-assigning-variable, broad-except
 
-
-import csv
-import glob
 import logging
 import sys
 import os
@@ -34,6 +31,7 @@ logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
 
 class CompareReportGenerator():
+    """Wrapper class to generate the compare report"""
 
     def __init__(self, path, env_name, local_run, compare_with):
         self.artifacts_dir = path
@@ -182,8 +180,9 @@ def compare_artifacts(dir1, dir2, run_name1, run_name2):
                 for agg_func in aggregates:
                     name = "{}_{}".format(agg_func, str(col))
 
+                    val1 = get_centile_val(metrics_from_file1, agg_func, col)
                     val2 = get_centile_val(metrics_from_file2, agg_func, col)
-                    val1 = get_centile_val(metrics_from_file2, agg_func, col)
+
                     diff, pass_fail, msg = compare_values(val1, val2, diff_percent, run_name1, run_name2)
 
                     if over_all_pass:

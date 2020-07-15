@@ -20,11 +20,11 @@ import logging
 import os
 import sys
 import shutil
+import pathlib
 
 import boto3
-import pathlib
-from agents import configuration
 
+from agents import configuration
 from utils import run_process
 
 logger = logging.getLogger(__name__)

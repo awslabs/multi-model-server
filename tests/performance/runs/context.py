@@ -34,8 +34,12 @@ logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 
 
 def get_git_commit_id(compare_with):
-    return subprocess.check_output('git rev-parse --short {}'.format(compare_with).split()).decode(
-        "utf-8")[:-1]
+    """Get short commit id for compare_with commit, branch, tag"""
+    cmd = 'git rev-parse --short {}'.format(compare_with)
+    logger.info("Running command: %s", cmd)
+    commit_id = subprocess.check_output(cmd.split()).decode("utf-8")[:-1]
+    logger.info("Commit id for compare_with='%s' is '%s'", compare_with, commit_id)
+    return commit_id
 
 
 class ExecutionEnv(object):

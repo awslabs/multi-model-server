@@ -100,7 +100,7 @@ class S3Storage(Storage):
 
         latest_run = self.get_latest(run_names, self.env_name, self.current_run_name, self.compare_with)
         if not latest_run:
-            logger.info("No run found for env_id %s", self.env_name)
+            logger.info("No run artifacts folder found for env_id %s", self.env_name)
             return '', ''
 
         if not os.path.exists(comp_data_path):

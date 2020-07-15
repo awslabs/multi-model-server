@@ -108,7 +108,7 @@ def get_centile_val(df, agg_func, col):
     val = None
     if "metric_name" in df and agg_func in df:
         val = df[df["metric_name"] == col][agg_func]
-        val = val[0] if len(val) else None
+        val = val.iloc[0] if len(val) >= 1 else None
     return val
 
 
@@ -205,7 +205,7 @@ def compare_artifacts(dir1, dir2, run_name1, run_name2):
 
 if __name__ == "__main__":
     compare_artifacts(
-        "./run_artifacts/xlarge__45b6399__1594725947",
-        "./run_artifacts/xlarge__45b6399__1594725717",
-        "xlarge__45b6399__1594725947", "xlarge__45b6399__1594725717"
+        "./run_artifacts/xlarge__5c35d98__1594819866",
+        "./run_artifacts/xlarge__f386038__1594819700",
+        "xlarge__5c35d98__1594819866", "xlarge__f386038__1594819700"
     )

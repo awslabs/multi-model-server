@@ -13,7 +13,7 @@
 """
 Start and stop monitoring server
 """
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin, broad-except
 
 import logging
 import os

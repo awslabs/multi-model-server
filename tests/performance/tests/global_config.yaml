@@ -21,6 +21,13 @@ modules:
       input_filepath: kitten.jpg # make sure jpg is available at this path
       # if relative path is provided this will be relative to current working directory
 
+      RESNET_152_BATCH_URL: ${RESNET_152_BATCH_URL}
+      RESNET_152_BATCH_NAME: ${RESNET_152_BATCH_NAME}
+      SQZNET_URL: ${SQZNET_URL}
+      SQZNET_NAME: ${SQZNET_NAME}
+      RESNET_URL: ${RESNET_URL}
+      RESNET_NAME: ${RESNET_NAME}
+
   server_local_monitoring:
     # metrics_monitoring_inproc and dependencies should be in python path
     class : metrics_monitoring_inproc.Monitor # monitoring class.

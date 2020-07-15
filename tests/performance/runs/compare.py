@@ -54,7 +54,8 @@ class CompareReportGenerator():
                                                                         self.storage.current_run_name, compare_run_name)
             self.pandas_result.to_csv(os.path.join(self.artifacts_dir, "comparison_result.csv"))
         else:
-            logger.warning("The latest run not found for env.")
+            logger.info("The latest run for comparison was not found for env='%s' and commit_id='%s'.",
+                        self.env_name, self.comare_with)
 
         self.storage.store_results()
         return self.junit_reporter

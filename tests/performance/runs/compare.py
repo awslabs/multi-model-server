@@ -44,7 +44,7 @@ class CompareReportGenerator():
         self.storage = storage_class(self.artifacts_dir, self.env_name, compare_with)
         self.junit_reporter = None
         self.pandas_result = None
-        self.pass_fail =  True
+        self.pass_fail = True
 
     def gen(self):
         """Driver method to get comparison directory, do the comparison of it with current run directory
@@ -53,7 +53,7 @@ class CompareReportGenerator():
         compare_dir, compare_run_name = self.storage.get_dir_to_compare()
         if compare_run_name:
             self.junit_reporter, self.pandas_result = compare_artifacts(self.storage.artifacts_dir, compare_dir,
-                                       self.storage.current_run_name, compare_run_name)
+                                                                        self.storage.current_run_name, compare_run_name)
             self.pandas_result.to_csv(os.path.join(self.artifacts_dir, "comparison_result.csv"))
         else:
             logger.warning("The latest run not found for env.")
@@ -108,8 +108,8 @@ def get_centile_val(df, agg_func, col):
 
     val = None
     if "metric_name" in df and agg_func in df:
-            val = df[df["metric_name"] == col][agg_func]
-            val = val[0] if len(val) else None
+        val = df[df["metric_name"] == col][agg_func]
+        val = val[0] if len(val) else None
     return val
 
 
@@ -205,7 +205,7 @@ def compare_artifacts(dir1, dir2, run_name1, run_name2):
 
 if __name__ == "__main__":
     compare_artifacts(
-    "/Users/demo/git/serve/test/performance/run_artifacts/xlarge__45b6399__1594725947",
-    "/Users/demo/git/serve/test/performance/run_artifacts/xlarge__45b6399__1594725717",
-    "xlarge__45b6399__1594725947", "xlarge__45b6399__1594725717"
+        "./run_artifacts/xlarge__45b6399__1594725947",
+        "./run_artifacts/xlarge__45b6399__1594725717",
+        "xlarge__45b6399__1594725947", "xlarge__45b6399__1594725717"
     )

@@ -54,6 +54,10 @@ class X2Junit(object):
         for metric_values in compare_list:
             col = metric_values[0]
             diff_percent = metric_values[2]
+            try:
+                diff_percent = float(diff_percent)
+            except Exception as e:
+                diff_percent = None
             tc = TestCase("{}_diff_run > {}".format(col, diff_percent))
             if diff_percent is None:
                 tc.result = Skipped("diff_percent_run value is not mentioned")
@@ -204,8 +208,7 @@ class X2Junit(object):
 if __name__ == "__main__":
     from utils.timer import Timer
     with Timer("ads") as t:
-        test_folder = '/Users/demo/git/serve/test/performance/'\
-                        'run_artifacts/xlarge__2dc700f__1594662587/scale_down_workers'
+        test_folder = './run_artifacts/xlarge__7bc1982__1594795786/scale_up_workers'
         x = X2Junit("test", test_folder, JUnitXml(), t, "xlarge")
 
     # x.update_metrics()

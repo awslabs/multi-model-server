@@ -44,7 +44,7 @@ The building blocks of the performance regression suite and flow is captured in 
 3. Make sure that `git` is installed and the test suites are run from the Model Server working directory.
 
 ### B. Running the test suite
-1. Make sure parameters set in [tests/global_config.yaml](tests/performance/tests/global_config.yaml) are correct.
+1. Make sure parameters set in [tests/global_config.yaml](tests/global_config.yaml) are correct.
 2. To run the test suite execute [run_performance_suite.py](run_performance_suite.py) with the following 
 parameters
 
@@ -92,7 +92,7 @@ cd $MODEL_SERVER_HOME/tests/performance
  
 # Note that Model server started and stopped by the individual test suite.
 # check variables such as Model server PORT etc 
-# vi tests/common/global_config.yaml 
+# vi tests/global_config.yaml 
 
 #all tests
 python -m run_performance_suite -e xlarge
@@ -205,11 +205,10 @@ Create a folder for the test under `test_dir` location. A test generally compris
 load scenario and a yaml file which contains test scenarios specifying the conditions for failure or success. The
 file-names should be identical to the folder name with their respective extensions. 
 
-An example [jmeter script](tests/examples_starter/examples_starter.jmx) 
-and a [scenario](tests/examples_starter/examples_starter.yaml) is provided as a template to get started.
+An example [jmeter script](tests/examples_starter/examples_starter.jmx) and [scenario](tests/examples_starter/examples_starter.yaml) is provided as a template to get started.
     
 Please note that various global configuration settings used by examples_starter.jmx script are specified in 
-[tests/global_config.yaml](tests/performance/tests/global_config.yaml) file.
+[tests/global_config.yaml](tests/global_config.yaml) file.
     
  ```tests/examples_starter/examples_starter.yaml
  execution:
@@ -243,7 +242,7 @@ Specify the metrics of interest in the services/monitoring section of the yaml.
 1. Standalone monitoring server
 
    Use this technique if Model Server and the tests execute on different machines. Before running the test cases, 
-   please start the [metrics_monitoring_server.py](metrics_monitoring_server.py) script. It will communicate server 
+   please start the [metrics_monitoring_server.py](agents/metrics_monitoring_server.py) script. It will communicate server 
    metric data with the test client over sockets. The monitoring server runs on port 9009 by default.
     
    To start the monitoring server, run the following commands on the Model Server host:
@@ -423,6 +422,4 @@ possible ways to achieve this
   the test framework and test cases.
 * Alternatively, deploy the standalone monitoring agent on the Model Server instance and run the test cases against the remote
 server. Note that the standalone monitoring agent works on both Python 2/3. 
-
-
 

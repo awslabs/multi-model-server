@@ -18,7 +18,5 @@ artifacts:
     - frontend/server/build/reports/tests/test/**/*
     - model-archiver/results_units/**/*
     - htmlcov/**/*
-  name: MMS-SMOKE-$(date +%Y-%m-%d)
-
 
 

@@ -16,7 +16,10 @@ artifacts:
     - frontend/server/build/reports/tests/test/**/*
     - model-archiver/results_units/**/*
     - htmlcov/**/*
-  name: MMS-SMOKE-$(date +%Y-%m-%d)
-
+    secondary-artifacts:
+      benchmark-report:
+        files:
+          - /tmp/MMSBenchmark/out/latency/resnet-18/report/*
+        name: benchmark_report
 
 

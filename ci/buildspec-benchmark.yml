@@ -15,11 +15,8 @@ artifacts:
   files:
     - frontend/server/build/reports/tests/test/**/*
     - model-archiver/results_units/**/*
-    - htmlcov/**/*
-    secondary-artifacts:
-      benchmark-report:
-        files:
-          - /tmp/MMSBenchmark/out/latency/resnet-18/report/*
-        name: benchmark_report
+    - result_units/**/*
+    - logs/**/*
+    - /tmp/MMSBenchmark/**/*
 
 

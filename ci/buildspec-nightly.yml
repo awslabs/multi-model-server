@@ -21,10 +21,8 @@ artifacts:
   files:
     - frontend/server/build/reports/tests/test/**/*
     - model-archiver/results_units/**/*
-    - test/management-api-report.html
-    - test/inference-api-report.html
-    - test/https-api-report.html
-    - htmlcov/**/*
+    - results_units/**/*
+    - test/artifacts/**/*
   name: MMS-NIGHTLY-$(date +%Y-%m-%d)
 
 

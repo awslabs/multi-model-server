@@ -17,6 +17,6 @@ artifacts:
   files:
     - frontend/server/build/reports/tests/test/**/*
     - model-archiver/results_units/**/*
-    - htmlcov/**/*
+    - results_units/**/*
 
 

@@ -1,0 +1,22 @@
+# Build Spec for AWS CodeBuild CI - Benchmark
+
+version: 0.2
+
+phases:
+  build:
+    commands:
+      # create and install build
+      - ./.circleci/scripts/linux_build.sh
+      - pip install dist/*
+      # run benchmark
+      - .circleci/scripts/linux_test_benchmark.sh
+
+artifacts:
+  files:
+    - frontend/server/build/reports/tests/test/**/*
+    - model-archiver/results_units/**/*
+    - htmlcov/**/*
+  name: MMS-SMOKE-$(date +%Y-%m-%d)
+
+
+

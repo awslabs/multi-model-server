@@ -39,7 +39,7 @@ commands:
     steps:
       - run:
           name: Start MMS, Execute << parameters.collection >> API Tests, Stop MMS
-          command: .circleci/scripts/linux_test_api.sh << parameters.collection >>
+          command: ci/scripts/linux_test_api.sh << parameters.collection >>
           when: always
 
 
@@ -53,7 +53,7 @@ jobs:
         - checkout
         - run:
             name: Build MMS
-            command: .circleci/scripts/linux_build.sh
+            command: ci/scripts/linux_build.sh
         - store_artifacts:
             name: Store gradle testng results
             path: frontend/server/build/reports/tests/test
@@ -71,7 +71,7 @@ jobs:
         - attach-mms-workspace
         - run:
             name: Execute python lint and unit tests
-            command: .circleci/scripts/linux_test_python.sh
+            command: ci/scripts/linux_test_python.sh
         - store_artifacts:
             name: Store python Test results
             path: result_units
@@ -105,7 +105,7 @@ jobs:
         - install-mms-server
         - run:
             name: Start MMS, Execute benchmark tests, Stop MMS
-            command: .circleci/scripts/linux_test_benchmark.sh
+            command: ci/scripts/linux_test_benchmark.sh
         - store_artifacts:
             name: Store server logs from benchmark tests
             path: logs/
@@ -122,7 +122,7 @@ jobs:
         - checkout
         - run:
             name: Execute python lint, unit and integration tests
-            command: .circleci/scripts/linux_test_modelarchiver.sh
+            command: ci/scripts/linux_test_modelarchiver.sh
         - store_artifacts:
             name: Store unit tests results from model archiver tests
             path: model-archiver/result_units

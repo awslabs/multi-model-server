@@ -6,16 +6,16 @@ phases:
   build:
     commands:
       # create and install build
-      - ./.circleci/scripts/linux_build.sh
+      - ci/scripts/linux_build.sh
       - pip install dist/*
       # modelarchiver tests
-      - ./.circleci/scripts/linux_test_modelarchiver.sh
+      - ci/scripts/linux_test_modelarchiver.sh
       # run python tests
-      - .circleci/scripts/linux_test_python.sh
+      - ci/scripts/linux_test_python.sh
       # run api tests
-      - ./.circleci/scripts/linux_test_api.sh management
-      - ./.circleci/scripts/linux_test_api.sh inference
-      - ./.circleci/scripts/linux_test_api.sh https
+      - ci/scripts/linux_test_api.sh management
+      - ci/scripts/linux_test_api.sh inference
+      - ci/scripts/linux_test_api.sh https
 
 artifacts:
   files:

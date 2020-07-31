@@ -26,9 +26,10 @@ install_mms_from_source() {
   git clone -b $2 $1
   cd multi-model-server
   pip install .
-  cd -
+  echo "MMS Branch : " "$(git rev-parse --abbrev-ref HEAD)" >> $3
+  echo "MMS Branch Commit Id : " "$(git rev-parse HEAD)" >> $3
+  echo "Build date : " "$(date)" >> $3
   echo "MMS Succesfully installed"
-  
 }
 
 
@@ -38,7 +39,7 @@ start_mms() {
   multi-model-server --start --model-store $1  &>> $2
   sleep 10
   curl http://127.0.0.1:8081/models
-  
+
 }
 
 stop_mms_serve() {
@@ -48,40 +49,41 @@ stop_mms_serve() {
 start_secure_mms() {
 
   # Start MMS with Model Store
-  multi-model-server --start --mms-config test/resources/config.properties --model-store $1  &>> $2
+  multi-model-server --start --mms-config resources/config.properties --model-store $1  &>> $2
   sleep 10
   curl --insecure -X GET https://127.0.0.1:8444/models
 }
 
 
-run_postman_test() {
+run_postman_test() {(
   # Run Postman Scripts
+  set -e
   mkdir $ROOT_DIR/report/
   cd $CODEBUILD_WD/
-  set +e
+
   # Run Management API Tests
   stop_mms_serve
   start_mms $MODEL_STORE $MMS_LOG_FILE
-  newman run -e test/postman/environment.json --bail --verbose test/postman/management_api_test_collection.json \
+  newman run -e postman/environment.json -x --verbose postman/management_api_test_collection.json \
 	  -r cli,html --reporter-html-export $ROOT_DIR/report/management_report.html >>$1 2>&1
 
   # Run Inference API Tests after Restart
   stop_mms_serve
   start_mms $MODEL_STORE $MMS_LOG_FILE
-  newman run -e test/postman/environment.json --bail --verbose test/postman/inference_api_test_collection.json \
-	  -d test/postman/inference_data.json -r cli,html --reporter-html-export $ROOT_DIR/report/inference_report.html >>$1 2>&1
+  newman run -e postman/environment.json -x --verbose postman/inference_api_test_collection.json \
+	  -d postman/inference_data.json -r cli,html --reporter-html-export $ROOT_DIR/report/inference_report.html >>$1 2>&1
 
 
   # Run Https test cases
   stop_mms_serve
   start_secure_mms $MODEL_STORE $MMS_LOG_FILE
-  newman run --insecure -e test/postman/environment.json --bail --verbose test/postman/https_test_collection.json \
+  newman run --insecure -e postman/environment.json -x --verbose postman/https_test_collection.json \
 	  -r cli,html --reporter-html-export $ROOT_DIR/report/MMS_https_test_report.html >>$1 2>&1
 
   stop_mms_serve
-  set -e
+
   cd -
-}
+)}
 
 
 sudo rm -rf $ROOT_DIR && sudo mkdir $ROOT_DIR
@@ -93,7 +95,7 @@ sudo rm -f $TEST_EXECUTION_LOG_FILE $MMS_LOG_FILE
 
 echo "** Execuing MMS Regression Test Suite executon for " $MMS_REPO " **"
 
-install_mms_from_source $MMS_REPO $BRANCH
+install_mms_from_source $MMS_REPO $BRANCH $TEST_EXECUTION_LOG_FILE
 run_postman_test $TEST_EXECUTION_LOG_FILE
 
 echo "** Tests Complete ** "

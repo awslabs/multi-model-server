@@ -21,15 +21,15 @@ In the Docker CLI execute the following cmds.
 apt-get update 
 apt-get install -y git wget sudo 
 git clone https://github.com/awslabs/multi-model-server.git
-cd multi-model-server
+cd multi-model-server/test
 ```
 To execute tests on master run: 
 
-`./test/regression_tests.sh `
+`./regression_tests.sh `
 
 To execute tests on different run: 
 
-`./test/regression_tests.sh <branch_name>`
+`./regression_tests.sh <branch_name>`
 
 
 You can view the logs for Test execution & the Multi-model-server in the /tmp dir.

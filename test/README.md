@@ -2,7 +2,7 @@
 
 This folder contains regression tests executed against MMS master.These tests use [POSTMAN](https://www.postman.com/downloads/) for exercising all the Management & Inference APIs.
 
-### Running the test manually.
+### Running the test manually using docker.
 
 Pull multi-model-server pre build docker image
 ```
@@ -12,7 +12,7 @@ docker pull awsdeeplearningteam/multi-model-server
 This would build a docker Image with a awsdeeplearningteam/multi-model-server:latest in which we would run our Regression Tests.
 
 ```
-docker run -it --user root  awsdeeplearningteam/multi-model-server:latest /bin/bash
+docker run -it --user root  -v /tmp:/tmp awsdeeplearningteam/multi-model-server:latest /bin/bash
 ```
 
 In the Docker CLI execute the following cmds.
@@ -31,13 +31,21 @@ To execute tests on different run:
 
 `./regression_tests.sh <branch_name>`
 
-
-You can view the logs for Test execution & the Multi-model-server in the /tmp dir.
-
+### Running the test manually local environment.
 ```
-cat /tmp/test_exec.log
-cat /tmp/mms.log 
+git clone https://github.com/awslabs/multi-model-server.git
+cd multi-model-server/test
 ```
+To execute tests on master run:
+
+`./regression_tests.sh `
+
+To execute tests on different run:
+
+`./regression_tests.sh <branch_name>`
+
+You can view the logs for Test execution & the Multi-model-server in the /tmp/MMS_regression folder.
+
 
 ### Adding tests
 

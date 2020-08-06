@@ -1,0 +1,8 @@
+---
+settings:
+  env:
+    HLTH_CHK_SUCC : 100%
+    HLTH_CHK_RT : 40ms
+    TOTAL_PROCS : 1
+    TOTAL_FDS : 480
+    TOTAL_MEM : 500000000 #500MB

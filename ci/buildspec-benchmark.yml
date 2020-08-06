@@ -19,5 +19,5 @@ artifacts:
 #    - result_units/**/*
 #    - logs/**/*
 #    - /tmp/MMSBenchmark/**/*
-    - tests/performance/logs/
-    - tests/performance/run_artifacts/
+    - tests/performance/logs/**/*
+    - tests/performance/run_artifacts/**/*

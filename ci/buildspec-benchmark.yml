@@ -9,15 +9,12 @@ phases:
       - ci/scripts/linux_build.sh
       - pip install dist/*
       # run benchmark
-      #- ci/scripts/linux_test_benchmark.sh
-      - ci/scripts/linux_test_perf_regression.sh
+      - ci/scripts/linux_test_benchmark.sh
 
 artifacts:
   files:
-#    - frontend/server/build/reports/tests/test/**/*
-#    - model-archiver/results_units/**/*
-#    - result_units/**/*
-#    - logs/**/*
-#    - /tmp/MMSBenchmark/**/*
-    - tests/performance/logs/**/*
-    - tests/performance/run_artifacts/**/*
+    - frontend/server/build/reports/tests/test/**/*
+    - model-archiver/results_units/**/*
+    - result_units/**/*
+    - logs/**/*
+    - /tmp/MMSBenchmark/**/*

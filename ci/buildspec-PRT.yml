@@ -12,8 +12,7 @@ phases:
       - ci/scripts/linux_test_perf_regression.sh
   post_build:
     commands:
-      - mkdir -p prt_artifacts/logs; mkdir -p prt_artifacts/run_artifacts;
-      - mv tests/performance/logs/* prt_artifacts/logs
+      - mkdir -p prt_artifacts/run_artifacts;
       - mv tests/performance/run_artifacts/* prt_artifacts/run_artifacts
 
 artifacts:

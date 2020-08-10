@@ -17,10 +17,18 @@ phases:
       - ci/scripts/linux_test_api.sh inference
       - ci/scripts/linux_test_api.sh https
 
+  post_build:
+    commands:
+      - mkdir -p nightly_artifacts/build_artifacts; mkdir -p nightly_artifacts/model_archiver_tests;
+      - mkdir -p nightly_artifacts/mms_python_units;   mkdir -p nightly_artifacts/api_tests
+      - mv frontend/server/build/reports/tests/test/* nightly_artifacts/build_artifacts
+      - mv model-archiver/result_units/* nightly_artifacts/model_archiver_tests
+      - mv result_units/* nightly_artifacts/mms_python_units
+      - mv tests/api/artifacts/* nightly_artifacts/api_tests
+
+
 artifacts:
-  files:
-    - frontend/server/build/reports/tests/test/**/*
-    - model-archiver/results_units/**/*
-    - results_units/**/*
-    - tests/api/artifacts/**/*
-  name: MMS-NIGHTLY-$(date +%Y-%m-%d)
+    files:
+      - '**/*'
+    name: MMS-NIGHTLY-$(date +%Y-%m-%d)
+    base-directory: nightly_artifacts

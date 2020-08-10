@@ -10,8 +10,12 @@ phases:
       - pip install dist/*
       # run PRT
       - ci/scripts/linux_test_perf_regression.sh
+  post_build:
+    commands:
+      - mkdir -p prt_artifacts/logs; mkdir -p prt_artifacts/run_artifacts;
+      - mv tests/performance/logs/* prt_artifacts/logs
+      - mv tests/performance/run_artifacts/* prt_artifacts/run_artifacts
 
 artifacts:
-  files:
-    - tests/performance/logs/**/*
-    - tests/performance/run_artifacts/**/*
+    files:
+      - prt_artifacts/**/*

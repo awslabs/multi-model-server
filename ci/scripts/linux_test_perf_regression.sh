@@ -18,7 +18,7 @@ pip install -r requirements.txt
 pip install bzt
 
 # Execute performance test suite and store exit code
-./run_performance_suite.py  -p api_description -j $JMETER_PATH -e xlarge -x example* --no-compare-local --no-monit
+./run_performance_suite.py  -j $JMETER_PATH -e xlarge -x example* --no-compare-local --no-monit
 EXIT_CODE=$?
 
 # Exit with the same error code as that of test execution

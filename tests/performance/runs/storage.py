@@ -32,6 +32,7 @@ logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 S3_BUCKET = configuration.get('suite', 's3_bucket')
 S3_COMPARE_DIR = configuration.get('suite', 'comparison_artifacts_dir')
 
+
 class Storage():
     """Class to store and retrieve artifacts"""
 
@@ -60,7 +61,7 @@ class Storage():
         latest_run = ''
         for run_name in names:
             run_name_list = run_name.split('__')
-            if env_name == run_name_list[0] and compare_with == run_name_list[1]\
+            if env_name == run_name_list[0] and compare_with == run_name_list[1] \
                     and run_name != exclude_name:
                 if int(run_name_list[2]) > max_ts:
                     max_ts = int(run_name_list[2])
@@ -93,10 +94,12 @@ class S3Storage(Storage):
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(S3_BUCKET)
         result = bucket.meta.client.list_objects(Bucket=bucket.name,
+                                                 Prefix=S3_COMPARE_DIR,
                                                  Delimiter='/')
         run_names = []
         for o in result.get('CommonPrefixes'):
-            run_names.append(o.get('Prefix')[:-1])
+            prefix_list = o.get('Prefix').split('/')
+            run_names.append(prefix_list[len(prefix_list) - 2])
 
         latest_run = self.get_latest(run_names, self.env_name, self.current_run_name, self.compare_with)
         if not latest_run:
@@ -118,4 +121,4 @@ class S3Storage(Storage):
             shutil.rmtree(comp_data_path)
 
         run_process("aws s3 cp {} s3://{}/{}/{}  --recursive".format(self.artifacts_dir, S3_BUCKET, S3_COMPARE_DIR,
-                                                                  self.current_run_name))
+                                                                     self.current_run_name))

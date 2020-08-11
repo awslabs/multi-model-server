@@ -93,7 +93,7 @@ class S3Storage(Storage):
         comp_data_path = os.path.join(self.artifacts_dir, "comp_data")
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(S3_BUCKET)
-        prefix = S3_COMPARE_DIR+"/" if not S3_COMPARE_DIR.endswith('/') else S3_COMPARE_DIR
+        prefix = S3_COMPARE_DIR+"/"
         result = bucket.meta.client.list_objects(Bucket=bucket.name,
                                                  Prefix=prefix,
                                                  Delimiter='/')

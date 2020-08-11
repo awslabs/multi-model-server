@@ -30,7 +30,7 @@ from utils import run_process
 logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 S3_BUCKET = configuration.get('suite', 's3_bucket')
-
+S3_COMPARE_DIR = configuration.get('suite', 'comparison_artifacts_dir')
 
 class Storage():
     """Class to store and retrieve artifacts"""
@@ -107,7 +107,7 @@ class S3Storage(Storage):
             os.makedirs(comp_data_path)
 
         tgt_path = os.path.join(comp_data_path, latest_run)
-        run_process("aws s3 cp  s3://{}/{} {} --recursive".format(bucket.name, latest_run, tgt_path))
+        run_process("aws s3 cp  s3://{}/{}/{} {} --recursive".format(bucket.name, S3_COMPARE_DIR, latest_run, tgt_path))
 
         return tgt_path, latest_run
 
@@ -117,5 +117,5 @@ class S3Storage(Storage):
         if os.path.exists(comp_data_path):
             shutil.rmtree(comp_data_path)
 
-        run_process("aws s3 cp {} s3://{}/{}  --recursive".format(self.artifacts_dir, S3_BUCKET,
+        run_process("aws s3 cp {} s3://{}/{}/{}  --recursive".format(self.artifacts_dir, S3_BUCKET, S3_COMPARE_DIR,
                                                                   self.current_run_name))

@@ -98,9 +98,10 @@ class S3Storage(Storage):
                                                  Prefix=prefix,
                                                  Delimiter='/')
         run_names = []
-        for o in result.get('CommonPrefixes'):
-            prefix_list = o.get('Prefix').split('/')
-            run_names.append(prefix_list[len(prefix_list) - 2])
+        if result.get('CommonPrefixes') is not None:
+            for o in result.get('CommonPrefixes'):
+                prefix_list = o.get('Prefix').split('/')
+                run_names.append(prefix_list[len(prefix_list) - 2])
 
         latest_run = self.get_latest(run_names, self.env_name, self.current_run_name, self.compare_with)
         if not latest_run:

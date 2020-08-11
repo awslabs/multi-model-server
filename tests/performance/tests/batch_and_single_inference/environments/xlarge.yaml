@@ -3,10 +3,10 @@ settings:
   env:
     API_LABEL : Inference1
     API_SUCCESS : 80%
-    API_AVG_RT : 30ms
+    API_AVG_RT : 2.5s
 
     INF2_SUCC: 80%
-    INF2_AVG_RT: 30ms
+    INF2_AVG_RT: 50ms
 
     TOTAL_WORKERS: 6
     TOTAL_WORKERS_MEM: 999686400

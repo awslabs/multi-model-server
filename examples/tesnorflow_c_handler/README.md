@@ -36,7 +36,9 @@ Create a python custom handler which invokes 'load_model' and 'run_model' API of
 Here is the example [handler](handler.py).
 
 3. Create a MAR file
-Use model-archiver utility to create a MAR file using handler.py.
+Use model-archiver utility to create a MAR file using handler.py. The handler uses
+[mobilenet model](https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.4_224.tgz). However you can use
+any other TensorFlow model.
 If you want to ship the model to different machine. Either ensure that you install "tf_c_inference" using step 1 or ship the .so file to that machine and ensure it's in python path.command
 
 ## Details about pybind code:

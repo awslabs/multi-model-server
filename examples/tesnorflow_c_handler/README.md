@@ -42,12 +42,12 @@ any other TensorFlow model.
 If you want to ship the model to different machine. Either ensure that you install "tf_c_inference" using step 1 or ship the .so file to that machine and ensure it's in python path.command
 
 ## Details about pybind code:
-The binding code is specified in [tf_c_inference.cpp](bindings/tf_c_inference.cpp) file.
+The binding code is specified in [tf_c_inference.cpp](bindings/src/tf_c_inference.cpp) file.
 The APIs exposed are 'load_model' and 'run_model'. The singleton is used so that model is loaded only once.
 The API invokes CppFlow C++ API which is a wrapper over TensorFlow C API. Feel free to modify the code as per your needs.
 
 ## Reference Links
-1. [pybind11](https://github.com/pybind/pybind11),
+1. [pybind11](https://github.com/pybind/pybind11)
 2. [cmake_example](https://github.com/pybind/cmake_example)
 3. [CppFlow](https://github.com/serizba/cppflow)
 4. [Tensorflow C API](https://www.tensorflow.org/install/lang_c)

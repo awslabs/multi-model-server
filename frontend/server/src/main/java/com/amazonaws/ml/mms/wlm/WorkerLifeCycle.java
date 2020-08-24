@@ -179,14 +179,7 @@ public class WorkerLifeCycle {
 
     public synchronized void exit() {
         if (process != null) {
-            process.destroy();
-            try {
-                process.waitFor(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                logger.warn(
-                        "WorkerThread interrupted during waitFor, possible asynch resource cleanup.");
-            }
-
+            process.destroyForcibly();
             connector.clean();
             terminateIOStreams();
         }

@@ -186,6 +186,7 @@ class MXNetModelServiceWorker(object):
                 sys.exit(0)
 
     def server_worker_sigterm_handler(self, signum, frame):
+        # Frontend Process.destroy() sends sigterm
         logging.info("PID=%s, received signal  %s server worker", os.getpid(), signum)
         for p in multiprocessing.active_children():
             logging.info("PID=%s, Killing child %s", os.getpid(), p.pid)
@@ -197,8 +198,8 @@ class MXNetModelServiceWorker(object):
         logging.info("PID=%s, Sending self kill signal", os.getpid())
         os.kill(os.getpid(), 9)
 
-
     def sigchld_handler(self, signum, frame):
+        # This is to handle zombie processes.
         # Calling `active_children` has the side effect of `joining` any processes which have already finished
         val = len(multiprocessing.active_children())
 

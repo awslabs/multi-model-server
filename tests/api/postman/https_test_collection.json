@@ -273,7 +273,7 @@
 				"body": {
 					"mode": "file",
 					"file": {
-						"src": "../examples/image_classifier/kitten.jpg"
+						"src": "resources/kitten.jpg"
 					},
 					"options": {
 						"raw": {

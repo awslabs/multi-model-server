@@ -4,5 +4,9 @@ settings:
     FAIL : 100%
     P90 : 290ms
     AVG_RT : 1s
-    TOTAL_WORKERS_MEM : 132000000
-    PERCENT_DIFF_TOTAL_WORKERS_MEM : 5
+    TOTAL_WORKERS_MEM : 135000000
+    TOTAL_WORKERS_MEM_DIFF : 5
+
+    STOP : false
+
+~compare_criteria:

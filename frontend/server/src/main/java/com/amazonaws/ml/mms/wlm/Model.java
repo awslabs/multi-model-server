@@ -172,7 +172,7 @@ public class Model {
             }
             logger.trace("sending jobs, size: {}", jobsRepo.size());
         } finally {
-            logger.debug("remove lock");
+            logger.debug("done pollBatch");
         }
     }
 

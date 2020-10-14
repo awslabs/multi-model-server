@@ -45,6 +45,14 @@ configure(javaProjects()) {
     }
 
     jacocoTestCoverageVerification {
+        afterEvaluate {
+            classDirectories = files(classDirectories.files.collect {
+                fileTree(dir: it, exclude:  [
+                        'com/amazonaws/ml/mms/protobuf/codegen/*',
+                ])
+            })
+        }
+
         violationRules {
             rule {
                 limit {

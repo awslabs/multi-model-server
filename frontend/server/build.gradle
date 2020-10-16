@@ -1,6 +1,7 @@
 plugins {
     id "com.google.protobuf" version "0.8.10"
     id "java"
+    id "idea"
 }
 
 dependencies {
@@ -33,6 +34,12 @@ protobuf {
     protoc {
         // Download from repositories
         artifact = 'com.google.protobuf:protoc:3.13.0'
+    }
+}
+
+idea {
+    module {
+        generatedSourceDirs += file('build/generated/source/proto')
     }
 }
 

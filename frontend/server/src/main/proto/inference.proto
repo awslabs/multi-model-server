@@ -9,7 +9,7 @@ option java_multiple_files = true;
 message InferenceRequest {
     string modelName = 1;
     WorkerCommands command = 2;
-    repeated RequestInput batch = 3;
+    RequestInput request = 3;
 }
 
 message InferenceResponse {

@@ -15,6 +15,7 @@ package com.amazonaws.ml.mms.http;
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
 import com.amazonaws.ml.mms.openapi.OpenApiUtils;
+import com.amazonaws.ml.mms.protobuf.codegen.InferenceRequest;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.InputParameter;
 import com.amazonaws.ml.mms.util.messages.RequestInput;
@@ -22,6 +23,7 @@ import com.amazonaws.ml.mms.util.messages.WorkerCommands;
 import com.amazonaws.ml.mms.wlm.Job;
 import com.amazonaws.ml.mms.wlm.Model;
 import com.amazonaws.ml.mms.wlm.ModelManager;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderValues;
@@ -49,39 +51,6 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
     /** Creates a new {@code InferenceRequestHandler} instance. */
     public InferenceRequestHandler(Map<String, ModelServerEndpoint> ep) {
         endpointMap = ep;
-    }
-
-    @Override
-    protected void handleRequest(
-            ChannelHandlerContext ctx,
-            FullHttpRequest req,
-            QueryStringDecoder decoder,
-            String[] segments)
-            throws ModelException {
-        if (isInferenceReq(segments)) {
-            if (endpointMap.getOrDefault(segments[1], null) != null) {
-                handleCustomEndpoint(ctx, req, segments, decoder);
-            } else {
-                switch (segments[1]) {
-                    case "ping":
-                        ModelManager.getInstance().workerStatus(ctx);
-                        break;
-                    case "models":
-                    case "invocations":
-                        validatePredictionsEndpoint(segments);
-                        handleInvocations(ctx, req, decoder, segments);
-                        break;
-                    case "predictions":
-                        handlePredictions(ctx, req, segments);
-                        break;
-                    default:
-                        handleLegacyPredict(ctx, req, decoder, segments);
-                        break;
-                }
-            }
-        } else {
-            chain.handleRequest(ctx, req, decoder, segments);
-        }
     }
 
     private boolean isInferenceReq(String[] segments) {
@@ -116,6 +85,61 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
         predict(ctx, req, null, segments[2]);
     }
 
+    @Override
+    protected void handleRequest(
+            ChannelHandlerContext ctx,
+            FullHttpRequest req,
+            QueryStringDecoder decoder,
+            String[] segments)
+            throws ModelException {
+        if (decoder == null) {
+            try {
+                InferenceRequest inferenceRequest =
+                        InferenceRequest.parseFrom(req.content().nioBuffer());
+
+                switch (inferenceRequest.getCommandValue()) {
+                    case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.ping_VALUE:
+                        ModelManager.getInstance().workerStatus(ctx);
+                        break;
+                    case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.models_VALUE:
+                    case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.invocations_VALUE:
+                    case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.predictions_VALUE:
+                    case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.predict_VALUE:
+                        handlePredictions(ctx, inferenceRequest);
+                        break;
+                    default:
+                        chain.handleRequest(ctx, req, null, segments);
+                        break;
+                }
+            } catch (InvalidProtocolBufferException e) {
+                chain.handleRequest(ctx, req, null, segments);
+            }
+        } else if (isInferenceReq(segments)) {
+            if (endpointMap.getOrDefault(segments[1], null) != null) {
+                handleCustomEndpoint(ctx, req, segments, decoder);
+            } else {
+                switch (segments[1]) {
+                    case "ping":
+                        ModelManager.getInstance().workerStatus(ctx);
+                        break;
+                    case "models":
+                    case "invocations":
+                        validatePredictionsEndpoint(segments);
+                        handleInvocations(ctx, req, decoder, segments);
+                        break;
+                    case "predictions":
+                        handlePredictions(ctx, req, segments);
+                        break;
+                    default:
+                        handleLegacyPredict(ctx, req, decoder, segments);
+                        break;
+                }
+            }
+        } else {
+            chain.handleRequest(ctx, req, decoder, segments);
+        }
+    }
+
     private void handleInvocations(
             ChannelHandlerContext ctx,
             FullHttpRequest req,
@@ -147,6 +171,27 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
         predict(ctx, req, decoder, segments[1]);
     }
 
+    private void handlePredictions(ChannelHandlerContext ctx, InferenceRequest inferenceRequest)
+            throws ModelNotFoundException {
+        String modelName = inferenceRequest.getModelName();
+        if (modelName.isEmpty()) {
+            if (ModelManager.getInstance().getStartupModels().size() == 1) {
+                modelName = ModelManager.getInstance().getStartupModels().iterator().next();
+            }
+        }
+        RequestInput input = new RequestInput(NettyUtils.getRequestId(ctx.channel()));
+        input.setProto(true);
+        com.amazonaws.ml.mms.protobuf.codegen.RequestInput protoInput =
+                inferenceRequest.getRequest();
+        input.setHeaders(protoInput.getHeadersMap());
+        for (com.amazonaws.ml.mms.protobuf.codegen.InputParameter parameter :
+                protoInput.getParametersList()) {
+            input.addParameter(
+                    new InputParameter(parameter.getName(), parameter.getValue().toByteArray()));
+        }
+        predict(ctx, modelName, input);
+    }
+
     private void predict(
             ChannelHandlerContext ctx,
             FullHttpRequest req,
@@ -170,6 +215,15 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             return;
         }
 
+        Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
+        if (!ModelManager.getInstance().addJob(job)) {
+            throw new ServiceUnavailableException(
+                    "No worker is available to serve request: " + modelName);
+        }
+    }
+
+    private void predict(ChannelHandlerContext ctx, String modelName, RequestInput input)
+            throws ModelNotFoundException, BadRequestException {
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         if (!ModelManager.getInstance().addJob(job)) {
             throw new ServiceUnavailableException(

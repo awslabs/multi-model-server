@@ -13,13 +13,16 @@
 package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.http.InternalServerException;
+import com.amazonaws.ml.mms.protobuf.codegen.Predictions;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.RequestInput;
 import com.amazonaws.ml.mms.util.messages.WorkerCommands;
+import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import java.util.Map;
@@ -37,6 +40,7 @@ public class Job {
     private RequestInput input;
     private long begin;
     private long scheduled;
+    private boolean proto;
 
     public Job(
             ChannelHandlerContext ctx, String modelName, WorkerCommands cmd, RequestInput input) {
@@ -44,6 +48,7 @@ public class Job {
         this.modelName = modelName;
         this.cmd = cmd;
         this.input = input;
+        this.proto = input.isProto();
 
         begin = System.currentTimeMillis();
         scheduled = begin;
@@ -69,6 +74,14 @@ public class Job {
         return input;
     }
 
+    public void setProto(boolean isProto) {
+        this.proto = isProto;
+    }
+
+    public boolean isProto() {
+        return this.proto;
+    }
+
     public void setScheduled() {
         scheduled = System.currentTimeMillis();
     }
@@ -85,15 +98,30 @@ public class Job {
                         : HttpResponseStatus.valueOf(statusCode, statusPhrase);
         FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, false);
 
-        if (contentType != null && contentType.length() > 0) {
-            resp.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
-        }
-        if (responseHeaders != null) {
-            for (Map.Entry<String, String> e : responseHeaders.entrySet()) {
-                resp.headers().set(e.getKey(), e.getValue());
+        if (proto) {
+            Predictions predictions =
+                    Predictions.newBuilder()
+                            .setRequestId(getJobId())
+                            .setStatusCode(statusCode)
+                            .setReasonPhrase(statusPhrase)
+                            .setContentType(contentType.toString())
+                            .putAllHeaders(responseHeaders)
+                            .setResp(ByteString.copyFrom(body))
+                            .build();
+            resp.headers()
+                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM);
+            resp.content().writeBytes(predictions.toByteArray());
+        } else {
+            if (contentType != null && contentType.length() > 0) {
+                resp.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
             }
+            if (responseHeaders != null) {
+                for (Map.Entry<String, String> e : responseHeaders.entrySet()) {
+                    resp.headers().set(e.getKey(), e.getValue());
+                }
+            }
+            resp.content().writeBytes(body);
         }
-        resp.content().writeBytes(body);
 
         /*
          * We can load the models based on the configuration file.Since this Job is
@@ -119,7 +147,11 @@ public class Job {
          * by external clients.
          */
         if (ctx != null) {
-            NettyUtils.sendError(ctx, status, new InternalServerException(error));
+            if (proto) {
+                NettyUtils.sendErrorProto(ctx, status, new InternalServerException(error));
+            } else {
+                NettyUtils.sendError(ctx, status, new InternalServerException(error));
+            }
         }
 
         logger.debug(

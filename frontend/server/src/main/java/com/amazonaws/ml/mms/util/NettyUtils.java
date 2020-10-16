@@ -132,6 +132,20 @@ public final class NettyUtils {
         sendJsonResponse(ctx, error, status);
     }
 
+    public static void sendErrorProto(
+            ChannelHandlerContext ctx, HttpResponseStatus status, Throwable t) {
+        com.amazonaws.ml.mms.protobuf.codegen.ErrorResponse errorResponse =
+                com.amazonaws.ml.mms.protobuf.codegen.ErrorResponse.newBuilder()
+                        .setCode(status.code())
+                        .setType(t.getClass().getSimpleName())
+                        .setMessage(t.getMessage())
+                        .build();
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, false);
+        resp.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM);
+        resp.content().writeBytes(errorResponse.toByteArray());
+        sendHttpResponse(ctx, resp, true);
+    }
+
     public static void sendError(
             ChannelHandlerContext ctx, HttpResponseStatus status, Throwable t, String msg) {
         ErrorResponse error = new ErrorResponse(status.code(), t.getClass().getSimpleName(), msg);

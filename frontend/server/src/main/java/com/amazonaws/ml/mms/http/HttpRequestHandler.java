@@ -32,6 +32,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
     private static final Logger logger = LoggerFactory.getLogger(HttpRequestHandler.class);
     HttpRequestHandlerChain handlerChain;
+
     /** Creates a new {@code HttpRequestHandler} instance. */
     public HttpRequestHandler() {}
 
@@ -47,11 +48,16 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             if (!req.decoderResult().isSuccess()) {
                 throw new BadRequestException("Invalid HTTP message.");
             }
+
             QueryStringDecoder decoder = new QueryStringDecoder(req.uri());
             String path = decoder.path();
 
             String[] segments = path.split("/");
-            handlerChain.handleRequest(ctx, req, decoder, segments);
+            if (segments.length == 1) {
+                handlerChain.handleRequest(ctx, req, null, null);
+            } else {
+                handlerChain.handleRequest(ctx, req, decoder, segments);
+            }
         } catch (ResourceNotFoundException | ModelNotFoundException e) {
             logger.trace("", e);
             NettyUtils.sendError(ctx, HttpResponseStatus.NOT_FOUND, e);

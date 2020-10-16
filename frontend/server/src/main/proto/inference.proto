@@ -7,44 +7,43 @@ option java_package = "com.amazonaws.ml.mms.protobuf.codegen";
 option java_multiple_files = true;
 
 message InferenceRequest {
-    string modelName = 1;
-    WorkerCommands command = 2;
-    RequestInput request = 3;
+  string modelName = 1;
+  WorkerCommands command = 2;
+  RequestInput request = 3;
 }
 
-message InferenceResponse {
-    // http code
-    int32 code = 1;
-    string message = 2;
-    repeated Prediction predictions = 3;
+message Predictions {
+  string requestId = 1;
+  int32 statusCode = 2;
+  string reasonPhrase = 3;
+  string contentType = 4;
+  map<string, string> headers = 5;
+  bytes resp = 6;
+}
+
+message ErrorResponse {
+  int32 code = 1;
+  string type = 2;
+  string message = 3;
 }
 
 enum WorkerCommands {
-    ping = 0;
-    models = 1;
-    predictions = 2;
-    apiDescription = 3;
-    invocations = 4;
-    predict = 5;
+  ping = 0;
+  models = 1;
+  predictions = 2;
+  apiDescription = 3;
+  invocations = 4;
+  predict = 5;
 }
 
 message RequestInput {
-    string requestId = 1;
-    map<string, string> headers = 2;
-    repeated InputParameter parameters = 3;
+  string requestId = 1;
+  map<string, string> headers = 2;
+  repeated InputParameter parameters = 3;
 }
 
 message InputParameter {
-    string name = 1;
-    bytes value = 2;
-    string contentType = 3;
-}
-
-message Prediction {
-    string requestId = 1;
-    int32 statusCode = 2;
-    string reasonPhrase = 3;
-    string contentType = 4;
-    map<string, string> headers = 5;
-    bytes resp = 6;
+  string name = 1;
+  bytes value = 2;
+  string contentType = 3;
 }

@@ -9,7 +9,8 @@ option java_multiple_files = true;
 message InferenceRequest {
   string modelName = 1;
   WorkerCommands command = 2;
-  RequestInput request = 3;
+  string customCommand = 3;
+  RequestInput request = 4;
 }
 
 message Predictions {
@@ -33,7 +34,6 @@ enum WorkerCommands {
   predictions = 2;
   apiDescription = 3;
   invocations = 4;
-  predict = 5;
 }
 
 message RequestInput {

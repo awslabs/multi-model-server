@@ -104,11 +104,15 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
                     case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.models_VALUE:
                     case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.invocations_VALUE:
                     case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.predictions_VALUE:
-                    case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.predict_VALUE:
-                        handlePredictions(ctx, inferenceRequest);
+                        handlePredictions(ctx, inferenceRequest, req.method());
                         break;
                     default:
-                        chain.handleRequest(ctx, req, null, segments);
+                        if (endpointMap.getOrDefault(inferenceRequest.getCustomCommand(), null)
+                                != null) {
+                            handleCustomEndpoint(ctx, req, segments, null, inferenceRequest);
+                        } else {
+                            chain.handleRequest(ctx, req, null, segments);
+                        }
                         break;
                 }
             } catch (InvalidProtocolBufferException e) {
@@ -116,7 +120,7 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             }
         } else if (isInferenceReq(segments)) {
             if (endpointMap.getOrDefault(segments[1], null) != null) {
-                handleCustomEndpoint(ctx, req, segments, decoder);
+                handleCustomEndpoint(ctx, req, segments, decoder, null);
             } else {
                 switch (segments[1]) {
                     case "ping":
@@ -171,7 +175,8 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
         predict(ctx, req, decoder, segments[1]);
     }
 
-    private void handlePredictions(ChannelHandlerContext ctx, InferenceRequest inferenceRequest)
+    private void handlePredictions(
+            ChannelHandlerContext ctx, InferenceRequest inferenceRequest, HttpMethod method)
             throws ModelNotFoundException {
         String modelName = inferenceRequest.getModelName();
         if (modelName.isEmpty()) {
@@ -189,7 +194,7 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             input.addParameter(
                     new InputParameter(parameter.getName(), parameter.getValue().toByteArray()));
         }
-        predict(ctx, modelName, input);
+        predict(ctx, modelName, input, method);
     }
 
     private void predict(
@@ -199,11 +204,17 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             String modelName)
             throws ModelNotFoundException, BadRequestException {
         RequestInput input = parseRequest(ctx, req, decoder);
+        predict(ctx, modelName, input, req.method());
+    }
+
+    private void predict(
+            ChannelHandlerContext ctx, String modelName, RequestInput input, HttpMethod method)
+            throws ModelNotFoundException, BadRequestException {
         if (modelName == null) {
             throw new BadRequestException("Parameter model_name is required.");
         }
 
-        if (HttpMethod.OPTIONS.equals(req.method())) {
+        if (HttpMethod.OPTIONS.equals(method)) {
             ModelManager modelManager = ModelManager.getInstance();
             Model model = modelManager.getModels().get(modelName);
             if (model == null) {
@@ -215,15 +226,6 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             return;
         }
 
-        Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
-        if (!ModelManager.getInstance().addJob(job)) {
-            throw new ServiceUnavailableException(
-                    "No worker is available to serve request: " + modelName);
-        }
-    }
-
-    private void predict(ChannelHandlerContext ctx, String modelName, RequestInput input)
-            throws ModelNotFoundException, BadRequestException {
         Job job = new Job(ctx, modelName, WorkerCommands.PREDICT, input);
         if (!ModelManager.getInstance().addJob(job)) {
             throw new ServiceUnavailableException(

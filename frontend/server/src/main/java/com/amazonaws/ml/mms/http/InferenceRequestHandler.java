@@ -91,7 +91,7 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             FullHttpRequest req,
             QueryStringDecoder decoder,
             String[] segments)
-            throws ModelException {
+            throws ModelNotFoundException, ModelException {
         if (decoder == null) {
             try {
                 InferenceRequest inferenceRequest =
@@ -99,17 +99,15 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
 
                 switch (inferenceRequest.getCommandValue()) {
                     case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.ping_VALUE:
-                        ModelManager.getInstance().workerStatus(ctx);
+                        ModelManager.getInstance().workerStatus(ctx, true);
                         break;
-                    case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.models_VALUE:
-                    case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.invocations_VALUE:
                     case com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands.predictions_VALUE:
                         handlePredictions(ctx, inferenceRequest, req.method());
                         break;
                     default:
                         if (endpointMap.getOrDefault(inferenceRequest.getCustomCommand(), null)
                                 != null) {
-                            handleCustomEndpoint(ctx, req, segments, null, inferenceRequest);
+                            handleCustomEndpoint(ctx, req, inferenceRequest);
                         } else {
                             chain.handleRequest(ctx, req, null, segments);
                         }
@@ -120,11 +118,11 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             }
         } else if (isInferenceReq(segments)) {
             if (endpointMap.getOrDefault(segments[1], null) != null) {
-                handleCustomEndpoint(ctx, req, segments, decoder, null);
+                handleCustomEndpoint(ctx, req, segments, decoder);
             } else {
                 switch (segments[1]) {
                     case "ping":
-                        ModelManager.getInstance().workerStatus(ctx);
+                        ModelManager.getInstance().workerStatus(ctx, false);
                         break;
                     case "models":
                     case "invocations":
@@ -184,6 +182,7 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
                 modelName = ModelManager.getInstance().getStartupModels().iterator().next();
             }
         }
+
         RequestInput input = new RequestInput(NettyUtils.getRequestId(ctx.channel()));
         input.setProto(true);
         com.amazonaws.ml.mms.protobuf.codegen.RequestInput protoInput =

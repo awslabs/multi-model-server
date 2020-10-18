@@ -19,11 +19,18 @@ import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.metrics.Dimension;
 import com.amazonaws.ml.mms.metrics.Metric;
 import com.amazonaws.ml.mms.metrics.MetricManager;
+import com.amazonaws.ml.mms.protobuf.codegen.InferenceRequest;
+import com.amazonaws.ml.mms.protobuf.codegen.InputParameter;
+import com.amazonaws.ml.mms.protobuf.codegen.Predictions;
+import com.amazonaws.ml.mms.protobuf.codegen.RequestInput;
+import com.amazonaws.ml.mms.protobuf.codegen.WorkerCommands;
 import com.amazonaws.ml.mms.servingsdk.impl.PluginsManager;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.Connector;
 import com.amazonaws.ml.mms.util.JsonUtils;
 import com.google.gson.JsonParseException;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -61,6 +68,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -87,6 +95,7 @@ public class ModelServerTest {
     CountDownLatch latch;
     HttpResponseStatus httpStatus;
     String result;
+    ByteBuffer resultBuf;
     HttpHeaders headers;
     private String listInferenceApisResult;
     private String listManagementApisResult;
@@ -150,6 +159,7 @@ public class ModelServerTest {
         Assert.assertNotNull(channel, "Failed to connect to inference port.");
         Assert.assertNotNull(managementChannel, "Failed to connect to management port.");
         testPing(channel);
+        // testPingProto(channel);
 
         testRoot(channel, listInferenceApisResult);
         testRoot(managementChannel, listManagementApisResult);
@@ -167,6 +177,7 @@ public class ModelServerTest {
         testPredictions(channel);
         testPredictionsBinary(channel);
         testPredictionsJson(channel);
+        testPredictionsProto(channel);
         testInvocationsJson(channel);
         testInvocationsMultipart(channel);
         testModelsInvokeJson(channel);
@@ -195,7 +206,7 @@ public class ModelServerTest {
         testInvalidPredictionsUri();
         testInvalidDescribeModel();
         testPredictionsModelNotFound();
-
+        testPredictionsModelNotFoundProto();
         testInvalidManagementUri();
         testInvalidModelsMethod();
         testInvalidModelMethod();
@@ -234,6 +245,25 @@ public class ModelServerTest {
 
         StatusResponse resp = JsonUtils.GSON.fromJson(result, StatusResponse.class);
         Assert.assertEquals(resp.getStatus(), "Healthy");
+        Assert.assertTrue(headers.contains("x-request-id"));
+    }
+
+    private void testPingProto(Channel channel)
+            throws InterruptedException, InvalidProtocolBufferException {
+        resultBuf = null;
+        latch = new CountDownLatch(1);
+        InferenceRequest inferenceRequest =
+                InferenceRequest.newBuilder().setCommand(WorkerCommands.ping).build();
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/ping");
+        req.headers().add("Content-Type", ConfigManager.HTTP_CONTENT_TYPE_PROTOBUF);
+        req.content().writeBytes(inferenceRequest.toByteArray());
+        channel.writeAndFlush(req);
+        latch.await();
+
+        com.amazonaws.ml.mms.protobuf.codegen.StatusResponse resp =
+                com.amazonaws.ml.mms.protobuf.codegen.StatusResponse.parseFrom(resultBuf);
+        Assert.assertEquals(resp.getMessage(), "Healthy");
         Assert.assertTrue(headers.contains("x-request-id"));
     }
 
@@ -428,6 +458,35 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(result, "OK");
+    }
+
+    private void testPredictionsProto(Channel channel)
+            throws InterruptedException, InvalidProtocolBufferException {
+        resultBuf = null;
+        latch = new CountDownLatch(1);
+
+        InputParameter parameter =
+                InputParameter.newBuilder()
+                        .setName("data")
+                        .setValue(ByteString.copyFrom("test", CharsetUtil.UTF_8))
+                        .build();
+        InferenceRequest inferenceRequest =
+                InferenceRequest.newBuilder()
+                        .setCommand(WorkerCommands.predictions)
+                        .setModelName("noop")
+                        .setRequest(RequestInput.newBuilder().addParameters(parameter).build())
+                        .build();
+
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/");
+        req.content().writeBytes(inferenceRequest.toByteArray());
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, ConfigManager.HTTP_CONTENT_TYPE_PROTOBUF);
+        channel.writeAndFlush(req);
+
+        latch.await();
+        Predictions predictions = Predictions.parseFrom(resultBuf);
+        Assert.assertEquals(predictions.getResp().toStringUtf8(), "OK");
     }
 
     private void testInvocationsJson(Channel channel) throws InterruptedException {
@@ -776,6 +835,44 @@ public class ModelServerTest {
 
         Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
         Assert.assertEquals(resp.getMessage(), "Model not found: InvalidModel");
+    }
+
+    private void testPredictionsModelNotFoundProto()
+            throws InterruptedException, InvalidProtocolBufferException {
+        Channel channel = connect(false);
+        Assert.assertNotNull(channel);
+
+        resultBuf = null;
+        latch = new CountDownLatch(1);
+
+        InputParameter parameter =
+                InputParameter.newBuilder()
+                        .setName("data")
+                        .setValue(ByteString.copyFrom("test", CharsetUtil.UTF_8))
+                        .build();
+        InferenceRequest inferenceRequest =
+                InferenceRequest.newBuilder()
+                        .setCommand(WorkerCommands.predictions)
+                        .setModelName("InvalidModel")
+                        .setRequest(RequestInput.newBuilder().addParameters(parameter).build())
+                        .build();
+
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/");
+        req.content().writeBytes(inferenceRequest.toByteArray());
+        HttpUtil.setContentLength(req, req.content().readableBytes());
+        req.headers().set(HttpHeaderNames.CONTENT_TYPE, ConfigManager.HTTP_CONTENT_TYPE_PROTOBUF);
+        channel.writeAndFlush(req).sync();
+        channel.closeFuture().sync();
+
+        latch.await();
+
+        com.amazonaws.ml.mms.protobuf.codegen.StatusResponse resp =
+                com.amazonaws.ml.mms.protobuf.codegen.StatusResponse.parseFrom(resultBuf);
+
+        Assert.assertEquals(resp.getCode(), HttpResponseStatus.NOT_FOUND.code());
+        Assert.assertEquals(resp.getMessage(), "Model not found: InvalidModel");
+        channel.close();
     }
 
     private void testInvalidManagementUri() throws InterruptedException {
@@ -1361,8 +1458,16 @@ public class ModelServerTest {
 
         @Override
         public void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) {
+            CharSequence contentType = HttpUtil.getMimeType(msg);
+            if (contentType != null
+                    && contentType
+                            .toString()
+                            .equalsIgnoreCase(ConfigManager.HTTP_CONTENT_TYPE_PROTOBUF)) {
+                resultBuf = msg.content().nioBuffer();
+            } else {
+                result = msg.content().toString(StandardCharsets.UTF_8);
+            }
             httpStatus = msg.status();
-            result = msg.content().toString(StandardCharsets.UTF_8);
             headers = msg.headers();
             latch.countDown();
         }

@@ -34,6 +34,7 @@ public class ModelServerRequest implements Request {
     public ModelServerRequest(FullHttpRequest r, QueryStringDecoder d) {
         req = r;
         decoder = d;
+        this.input = null;
         parameterMap = null;
     }
 

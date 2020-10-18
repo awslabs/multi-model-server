@@ -22,7 +22,7 @@ message Predictions {
   bytes resp = 6;
 }
 
-message ErrorResponse {
+message StatusResponse {
   int32 code = 1;
   string type = 2;
   string message = 3;
@@ -30,10 +30,7 @@ message ErrorResponse {
 
 enum WorkerCommands {
   ping = 0;
-  models = 1;
-  predictions = 2;
-  apiDescription = 3;
-  invocations = 4;
+  predictions = 1;
 }
 
 message RequestInput {

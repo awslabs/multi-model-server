@@ -63,7 +63,7 @@ public class ManagementRequestHandler extends HttpRequestHandlerChain {
             throws ModelException {
         if (isManagementReq(segments)) {
             if (endpointMap.getOrDefault(segments[1], null) != null) {
-                handleCustomEndpoint(ctx, req, segments, decoder, null);
+                handleCustomEndpoint(ctx, req, segments, decoder);
             } else {
                 if (!"models".equals(segments[1])) {
                     throw new ResourceNotFoundException();

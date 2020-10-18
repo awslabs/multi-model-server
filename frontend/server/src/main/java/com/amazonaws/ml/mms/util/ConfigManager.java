@@ -99,6 +99,8 @@ public final class ConfigManager {
     public static final String MODEL_LOGGER = "MODEL_LOG";
     public static final String MODEL_SERVER_METRICS_LOGGER = "MMS_METRICS";
 
+    public static final String HTTP_CONTENT_TYPE_PROTOBUF = "application/x-protobuf";
+
     private Pattern blacklistPattern;
     private Properties prop;
     private static Pattern pattern = Pattern.compile("\\$\\$([^$]+[^$])\\$\\$");

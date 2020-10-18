@@ -85,8 +85,7 @@ public abstract class HttpRequestHandlerChain {
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             String[] segments,
-            QueryStringDecoder decoder,
-            InferenceRequest inferenceRequest) {
+            QueryStringDecoder decoder) {
         ModelServerEndpoint endpoint = endpointMap.get(segments[1]);
         Runnable r =
                 () -> {
@@ -95,60 +94,69 @@ public abstract class HttpRequestHandlerChain {
                             new DefaultFullHttpResponse(
                                     HttpVersion.HTTP_1_1, HttpResponseStatus.OK, false);
                     try {
-                        if (decoder == null) {
-                            run(endpoint, req, rsp, null, inferenceRequest.getRequest());
-                        } else {
-                            run(endpoint, req, rsp, decoder, null);
-                        }
+                        run(endpoint, req, rsp, decoder, null);
                         NettyUtils.sendHttpResponse(ctx, rsp, true);
                         logger.info(
                                 "Running \"{}\" endpoint took {} ms",
-                                decoder == null ? inferenceRequest.getCustomCommand() : segments[0],
+                                segments[0],
                                 System.currentTimeMillis() - start);
                     } catch (ModelServerEndpointException me) {
-                        if (decoder == null) {
-                            NettyUtils.sendErrorProto(
-                                    ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, me);
-                        } else {
-                            NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, me);
-                        }
+                        NettyUtils.sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, me);
                         logger.error("Error thrown by the model endpoint plugin.", me);
                     } catch (OutOfMemoryError oom) {
-                        if (decoder == null) {
-                            NettyUtils.sendErrorProto(
-                                    ctx, HttpResponseStatus.INSUFFICIENT_STORAGE, oom);
-                        } else {
-                            NettyUtils.sendError(
-                                    ctx,
-                                    HttpResponseStatus.INSUFFICIENT_STORAGE,
-                                    oom,
-                                    "Out of memory");
-                        }
+                        NettyUtils.sendError(
+                                ctx, HttpResponseStatus.INSUFFICIENT_STORAGE, oom, "Out of memory");
                         logger.error("Out of memory while running the custom endpoint.", oom);
                     } catch (IOException ioe) {
-                        if (decoder == null) {
-                            NettyUtils.sendErrorProto(
-                                    ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, ioe);
-                        } else {
-                            NettyUtils.sendError(
-                                    ctx,
-                                    HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                    ioe,
-                                    "I/O error while running the custom endpoint");
-                        }
+                        NettyUtils.sendError(
+                                ctx,
+                                HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                ioe,
+                                "I/O error while running the custom endpoint");
                         logger.error("I/O error while running the custom endpoint.", ioe);
                     } catch (Throwable e) {
-                        if (decoder == null) {
-                            NettyUtils.sendErrorProto(
-                                    ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e);
-                        } else {
-                            NettyUtils.sendError(
-                                    ctx,
-                                    HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                    e,
-                                    "Unknown exception");
-                            logger.error("Unknown exception", e);
-                        }
+                        NettyUtils.sendError(
+                                ctx,
+                                HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                e,
+                                "Unknown exception");
+                        logger.error("Unknown exception", e);
+                    }
+                };
+        ModelManager.getInstance().submitTask(r);
+    }
+
+    protected void handleCustomEndpoint(
+            ChannelHandlerContext ctx, FullHttpRequest req, InferenceRequest inferenceRequest) {
+        ModelServerEndpoint endpoint = endpointMap.get(inferenceRequest.getCustomCommand());
+        Runnable r =
+                () -> {
+                    Long start = System.currentTimeMillis();
+                    FullHttpResponse rsp =
+                            new DefaultFullHttpResponse(
+                                    HttpVersion.HTTP_1_1, HttpResponseStatus.OK, false);
+                    try {
+                        run(endpoint, req, rsp, null, inferenceRequest.getRequest());
+                        NettyUtils.sendHttpResponse(ctx, rsp, true);
+                        logger.info(
+                                "Running \"{}\" endpoint took {} ms",
+                                inferenceRequest.getCustomCommand(),
+                                System.currentTimeMillis() - start);
+                    } catch (ModelServerEndpointException me) {
+                        NettyUtils.sendErrorProto(
+                                ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, me);
+                        logger.error("Error thrown by the model endpoint plugin.", me);
+                    } catch (OutOfMemoryError oom) {
+                        NettyUtils.sendErrorProto(
+                                ctx, HttpResponseStatus.INSUFFICIENT_STORAGE, oom, "Out of memory");
+                        logger.error("Out of memory while running the custom endpoint.", oom);
+                    } catch (IOException ioe) {
+                        NettyUtils.sendErrorProto(
+                                ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, ioe);
+                        logger.error("I/O error while running the custom endpoint.", ioe);
+                    } catch (Throwable e) {
+                        NettyUtils.sendErrorProto(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e);
+                        logger.error("Unknown exception", e);
                     }
                 };
         ModelManager.getInstance().submitTask(r);

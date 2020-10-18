@@ -14,6 +14,7 @@ package com.amazonaws.ml.mms.wlm;
 
 import com.amazonaws.ml.mms.http.InternalServerException;
 import com.amazonaws.ml.mms.protobuf.codegen.Predictions;
+import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.RequestInput;
 import com.amazonaws.ml.mms.util.messages.WorkerCommands;
@@ -22,7 +23,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import java.util.Map;
@@ -109,7 +109,7 @@ public class Job {
                             .setResp(ByteString.copyFrom(body))
                             .build();
             resp.headers()
-                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM);
+                    .set(HttpHeaderNames.CONTENT_TYPE, ConfigManager.HTTP_CONTENT_TYPE_PROTOBUF);
             resp.content().writeBytes(predictions.toByteArray());
         } else {
             if (contentType != null && contentType.length() > 0) {

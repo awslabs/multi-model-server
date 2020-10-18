@@ -159,7 +159,7 @@ public class ModelServerTest {
         Assert.assertNotNull(channel, "Failed to connect to inference port.");
         Assert.assertNotNull(managementChannel, "Failed to connect to management port.");
         testPing(channel);
-        // testPingProto(channel);
+        testPingProto(channel);
 
         testRoot(channel, listInferenceApisResult);
         testRoot(managementChannel, listManagementApisResult);

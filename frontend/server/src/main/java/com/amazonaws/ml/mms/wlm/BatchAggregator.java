@@ -21,55 +21,60 @@ import com.amazonaws.ml.mms.util.messages.RequestInput;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BatchAggregator {
-
-    private static final Logger logger = LoggerFactory.getLogger(BatchAggregator.class);
-
-    private Model model;
-    private Map<String, Job> jobs;
+    static final Logger logger = LoggerFactory.getLogger(BatchAggregator.class);
+    Model model;
+    ArrayBlockingQueue<BaseModelRequest> reqQ;
+    ArrayBlockingQueue<Map<String, Job>> jobQ;
+    String threadName;
+    private ExecutorService batchHandlerService;
 
     public BatchAggregator(Model model) {
         this.model = model;
-        jobs = new LinkedHashMap<>();
+        // this.lastJobs = new LinkedHashMap<>();
+        reqQ = new ArrayBlockingQueue<>(1);
+        jobQ = new ArrayBlockingQueue<>(2);
     }
 
-    public BaseModelRequest getRequest(String threadName, WorkerState state)
-            throws InterruptedException {
-        jobs.clear();
+    public void setThreadName(String threadName) {
+        logger.info("set threadName=" + threadName);
+        this.threadName = threadName;
+    }
 
-        ModelInferenceRequest req = new ModelInferenceRequest(model.getModelName());
+    public String getThreadName() {
+        return threadName;
+    }
 
-        model.pollBatch(
-                threadName, (state == WorkerState.WORKER_MODEL_LOADED) ? 0 : Long.MAX_VALUE, jobs);
-
-        for (Job j : jobs.values()) {
-            if (j.isControlCmd()) {
-                if (jobs.size() > 1) {
-                    throw new IllegalStateException(
-                            "Received more than 1 control command. "
-                                    + "Control messages should be processed/retrieved one at a time.");
-                }
-                RequestInput input = j.getPayload();
-                int gpuId = -1;
-                String gpu = input.getStringParameter("gpu");
-                if (gpu != null) {
-                    gpuId = Integer.parseInt(gpu);
-                }
-                return new ModelLoadModelRequest(model, gpuId, threadName);
-            } else {
-                j.setScheduled();
-                req.addRequest(j.getPayload());
-            }
+    public void startBatchHandlerService(String threadName) {
+        setThreadName(threadName);
+        if (batchHandlerService == null) {
+            batchHandlerService = Executors.newSingleThreadExecutor();
+            batchHandlerService.execute(new BatchHandler());
         }
-        return req;
+    }
+
+    public void stopBatchHandlerService() {
+        if (batchHandlerService != null) {
+            batchHandlerService.shutdown();
+        }
+        batchHandlerService = null;
+    }
+
+    public BaseModelRequest getRequest(WorkerState state) throws InterruptedException {
+        return reqQ.take();
+        // lastJobs = jobQ.peek();
+        // return req;
     }
 
     public void sendResponse(ModelWorkerResponse message) {
         // TODO: Handle prediction level code
-
+        Map<String, Job> jobs = jobQ.poll();
         if (message.getCode() == 200) {
             if (jobs.isEmpty()) {
                 // this is from initial load.
@@ -109,6 +114,7 @@ public class BatchAggregator {
             return;
         }
 
+        Map<String, Job> jobs = jobQ.poll();
         if (message != null) {
             ModelInferenceRequest msg = (ModelInferenceRequest) message;
             for (RequestInput req : msg.getRequestBatch()) {
@@ -126,16 +132,66 @@ public class BatchAggregator {
             }
         } else {
             // Send the error message to all the jobs
-            for (Map.Entry<String, Job> j : jobs.entrySet()) {
-                String jobsId = j.getValue().getJobId();
-                Job job = jobs.remove(jobsId);
+            if (jobs != null) {
+                for (Map.Entry<String, Job> j : jobs.entrySet()) {
+                    String jobsId = j.getValue().getJobId();
+                    Job job = jobs.remove(jobsId);
 
-                if (job.isControlCmd()) {
-                    job.sendError(status, error);
-                } else {
-                    // Data message can be handled by other workers.
-                    // If batch has gone past its batch max delay timer?
-                    model.addFirst(job);
+                    if (job.isControlCmd()) {
+                        job.sendError(status, error);
+                    } else {
+                        // Data message can be handled by other workers.
+                        // If batch has gone past its batch max delay timer?
+                        model.addFirst(job);
+                    }
+                }
+            }
+        }
+    }
+
+    private class BatchHandler implements Runnable {
+        @Override
+        public void run() {
+            while (true) {
+                Map<String, Job> jobs = new LinkedHashMap<>();
+                ModelInferenceRequest req = new ModelInferenceRequest(model.getModelName());
+                boolean loadModelJob = false;
+
+                try {
+                    model.pollBatch(threadName, jobs);
+                    if (!jobs.isEmpty()) {
+                        jobQ.put(jobs);
+
+                        for (Job j : jobs.values()) {
+                            if (j.isControlCmd()) {
+                                if (jobs.size() > 1) {
+                                    throw new IllegalStateException(
+                                            "Received more than 1 control command. "
+                                                    + "Control messages should be processed/retrieved one at a time.");
+                                }
+                                RequestInput input = j.getPayload();
+                                int gpuId = -1;
+                                String gpu = input.getStringParameter("gpu");
+                                if (gpu != null) {
+                                    gpuId = Integer.parseInt(gpu);
+                                }
+                                reqQ.put(new ModelLoadModelRequest(model, gpuId, threadName));
+                                loadModelJob = true;
+                                break;
+                            } else {
+                                j.setScheduled();
+                                req.addRequest(j.getPayload());
+                            }
+                        }
+                        if (!loadModelJob) {
+                            reqQ.put(req);
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    logger.debug("Aggregator for " + threadName + " got interrupted.", e);
+                    break;
+                } catch (IllegalArgumentException e) {
+                    logger.debug("Aggregator for " + threadName + " got illegal argument.", e);
                 }
             }
         }

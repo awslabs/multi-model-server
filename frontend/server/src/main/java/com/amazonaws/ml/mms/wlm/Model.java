@@ -128,8 +128,7 @@ public class Model {
         jobsDb.get(DEFAULT_DATA_QUEUE).addFirst(job);
     }
 
-    public void pollBatch(String threadId, long waitTime, Map<String, Job> jobsRepo)
-            throws InterruptedException {
+    public void pollBatch(String threadId, Map<String, Job> jobsRepo) throws InterruptedException {
         if (jobsRepo == null || threadId == null || threadId.isEmpty()) {
             throw new IllegalArgumentException("Invalid input given provided");
         }
@@ -141,7 +140,7 @@ public class Model {
 
         LinkedBlockingDeque<Job> jobsQueue = jobsDb.get(threadId);
         if (jobsQueue != null && !jobsQueue.isEmpty()) {
-            Job j = jobsQueue.poll(waitTime, TimeUnit.MILLISECONDS);
+            Job j = jobsQueue.poll();
             if (j != null) {
                 jobsRepo.put(j.getJobId(), j);
                 return;

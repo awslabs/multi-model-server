@@ -29,6 +29,7 @@ def test_metrics(caplog):
     Test if metric classes methods behave as expected
     Also checks global metric service methods
     """
+    caplog.set_level(logging.INFO)
     # Create a batch of request ids
     request_ids = {0: 'abcd', 1: "xyz", 2: "qwerty", 3: "hjshfj"}
     all_req_ids = ','.join(request_ids.values())

@@ -50,6 +50,7 @@ class TestService:
 class TestEmitMetrics:
 
     def test_emit_metrics(self, caplog):
+        caplog.set_level(logging.INFO)
         metrics = {'test_emit_metrics': True}
         emit_metrics(metrics)
         assert "[METRICS]" in caplog.text

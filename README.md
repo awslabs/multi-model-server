@@ -11,7 +11,7 @@ Use the MMS Server CLI, or the pre-configured Docker images, to start a service 
 
 A quick overview and examples for both serving and packaging are provided below. Detailed documentation and examples are provided in the [docs folder](docs/README.md).
 
-Join our [<img src='docs/images/slack.png' width='20px' /> slack channel](https://join.slack.com/t/mms-awslabs/shared_invite/enQtNDk4MTgzNDc5NzE4LTBkYTAwMjBjMTVmZTdkODRmYTZkNjdjZGYxZDI0ODhiZDdlM2Y0ZGJiZTczMGY3Njc4MmM3OTQ0OWI2ZDMyNGQ) to get in touch with development team, ask questions, find out what's cooking and more!
+Join our [<img src='docs/images/slack.png' width='20px' /> slack channel](https://join.slack.com/t/mms-awslabs/shared_invite/zt-6cv1kx46-MBTOPLNDwmyBynEvFBsNkQ) to get in touch with development team, ask questions, find out what's cooking and more!
 
 ## Contents of this Document
 * [Quick Start](#quick-start)

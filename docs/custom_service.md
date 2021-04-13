@@ -123,6 +123,18 @@ Here the ``` handle()``` method is our entry point that will be invoked by MMS, 
  
  This entry point is engaged in two cases: (1) when MMS is asked to scale a model up, to increase the number of backend workers (it is done either via a ```PUT /models/{model_name}``` request or a ```POST /models``` request with `initial-workers` option or during MMS startup when you use `--models` option (```multi-model-server --start --models {model_name=model.mar}```), ie., you provide model(s) to load) or (2) when MMS gets a ```POST /predictions/{model_name}``` request. (1) is used to scale-up or scale-down workers for a model. (2) is used as a standard way to run inference against a model. (1) is also known as model load time, and that is where you would normally want to put code for model initialization. You can find out more about these and other MMS APIs in [MMS Management API](./management_api.md) and [MMS Inference API](./inference_api.md)
 
+
+### Returning custom error codes 
+
+To return a custom error code back to the user use the `PredictionException` in the `mms.service` module.
+
+```python
+from mms.service import PredictionException
+def handler(data, context):
+    # Some unexpected error - returning error code 513
+    raise PredictionException("Some Prediction Error", 513)
+```
+
 ## Creating model archive with entry point 
 
 MMS, identifies the entry point to the custom service, from the manifest file. Thus file creating the model archive, one needs to mention the entry point using the ```--handler``` option. 

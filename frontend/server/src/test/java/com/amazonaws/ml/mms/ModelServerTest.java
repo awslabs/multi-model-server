@@ -1219,9 +1219,9 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        StatusResponse status = JsonUtils.GSON.fromJson(result, StatusResponse.class);
-        Assert.assertEquals(status.getMessage(), "Some Prediction Error");
-        Assert.assertEquals(status.getCode(), 599);
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+        Assert.assertEquals(resp.getMessage(), "Some Prediction Error");
+        Assert.assertEquals(resp.getCode(), 599);
         channel.close();
 
         // Unload the model

@@ -138,7 +138,7 @@ class PredictionException(Exception):
         super(PredictionException, self).__init__(message)
 
     def __str__(self):
-        return "message : error_code".format(message=self.message, error_code=self.error_code)
+        return "{message} : {error_code}".format(message=self.message, error_code=self.error_code)
 
 
 def emit_metrics(metrics):

@@ -1219,20 +1219,9 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
 
-        Assert.assertEquals(httpStatus.code(), 599);
-        channel.close();
-
-        // Unload the model
-        channel = connect(true);
-        httpStatus = null;
-        latch = new CountDownLatch(1);
-        Assert.assertNotNull(channel);
-        req =
-                new DefaultFullHttpRequest(
-                        HttpVersion.HTTP_1_1, HttpMethod.DELETE, "/models/custom-return-code");
-        channel.writeAndFlush(req);
-        latch.await();
-        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+        Assert.assertEquals(resp.getMessage(), "Some Prediction Error");
+        Assert.assertEquals(resp.getCode(), 599);
     }
 
     private void testErrorBatch() throws InterruptedException {

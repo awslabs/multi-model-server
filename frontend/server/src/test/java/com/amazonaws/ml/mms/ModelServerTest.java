@@ -187,8 +187,8 @@ public class ModelServerTest {
         testMetricManager();
         testErrorBatch();
 
-        channel.close();
-        managementChannel.close();
+        channel.close().sync();
+        managementChannel.close().sync();
 
         // negative test case, channel will be closed by server
         testInvalidRootRequest();
@@ -1101,7 +1101,7 @@ public class ModelServerTest {
         StatusResponse status = JsonUtils.GSON.fromJson(result, StatusResponse.class);
         Assert.assertEquals(status.getStatus(), "Workers scaled");
 
-        channel.close();
+        channel.close().sync();
 
         channel = connect(false);
         Assert.assertNotNull(channel);
@@ -1142,7 +1142,7 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(httpStatus, HttpResponseStatus.INSUFFICIENT_STORAGE);
-        channel.close();
+        channel.close().sync();
     }
 
     private void testPredictionMemoryError() throws InterruptedException {
@@ -1159,7 +1159,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
-        channel.close();
+        channel.close().sync();
 
         // Test for prediction
         channel = connect(false);
@@ -1175,7 +1175,7 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(httpStatus, HttpResponseStatus.INSUFFICIENT_STORAGE);
-        channel.close();
+        channel.close().sync();
 
         // Unload the model
         channel = connect(true);
@@ -1204,7 +1204,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
-        channel.close();
+        channel.close().sync();
 
         // Test for prediction
         channel = connect(false);
@@ -1242,7 +1242,7 @@ public class ModelServerTest {
         StatusResponse status = JsonUtils.GSON.fromJson(result, StatusResponse.class);
         Assert.assertEquals(status.getStatus(), "Workers scaled");
 
-        channel.close();
+        channel.close().sync();
 
         channel = connect(false);
         Assert.assertNotNull(channel);

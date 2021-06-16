@@ -23,11 +23,13 @@ public class RequestInput {
     private String requestId;
     private Map<String, String> headers;
     private List<InputParameter> parameters;
+    private boolean proto;
 
     public RequestInput(String requestId) {
         this.requestId = requestId;
         headers = new HashMap<>();
         parameters = new ArrayList<>();
+        proto = false;
     }
 
     public String getRequestId() {
@@ -60,6 +62,14 @@ public class RequestInput {
 
     public void addParameter(InputParameter modelInput) {
         parameters.add(modelInput);
+    }
+
+    public void setProto(boolean isProto) {
+        this.proto = isProto;
+    }
+
+    public boolean isProto() {
+        return this.proto;
     }
 
     public String getStringParameter(String key) {

@@ -21,7 +21,11 @@ import com.amazonaws.ml.mms.http.StatusResponse;
 import com.amazonaws.ml.mms.util.ConfigManager;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -218,7 +222,7 @@ public final class ModelManager {
         return model.addJob(job);
     }
 
-    public void workerStatus(final ChannelHandlerContext ctx) {
+    public void workerStatus(final ChannelHandlerContext ctx, boolean isProto) {
         Runnable r =
                 () -> {
                     String response = "Healthy";
@@ -237,8 +241,24 @@ public final class ModelManager {
 
                     // TODO: Check if its OK to send other 2xx errors to ALB for "Partial Healthy"
                     // and "Unhealthy"
-                    NettyUtils.sendJsonResponse(
-                            ctx, new StatusResponse(response), HttpResponseStatus.OK);
+                    if (isProto) {
+                        com.amazonaws.ml.mms.protobuf.codegen.StatusResponse statusResponse =
+                                com.amazonaws.ml.mms.protobuf.codegen.StatusResponse.newBuilder()
+                                        .setMessage(response)
+                                        .build();
+                        FullHttpResponse resp =
+                                new DefaultFullHttpResponse(
+                                        HttpVersion.HTTP_1_1, HttpResponseStatus.OK, false);
+                        resp.headers()
+                                .set(
+                                        HttpHeaderNames.CONTENT_TYPE,
+                                        ConfigManager.HTTP_CONTENT_TYPE_PROTOBUF);
+                        resp.content().writeBytes(statusResponse.toByteArray());
+                        NettyUtils.sendHttpResponse(ctx, resp, true);
+                    } else {
+                        NettyUtils.sendJsonResponse(
+                                ctx, new StatusResponse(response), HttpResponseStatus.OK);
+                    }
                 };
         wlm.scheduleAsync(r);
     }

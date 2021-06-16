@@ -9,3 +9,4 @@ click==7.1.2
 tabulate==0.8.7
 pandas==1.0.3
 termcolor==1.1.0
+bzt== 1.14.2

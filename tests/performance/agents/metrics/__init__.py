@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Customised system and mms process metrics for monitoring and pass-fail criteria in taurus"""
+""" Customised system and Model Server process metrics for monitoring and pass-fail criteria in taurus"""
 
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
@@ -10,6 +10,7 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
+# pylint: disable=redefined-builtin, redefined-outer-name, broad-except, unused-variable
 
 from enum import Enum
 from statistics import mean
@@ -19,7 +20,7 @@ from psutil import NoSuchProcess, ZombieProcess
 
 
 class ProcessType(Enum):
-    """ Type of MMS processes to compute metrics on """
+    """ Type of Server processes to compute metrics on """
     FRONTEND = 1
     WORKER = 2
     ALL = 3
@@ -64,7 +65,8 @@ system_metrics = {
 misc_metrics = {
     'total_processes': None,
     'total_workers': None,
-    'orphans': None
+    'orphans': None,
+    'zombies': None
 }
 
 AVAILABLE_METRICS = list(system_metrics) + list(misc_metrics)
@@ -85,6 +87,7 @@ for metric in list(process_metrics):
                 AVAILABLE_METRICS.append('{}_{}_{}'.format(op, PNAME, metric))
 
 children = set()
+zombie_children = set()
 
 
 def get_metrics(server_process, child_processes, logger):
@@ -92,7 +95,7 @@ def get_metrics(server_process, child_processes, logger):
     """
     result = {}
     children.update(child_processes)
-    logger.debug("children : {0}".format(",".join([str(c.pid) for c in children])))
+    logger.info("children : {0}".format(",".join([str(c.pid) for c in children])))
 
     def update_metric(metric_name, proc_type, stats):
         stats = list(filter(lambda x: isinstance(x, (float, int)), stats))
@@ -116,22 +119,28 @@ def get_metrics(server_process, child_processes, logger):
     try:
         # as_dict() gets all stats in one shot
         processes_stats.append({'type': ProcessType.FRONTEND, 'stats': server_process.as_dict()})
-    except:
+    except Exception as e:
         pass
-    for child in children:
+
+    for child in children | zombie_children:
         try:
             child_cmdline = child.cmdline()
             if psutil.pid_exists(child.pid) and len(child_cmdline) >= 2 and WORKER_NAME in child_cmdline[1]:
                 processes_stats.append({'type': ProcessType.WORKER, 'stats': child.as_dict()})
             else:
                 reclaimed_pids.append(child)
-                logger.debug('child {0} no longer available'.format(child.pid))
-        except (NoSuchProcess, ZombieProcess):
+                logger.info('child {0} no longer available'.format(child.pid))
+        except ZombieProcess:
+            zombie_children.add(child)
+        except NoSuchProcess:
             reclaimed_pids.append(child)
-            logger.debug('child {0} no longer available'.format(child.pid))
+            logger.info('child {0} no longer available'.format(child.pid))
 
     for p in reclaimed_pids:
-        children.remove(p)
+        if p in children:
+            children.remove(p)
+        if p in zombie_children:
+            zombie_children.remove(p)
 
     ### PROCESS METRICS ###
     worker_stats = list(map(lambda x: x['stats'], \
@@ -147,10 +156,11 @@ def get_metrics(server_process, child_processes, logger):
 
     # Total processes
     result['total_processes'] = len(worker_stats) + 1
-    result['total_workers'] = max(len(worker_stats) - 1, 0)
+    result['total_workers'] = len(worker_stats)
     result['orphans'] = len(list(filter(lambda p: p['ppid'] == 1, worker_stats)))
+    result['zombies'] = len(zombie_children)
 
-    ### SYSTEM METRICS ###
+    # ###SYSTEM METRICS ###
     result['system_disk_used'] = psutil.disk_usage('/').used
     result['system_memory_percent'] = psutil.virtual_memory().percent
     system_disk_io_counters = psutil.disk_io_counters()
@@ -160,3 +170,22 @@ def get_metrics(server_process, child_processes, logger):
     result['system_write_bytes'] = system_disk_io_counters.write_bytes
 
     return result
+
+
+if __name__ == "__main__":
+    import logging
+    import sys
+    from agents.utils.process import *
+    from agents import configuration
+
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
+
+    PID_FILE = configuration.get('server', 'pid_file', 'model_server.pid')
+    server_pid = get_process_pid_from_file(get_server_pidfile(PID_FILE))
+    server_process = get_server_processes(server_pid)
+    children = get_child_processes(server_process)
+
+    metrics = get_metrics(server_process, children, logger)
+
+    print(metrics)

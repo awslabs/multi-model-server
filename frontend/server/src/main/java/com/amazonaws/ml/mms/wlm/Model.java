@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +37,6 @@ public class Model {
     private int maxBatchDelay;
     private String preloadModel;
     private AtomicInteger port; // Port on which the model server is running
-    private ReentrantLock lock;
     private int responseTimeout;
     private WorkerThread serverThread;
     // Total number of subsequent inference request failures
@@ -57,7 +55,6 @@ public class Model {
         jobsDb.putIfAbsent(DEFAULT_DATA_QUEUE, new LinkedBlockingDeque<>(queueSize));
         failedInfReqs = new AtomicInteger(0);
         port = new AtomicInteger(-1);
-        lock = new ReentrantLock();
     }
 
     public String getModelName() {
@@ -131,8 +128,7 @@ public class Model {
         jobsDb.get(DEFAULT_DATA_QUEUE).addFirst(job);
     }
 
-    public void pollBatch(String threadId, long waitTime, Map<String, Job> jobsRepo)
-            throws InterruptedException {
+    public void pollBatch(String threadId, Map<String, Job> jobsRepo) throws InterruptedException {
         if (jobsRepo == null || threadId == null || threadId.isEmpty()) {
             throw new IllegalArgumentException("Invalid input given provided");
         }
@@ -144,7 +140,7 @@ public class Model {
 
         LinkedBlockingDeque<Job> jobsQueue = jobsDb.get(threadId);
         if (jobsQueue != null && !jobsQueue.isEmpty()) {
-            Job j = jobsQueue.poll(waitTime, TimeUnit.MILLISECONDS);
+            Job j = jobsQueue.poll();
             if (j != null) {
                 jobsRepo.put(j.getJobId(), j);
                 return;
@@ -152,7 +148,6 @@ public class Model {
         }
 
         try {
-            lock.lockInterruptibly();
             long maxDelay = maxBatchDelay;
             jobsQueue = jobsDb.get(DEFAULT_DATA_QUEUE);
 
@@ -176,9 +171,7 @@ public class Model {
             }
             logger.trace("sending jobs, size: {}", jobsRepo.size());
         } finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
+            logger.debug("done pollBatch");
         }
     }
 

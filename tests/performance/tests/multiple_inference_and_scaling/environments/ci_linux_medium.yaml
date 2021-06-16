@@ -1,0 +1,12 @@
+---
+settings:
+  env:
+    INFR1_SUCC : 100%
+    INFR2_SUCC: 100%
+    INFR1_RT : 100ms
+    INFR2_RT: 250ms
+    TOTAL_PROCS : 11
+    TOTAL_FDS : 608
+    TOTAL_MEM : 2000000000 #~2GB
+    TOTAL_ORPHANS : 0
+    FRNTEND_MEM : 800000000 #~800MB

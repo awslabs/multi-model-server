@@ -17,6 +17,7 @@ modules:
 services:
   - module: shellexec
     prepare:
+      - "ps aux | grep '[c]om.amazonaws.ml.mms.ModelServer' | awk '{print $2}' | xargs kill -9"
       - "curl -s -O https://s3.amazonaws.com/model-server/inputs/kitten.jpg"
       - "multi-model-server --start > /dev/null 2>&1"
       - "sleep 20s"
@@ -28,6 +29,7 @@ services:
       - "curl -s -X PUT  http://localhost:8081/models/squeezenet_v1.1?min_worker=2&synchronous=true"
     post-process:
       - "multi-model-server --stop > /dev/null 2>&1"
+      - "sleep 10"
       - "rm kitten.jpg"
   - module: server_local_monitoring # should be added in modules section
     ServerLocalClient: # keyword from metrics_monitoring_inproc.Monitor

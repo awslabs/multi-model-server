@@ -1,0 +1,8 @@
+---
+settings:
+  env:
+    INFR_SUCC : 100%
+    INFR_RT : 800ms
+    TOTAL_PROCS : 3
+    TOTAL_FDS : 503
+    TOTAL_MEM : 500000000 #500MB

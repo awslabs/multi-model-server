@@ -35,7 +35,7 @@ pip install mxnet-mkl
 or for GPU instance:
 
 ```bash
-pip install mxnet-cu90-mkl
+pip install mxnet-cu90mkl
 ```
 
 

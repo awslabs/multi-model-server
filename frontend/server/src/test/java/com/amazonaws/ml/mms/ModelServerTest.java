@@ -183,11 +183,12 @@ public class ModelServerTest {
         testLoggingUnload(channel, managementChannel);
         testLoadingMemoryError();
         testPredictionMemoryError();
+        testPredictionCustomErrorCode();
         testMetricManager();
         testErrorBatch();
 
-        channel.close();
-        managementChannel.close();
+        channel.close().sync();
+        managementChannel.close().sync();
 
         // negative test case, channel will be closed by server
         testInvalidRootRequest();
@@ -1100,7 +1101,7 @@ public class ModelServerTest {
         StatusResponse status = JsonUtils.GSON.fromJson(result, StatusResponse.class);
         Assert.assertEquals(status.getStatus(), "Workers scaled");
 
-        channel.close();
+        channel.close().sync();
 
         channel = connect(false);
         Assert.assertNotNull(channel);
@@ -1141,7 +1142,7 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(httpStatus, HttpResponseStatus.INSUFFICIENT_STORAGE);
-        channel.close();
+        channel.close().sync();
     }
 
     private void testPredictionMemoryError() throws InterruptedException {
@@ -1158,7 +1159,7 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
-        channel.close();
+        channel.close().sync();
 
         // Test for prediction
         channel = connect(false);
@@ -1174,7 +1175,7 @@ public class ModelServerTest {
         latch.await();
 
         Assert.assertEquals(httpStatus, HttpResponseStatus.INSUFFICIENT_STORAGE);
-        channel.close();
+        channel.close().sync();
 
         // Unload the model
         channel = connect(true);
@@ -1187,6 +1188,40 @@ public class ModelServerTest {
         channel.writeAndFlush(req);
         latch.await();
         Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+    }
+
+    private void testPredictionCustomErrorCode() throws InterruptedException {
+        // Load the model
+        Channel channel = connect(true);
+        Assert.assertNotNull(channel);
+        result = null;
+        latch = new CountDownLatch(1);
+        DefaultFullHttpRequest req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1,
+                        HttpMethod.POST,
+                        "/models?url=custom-return-code&model_name=custom-return-code&runtime=python&initial_workers=1&synchronous=true");
+        channel.writeAndFlush(req);
+        latch.await();
+        Assert.assertEquals(httpStatus, HttpResponseStatus.OK);
+        channel.close().sync();
+
+        // Test for prediction
+        channel = connect(false);
+        Assert.assertNotNull(channel);
+        result = null;
+        latch = new CountDownLatch(1);
+        req =
+                new DefaultFullHttpRequest(
+                        HttpVersion.HTTP_1_1, HttpMethod.POST, "/predictions/custom-return-code");
+        req.content().writeCharSequence("data=invalid_output", CharsetUtil.UTF_8);
+
+        channel.writeAndFlush(req);
+        latch.await();
+
+        ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+        Assert.assertEquals(resp.getMessage(), "Some Prediction Error");
+        Assert.assertEquals(resp.getCode(), 599);
     }
 
     private void testErrorBatch() throws InterruptedException {
@@ -1207,7 +1242,7 @@ public class ModelServerTest {
         StatusResponse status = JsonUtils.GSON.fromJson(result, StatusResponse.class);
         Assert.assertEquals(status.getStatus(), "Workers scaled");
 
-        channel.close();
+        channel.close().sync();
 
         channel = connect(false);
         Assert.assertNotNull(channel);

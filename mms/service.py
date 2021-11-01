@@ -106,6 +106,9 @@ class Service(object):
         # noinspection PyBroadException
         try:
             ret = self._entry_point(input_batch, self.context)
+        except PredictionException as e:
+            logger.error("Prediction error", exc_info=True)
+            return create_predict_response(None, req_id_map, e.message, e.error_code)
         except MemoryError:
             logger.error("System out of memory", exc_info=True)
             return create_predict_response(None, req_id_map, "Out of resources", 507)
@@ -126,6 +129,16 @@ class Service(object):
         metrics.add_time(PREDICTION_METRIC, duration)
 
         return create_predict_response(ret, req_id_map, "Prediction success", 200, context=self.context)
+
+
+class PredictionException(Exception):
+    def __init__(self, message, error_code=500):
+        self.message = message
+        self.error_code = error_code
+        super(PredictionException, self).__init__(message)
+
+    def __str__(self):
+        return "{message} : {error_code}".format(message=self.message, error_code=self.error_code)
 
 
 def emit_metrics(metrics):

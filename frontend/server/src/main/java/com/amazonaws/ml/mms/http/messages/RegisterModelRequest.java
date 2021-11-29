@@ -72,7 +72,7 @@ public class RegisterModelRequest {
         synchronous = true;
         initialWorkers = ConfigManager.getInstance().getConfiguredDefaultWorkersPerModel();
         responseTimeout = -1;
-        preloadModel = "false";
+        preloadModel = null;
     }
 
     public String getModelName() {

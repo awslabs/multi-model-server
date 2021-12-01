@@ -25,7 +25,7 @@ public class ApiDescriptionRequestHandler extends HttpRequestHandlerChain {
             String[] segments)
             throws ModelException {
 
-        if (isApiDescription(segments)) {
+        if (decoder != null && isApiDescription(segments)) {
             String path = decoder.path();
             if (("/".equals(path) && HttpMethod.OPTIONS.equals(req.method()))
                     || (segments.length == 2 && segments[1].equals("api-description"))) {

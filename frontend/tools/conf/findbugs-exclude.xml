@@ -10,5 +10,7 @@
     <Match>
         <Bug pattern="PZLA_PREFER_ZERO_LENGTH_ARRAYS,DB_DUPLICATE_SWITCH_CLAUSES,BC_UNCONFIRMED_CAST"/>
     </Match>
-
+    <Match>
+        <Package name="com.amazonaws.ml.mms.protobuf.codegen"/>
+    </Match>
 </FindBugsFilter>

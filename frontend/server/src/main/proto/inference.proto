@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package com.amazonaws.ml.mms.protobuf.codegen;
+
+option optimize_for = SPEED;
+option java_package = "com.amazonaws.ml.mms.protobuf.codegen";
+option java_multiple_files = true;
+
+message InferenceRequest {
+  string modelName = 1;
+  WorkerCommands command = 2;
+  string customCommand = 3;
+  RequestInput request = 4;
+}
+
+message Predictions {
+  string requestId = 1;
+  int32 statusCode = 2;
+  string reasonPhrase = 3;
+  string contentType = 4;
+  map<string, string> headers = 5;
+  bytes resp = 6;
+}
+
+message StatusResponse {
+  int32 code = 1;
+  string type = 2;
+  string message = 3;
+}
+
+enum WorkerCommands {
+  ping = 0;
+  predictions = 1;
+}
+
+message RequestInput {
+  string requestId = 1;
+  map<string, string> headers = 2;
+  repeated InputParameter parameters = 3;
+}
+
+message InputParameter {
+  string name = 1;
+  bytes value = 2;
+  string contentType = 3;
+}

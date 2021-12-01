@@ -2,6 +2,8 @@ package com.amazonaws.ml.mms.http;
 
 import com.amazonaws.ml.mms.archive.ModelException;
 import com.amazonaws.ml.mms.archive.ModelNotFoundException;
+import com.amazonaws.ml.mms.protobuf.codegen.InferenceRequest;
+import com.amazonaws.ml.mms.protobuf.codegen.RequestInput;
 import com.amazonaws.ml.mms.servingsdk.impl.ModelServerContext;
 import com.amazonaws.ml.mms.servingsdk.impl.ModelServerRequest;
 import com.amazonaws.ml.mms.servingsdk.impl.ModelServerResponse;
@@ -49,32 +51,30 @@ public abstract class HttpRequestHandlerChain {
             FullHttpRequest req,
             FullHttpResponse rsp,
             QueryStringDecoder decoder,
-            String method)
+            RequestInput input)
             throws IOException {
-        switch (method) {
+        ModelServerRequest modelServerRequest;
+        if (decoder == null) {
+            modelServerRequest = new ModelServerRequest(req, input);
+        } else {
+            modelServerRequest = new ModelServerRequest(req, decoder);
+        }
+        switch (req.method().toString()) {
             case "GET":
                 endpoint.doGet(
-                        new ModelServerRequest(req, decoder),
-                        new ModelServerResponse(rsp),
-                        new ModelServerContext());
+                        modelServerRequest, new ModelServerResponse(rsp), new ModelServerContext());
                 break;
             case "PUT":
                 endpoint.doPut(
-                        new ModelServerRequest(req, decoder),
-                        new ModelServerResponse(rsp),
-                        new ModelServerContext());
+                        modelServerRequest, new ModelServerResponse(rsp), new ModelServerContext());
                 break;
             case "DELETE":
                 endpoint.doDelete(
-                        new ModelServerRequest(req, decoder),
-                        new ModelServerResponse(rsp),
-                        new ModelServerContext());
+                        modelServerRequest, new ModelServerResponse(rsp), new ModelServerContext());
                 break;
             case "POST":
                 endpoint.doPost(
-                        new ModelServerRequest(req, decoder),
-                        new ModelServerResponse(rsp),
-                        new ModelServerContext());
+                        modelServerRequest, new ModelServerResponse(rsp), new ModelServerContext());
                 break;
             default:
                 throw new ServiceUnavailableException("Invalid HTTP method received");
@@ -94,7 +94,7 @@ public abstract class HttpRequestHandlerChain {
                             new DefaultFullHttpResponse(
                                     HttpVersion.HTTP_1_1, HttpResponseStatus.OK, false);
                     try {
-                        run(endpoint, req, rsp, decoder, req.method().toString());
+                        run(endpoint, req, rsp, decoder, null);
                         NettyUtils.sendHttpResponse(ctx, rsp, true);
                         logger.info(
                                 "Running \"{}\" endpoint took {} ms",
@@ -106,6 +106,7 @@ public abstract class HttpRequestHandlerChain {
                     } catch (OutOfMemoryError oom) {
                         NettyUtils.sendError(
                                 ctx, HttpResponseStatus.INSUFFICIENT_STORAGE, oom, "Out of memory");
+                        logger.error("Out of memory while running the custom endpoint.", oom);
                     } catch (IOException ioe) {
                         NettyUtils.sendError(
                                 ctx,
@@ -119,6 +120,42 @@ public abstract class HttpRequestHandlerChain {
                                 HttpResponseStatus.INTERNAL_SERVER_ERROR,
                                 e,
                                 "Unknown exception");
+                        logger.error("Unknown exception", e);
+                    }
+                };
+        ModelManager.getInstance().submitTask(r);
+    }
+
+    protected void handleCustomEndpoint(
+            ChannelHandlerContext ctx, FullHttpRequest req, InferenceRequest inferenceRequest) {
+        ModelServerEndpoint endpoint = endpointMap.get(inferenceRequest.getCustomCommand());
+        Runnable r =
+                () -> {
+                    Long start = System.currentTimeMillis();
+                    FullHttpResponse rsp =
+                            new DefaultFullHttpResponse(
+                                    HttpVersion.HTTP_1_1, HttpResponseStatus.OK, false);
+                    try {
+                        run(endpoint, req, rsp, null, inferenceRequest.getRequest());
+                        NettyUtils.sendHttpResponse(ctx, rsp, true);
+                        logger.info(
+                                "Running \"{}\" endpoint took {} ms",
+                                inferenceRequest.getCustomCommand(),
+                                System.currentTimeMillis() - start);
+                    } catch (ModelServerEndpointException me) {
+                        NettyUtils.sendErrorProto(
+                                ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, me);
+                        logger.error("Error thrown by the model endpoint plugin.", me);
+                    } catch (OutOfMemoryError oom) {
+                        NettyUtils.sendErrorProto(
+                                ctx, HttpResponseStatus.INSUFFICIENT_STORAGE, oom, "Out of memory");
+                        logger.error("Out of memory while running the custom endpoint.", oom);
+                    } catch (IOException ioe) {
+                        NettyUtils.sendErrorProto(
+                                ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, ioe);
+                        logger.error("I/O error while running the custom endpoint.", ioe);
+                    } catch (Throwable e) {
+                        NettyUtils.sendErrorProto(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR, e);
                         logger.error("Unknown exception", e);
                     }
                 };

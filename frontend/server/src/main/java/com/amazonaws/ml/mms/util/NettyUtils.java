@@ -138,6 +138,34 @@ public final class NettyUtils {
         sendJsonResponse(ctx, error, status);
     }
 
+    public static void sendErrorProto(
+            ChannelHandlerContext ctx, HttpResponseStatus status, Throwable t) {
+        com.amazonaws.ml.mms.protobuf.codegen.StatusResponse errorResponse =
+                com.amazonaws.ml.mms.protobuf.codegen.StatusResponse.newBuilder()
+                        .setCode(status.code())
+                        .setType(t.getClass().getSimpleName())
+                        .setMessage(t.getMessage())
+                        .build();
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, false);
+        resp.headers().set(HttpHeaderNames.CONTENT_TYPE, ConfigManager.HTTP_CONTENT_TYPE_PROTOBUF);
+        resp.content().writeBytes(errorResponse.toByteArray());
+        sendHttpResponse(ctx, resp, true);
+    }
+
+    public static void sendErrorProto(
+            ChannelHandlerContext ctx, HttpResponseStatus status, Throwable t, String msg) {
+        com.amazonaws.ml.mms.protobuf.codegen.StatusResponse errorResponse =
+                com.amazonaws.ml.mms.protobuf.codegen.StatusResponse.newBuilder()
+                        .setCode(status.code())
+                        .setType(t.getClass().getSimpleName())
+                        .setMessage(msg)
+                        .build();
+        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, false);
+        resp.headers().set(HttpHeaderNames.CONTENT_TYPE, ConfigManager.HTTP_CONTENT_TYPE_PROTOBUF);
+        resp.content().writeBytes(errorResponse.toByteArray());
+        sendHttpResponse(ctx, resp, true);
+    }
+
     /**
      * Send HTTP response to client.
      *

@@ -219,8 +219,8 @@ public class WorkerLifeCycle {
         private boolean error;
         private WorkerLifeCycle lifeCycle;
         private AtomicBoolean isRunning = new AtomicBoolean(true);
-        static final org.apache.log4j.Logger loggerModelMetrics =
-                org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
+        static final Logger loggerModelMetrics =
+                LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
 
         public ReaderThread(String name, InputStream is, boolean error, WorkerLifeCycle lifeCycle) {
             super(name + (error ? "-stderr" : "-stdout"));
@@ -242,7 +242,7 @@ public class WorkerLifeCycle {
                         break;
                     }
                     if (result.startsWith("[METRICS]")) {
-                        loggerModelMetrics.info(Metric.parse(result.substring(9)));
+                        loggerModelMetrics.info("{}", Metric.parse(result.substring(9)));
                         continue;
                     }
 

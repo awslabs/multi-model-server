@@ -14,10 +14,22 @@ package com.amazonaws.ml.mms.util.logging;
 
 import com.amazonaws.ml.mms.metrics.Dimension;
 import com.amazonaws.ml.mms.metrics.Metric;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.config.Node;
+import org.apache.logging.log4j.core.config.plugins.Plugin;
+import org.apache.logging.log4j.core.layout.AbstractStringLayout;
 
-public class QLogLayout extends PatternLayout {
+@Plugin(
+        name = "QLogLayout",
+        category = Node.CATEGORY,
+        elementType = Layout.ELEMENT_TYPE,
+        printObject = true)
+public class QLogLayout extends AbstractStringLayout {
+
+    public QLogLayout() {
+        super(null, null, null);
+    }
 
     /**
      * Model server also supports query log formatting.
@@ -73,7 +85,7 @@ public class QLogLayout extends PatternLayout {
      * @return
      */
     @Override
-    public String format(LoggingEvent event) {
+    public String toSerializable(LogEvent event) {
         Object eventMessage = event.getMessage();
         String programName =
                 getStringOrDefault(System.getenv("MXNETMODELSERVER_PROGRAM"), "MXNetModelServer");

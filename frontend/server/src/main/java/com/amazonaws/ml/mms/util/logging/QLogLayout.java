@@ -18,7 +18,9 @@ import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.config.Node;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
+import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.AbstractStringLayout;
+import org.apache.logging.log4j.message.Message;
 
 @Plugin(
         name = "QLogLayout",
@@ -86,66 +88,71 @@ public class QLogLayout extends AbstractStringLayout {
      */
     @Override
     public String toSerializable(LogEvent event) {
-        Object eventMessage = event.getMessage();
+        Message eventMessage = event.getMessage();
+        if (eventMessage == null || eventMessage.getParameters() == null) {
+            return null;
+        }
         String programName =
                 getStringOrDefault(System.getenv("MXNETMODELSERVER_PROGRAM"), "MXNetModelServer");
         String domain = getStringOrDefault(System.getenv("DOMAIN"), "Unknown");
-
         long currentTimeInSec = System.currentTimeMillis() / 1000;
+        Object[] parameters = eventMessage.getParameters();
 
-        if (eventMessage == null) {
-            return null;
-        }
-        if (eventMessage instanceof Metric) {
-            String marketPlace = System.getenv("REALM");
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Object obj : parameters) {
+            if (obj instanceof Metric) {
+                Metric metric = (Metric) obj;
+                String marketPlace = System.getenv("REALM");
 
-            StringBuilder stringBuilder = new StringBuilder();
-            Metric metric = (Metric) eventMessage;
-            stringBuilder.append("HostName=").append(metric.getHostName());
+                stringBuilder.append("HostName=").append(metric.getHostName());
 
-            if (metric.getRequestId() != null && !metric.getRequestId().isEmpty()) {
-                stringBuilder.append("\nRequestId=").append(metric.getRequestId());
-            }
+                if (metric.getRequestId() != null && !metric.getRequestId().isEmpty()) {
+                    stringBuilder.append("\nRequestId=").append(metric.getRequestId());
+                }
 
-            // Marketplace format should be : <programName>:<domain>:<realm>
-            if (marketPlace != null && !marketPlace.isEmpty()) {
+                // Marketplace format should be : <programName>:<domain>:<realm>
+                if (marketPlace != null && !marketPlace.isEmpty()) {
+                    stringBuilder
+                            .append("\nMarketplace=")
+                            .append(programName)
+                            .append(':')
+                            .append(domain)
+                            .append(':')
+                            .append(marketPlace);
+                }
+
                 stringBuilder
-                        .append("\nMarketplace=")
+                        .append("\nStartTime=")
+                        .append(
+                                getStringOrDefault(
+                                        metric.getTimestamp(), Long.toString(currentTimeInSec)));
+
+                stringBuilder
+                        .append("\nProgram=")
                         .append(programName)
-                        .append(':')
-                        .append(domain)
-                        .append(':')
-                        .append(marketPlace);
-            }
-
-            stringBuilder
-                    .append("\nStartTime=")
-                    .append(
-                            getStringOrDefault(
-                                    metric.getTimestamp(), Long.toString(currentTimeInSec)));
-
-            stringBuilder
-                    .append("\nProgram=")
-                    .append(programName)
-                    .append("\nMetrics=")
-                    .append(metric.getMetricName())
-                    .append('=')
-                    .append(metric.getValue())
-                    .append(' ')
-                    .append(metric.getUnit());
-            for (Dimension dimension : metric.getDimensions()) {
-                stringBuilder
+                        .append("\nMetrics=")
+                        .append(metric.getMetricName())
+                        .append('=')
+                        .append(metric.getValue())
                         .append(' ')
-                        .append(dimension.getName())
-                        .append('|')
-                        .append(dimension.getValue())
-                        .append(' ');
+                        .append(metric.getUnit());
+                for (Dimension dimension : metric.getDimensions()) {
+                    stringBuilder
+                            .append(' ')
+                            .append(dimension.getName())
+                            .append('|')
+                            .append(dimension.getValue())
+                            .append(' ');
+                }
+                stringBuilder.append("\nEOE\n");
             }
-            stringBuilder.append("\nEOE\n");
-
-            return stringBuilder.toString();
         }
-        return eventMessage.toString();
+        return stringBuilder.toString();
+    }
+
+    @PluginFactory
+    public static QLogLayout createLayout() {
+        return new QLogLayout();
     }
 
     private static String getStringOrDefault(String val, String defVal) {

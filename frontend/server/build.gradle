@@ -22,8 +22,10 @@ jar {
     exclude "META-INF//NOTICE*"
 }
 
-test.doFirst {
-    systemProperty "mmsConfigFile", 'src/test/resources/config.properties'
-    systemProperty "METRICS_LOCATION","build/logs"
-    systemProperty "LOG_LOCATION","build/logs"
+test {
+    doFirst {
+        systemProperty "mmsConfigFile", 'src/test/resources/config.properties'
+    }
+    environment "METRICS_LOCATION","build/logs"
+    environment "LOG_LOCATION","build/logs"
 }

@@ -22,15 +22,12 @@ import io.netty.handler.codec.http.multipart.HttpPostRequestEncoder;
 import io.netty.handler.codec.http.multipart.MemoryFileUpload;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,14 +177,5 @@ public final class Cts {
     private static void updateLog4jConfiguration() {
         System.setProperty("LOG_LOCATION", "logs");
         System.setProperty("METRICS_LOCATION", "logs");
-
-        Properties props = new Properties();
-        try (InputStream is = Cts.class.getResourceAsStream("log4j.properties")) {
-            props.load(is);
-        } catch (IOException e) {
-            System.out.println("Cannot load log4j configuration file"); // NOPMD
-        }
-
-        PropertyConfigurator.configure(props);
     }
 }

@@ -49,9 +49,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Appender;
-import org.apache.log4j.AsyncAppender;
-import org.apache.log4j.Logger;
 
 public final class ConfigManager {
     // Variables that can be configured through config.properties and Environment Variables
@@ -129,20 +126,6 @@ public final class ConfigManager {
         }
 
         resolveEnvVarVals(prop);
-        String logLocation = System.getenv("LOG_LOCATION");
-        if (logLocation != null) {
-            System.setProperty("LOG_LOCATION", logLocation);
-        } else if (System.getProperty("LOG_LOCATION") == null) {
-            System.setProperty("LOG_LOCATION", "logs");
-        }
-
-        String metricsLocation = System.getenv("METRICS_LOCATION");
-        if (metricsLocation != null) {
-            System.setProperty("METRICS_LOCATION", metricsLocation);
-        } else if (System.getProperty("METRICS_LOCATION") == null) {
-            System.setProperty("METRICS_LOCATION", "logs");
-        }
-
         String modelStore = args.getModelStore();
         if (modelStore != null) {
             prop.setProperty(MMS_MODEL_STORE, modelStore);
@@ -558,30 +541,9 @@ public final class ConfigManager {
     }
 
     private void enableAsyncLogging() {
-        enableAsyncLogging(Logger.getRootLogger());
-        enableAsyncLogging(Logger.getLogger(MODEL_METRICS_LOGGER));
-        enableAsyncLogging(Logger.getLogger(MODEL_LOGGER));
-        enableAsyncLogging(Logger.getLogger(MODEL_SERVER_METRICS_LOGGER));
-        enableAsyncLogging(Logger.getLogger("ACCESS_LOG"));
-        enableAsyncLogging(Logger.getLogger("com.amazonaws.ml.mms"));
-    }
-
-    private void enableAsyncLogging(Logger logger) {
-        AsyncAppender asyncAppender = new AsyncAppender();
-
-        @SuppressWarnings("unchecked")
-        Enumeration<Appender> en = logger.getAllAppenders();
-        while (en.hasMoreElements()) {
-            Appender appender = en.nextElement();
-            if (appender instanceof AsyncAppender) {
-                // already async
-                return;
-            }
-
-            logger.removeAppender(appender);
-            asyncAppender.addAppender(appender);
-        }
-        logger.addAppender(asyncAppender);
+        System.setProperty(
+                "log4j2.contextSelector",
+                "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector");
     }
 
     public HashMap<String, String> getBackendConfiguration() {

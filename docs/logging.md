@@ -41,7 +41,7 @@ These logs collect all the logs from Model Server and from the backend workers (
 The default configuration pertaining to mms logs are as follows:
 ```xml
         <RollingFile
-                name="ts_log"
+                name="mms_log"
                 fileName="${env:LOG_LOCATION:-logs}/ts_log.log"
                 filePattern="${env:LOG_LOCATION:-logs}/ts_log.%d{dd-MMM}.log.gz">
             <PatternLayout pattern="%d{ISO8601} [%-5p] %t %c - %m%n"/>

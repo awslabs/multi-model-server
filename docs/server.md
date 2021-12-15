@@ -131,7 +131,7 @@ There are no default required arguments to start the server
     c) Multiple models loading are also supported by specifying multiple name path pairs.
 1. **model-store**: optional, A location where models are stored by default, all models in this location are loaded, the model name is same as archive or folder name.
 1. **mms-config**: optional, provide a [configuration](configuration.md) file in config.properties format.
-1. **log-config**: optional, This parameter will override default log4j.properties, present within the server.
+1. **log-config**: optional, This parameter will override default log4j2.xml, present within the server.
 1. **start**: optional, A more descriptive way to start the server.
 1. **stop**: optional, Stop the server if it is already running.
 

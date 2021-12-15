@@ -4,9 +4,7 @@ In this document we will go through logging mechanism in Multi Model Server. We 
 metrics, as metrics are logged into a file. To further understand how to customize metrics or define custom logging layouts, refer to the [metrics document](metrics.md)
 
 # Pre-requisites
-Before getting into this tutorials, you must familiarize yourself with log4j configuration properties. Refer to this online [document](https://logging.apache.org/log4j/2.x/manual/configuration.html)
-on how to configure the log4j parameters. Similarly, familiarize yourself with the default [log4j.properties](../frontend/server/src/main/resources/log4j.properties) used by 
-Multi Model Server. 
+Before getting into this tutorials, you must familiarize yourself with log4j2 configuration. Refer to this online [document](https://logging.apache.org/log4j/2.x/manual/configuration.html) on how to configure the log4j2 parameters. Similarly, familiarize yourself with the default [log4j2.xml](../frontend/server/src/main/resources/log4j2.xml) used by Multi Model Server.
 
 # Types of logs
 Multi Model Server currently provides three types of logs.
@@ -15,16 +13,18 @@ Multi Model Server currently provides three types of logs.
 
 ## Access Logs:
 These logs collect the access pattern to Multi Model Server. The configuration pertaining to access logs are as follows,
-```properties
-log4j.logger.ACCESS_LOG = INFO, access_log
-
-
-log4j.appender.access_log = org.apache.log4j.RollingFileAppender
-log4j.appender.access_log.File = ${LOG_LOCATION}/access_log.log
-log4j.appender.access_log.MaxFileSize = 100MB
-log4j.appender.access_log.MaxBackupIndex = 5
-log4j.appender.access_log.layout = org.apache.log4j.PatternLayout
-log4j.appender.access_log.layout.ConversionPattern = %d{ISO8601} - %m%n
+```xml
+        <RollingFile
+                name="access_log"
+                fileName="${env:LOG_LOCATION:-logs}/access_log.log"
+                filePattern="${env:LOG_LOCATION:-logs}/access_log.%d{dd-MMM}.log.gz">
+            <PatternLayout pattern="%d{ISO8601} - %m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
 ```
 
 As defined in the properties file, the access logs are collected in {LOG_LOCATION}/access_log.log file. When we load the model server
@@ -39,16 +39,18 @@ These logs are useful to determine the current performance of the model-server a
 ## Model Server Logs
 These logs collect all the logs from Model Server and from the backend workers (the custom model code).
 The default configuration pertaining to mms logs are as follows:
-```properties
-log4j.logger.com.amazonaws.ml.mms = DEBUG, mms_log
-
-
-log4j.appender.mms_log = org.apache.log4j.RollingFileAppender
-log4j.appender.mms_log.File = ${LOG_LOCATION}/mms_log.log
-log4j.appender.mms_log.MaxFileSize = 100MB
-log4j.appender.mms_log.MaxBackupIndex = 5
-log4j.appender.mms_log.layout = org.apache.log4j.PatternLayout
-log4j.appender.mms_log.layout.ConversionPattern = %d{ISO8601} [%-5p] %t %c - %m%n
+```xml
+        <RollingFile
+                name="mms_log"
+                fileName="${env:LOG_LOCATION:-logs}/mms_log.log"
+                filePattern="${env:LOG_LOCATION:-logs}/mms_log.%d{dd-MMM}.log.gz">
+            <PatternLayout pattern="%d{ISO8601} [%-5p] %t %c - %m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
 ```
 
 This configuration by default dumps all the logs above `DEBUG` level. 
@@ -73,15 +75,14 @@ e...
 ```
 
 # Modifying the behavior of the logs
-In order to modify the default behavior of the logging, you could define `log4j.properties` file. There are two ways of starting
+In order to modify the default behavior of the logging, you could define `log4j2.xml` file. There are two ways of starting
 model server with custom logs
 
 ### Provide with config.properties
- Once you define custom `log4j.properties`, add this to the 
-`config.properties` file as follows
+ Once you define custom `log4j2.xml`, add this to the `config.properties` file as follows
 
 ```properties
-vmargs=-Dlog4j.configuration=file:///path/to/custom/log4j.properties
+vmargs=-Dlog4j.configurationFile=file:///path/to/custom/log4j2.xml
 ```
 Then start the model server as follows
 ```bash
@@ -91,7 +92,7 @@ $ multi-model-server --start --mms-config /path/to/config.properties
 Alternatively, you could start the model server with the following command as well
 
 ```bash
-$ multi-model-server --start --log-config /path/to/custom/log4j.properties
+$ multi-model-server --start --log-config /path/to/custom/log4j2.xml
 ```
 
 # Enable asynchronous logging

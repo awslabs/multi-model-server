@@ -20,7 +20,7 @@ User can following parameters to start MMS, those parameters will override defau
 * **--mms-config** MMS will load specified configuration file if MMS_CONFIG_FILE is not set.
 * **--model-store** This parameter will override `model_store` property in config.properties file.
 * **--models** This parameter will override `load_models' property in config.properties.
-* **--log-config** This parameter will override default log4j.properties.
+* **--log-config** This parameter will override default log4j2.xml
 * **--foreground** This parameter will run the model server in foreground. If this option is
                         disabled, the model server will run in the background.
 

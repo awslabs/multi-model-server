@@ -313,7 +313,7 @@ Notes on a couple of the parameters:
 in the range of 0 .. (num-gpu-1) in a round-robin fashion. **By default MMS uses all the available GPUs but this parameter can be configured if user want to use only few of them**.
 
 ```properties
-# vmargs=-Xmx1g -XX:MaxDirectMemorySize=512m -Dlog4j.configuration=file:///opt/ml/conf/log4j.properties
+# vmargs=-Xmx1g -XX:MaxDirectMemorySize=512m -Dlog4j.configurationFile=file:///opt/ml/conf/log4j2.xml
 # model_store=/opt/ml/model
 # load_models=ALL
 # inference_address=http://0.0.0.0:8080

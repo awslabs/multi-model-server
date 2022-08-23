@@ -609,23 +609,22 @@ public final class ConfigManager {
 
     private static int getAvailableNeuronCores() {
         try {
-            Process process =
-                    Runtime.getRuntime().exec("neuron-ls --json-output");
+            Process process = Runtime.getRuntime().exec("neuron-ls --json-output");
             int ret = process.waitFor();
             if (ret != 0) {
                 return 0;
             }
             Reader reader = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8);
-            NeuronConfig[] results  = JsonUtils.GSON.fromJson(reader, NeuronConfig[].class);
+            NeuronConfig[] results = JsonUtils.GSON.fromJson(reader, NeuronConfig[].class);
             return Arrays.stream(results).mapToInt(c -> c.numNeuronCores).sum();
         } catch (IOException | InterruptedException e) {
             return 0;
         }
     }
 
-    private static final class NeuronConfig{
-	@SerializedName("nc_count")
-	private int numNeuronCores;
+    private static final class NeuronConfig {
+        @SerializedName("nc_count")
+        int numNeuronCores;
     }
 
     public static final class Arguments {

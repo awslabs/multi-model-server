@@ -12,7 +12,7 @@
  */
 package com.amazonaws.ml.mms.util;
 
-import com.amazonaws.ml.mms.util.JsonUtils;
+import com.google.gson.annotations.SerializedName;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
@@ -607,10 +607,6 @@ public final class ConfigManager {
         }
     }
 
-    private static final class NeuronConfig{
-        int nc_count;
-    }
-
     private static int getAvailableNeuronCores() {
         try {
             Process process =
@@ -621,10 +617,15 @@ public final class ConfigManager {
             }
             Reader reader = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8);
             NeuronConfig[] results  = JsonUtils.GSON.fromJson(reader, NeuronConfig[].class);
-            return Arrays.stream(results).mapToInt(r -> r.nc_count).sum();
+            return Arrays.stream(results).mapToInt(c -> c.numNeuronCores).sum();
         } catch (IOException | InterruptedException e) {
             return 0;
         }
+    }
+
+    private static final class NeuronConfig{
+	@SerializedName("nc_count")
+	private int numNeuronCores;
     }
 
     public static final class Arguments {

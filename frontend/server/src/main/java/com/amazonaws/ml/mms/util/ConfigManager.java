@@ -12,6 +12,7 @@
  */
 package com.amazonaws.ml.mms.util;
 
+import com.amazonaws.ml.mms.util.JsonUtils;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
@@ -19,6 +20,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -67,6 +70,7 @@ public final class ConfigManager {
     private static final String MMS_NETTY_CLIENT_THREADS = "netty_client_threads";
     private static final String MMS_JOB_QUEUE_SIZE = "job_queue_size";
     private static final String MMS_NUMBER_OF_GPU = "number_of_gpu";
+    private static final String MMS_NUMBER_OF_NEURON_CORES = "number_of_neuron_cores";
     private static final String MMS_ASYNC_LOGGING = "async_logging";
     private static final String MMS_CORS_ALLOWED_ORIGIN = "cors_allowed_origin";
     private static final String MMS_CORS_ALLOWED_METHODS = "cors_allowed_methods";
@@ -142,6 +146,13 @@ public final class ConfigManager {
                         Integer.min(
                                 getAvailableGpu(),
                                 getIntProperty(MMS_NUMBER_OF_GPU, Integer.MAX_VALUE))));
+
+        prop.setProperty(
+                MMS_NUMBER_OF_NEURON_CORES,
+                String.valueOf(
+                        Integer.min(
+                                getAvailableNeuronCores(),
+                                getIntProperty(MMS_NUMBER_OF_NEURON_CORES, Integer.MAX_VALUE))));
 
         String pythonExecutable = args.getPythonExecutable();
         if (pythonExecutable != null) {
@@ -258,6 +269,10 @@ public final class ConfigManager {
         return getIntProperty(MMS_NUMBER_OF_GPU, 0);
     }
 
+    public int getNumberOfNeuronCores() {
+        return getIntProperty(MMS_NUMBER_OF_NEURON_CORES, 0);
+    }
+
     public String getMmsDefaultServiceHandler() {
         return getProperty(MMS_DEFAULT_SERVICE_HANDLER, null);
     }
@@ -282,6 +297,9 @@ public final class ConfigManager {
 
         if (workers == 0) {
             workers = getNumberOfGpu();
+        }
+        if (workers == 0) {
+            workers = getNumberOfNeuronCores();
         }
         if (workers == 0) {
             workers = Runtime.getRuntime().availableProcessors();
@@ -453,6 +471,8 @@ public final class ConfigManager {
                 + System.getProperty("java.io.tmpdir")
                 + "\nNumber of GPUs: "
                 + getNumberOfGpu()
+                + "\nNumber of Neuron Cores: "
+                + getNumberOfNeuronCores()
                 + "\nNumber of CPUs: "
                 + runtime.availableProcessors()
                 + "\nMax heap size: "
@@ -582,6 +602,26 @@ public final class ConfigManager {
                 throw new AssertionError("Unexpected nvidia-smi response.");
             }
             return list.size() - 1;
+        } catch (IOException | InterruptedException e) {
+            return 0;
+        }
+    }
+
+    private static final class NeuronConfig{
+        int nc_count;
+    }
+
+    private static int getAvailableNeuronCores() {
+        try {
+            Process process =
+                    Runtime.getRuntime().exec("neuron-ls --json-output");
+            int ret = process.waitFor();
+            if (ret != 0) {
+                return 0;
+            }
+            Reader reader = new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8);
+            NeuronConfig[] results  = JsonUtils.GSON.fromJson(reader, NeuronConfig[].class);
+            return Arrays.stream(results).mapToInt(r -> r.nc_count).sum();
         } catch (IOException | InterruptedException e) {
             return 0;
         }

@@ -172,7 +172,7 @@ Most of those properties are designed for performance tuning. Adjusting those nu
 * enable_envvars_config: Enable configuring MMS through environment variables. When this option is set to "true", all the static configurations of MMS can come through environment variables as well. default: false
 * number_of_netty_threads: number frontend netty thread, default: number of logical processors available to the JVM.
 * netty_client_threads: number of backend netty thread, default: number of logical processors available to the JVM.
-* default_workers_per_model: number of workers to create for each model that loaded at startup time, default: available GPUs in system or number of logical processors available to the JVM.
+* default_workers_per_model: number of workers to create for each model that loaded at startup time, default: available GPUs in system, available Neuron cores in system, or number of logical processors available to the JVM.
 * job_queue_size: number inference jobs that frontend will queue before backend can serve, default 100. Useful in cases where certain requests take predictably longer to complete.
 * async_logging: enable asynchronous logging for higher throughput, log output may be delayed if this is enabled, default: false.
 * default_response_timeout: Timeout, in seconds, used for model's backend workers before they are deemed unresponsive and rebooted. default: 120 seconds.

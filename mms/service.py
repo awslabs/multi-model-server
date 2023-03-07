@@ -109,7 +109,7 @@ class Service(object):
         except PredictionException as e:
             logger.error("Prediction error", exc_info=True)
             return create_predict_response(None, req_id_map, e.message, e.error_code)
-        except MemoryError as e:
+        except MemoryError:
             logger.error("System out of memory", exc_info=True)
             return create_predict_response(None, req_id_map, "Out of resources", 507)
         except Exception as e:  # pylint: disable=broad-except

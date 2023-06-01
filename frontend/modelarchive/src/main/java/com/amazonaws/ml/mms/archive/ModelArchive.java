@@ -108,8 +108,7 @@ public class ModelArchive {
             InputStream is = zip.getInputStream(manifestEntry);
             Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
 
-            JsonParser parser = new JsonParser();
-            JsonObject json = (JsonObject) parser.parse(reader);
+            JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
             JsonPrimitive version = json.getAsJsonPrimitive("specificationVersion");
             Manifest manifest;
             if (version != null && "1.0".equals(version.getAsString())) {

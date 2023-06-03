@@ -233,9 +233,12 @@ if __name__ == "__main__":
         sock_type = args.sock_type
         host = args.host
         port = args.port
-        model_req["handler"] = args.handler.encode('utf-8')
-        model_req["modelPath"] = args.model_path.encode('utf-8')
-        model_req["modelName"] = args.model_name.encode('utf-8')
+        if args.handler is not None: 
+            model_req["handler"] = args.handler.encode('utf-8')
+        if args.model_path is not None:
+            model_req["modelPath"] = args.model_path.encode('utf-8')
+        if args.model_name is not None:
+            model_req["modelName"] = args.model_name.encode('utf-8')
         worker = MXNetModelServiceWorker(sock_type, socket_name, host, port, model_req,
                                          args.preload_model, args.tmp_dir)
 

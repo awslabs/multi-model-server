@@ -141,7 +141,7 @@ public class WorkerThread implements Runnable {
             throws WorkerInitializationException, InterruptedException, FileNotFoundException {
         int responseTimeout = model.getResponseTimeout();
         while (isRunning()) {
-            req = aggregator.getRequest(backendChannel.id().asLongText(), state);
+            req = aggregator.getRequest(state);
             backendChannel.writeAndFlush(req).sync();
             long begin = System.currentTimeMillis();
             // TODO: Change this to configurable param
@@ -208,6 +208,7 @@ public class WorkerThread implements Runnable {
         try {
             if (!serverThread) {
                 connect();
+                aggregator.startBatchHandlerService(backendChannel.id().asLongText());
                 runWorker();
             } else {
                 // TODO: Move this logic to a seperate ServerThread class
@@ -406,6 +407,7 @@ public class WorkerThread implements Runnable {
             aggregator.sendError(
                     null, "Worker scaled down.", HttpResponseStatus.INTERNAL_SERVER_ERROR);
         }
+        aggregator.stopBatchHandlerService();
     }
 
     public boolean isServerThread() {

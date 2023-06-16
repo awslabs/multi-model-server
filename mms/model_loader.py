@@ -144,8 +144,9 @@ class MmsModelLoader(ModelLoader):
                 try:
                     model_service.initialize(service.context)
                     # pylint: disable=broad-except
-                except Exception:
+                except Exception as e:
                     # noinspection PyBroadException
+                    logging.exception(e)
                     try:
                         sys.exc_clear()
                         # pylint: disable=broad-except

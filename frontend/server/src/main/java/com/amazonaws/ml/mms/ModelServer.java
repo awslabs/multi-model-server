@@ -216,7 +216,7 @@ public class ModelServer {
                                 null,
                                 1,
                                 100,
-                                configManager.getDefaultResponseTimeout(),
+                                configManager.getDefaultResponseTimeoutSeconds(),
                                 defaultModelName,
                                 configManager.getPreloadModel());
                 modelManager.updateModel(archive.getModelName(), workers, workers);

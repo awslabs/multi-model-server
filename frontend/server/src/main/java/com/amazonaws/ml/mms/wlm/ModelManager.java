@@ -78,7 +78,7 @@ public final class ModelManager {
                 null,
                 1,
                 100,
-                configManager.getDefaultResponseTimeout(),
+                configManager.getDefaultResponseTimeoutSeconds(),
                 defaultModelName,
                 preloadModel);
     }
@@ -90,7 +90,7 @@ public final class ModelManager {
             String handler,
             int batchSize,
             int maxBatchDelay,
-            int responseTimeout,
+            int responseTimeoutSeconds,
             String defaultModelName,
             String preloadModel)
             throws ModelException, IOException, InterruptedException, ExecutionException,
@@ -121,7 +121,7 @@ public final class ModelManager {
         Model model = new Model(archive, configManager.getJobQueueSize(), preloadModel);
         model.setBatchSize(batchSize);
         model.setMaxBatchDelay(maxBatchDelay);
-        model.setResponseTimeout(responseTimeout);
+        model.setResponseTimeoutSeconds(responseTimeoutSeconds);
         Model existingModel = models.putIfAbsent(modelName, model);
         if (existingModel != null) {
             // model already exists

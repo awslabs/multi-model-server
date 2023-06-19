@@ -139,13 +139,13 @@ public class WorkerThread implements Runnable {
 
     private void runWorker()
             throws WorkerInitializationException, InterruptedException, FileNotFoundException {
-        int responseTimeout = model.getResponseTimeout();
+        int responseTimeoutSeconds = model.getResponseTimeoutSeconds();
         while (isRunning()) {
             req = aggregator.getRequest(backendChannel.id().asLongText(), state);
             backendChannel.writeAndFlush(req).sync();
             long begin = System.currentTimeMillis();
             // TODO: Change this to configurable param
-            ModelWorkerResponse reply = replies.poll(responseTimeout, TimeUnit.MINUTES);
+            ModelWorkerResponse reply = replies.poll(responseTimeoutSeconds, TimeUnit.SECONDS);
             long duration = System.currentTimeMillis() - begin;
             logger.info("Backend response time: {}", duration);
 

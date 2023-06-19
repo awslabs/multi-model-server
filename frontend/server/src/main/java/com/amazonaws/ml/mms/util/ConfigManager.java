@@ -61,7 +61,11 @@ public final class ConfigManager {
     private static final String MMS_LOAD_MODELS = "load_models";
     private static final String MMS_BLACKLIST_ENV_VARS = "blacklist_env_vars";
     private static final String MMS_DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
+
     private static final String MMS_DEFAULT_RESPONSE_TIMEOUT = "default_response_timeout";
+    private static final String MMS_DEFAULT_RESPONSE_TIMEOUT_SECONDS =
+            "default_response_timeout_seconds";
+
     private static final String MMS_UNREGISTER_MODEL_TIMEOUT = "unregister_model_timeout";
     private static final String MMS_NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
     private static final String MMS_NETTY_CLIENT_THREADS = "netty_client_threads";
@@ -519,8 +523,20 @@ public final class ConfigManager {
         return Integer.parseInt(value);
     }
 
-    public int getDefaultResponseTimeout() {
-        return Integer.parseInt(prop.getProperty(MMS_DEFAULT_RESPONSE_TIMEOUT, "120"));
+    public int getDefaultResponseTimeoutSeconds() {
+        // TODO The MMS_DEFAULT_RESPONSE_TIMEOUT variable was never intended to represent minutes,
+        // but due to a bug that's what it did. We'd like to remove this and match the documented
+        // behavior, but for now we're being cautious about backward compatibility.
+
+        // Check both properties, prefer seconds if provided, convert to seconds for return value
+        int timeoutSeconds =
+                Integer.parseInt(prop.getProperty(MMS_DEFAULT_RESPONSE_TIMEOUT_SECONDS, "-1"));
+        if (timeoutSeconds < 0) {
+            int timeoutMinutes =
+                    Integer.parseInt(prop.getProperty(MMS_DEFAULT_RESPONSE_TIMEOUT, "120"));
+            timeoutSeconds = 60 * timeoutMinutes;
+        }
+        return timeoutSeconds;
     }
 
     public int getUnregisterModelTimeout() {

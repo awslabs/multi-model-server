@@ -20,25 +20,27 @@ import logging
 import os
 import sys
 import shutil
+import pathlib
 
 import boto3
-import pathlib
-from agents import configuration
 
+from agents import configuration
 from utils import run_process
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
 S3_BUCKET = configuration.get('suite', 's3_bucket')
+S3_COMPARE_DIR = configuration.get('suite', 'comparison_artifacts_dir')
 
 
 class Storage():
     """Class to store and retrieve artifacts"""
 
-    def __init__(self, path, env_name):
+    def __init__(self, path, env_name, compare_with):
         self.artifacts_dir = path
         self.current_run_name = os.path.basename(path)
         self.env_name = env_name
+        self.compare_with = compare_with
 
     def get_dir_to_compare(self):
         """get the artifacts dir to compare to"""
@@ -47,7 +49,7 @@ class Storage():
         """Store the results"""
 
     @staticmethod
-    def get_latest(names, env_name, exclude_name):
+    def get_latest(names, env_name, exclude_name, compare_with):
         """
         Get latest directory for same env_name name given a list of them.
         :param names: list of folder names in the format env_name___commitid__timestamp
@@ -59,7 +61,8 @@ class Storage():
         latest_run = ''
         for run_name in names:
             run_name_list = run_name.split('__')
-            if env_name == run_name_list[0] and run_name != exclude_name:
+            if env_name == run_name_list[0] and compare_with == run_name_list[1] \
+                    and run_name != exclude_name:
                 if int(run_name_list[2]) > max_ts:
                     max_ts = int(run_name_list[2])
                     latest_run = run_name
@@ -76,7 +79,7 @@ class LocalStorage(Storage):
         """Get latest run directory name to be compared with"""
         parent_dir = pathlib.Path(self.artifacts_dir).parent
         names = [di for di in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, di))]
-        latest_run = self.get_latest(names, self.env_name, self.current_run_name)
+        latest_run = self.get_latest(names, self.env_name, self.current_run_name, self.compare_with)
         return os.path.join(parent_dir, latest_run), latest_run
 
 
@@ -90,22 +93,26 @@ class S3Storage(Storage):
         comp_data_path = os.path.join(self.artifacts_dir, "comp_data")
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(S3_BUCKET)
+        prefix = S3_COMPARE_DIR+"/"
         result = bucket.meta.client.list_objects(Bucket=bucket.name,
+                                                 Prefix=prefix,
                                                  Delimiter='/')
         run_names = []
-        for o in result.get('CommonPrefixes'):
-            run_names.append(o.get('Prefix')[:-1])
+        if result.get('CommonPrefixes') is not None:
+            for o in result.get('CommonPrefixes'):
+                prefix_list = o.get('Prefix').split('/')
+                run_names.append(prefix_list[len(prefix_list) - 2])
 
-        latest_run = self.get_latest(run_names, self.env_name, self.current_run_name)
+        latest_run = self.get_latest(run_names, self.env_name, self.current_run_name, self.compare_with)
         if not latest_run:
-            logger.info("No run found for env_id %s", self.env_name)
+            logger.info("No run artifacts folder found for env_id %s", self.env_name)
             return '', ''
 
         if not os.path.exists(comp_data_path):
             os.makedirs(comp_data_path)
 
         tgt_path = os.path.join(comp_data_path, latest_run)
-        run_process("aws s3 cp  s3://{}/{} {} --recursive".format(bucket.name, latest_run, tgt_path))
+        run_process("aws s3 cp  s3://{}/{}/{} {} --recursive".format(bucket.name, S3_COMPARE_DIR, latest_run, tgt_path))
 
         return tgt_path, latest_run
 
@@ -115,5 +122,5 @@ class S3Storage(Storage):
         if os.path.exists(comp_data_path):
             shutil.rmtree(comp_data_path)
 
-        run_process("aws s3 cp {} s3://{}/{}  --recursive".format(self.artifacts_dir, S3_BUCKET,
-                                                                  self.current_run_name))
+        run_process("aws s3 cp {} s3://{}/{}/{}  --recursive".format(self.artifacts_dir, S3_BUCKET, S3_COMPARE_DIR,
+                                                                     self.current_run_name))

@@ -37,5 +37,9 @@ class Timer(object):
     def __exit__(self, type, value, traceback):
         logger.info("%s: %ss", self.description, self.diff())
 
+        # Return False needed so that __exit__ method do no ignore the exception
+        # otherwise exception are not reported
+        return False
+
     def diff(self):
         return int(time.time()) - self.start

@@ -16,6 +16,7 @@ Following _jobs_ are executed under each workflow -
 3. **python-tests** : Executes pytests from _mms/tests/unit_tests/_
 4. **benchmark** : Executes latency benchmark using resnet-18 model
 5. (NEW!) **api-tests** : Executes newman test suite for API testing
+6. (NEW!) **performance-regression** : Executes performance regression suite
 
 Following _executors_ are available for job execution -
 1. py27

@@ -40,12 +40,7 @@ commands:
       - run:
           name: Start MMS, Execute << parameters.collection >> API Tests, Stop MMS
           command: .circleci/scripts/linux_test_api.sh << parameters.collection >>
-      - store_artifacts:
-          name: Store server logs from << parameters.collection >> API tests
-          path: mms_<< parameters.collection >>.log
-      - store_artifacts:
-          name: Store << parameters.collection >> API test results
-          path: test/<< parameters.collection >>-api-report.html
+          when: always
 
 
 jobs:
@@ -57,7 +52,7 @@ jobs:
       steps:
         - checkout
         - run:
-            name: Build frontend
+            name: Build MMS
             command: .circleci/scripts/linux_build.sh
         - store_artifacts:
             name: Store gradle testng results
@@ -75,11 +70,12 @@ jobs:
       steps:
         - attach-mms-workspace
         - run:
-            name: Execute python unit tests
+            name: Execute python lint and unit tests
             command: .circleci/scripts/linux_test_python.sh
         - store_artifacts:
             name: Store python Test results
-            path: htmlcov
+            path: result_units
+            destination: units
 
     api-tests:
       parameters:
@@ -95,6 +91,9 @@ jobs:
             collection: inference
         - exeucute-api-tests:
             collection: https
+        - store_artifacts:
+            name: Store server logs and test results
+            path: tests/api/artifacts/
 
     benchmark:
       parameters:
@@ -109,11 +108,31 @@ jobs:
             command: .circleci/scripts/linux_test_benchmark.sh
         - store_artifacts:
             name: Store server logs from benchmark tests
-            path: mms.log
+            path: logs/
         - store_artifacts:
             name: Store Benchmark Latency resnet-18 results
-            path: /tmp/MMSBenchmark/out/latency/resnet-18/report/
-            destination: benchmark-latency-resnet-18
+            path: /tmp/MMSBenchmark
+
+    performance-regression:
+      parameters:
+        executor:
+          type: executor
+      executor: << parameters.executor >>
+      steps:
+        - attach-mms-workspace
+        - install-mms-server
+        - run:
+            name: Start MMS, Execute performance regression testcases, Stop MMS
+            command: .circleci/scripts/linux_test_perf_regression.sh
+        - store_artifacts:
+            name: Store server logs
+            path: tests/performance/logs/
+        - store_artifacts:
+            name: Store artifacts from performance regression run
+            path: tests/performance/run_artifacts/
+        - store_test_results:
+            name: Store performance regression test results for CircleCI
+            path: tests/performance/run_artifacts/report/
 
     modelarchiver:
       parameters:
@@ -123,11 +142,11 @@ jobs:
       steps:
         - checkout
         - run:
-            name: Execute lint, unit and integration tests
+            name: Execute python lint, unit and integration tests
             command: .circleci/scripts/linux_test_modelarchiver.sh
         - store_artifacts:
             name: Store unit tests results from model archiver tests
-            path: model-archiver/results_units
+            path: model-archiver/result_units
             destination: units
 
 
@@ -184,6 +203,11 @@ workflows:
       - *build
       - benchmark:
           name: benchmark-<< matrix.executor >>
+          requires:
+            - build-<< matrix.executor >>
+          matrix: *matrix
+      - performance-regression:
+          name: performance-regression-<< matrix.executor >>
           requires:
             - build-<< matrix.executor >>
           matrix: *matrix

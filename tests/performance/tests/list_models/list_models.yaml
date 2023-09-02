@@ -16,12 +16,14 @@ modules:
 services:
   - module: shellexec
     prepare:
+      - "ps aux | grep '[c]om.amazonaws.ml.mms.ModelServer' | awk '{print $2}' | xargs kill -9"
       - "multi-model-server --start > /dev/null 2>&1"
       - "sleep 20s"
       - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/squeezenet_v1.1.mar"
       - "curl -s -X POST http://localhost:8081/models?url=https://s3.amazonaws.com/model-server/model_archive_1.0/shufflenet.mar"
     post-process:
       - "multi-model-server --stop > /dev/null 2>&1"
+      - "sleep 10"
   - module: server_local_monitoring
     ServerLocalClient:
       - interval: 1s

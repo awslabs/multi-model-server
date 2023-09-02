@@ -1,25 +1,20 @@
+
 ---
 settings:
   env:
-    API_LABEL : RegisterModel
+    API_LABEL : Inference
     API_SUCCESS : 80%
-    API_AVG_RT : 15s
-
-    SCL_UP_SUCC: 80%
-    UNREG_SUCC: 80%
-    SCL_UP_RT: 1.5s
-    UNREG_RT: 18ms
+    API_AVG_RT : 140ms
 
     TOTAL_WORKERS: 1
-    TOTAL_WORKERS_MEM: 100000000
-    TOTAL_WORKERS_FDS: 200
+    TOTAL_WORKERS_MEM: 300000000
+    TOTAL_WORKERS_FDS: 150
 
+    TOTAL_MEM : 1000000000
+    TOTAL_PROCS : 3
+    TOTAL_FDS : 150
 
-    TOTAL_MEM : 2000000000
-    TOTAL_PROCS : 2
-    TOTAL_FDS : 200
-
-    FRNTEND_MEM: 100000000
+    FRNTEND_MEM: 600000000
 
     TOTAL_ORPHANS : 0
     TOTAL_ZOMBIES : 0
@@ -36,20 +31,18 @@ settings:
     TOTAL_ZOMBIES_PREV_DIFF: 0
 
     TOTAL_WORKERS_RUN_DIFF: 0
-    TOTAL_WORKERS_MEM_RUN_DIFF: 200
-    TOTAL_WORKERS_FDS_RUN_DIFF: 200
-    TOTAL_MEM_RUN_DIFF: 200
-    TOTAL_PROCS_RUN_DIFF: 150
-    TOTAL_FDS_RUN_DIFF: 200
-    FRNTEND_MEM_RUN_DIFF: 200
+    TOTAL_WORKERS_MEM_RUN_DIFF: 30
+    TOTAL_WORKERS_FDS_RUN_DIFF: 30
+    TOTAL_MEM_RUN_DIFF: 60
+    TOTAL_PROCS_RUN_DIFF: 30
+    TOTAL_FDS_RUN_DIFF: 30
+    FRNTEND_MEM_RUN_DIFF: 90
     TOTAL_ORPHANS_RUN_DIFF: 0
     TOTAL_ZOMBIES_RUN_DIFF: 0
 
-
-    CONCURRENCY : 1
+    CONCURRENCY : 10
     RAMP-UP : 1s
-    ITERATIONS : 360 #approximately runs for 5 mins
-    SCRIPT : register_unregister_multiple.jmx
+    HOLD-FOR : 300s
 
     STOP :  ''    #possible values true, false. Bug in bzt so for false use ''
     STOP_ALIAS: continue  #possible values continue, stop

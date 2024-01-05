@@ -51,8 +51,8 @@ import org.slf4j.LoggerFactory;
 public class WorkerThread implements Runnable {
 
     static final Logger logger = LoggerFactory.getLogger(WorkerThread.class);
-    private static final org.apache.log4j.Logger loggerMmsMetrics =
-            org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_SERVER_METRICS_LOGGER);
+    private static final Logger loggerMmsMetrics =
+            LoggerFactory.getLogger(ConfigManager.MODEL_SERVER_METRICS_LOGGER);
 
     private Metric workerLoadTime;
 
@@ -139,13 +139,13 @@ public class WorkerThread implements Runnable {
 
     private void runWorker()
             throws WorkerInitializationException, InterruptedException, FileNotFoundException {
-        int responseTimeout = model.getResponseTimeout();
+        int responseTimeoutSeconds = model.getResponseTimeoutSeconds();
         while (isRunning()) {
             req = aggregator.getRequest(backendChannel.id().asLongText(), state);
             backendChannel.writeAndFlush(req).sync();
             long begin = System.currentTimeMillis();
             // TODO: Change this to configurable param
-            ModelWorkerResponse reply = replies.poll(responseTimeout, TimeUnit.MINUTES);
+            ModelWorkerResponse reply = replies.poll(responseTimeoutSeconds, TimeUnit.SECONDS);
             long duration = System.currentTimeMillis() - begin;
             logger.info("Backend response time: {}", duration);
 
@@ -432,7 +432,7 @@ public class WorkerThread implements Runnable {
             workerLoadTime.setValue(String.valueOf(timeTaken));
             workerLoadTime.setTimestamp(
                     String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
-            loggerMmsMetrics.info(workerLoadTime);
+            loggerMmsMetrics.info("{}", workerLoadTime);
         }
     }
 

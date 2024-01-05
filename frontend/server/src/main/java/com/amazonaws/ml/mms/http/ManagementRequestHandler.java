@@ -188,13 +188,13 @@ public class ManagementRequestHandler extends HttpRequestHandlerChain {
         int maxBatchDelay = registerModelRequest.getMaxBatchDelay();
         int initialWorkers = registerModelRequest.getInitialWorkers();
         boolean synchronous = registerModelRequest.isSynchronous();
-        int responseTimeout = registerModelRequest.getResponseTimeout();
+        int responseTimeoutSeconds = registerModelRequest.getResponseTimeoutSeconds();
         String preloadModel = registerModelRequest.getPreloadModel();
         if (preloadModel == null) {
             preloadModel = ConfigManager.getInstance().getPreloadModel();
         }
-        if (responseTimeout == -1) {
-            responseTimeout = ConfigManager.getInstance().getDefaultResponseTimeout();
+        if (responseTimeoutSeconds == -1) {
+            responseTimeoutSeconds = ConfigManager.getInstance().getDefaultResponseTimeoutSeconds();
         }
         Manifest.RuntimeType runtimeType = null;
         if (runtime != null) {
@@ -217,7 +217,7 @@ public class ManagementRequestHandler extends HttpRequestHandlerChain {
                             handler,
                             batchSize,
                             maxBatchDelay,
-                            responseTimeout,
+                            responseTimeoutSeconds,
                             null,
                             preloadModel);
         } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {

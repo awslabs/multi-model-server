@@ -133,6 +133,7 @@ class MXNetModelServiceWorker(object):
         :param cl_socket:
         :return:
         """
+        logging.basicConfig(stream=sys.stdout, format="%(message)s", level=logging.INFO)
         cl_socket.setblocking(True)
         while True:
             cmd, msg = retrieve_msg(cl_socket)

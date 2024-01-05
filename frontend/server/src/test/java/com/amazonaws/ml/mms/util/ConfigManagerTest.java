@@ -90,7 +90,7 @@ public class ConfigManagerTest {
         ConfigManager configManager = ConfigManager.getInstance();
         configManager.setProperty("keystore", "src/test/resources/keystore.p12");
         Assert.assertEquals("true", configManager.getEnableEnvVarsConfig());
-        Assert.assertEquals(130, configManager.getDefaultResponseTimeout());
+        Assert.assertEquals(60 * 130, configManager.getDefaultResponseTimeoutSeconds());
 
         Dimension dimension;
         List<Metric> metrics = new ArrayList<>();
@@ -98,13 +98,12 @@ public class ConfigManagerTest {
 
         metrics.add(createMetric("TestMetric1", "12345"));
         metrics.add(createMetric("TestMetric2", "23478"));
-        org.apache.log4j.Logger logger =
-                org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_SERVER_METRICS_LOGGER);
-        logger.debug(metrics);
+        Logger logger = LoggerFactory.getLogger(ConfigManager.MODEL_SERVER_METRICS_LOGGER);
+        logger.debug("{}", metrics);
         Assert.assertTrue(new File("build/logs/mms_metrics.log").exists());
 
-        logger = org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
-        logger.debug(metrics);
+        logger = LoggerFactory.getLogger(ConfigManager.MODEL_METRICS_LOGGER);
+        logger.debug("{}", metrics);
         Assert.assertTrue(new File("build/logs/model_metrics.log").exists());
 
         Logger modelLogger = LoggerFactory.getLogger(ConfigManager.MODEL_LOGGER);
@@ -125,6 +124,20 @@ public class ConfigManagerTest {
         ConfigManager.init(args);
         ConfigManager configManager = ConfigManager.getInstance();
         Assert.assertEquals("false", configManager.getEnableEnvVarsConfig());
-        Assert.assertEquals(120, configManager.getDefaultResponseTimeout());
+        Assert.assertEquals(60 * 120, configManager.getDefaultResponseTimeoutSeconds());
+    }
+
+    @Test
+    public void testResponseTimeoutSeconds()
+            throws IOException, GeneralSecurityException, IllegalAccessException,
+                    NoSuchFieldException, ClassNotFoundException {
+        System.setProperty("mmsConfigFile", "src/test/resources/config.properties");
+        modifyEnv("MMS_DEFAULT_RESPONSE_TIMEOUT_SECONDS", "130");
+        ConfigManager.Arguments args = new ConfigManager.Arguments();
+        args.setModels(new String[] {"noop_v0.1"});
+        ConfigManager.init(args);
+        ConfigManager configManager = ConfigManager.getInstance();
+        Assert.assertEquals("true", configManager.getEnableEnvVarsConfig());
+        Assert.assertEquals(130, configManager.getDefaultResponseTimeoutSeconds());
     }
 }

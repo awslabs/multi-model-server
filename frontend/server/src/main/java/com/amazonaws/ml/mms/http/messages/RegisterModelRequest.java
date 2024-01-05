@@ -41,7 +41,7 @@ public class RegisterModelRequest {
     private boolean synchronous;
 
     @SerializedName("response_timeout")
-    private int responseTimeout;
+    private int responseTimeoutSeconds;
 
     @SerializedName("url")
     private String modelUrl;
@@ -61,7 +61,15 @@ public class RegisterModelRequest {
                         "initial_workers",
                         ConfigManager.getInstance().getConfiguredDefaultWorkersPerModel());
         synchronous = Boolean.parseBoolean(NettyUtils.getParameter(decoder, "synchronous", "true"));
-        responseTimeout = NettyUtils.getIntParameter(decoder, "response_timeout", -1);
+
+        // TODO Fix this so it matches the documentation, where timeouts are specified in seconds.
+        // For now, we're being extra careful about backwards compatibility.
+        // So, assume parameter is in minutes, and convert to seconds internally.
+        responseTimeoutSeconds = 60 * NettyUtils.getIntParameter(decoder, "response_timeout", -1);
+        if (responseTimeoutSeconds < 0) {
+            responseTimeoutSeconds = -1;
+        }
+
         modelUrl = NettyUtils.getParameter(decoder, "url", null);
         preloadModel = NettyUtils.getParameter(decoder, "preload_model", null);
     }
@@ -71,8 +79,8 @@ public class RegisterModelRequest {
         maxBatchDelay = 100;
         synchronous = true;
         initialWorkers = ConfigManager.getInstance().getConfiguredDefaultWorkersPerModel();
-        responseTimeout = -1;
-        preloadModel = "false";
+        responseTimeoutSeconds = -1;
+        preloadModel = null;
     }
 
     public String getModelName() {
@@ -103,8 +111,8 @@ public class RegisterModelRequest {
         return synchronous;
     }
 
-    public Integer getResponseTimeout() {
-        return responseTimeout;
+    public Integer getResponseTimeoutSeconds() {
+        return responseTimeoutSeconds;
     }
 
     public String getModelUrl() {

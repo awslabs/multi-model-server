@@ -49,9 +49,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Appender;
-import org.apache.log4j.AsyncAppender;
-import org.apache.log4j.Logger;
 
 public final class ConfigManager {
     // Variables that can be configured through config.properties and Environment Variables
@@ -64,7 +61,11 @@ public final class ConfigManager {
     private static final String MMS_LOAD_MODELS = "load_models";
     private static final String MMS_BLACKLIST_ENV_VARS = "blacklist_env_vars";
     private static final String MMS_DEFAULT_WORKERS_PER_MODEL = "default_workers_per_model";
+
     private static final String MMS_DEFAULT_RESPONSE_TIMEOUT = "default_response_timeout";
+    private static final String MMS_DEFAULT_RESPONSE_TIMEOUT_SECONDS =
+            "default_response_timeout_seconds";
+
     private static final String MMS_UNREGISTER_MODEL_TIMEOUT = "unregister_model_timeout";
     private static final String MMS_NUMBER_OF_NETTY_THREADS = "number_of_netty_threads";
     private static final String MMS_NETTY_CLIENT_THREADS = "netty_client_threads";
@@ -129,20 +130,6 @@ public final class ConfigManager {
         }
 
         resolveEnvVarVals(prop);
-        String logLocation = System.getenv("LOG_LOCATION");
-        if (logLocation != null) {
-            System.setProperty("LOG_LOCATION", logLocation);
-        } else if (System.getProperty("LOG_LOCATION") == null) {
-            System.setProperty("LOG_LOCATION", "logs");
-        }
-
-        String metricsLocation = System.getenv("METRICS_LOCATION");
-        if (metricsLocation != null) {
-            System.setProperty("METRICS_LOCATION", metricsLocation);
-        } else if (System.getProperty("METRICS_LOCATION") == null) {
-            System.setProperty("METRICS_LOCATION", "logs");
-        }
-
         String modelStore = args.getModelStore();
         if (modelStore != null) {
             prop.setProperty(MMS_MODEL_STORE, modelStore);
@@ -536,8 +523,20 @@ public final class ConfigManager {
         return Integer.parseInt(value);
     }
 
-    public int getDefaultResponseTimeout() {
-        return Integer.parseInt(prop.getProperty(MMS_DEFAULT_RESPONSE_TIMEOUT, "120"));
+    public int getDefaultResponseTimeoutSeconds() {
+        // TODO The MMS_DEFAULT_RESPONSE_TIMEOUT variable was never intended to represent minutes,
+        // but due to a bug that's what it did. We'd like to remove this and match the documented
+        // behavior, but for now we're being cautious about backward compatibility.
+
+        // Check both properties, prefer seconds if provided, convert to seconds for return value
+        int timeoutSeconds =
+                Integer.parseInt(prop.getProperty(MMS_DEFAULT_RESPONSE_TIMEOUT_SECONDS, "-1"));
+        if (timeoutSeconds < 0) {
+            int timeoutMinutes =
+                    Integer.parseInt(prop.getProperty(MMS_DEFAULT_RESPONSE_TIMEOUT, "120"));
+            timeoutSeconds = 60 * timeoutMinutes;
+        }
+        return timeoutSeconds;
     }
 
     public int getUnregisterModelTimeout() {
@@ -558,30 +557,9 @@ public final class ConfigManager {
     }
 
     private void enableAsyncLogging() {
-        enableAsyncLogging(Logger.getRootLogger());
-        enableAsyncLogging(Logger.getLogger(MODEL_METRICS_LOGGER));
-        enableAsyncLogging(Logger.getLogger(MODEL_LOGGER));
-        enableAsyncLogging(Logger.getLogger(MODEL_SERVER_METRICS_LOGGER));
-        enableAsyncLogging(Logger.getLogger("ACCESS_LOG"));
-        enableAsyncLogging(Logger.getLogger("com.amazonaws.ml.mms"));
-    }
-
-    private void enableAsyncLogging(Logger logger) {
-        AsyncAppender asyncAppender = new AsyncAppender();
-
-        @SuppressWarnings("unchecked")
-        Enumeration<Appender> en = logger.getAllAppenders();
-        while (en.hasMoreElements()) {
-            Appender appender = en.nextElement();
-            if (appender instanceof AsyncAppender) {
-                // already async
-                return;
-            }
-
-            logger.removeAppender(appender);
-            asyncAppender.addAppender(appender);
-        }
-        logger.addAppender(asyncAppender);
+        System.setProperty(
+                "log4j2.contextSelector",
+                "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector");
     }
 
     public HashMap<String, String> getBackendConfiguration() {

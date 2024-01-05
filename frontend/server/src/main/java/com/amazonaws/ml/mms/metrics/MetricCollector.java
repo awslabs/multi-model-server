@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
 public class MetricCollector implements Runnable {
 
     static final Logger logger = LoggerFactory.getLogger(MetricCollector.class);
-    private static final org.apache.log4j.Logger loggerMetrics =
-            org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_SERVER_METRICS_LOGGER);
+    private static final Logger loggerMetrics =
+            LoggerFactory.getLogger(ConfigManager.MODEL_SERVER_METRICS_LOGGER);
     private ConfigManager configManager;
 
     public MetricCollector(ConfigManager configManager) {
@@ -106,7 +106,7 @@ public class MetricCollector implements Runnable {
                     if (metric == null) {
                         logger.warn("Parse metrics failed: " + line);
                     } else {
-                        loggerMetrics.info(metric);
+                        loggerMetrics.info("{}", metric);
                         metricsSystem.add(metric);
                     }
                 }

@@ -39,7 +39,7 @@ public class Model {
     private String preloadModel;
     private AtomicInteger port; // Port on which the model server is running
     private ReentrantLock lock;
-    private int responseTimeout;
+    private int responseTimeoutSeconds;
     private WorkerThread serverThread;
     // Total number of subsequent inference request failures
     private AtomicInteger failedInfReqs;
@@ -198,12 +198,12 @@ public class Model {
         failedInfReqs.set(0);
     }
 
-    public int getResponseTimeout() {
-        return ConfigManager.getInstance().isDebug() ? Integer.MAX_VALUE : responseTimeout;
+    public int getResponseTimeoutSeconds() {
+        return ConfigManager.getInstance().isDebug() ? Integer.MAX_VALUE : responseTimeoutSeconds;
     }
 
-    public void setResponseTimeout(int responseTimeout) {
-        this.responseTimeout = responseTimeout;
+    public void setResponseTimeoutSeconds(int responseTimeoutSeconds) {
+        this.responseTimeoutSeconds = responseTimeoutSeconds;
     }
 
     public WorkerThread getServerThread() {

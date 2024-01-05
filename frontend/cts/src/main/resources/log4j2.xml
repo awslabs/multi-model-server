@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{ISO8601} [%-5p] %t %c - %m%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Logger name="com.amazonaws.ml.mms.cts" level="info"/>
+        <Logger name="com.amazonaws.ml.mms" level="warn"/>
+        <Logger name="io.netty" level="error"/>
+        <Logger name="ACCESS_LOG" level="off"/>
+        <Logger name="MODEL_LOG" level="off"/>
+        <Logger name="MODEL_METRICS" level="off"/>
+        <Logger name="org.apache" level="off"/>
+        <Logger name="MMS_METRICS" level="off"/>
+        <Root level="info">
+            <AppenderRef ref="STDOUT"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -147,7 +147,7 @@ public class WorkLoadManager {
         Process workerProcess = lifecycle.getProcess();
         if (workerProcess.isAlive()) {
             boolean workerDestroyed = false;
-            workerProcess.destroyForcibly();
+            workerProcess.destroy(); // sends SIGTERM to workerProcess
             try {
                 workerDestroyed =
                         workerProcess.waitFor(

@@ -94,7 +94,8 @@ public abstract class HttpRequestHandlerChain {
                     Long start = System.currentTimeMillis();
                     FullHttpResponse rsp =
                             new DefaultFullHttpResponse(
-                                    HttpVersion.HTTP_1_1, HttpResponseStatus.OK,
+                                    HttpVersion.HTTP_1_1,
+                                    HttpResponseStatus.OK,
                                     Unpooled.directBuffer(),
                                     DefaultHttpHeadersFactory.headersFactory(),
                                     DefaultHttpHeadersFactory.trailersFactory());

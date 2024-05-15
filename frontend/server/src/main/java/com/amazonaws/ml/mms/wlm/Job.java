@@ -85,10 +85,13 @@ public class Job {
                 (statusPhrase == null)
                         ? HttpResponseStatus.valueOf(statusCode)
                         : HttpResponseStatus.valueOf(statusCode, statusPhrase);
-        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status,
-                Unpooled.directBuffer(),
-                DefaultHttpHeadersFactory.headersFactory(),
-                DefaultHttpHeadersFactory.trailersFactory());
+        FullHttpResponse resp =
+                new DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        status,
+                        Unpooled.directBuffer(),
+                        DefaultHttpHeadersFactory.headersFactory(),
+                        DefaultHttpHeadersFactory.trailersFactory());
 
         if (contentType != null && contentType.length() > 0) {
             resp.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);

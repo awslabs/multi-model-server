@@ -7,6 +7,7 @@ import com.amazonaws.ml.mms.servingsdk.impl.ModelServerRequest;
 import com.amazonaws.ml.mms.servingsdk.impl.ModelServerResponse;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.wlm.ModelManager;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -92,7 +93,7 @@ public abstract class HttpRequestHandlerChain {
                     Long start = System.currentTimeMillis();
                     FullHttpResponse rsp =
                             new DefaultFullHttpResponse(
-                                    HttpVersion.HTTP_1_1, HttpResponseStatus.OK, false);
+                                    HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.EMPTY_BUFFER);
                     try {
                         run(endpoint, req, rsp, decoder, req.method().toString());
                         NettyUtils.sendHttpResponse(ctx, rsp, true);

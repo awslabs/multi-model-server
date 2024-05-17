@@ -1033,6 +1033,7 @@ public class ModelServerTest {
         channel.closeFuture().sync();
 
         ErrorResponse resp = JsonUtils.GSON.fromJson(result, ErrorResponse.class);
+        System.out.print("testUnregisterModelTimeout " + resp.getCode());
         Assert.assertEquals(resp.getCode(), HttpResponseStatus.REQUEST_TIMEOUT.code());
         Assert.assertEquals(resp.getMessage(), "Timed out while cleaning resources: noop_v0.1");
 

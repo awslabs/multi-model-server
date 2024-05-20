@@ -24,6 +24,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpHeadersFactory;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
@@ -117,7 +118,13 @@ public final class NettyUtils {
 
     public static void sendJsonResponse(
             ChannelHandlerContext ctx, String json, HttpResponseStatus status) {
-        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, false);
+        FullHttpResponse resp =
+                new DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        status,
+                        Unpooled.directBuffer(),
+                        DefaultHttpHeadersFactory.headersFactory(),
+                        DefaultHttpHeadersFactory.trailersFactory());
         resp.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
         ByteBuf content = resp.content();
         content.writeCharSequence(json, CharsetUtil.UTF_8);

@@ -16,8 +16,10 @@ import com.amazonaws.ml.mms.http.InternalServerException;
 import com.amazonaws.ml.mms.util.NettyUtils;
 import com.amazonaws.ml.mms.util.messages.RequestInput;
 import com.amazonaws.ml.mms.util.messages.WorkerCommands;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpHeadersFactory;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -83,7 +85,13 @@ public class Job {
                 (statusPhrase == null)
                         ? HttpResponseStatus.valueOf(statusCode)
                         : HttpResponseStatus.valueOf(statusCode, statusPhrase);
-        FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, false);
+        FullHttpResponse resp =
+                new DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        status,
+                        Unpooled.directBuffer(),
+                        DefaultHttpHeadersFactory.headersFactory(),
+                        DefaultHttpHeadersFactory.trailersFactory());
 
         if (contentType != null && contentType.length() > 0) {
             resp.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);

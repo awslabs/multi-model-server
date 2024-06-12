@@ -1,5 +1,3 @@
-
-
 # Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
@@ -13,20 +11,20 @@
 """
 Run Performance Regression Test Cases and Generate Reports
 """
-# pylint: disable=redefined-builtin, no-value-for-parameter
+# pylint: disable=redefined-builtin, no-value-for-parameter, unused-argument
 
 import logging
 import os
 import subprocess
 import sys
 import time
+import pathlib
 
 import click
-import pathlib
-from runs.context import ExecutionEnv
-from runs.taurus import get_taurus_options, x2junit, update_taurus_metric_files
 from tqdm import tqdm
 
+from runs.context import ExecutionEnv
+from runs.taurus import get_taurus_options, x2junit, update_taurus_metric_files
 from utils import run_process, Timer, get_sub_dirs
 
 logger = logging.getLogger(__name__)
@@ -71,8 +69,9 @@ def validate_env(ctx, param, value):
 @click.option('--monit/--no-monit', help='Start Monitoring server', default=True)
 @click.option('--compare-local/--no-compare-local', help='Compare with previous run with files stored'
                                                          ' in artifacts directory', default=True)
+@click.option('-c', '--compare-with', help='Compare with commit id, branch, tag, HEAD~N.', default="HEAD~1")
 def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
-                   jmeter_path, env_name, monit, compare_local):
+                   jmeter_path, env_name, monit, compare_local, compare_with):
     """Collect test suites, run them and generate reports"""
 
     logger.info("Artifacts will be stored in directory %s", artifacts_dir)
@@ -84,8 +83,8 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
     else:
         logger.info("Collected tests %s", test_dirs)
 
-    with ExecutionEnv(MONITORING_AGENT, artifacts_dir, env_name, compare_local, monit) as prt:
-        pre_command = 'export PYTHONPATH={}:$PYTHONPATH;'.format(os.path.join(str(ROOT_PATH), "agents"))
+    with ExecutionEnv(MONITORING_AGENT, artifacts_dir, env_name, compare_local, compare_with, monit) as prt:
+        pre_command = 'export PYTHONPATH={}:$PYTHONPATH;'.format(os.path.join(str(ROOT_PATH), "runs", "taurus", "override"))
         for suite_name in tqdm(test_dirs, desc="Test Suites"):
             with Timer("Test suite {} execution time".format(suite_name)) as t:
                 suite_artifacts_dir = os.path.join(artifacts_dir, suite_name)
@@ -95,10 +94,13 @@ def run_test_suite(artifacts_dir, test_dir, pattern, exclude_pattern,
                 test_file = os.path.join(test_dir, suite_name, "{}.yaml".format(suite_name))
                 with x2junit.X2Junit(suite_name, suite_artifacts_dir, prt.reporter, t, env_name) as s:
                     s.code, s.err = run_process("{} bzt {} {} {} {}".format(pre_command, options_str,
-                                                                            test_file, env_yaml_path,
-                                                                            GLOBAL_CONFIG_PATH))
+                                                                            GLOBAL_CONFIG_PATH, test_file,
+                                                                            env_yaml_path))
 
-                    update_taurus_metric_files(suite_artifacts_dir, test_file)
+                    update_taurus_metric_files(suite_artifacts_dir)
+
+    sys.exit(prt.exit_code)
+
 
 if __name__ == "__main__":
     run_test_suite()

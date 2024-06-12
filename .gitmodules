@@ -1,0 +1,3 @@
+[submodule "/Users/demo/git/multi-model-server/examples/tesnorflow_c_handler/bindings/pybind11"]
+	path = /Users/demo/git/multi-model-server/examples/tesnorflow_c_handler/bindings/pybind11
+	url = https://github.com/pybind/pybind11.git

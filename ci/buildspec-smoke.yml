@@ -1,0 +1,25 @@
+# Build Spec for AWS CodeBuild CI - SMOKE
+
+version: 0.2
+
+phases:
+  build:
+    commands:
+      # create and install build
+      - ci/scripts/linux_build.sh
+      - pip install dist/*
+      # modelarchiver tests
+      - ci/scripts/linux_test_modelarchiver.sh
+      # run python tests
+      - ci/scripts/linux_test_python.sh
+  post_build:
+    commands:
+      - mkdir -p smoke_artifacts/build_artifacts; mkdir -p smoke_artifacts/model_archiver_tests;
+      - mkdir -p smoke_artifacts/mms_python_units;
+      - mv frontend/server/build/reports/tests/test/* smoke_artifacts/build_artifacts
+      - mv model-archiver/result_units/* smoke_artifacts/model_archiver_tests
+      - mv result_units/* smoke_artifacts/mms_python_units
+
+artifacts:
+    files:
+      - smoke_artifacts/**/*

@@ -161,6 +161,7 @@ class MXNetModelServiceWorker(object):
                 os.remove(node)
             except OSError:
                 pass
+        sys.exit(0)
 
     def start_worker(self, cl_socket):
         """

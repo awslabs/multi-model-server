@@ -21,7 +21,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 RUN update-alternatives --install /usr/local/bin/pip pip /usr/local/bin/pip3 1
 
 RUN pip install --no-cache-dir multi-model-server \
-    && pip install --no-cache-dir mxnet-cu92mkl==1.4.0
+    && pip install --no-cache-dir mxnet-cu92mkl==1.6.0
 
 RUN useradd -m model-server \
     && mkdir -p /home/model-server/tmp

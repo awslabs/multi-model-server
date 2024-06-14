@@ -92,7 +92,7 @@ def get_metrics(server_process, child_processes, logger):
     """
     result = {}
     children.update(child_processes)
-    logger.debug("children : {0}".format(",".join([str(c.pid) for c in children])))
+    logger.info("children : {0}".format(",".join([str(c.pid) for c in children])))
 
     def update_metric(metric_name, proc_type, stats):
         stats = list(filter(lambda x: isinstance(x, (float, int)), stats))
@@ -125,10 +125,12 @@ def get_metrics(server_process, child_processes, logger):
                 processes_stats.append({'type': ProcessType.WORKER, 'stats': child.as_dict()})
             else:
                 reclaimed_pids.append(child)
-                logger.debug('child {0} no longer available'.format(child.pid))
+                logger.info('child {0} no longer available'.format(child.pid))
         except (NoSuchProcess, ZombieProcess):
             reclaimed_pids.append(child)
-            logger.debug('child {0} no longer available'.format(child.pid))
+            logger.info('child {0} no longer available'.format(child.pid))
+        except psutil.AccessDenied as e:
+            logger.info('child {0} threw access denied {1}'.format(child.pid, str(e)))
 
     for p in reclaimed_pids:
         children.remove(p)

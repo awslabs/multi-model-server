@@ -186,6 +186,25 @@ class MXNetModelServiceWorker(object):
                 cl_socket.close()
                 sys.exit(0)
 
+    def server_worker_sigterm_handler(self, signum, frame):
+        # Frontend Process.destroy() sends sigterm
+        logging.info("PID=%s, received signal  %s server worker", os.getpid(), signum)
+        for p in multiprocessing.active_children():
+            logging.info("PID=%s, Killing child %s", os.getpid(), p.pid)
+            p.terminate()
+
+        if self.sock_type == 'unix' and os.path.exists(self.sock_name):
+            os.remove(self.sock_name)
+
+        logging.info("PID=%s, Sending self kill signal", os.getpid())
+        os.kill(os.getpid(), 9)
+
+    def sigchld_handler(self, signum, frame):
+        # This is to handle zombie processes.
+        # Calling `active_children` has the side effect of `joining` any processes which have already finished
+        val = len(multiprocessing.active_children())
+
+
     def run_server(self):
         """
         Run the backend worker process and listen on a socket
@@ -200,6 +219,8 @@ class MXNetModelServiceWorker(object):
         logging.info("[PID] %d", os.getpid())
         logging.info("MMS worker started.")
         logging.info("Python runtime: %s", platform.python_version())
+        signal.signal(signal.SIGCHLD, self.sigchld_handler)
+        signal.signal(signal.SIGTERM, self.server_worker_sigterm_handler)
         while True:
             if self.service is None and self.preload is True:
                 # Lazy loading the models

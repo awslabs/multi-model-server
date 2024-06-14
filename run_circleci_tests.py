@@ -3,9 +3,9 @@
 - This script helps to execute circleci jobs in a container on developer's local machine.
 - The script accepts workflow(mandatory), job(optional) and executor(optional) arguments.
 - The script used circleci cli's process command to generate a processed yaml.
-- The processed yaml, is parsed and twekaed to generate a new transformed yaml.
+- The processed yaml, is parsed and tweaked to generate a new transformed yaml.
 - The transformed yaml contains a single job, which is merged and ordered list of job steps
-from the specfied and requird parent jobs.
+from the specified and required parent jobs.
 """
 
 # Make sure you have following dependencies installed on your local machine

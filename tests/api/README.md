@@ -25,11 +25,11 @@ cd multi-model-server
 ```
 To execute tests on master run: 
 
-`./test/regression_tests.sh `
+`./tests/api/regression_tests.sh `
 
 To execute tests on different run: 
 
-`./test/regression_tests.sh <branch_name>`
+`./tests/api/regression_tests.sh <branch_name>`
 
 
 You can view the logs for Test execution & the Multi-model-server in the /tmp dir.

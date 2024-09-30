@@ -1,4 +1,4 @@
-gevent==20.5.2
+gevent==23.9.1
 junitparser==1.4.1
 git+https://github.com/maheshambule/vjunit.git#egg=vjunit
 tqdm==4.40.0
